@@ -36,7 +36,8 @@ For demonstration purposes, we'll bring up a PHP app (served by Apache) that dep
 	"image": "apache",
 	"parameters": {
 		"v": ["apache/www:/var/www"],
-		"p": ["80:80"]
+		"p": ["80:80"],
+		"d": true
 	},
 	"dependencies": {
 		"db": {
