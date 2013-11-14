@@ -5,7 +5,7 @@ Lift containers with ease
 Crane is a little tool to orchestrate Docker containers. It works by reading in a `Cranefile` (a JSON file) which describes how to obtain container images and how to run them. This simplifies setting up a development environemt a lot as you don't have to bring up every container manually, remembering all the arguments you need to pass. By storing the `Cranefile` next to the data and the app(s) in a repository, you can easily share the whole development environment.
 
 ## Installation
-Dowload `crane` and put it in your path. As docker needs to be executed with `sudo`, I recommend placing it e.g. in `/usr/local/bin`.
+Dowload [the latest release](https://github.com/michaelsauter/crane/releases/download/v0.1.0/crane) of `crane` and put it in your path. As docker needs to be executed with `sudo`, I recommend placing it e.g. in `/usr/local/bin`.
 
 ## Usage
 Crane is a very light wrapper around the Docker commands. This means that e.g. `run`, `rm`, `kill`, `start`, `stop` just call the corresponding Docker commands, but for all defined containers. The only exception is `provision` which either calls Docker's `build` or `pull`, depending on whether a Dockerfile is specified. For all available commands, see `crane help`. There is only one flag, `--verbose`, which will print more output.
