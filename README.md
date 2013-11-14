@@ -57,8 +57,8 @@ If you have Docker installed, you can just clone that repository and bring up th
 In the folder where the Cranefile is, type:
 
 ```
-sudo crane provision --verbose
-sudo crane run --verbose
+sudo crane provision
+sudo crane run
 ```
 
-This will bring up the webapp container, which has the MySQL and Memcached automatically linked. Open `http://localhost` and you should be greated with "Hello World".
+This will bring up the webapp container, which has the MySQL and Memcached containers automatically linked. Open `http://localhost` and you should be greated with "Hello World".
