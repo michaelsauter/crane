@@ -22,6 +22,7 @@ type Parameters struct {
 	Environments []string `json:"e"`
 	Tty          bool     `json:"t"`
 	Interactive  bool     `json:"i"`
+	Detached     bool     `json:"d"`
 	Command      string   `json:"cmd"`
 }
 
@@ -70,17 +71,17 @@ func (container *Container) build() {
 }
 
 // Run container and dependent containers
-func (container *Container) run() {
+func (container *Container) run(attachable bool) {
 	var links map[string]string
 	links = make(map[string]string)
 	// Run the dependencies
 	for key, dependency := range container.Dependencies {
-		dependency.run()
+		dependency.run(false)
 		links[key] = dependency.Name
 	}
 	// Run this container
 	// Assemble command arguments
-	args := []string{"run", "-d"}
+	args := []string{"run"}
 	// Volumes
 	for _, volume := range container.Parameters.Volumes {
 		paths := strings.Split(volume, ":")
@@ -105,6 +106,10 @@ func (container *Container) run() {
 	// Tty
 	if container.Parameters.Tty {
 		args = append(args, "-t")
+	}
+	// Detached (we can only attach to the "entry" container)
+	if !attachable || container.Parameters.Detached {
+		args = append(args, "-d")
 	}
 	// Links
 	for key, name := range links {

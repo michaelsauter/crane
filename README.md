@@ -13,11 +13,18 @@ Crane is a very light wrapper around the Docker commands. This means that e.g. `
 ## Cranefile
 A `Cranefile` defines the containers. The structure is very simple. Every container can have multiple nested containers which are automatically linked to their parents. Every container consists of:
 
-* `name` (required): Name of the container
-* `image` (required): Name of the image to build/pull
-* `dockerfile` (optional): Relative path to the Dockerfile
-* `parameters` (optional): Available are `v` (volumes), `p` (ports), `e` (environment variables), `t` (TTY), `i` (interactive) and `cmd` (command). They all map to the arguments of Docker's `run`.
-* `dependencies` (optional): Hash where the key is the alias used for the container link and the value is a container
+* `name` (string, required): Name of the container
+* `image` (string, required): Name of the image to build/pull
+* `dockerfile` (string, optional): Relative path to the Dockerfile
+* `parameters` (object, optional): Parameters mapped to Docker's `run`.
+  * `v` (array) Mount folders. In contrast to plain Docker, the host path can be relative
+  * `p` (array) Map network ports to the container
+  * `e` (array) Environment variables
+  * `t` (boolean) Allocate a pseudo-tty
+  * `i` (boolean) Keep stdin open even if not attached
+  * `d` (boolean) Detach. This value is only used for the "entry" container. If you want to attach to the other containers, you can do so afterwards using `sudo docker attach <container name>`.
+  * `cmd` (string) Command to append
+* `dependencies` (object, optional): The key is the alias used for the container link and the value is a container
 
 ## Example
 For demonstration purposes, we'll bring up a PHP app (served by Apache) that depends both on a MySQL database and a Memcached server. The source code is available at http://github.com/michaelsauter/crane-example. Here's what the Cranefile looks like:

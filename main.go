@@ -25,32 +25,33 @@ func main() {
 		// Run subcommand
 		switch os.Args[1] {
 		case "provision":
-			fmt.Println("Provision container " + container.Name + "...")
+			fmt.Println("Provisioning...")
 			container.provision()
 			break
 
 		case "run":
-			fmt.Println("Run container " + container.Name + "...")
-			container.run()
+			fmt.Println("Running...")
+			// "Entry" container is attachable
+			container.run(true)
 			break
 
 		case "rm":
-			fmt.Println("Remove container " + container.Name + "...")
+			fmt.Println("Removing...")
 			container.rm()
 			break
 
 		case "kill":
-			fmt.Println("Kill container " + container.Name + "...")
+			fmt.Println("Killing...")
 			container.kill()
 			break
 
 		case "start":
-			fmt.Println("Start container " + container.Name + "...")
+			fmt.Println("Starting...")
 			container.start()
 			break
 
 		case "stop":
-			fmt.Println("Stop container " + container.Name + "...")
+			fmt.Println("Stopping...")
 			container.stop()
 			break
 
@@ -70,10 +71,9 @@ func executeCommand(name string, args []string) {
 		fmt.Printf("%v\n", args)
 	}
 	cmd := exec.Command("docker", args...)
-	if verbose {
-		cmd.Stdout = os.Stdout
-	}
+	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
 	cmd.Run()
 	if !cmd.ProcessState.Success() {
 		panic(cmd.ProcessState.String()) // pass the error?
