@@ -18,10 +18,6 @@ func main() {
 		}
 	}()
 
-	// Read the Cranefile in order to have
-	// a root container to execute the commands.
-	container := readCranefile("Cranefile")
-
 	var cmdProvision = &cobra.Command{
 		Use:   "provision",
 		Short: "Build or pull images",
@@ -31,6 +27,7 @@ If no Dockerfile is given, it will pull the image from the index.
         `,
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("Provisioning...")
+			container := readCranefile("Cranefile")
 			container.provision()
 		},
 	}
@@ -41,6 +38,7 @@ If no Dockerfile is given, it will pull the image from the index.
 		Long:  `run will call docker run on all containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("Running...")
+			container := readCranefile("Cranefile")
 			// "Entry" container is attachable
 			container.run(true)
 		},
@@ -52,6 +50,7 @@ If no Dockerfile is given, it will pull the image from the index.
 		Long:  `rm will call docker rm on all containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("Removing...")
+			container := readCranefile("Cranefile")
 			container.rm()
 		},
 	}
@@ -62,6 +61,7 @@ If no Dockerfile is given, it will pull the image from the index.
 		Long:  `kill will call docker kill on all containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("Killing...")
+			container := readCranefile("Cranefile")
 			container.kill()
 		},
 	}
@@ -72,6 +72,7 @@ If no Dockerfile is given, it will pull the image from the index.
 		Long:  `start will call docker start on all containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("Starting...")
+			container := readCranefile("Cranefile")
 			container.start()
 		},
 	}
@@ -82,7 +83,17 @@ If no Dockerfile is given, it will pull the image from the index.
 		Long:  `stop will call docker stop on all containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("Stopping...")
+			container := readCranefile("Cranefile")
 			container.stop()
+		},
+	}
+
+	var cmdVersion = &cobra.Command{
+		Use:   "version",
+		Short: "Display version",
+		Long:  `Displays the version of Crane.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println("v0.3.0")
 		},
 	}
 
@@ -97,7 +108,7 @@ See the corresponding docker commands for more information.
 	}
 
 	craneCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
-	craneCmd.AddCommand(cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop)
+	craneCmd.AddCommand(cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdVersion)
 	craneCmd.Execute()
 }
 
