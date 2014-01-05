@@ -5,6 +5,7 @@ import (
 	"github.com/spf13/cobra"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 var verbose bool
@@ -102,7 +103,7 @@ See the corresponding docker commands for more information.
 
 func executeCommand(name string, args []string) {
 	if verbose {
-		fmt.Printf("Calling docker with %v\n", args)
+		fmt.Printf("--> docker %s\n", strings.Join(args, " "))
 	}
 	cmd := exec.Command("docker", args...)
 	cmd.Stdout = os.Stdout
