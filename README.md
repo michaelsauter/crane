@@ -5,7 +5,7 @@ Lift containers with ease
 Crane is a little tool to orchestrate Docker containers. It works by reading in a `Cranefile` (a JSON file) which describes how to obtain container images and how to run them. This simplifies setting up a development environemt a lot as you don't have to bring up every container manually, remembering all the arguments you need to pass. By storing the `Cranefile` next to the data and the app(s) in a repository, you can easily share the whole development environment.
 
 ## Installation
-Dowload [the latest release](https://github.com/michaelsauter/crane/releases/download/v0.3.0/crane) of `crane` and put it in your path. As docker needs to be executed with `sudo`, I recommend placing it e.g. in `/usr/local/bin`.
+Dowload [the latest release](https://github.com/michaelsauter/crane/releases/download/v0.3.0/crane) of `crane` and put it in your path, e.g. in `/usr/local/bin`.
 
 ## Usage
 Crane is a very light wrapper around the Docker commands. This means that e.g. `run`, `rm`, `kill`, `start`, `stop` just call the corresponding Docker commands, but for all defined containers. There are only two exception: `provision` which either calls Docker's `build` or `pull` (depending on whether a Dockerfile is specified) and `lift`, which will build and run the containers in one go.
@@ -76,7 +76,7 @@ If you have Docker installed, you can just clone that repository and bring up th
 In the folder where the Cranefile is, type:
 
 ```
-sudo crane lift
+[sudo] crane lift
 ```
 
 This will bring up the webapp container, which has the MySQL and Memcached containers automatically linked. Open `http://localhost` and you should be greated with "Hello World".
