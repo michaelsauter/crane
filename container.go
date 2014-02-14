@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path"
 	"strconv"
 	"strings"
@@ -66,14 +65,13 @@ func (container *Container) exists() bool {
 	if err != nil || len(id) == 0 {
 		return false
 	}
-	dockerCmd := exec.Command("docker", "ps", "-q", "-a", "-notrunc")
-	grepCmd := exec.Command("grep", "-wF", id)
-	output, err := pipeCommands(dockerCmd, grepCmd)
+	dockerCmd := []string{"docker", "ps", "-q", "-a", "-notrunc"}
+	grepCmd := []string{"grep", "-wF", id}
+	output, err := pipedCommandOutput(dockerCmd, grepCmd)
 	if err != nil {
 		return false
 	}
 	result := string(output)
-	fmt.Printf("%v\n", result)
 	if len(result) > 0 {
 		return true
 	} else {
@@ -87,9 +85,9 @@ func (container *Container) running() bool {
 	if err != nil || len(id) == 0 {
 		return false
 	}
-	dockerCmd := exec.Command("docker", "ps", "-q", "-notrunc")
-	grepCmd := exec.Command("grep", "-wF", id)
-	output, err := pipeCommands(dockerCmd, grepCmd)
+	dockerCmd := []string{"docker", "ps", "-q", "-notrunc"}
+	grepCmd := []string{"grep", "-wF", id}
+	output, err := pipedCommandOutput(dockerCmd, grepCmd)
 	if err != nil {
 		return false
 	}
@@ -102,9 +100,9 @@ func (container *Container) running() bool {
 }
 
 func (container *Container) imageExists() bool {
-	dockerCmd := exec.Command("docker", "images", "-notrunc")
-	grepCmd := exec.Command("grep", "-wF", container.Image)
-	output, err := pipeCommands(dockerCmd, grepCmd)
+	dockerCmd := []string{"docker", "images", "-notrunc"}
+	grepCmd := []string{"grep", "-wF", container.Image}
+	output, err := pipedCommandOutput(dockerCmd, grepCmd)
 	if err != nil {
 		return false
 	}

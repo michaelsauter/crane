@@ -148,7 +148,12 @@ func commandOutput(name string, args []string) (string, error) {
 }
 
 // from https://gist.github.com/dagoof/1477401
-func pipeCommands(commands ...*exec.Cmd) ([]byte, error) {
+func pipedCommandOutput(pipedCommandArgs ...[]string) ([]byte, error) {
+	var commands []exec.Cmd
+	for _, commandArgs := range pipedCommandArgs {
+		cmd := exec.Command(commandArgs[0], commandArgs[1:]...)
+		commands = append(commands, *cmd)
+	}
 	for i, command := range commands[:len(commands)-1] {
 		out, err := command.StdoutPipe()
 		if err != nil {
