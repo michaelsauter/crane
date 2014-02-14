@@ -61,14 +61,14 @@ For demonstration purposes, we'll bring up a PHP app (served by Apache) that dep
 		}
 	},
 	{
-		"name": "c-mysql",
+		"name": "mysql",
 		"dockerfile": "mysql",
-		"image": "mysql"
+		"image": "imysql"
 	},
 	{
-		"name": "c-memcached",
+		"name": "memcached",
 		"dockerfile": "memcached",
-		"image": "memcached"
+		"image": "imemcached"
 	}
 ]
 ```
