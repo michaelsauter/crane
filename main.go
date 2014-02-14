@@ -9,6 +9,8 @@ import (
 )
 
 var verbose bool
+var vverbose bool
+var force bool
 
 func main() {
 	// On panic, recover the error and display it
@@ -18,6 +20,19 @@ func main() {
 		}
 	}()
 
+	var cmdLift = &cobra.Command{
+		Use:   "lift",
+		Short: "Build or pull images, then run or start the containers",
+		Long: `
+provision will use specified Dockerfiles to build the images.
+If no Dockerfile is given, it will pull the image from the index.
+       `,
+		Run: func(cmd *cobra.Command, args []string) {
+			containers := readCranefile("Cranefile")
+			containers.lift(force)
+		},
+	}
+
 	var cmdProvision = &cobra.Command{
 		Use:   "provision",
 		Short: "Build or pull images",
@@ -26,9 +41,8 @@ provision will use specified Dockerfiles to build the images.
 If no Dockerfile is given, it will pull the image from the index.
         `,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("Provisioning...")
-			container := readCranefile("Cranefile")
-			container.provision()
+			containers := readCranefile("Cranefile")
+			containers.provision(force)
 		},
 	}
 
@@ -37,10 +51,8 @@ If no Dockerfile is given, it will pull the image from the index.
 		Short: "Run the containers",
 		Long:  `run will call docker run on all containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("Running...")
-			container := readCranefile("Cranefile")
-			// "Entry" container is attachable
-			container.run(true)
+			containers := readCranefile("Cranefile")
+			containers.run(force)
 		},
 	}
 
@@ -49,9 +61,8 @@ If no Dockerfile is given, it will pull the image from the index.
 		Short: "Remove the containers",
 		Long:  `rm will call docker rm on all containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("Removing...")
-			container := readCranefile("Cranefile")
-			container.rm()
+			containers := readCranefile("Cranefile")
+			containers.rm(force)
 		},
 	}
 
@@ -60,9 +71,8 @@ If no Dockerfile is given, it will pull the image from the index.
 		Short: "Kill the containers",
 		Long:  `kill will call docker kill on all containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("Killing...")
-			container := readCranefile("Cranefile")
-			container.kill()
+			containers := readCranefile("Cranefile")
+			containers.kill()
 		},
 	}
 
@@ -71,9 +81,8 @@ If no Dockerfile is given, it will pull the image from the index.
 		Short: "Start the containers",
 		Long:  `start will call docker start on all containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("Starting...")
-			container := readCranefile("Cranefile")
-			container.start()
+			containers := readCranefile("Cranefile")
+			containers.start()
 		},
 	}
 
@@ -82,9 +91,8 @@ If no Dockerfile is given, it will pull the image from the index.
 		Short: "Stop the containers",
 		Long:  `stop will call docker stop on all containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("Stopping...")
-			container := readCranefile("Cranefile")
-			container.stop()
+			containers := readCranefile("Cranefile")
+			containers.stop()
 		},
 	}
 
@@ -107,16 +115,21 @@ See the corresponding docker commands for more information.
 		`,
 	}
 
+	craneCmd.PersistentFlags().BoolVarP(&vverbose, "vverbose", "V", false, "very verbose output")
 	craneCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
-	craneCmd.AddCommand(cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdVersion)
+	cmdLift.Flags().BoolVarP(&force, "force", "f", false, "force")
+	cmdProvision.Flags().BoolVarP(&force, "force", "f", false, "force")
+	cmdRun.Flags().BoolVarP(&force, "force", "f", false, "force")
+	cmdRm.Flags().BoolVarP(&force, "force", "f", false, "force")
+	craneCmd.AddCommand(cmdLift, cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdVersion)
 	craneCmd.Execute()
 }
 
 func executeCommand(name string, args []string) {
-	if verbose {
-		fmt.Printf("--> docker %s\n", strings.Join(args, " "))
+	if verbose || vverbose {
+		fmt.Printf("--> %s %s\n", name, strings.Join(args, " "))
 	}
-	cmd := exec.Command("docker", args...)
+	cmd := exec.Command(name, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
@@ -124,4 +137,29 @@ func executeCommand(name string, args []string) {
 	if !cmd.ProcessState.Success() {
 		panic(cmd.ProcessState.String()) // pass the error?
 	}
+}
+
+func commandOutput(name string, args []string) (string, error) {
+	if vverbose {
+		fmt.Printf("--> %s %s\n", name, strings.Join(args, " "))
+	}
+	out, err := exec.Command(name, args...).Output()
+	return strings.TrimSpace(string(out)), err
+}
+
+// from https://gist.github.com/dagoof/1477401
+func pipeCommands(commands ...*exec.Cmd) ([]byte, error) {
+	for i, command := range commands[:len(commands)-1] {
+		out, err := command.StdoutPipe()
+		if err != nil {
+			return nil, err
+		}
+		command.Start()
+		commands[i+1].Stdin = out
+	}
+	final, err := commands[len(commands)-1].Output()
+	if err != nil {
+		return nil, err
+	}
+	return final, nil
 }
