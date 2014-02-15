@@ -9,7 +9,6 @@ import (
 )
 
 var verbose bool
-var vverbose bool
 var force bool
 
 func main() {
@@ -115,7 +114,6 @@ See the corresponding docker commands for more information.
 		`,
 	}
 
-	craneCmd.PersistentFlags().BoolVarP(&vverbose, "vverbose", "V", false, "very verbose output")
 	craneCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
 	cmdLift.Flags().BoolVarP(&force, "force", "f", false, "force")
 	cmdProvision.Flags().BoolVarP(&force, "force", "f", false, "force")
@@ -126,7 +124,7 @@ See the corresponding docker commands for more information.
 }
 
 func executeCommand(name string, args []string) {
-	if verbose || vverbose {
+	if verbose {
 		fmt.Printf("--> %s %s\n", name, strings.Join(args, " "))
 	}
 	cmd := exec.Command(name, args...)
@@ -140,9 +138,6 @@ func executeCommand(name string, args []string) {
 }
 
 func commandOutput(name string, args []string) (string, error) {
-	if vverbose {
-		fmt.Printf("--> %s %s\n", name, strings.Join(args, " "))
-	}
 	out, err := exec.Command(name, args...).Output()
 	return strings.TrimSpace(string(out)), err
 }

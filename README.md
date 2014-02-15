@@ -9,7 +9,7 @@ Dowload [the latest release](https://github.com/michaelsauter/crane/releases/dow
 
 ## Usage
 Crane is a very light wrapper around the Docker commands. This means that e.g. `run`, `rm`, `kill`, `start`, `stop` just call the corresponding Docker commands, but for all defined containers. There are only two exception: `provision` which either calls Docker's `build` or `pull` (depending on whether a Dockerfile is specified) and `lift`, which will build and run the containers in one go.
-You can get more information about what's happening behind the scenes by using `--verbose` or even `--vverbose`.
+You can get more information about what's happening behind the scenes by using `--verbose`.
 Some commands have a `--force` flag, which will save you intermediate steps, such as stopping the containers before removing them, or rebuilding images even though they exist already.
 For all available commands and details on usage, just type `crane`.
 
