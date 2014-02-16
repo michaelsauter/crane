@@ -21,8 +21,8 @@ Every container consists of:
 * `image` (string, required): Name of the image to build/pull
 * `dockerfile` (string, optional): Relative path to the Dockerfile
 * `run` (object, optional): Parameters mapped to Docker's `run`.
-	* `cidfile` (string)
-	* `cpu-shares` (integer)
+  * `cidfile` (string)
+  * `cpu-shares` (integer)
   * `detach` (boolean) `sudo docker attach <container name>` will work as normal.
   * `dns` (array)
   * `env` (array)
@@ -50,26 +50,41 @@ For demonstration purposes, we'll bring up a PHP app (served by Apache) that dep
 
 ```
 [
-	{
-		"name": "webapp",
-		"dockerfile": "apache",
-		"image": "apache",
-		"run": {
-			"volume": ["apache/www:/var/www"],
-			"publish": ["80:80"],
-			"detach": true
-		}
-	},
-	{
-		"name": "mysql",
-		"dockerfile": "mysql",
-		"image": "imysql"
-	},
-	{
-		"name": "memcached",
-		"dockerfile": "memcached",
-		"image": "imemcached"
-	}
+  {
+    "name": "crane_apache",
+    "dockerfile": "apache",
+    "image": "icrane_apache",
+    "run": {
+      "volumes-from": ["crane_app"],
+      "publish": ["80:80"],
+      "link": ["crane_mysql:db", "crane_memcached:cache"],
+      "detach": true
+    }
+  },
+  {
+    "name": "crane_app",
+    "dockerfile": "app",
+    "image": "icrane_app",
+    "run": {
+      "detach": true
+    }
+  },
+  {
+    "name": "crane_mysql",
+    "dockerfile": "mysql",
+    "image": "icrane_mysql",
+    "run": {
+      "detach": true
+    }
+  },
+  {
+    "name": "crane_memcached",
+    "dockerfile": "memcached",
+    "image": "icrane_memcached",
+    "run": {
+      "detach": true
+    }
+  }
 ]
 ```
 If you have Docker installed, you can just clone that repository and bring up the environment right now.
