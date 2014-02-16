@@ -94,4 +94,4 @@ In the folder where the Cranefile is, type:
 [sudo] crane lift
 ```
 
-This will bring up the webapp container, which has the MySQL and Memcached containers automatically linked. Open `http://localhost` and you should be greated with "Hello World".
+This will bring up the containers. The container running Apache has the MySQL and Memcached containers automatically linked. Open `http://localhost` and you should be greated with "Hello World".
