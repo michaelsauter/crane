@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 )
 
@@ -34,7 +33,6 @@ func (containers Containers) reversed() []Container {
 // When forced, this will rebuild all images
 // and recreate all containers.
 func (containers Containers) lift(force bool) {
-	fmt.Println("Lifting containers ...")
 	containers.provision(force)
 	containers.runOrStart(force)
 }
@@ -42,7 +40,6 @@ func (containers Containers) lift(force bool) {
 // Provision containers.
 // When forced, this will rebuild all images.
 func (containers Containers) provision(force bool) {
-	fmt.Println("Provisioning images ...")
 	for _, container := range containers.reversed() {
 		container.provision(force)
 	}
@@ -54,7 +51,6 @@ func (containers Containers) run(force bool) {
 	if force {
 		containers.rm(force)
 	}
-	fmt.Println("Running containers ...")
 	for _, container := range containers.reversed() {
 		container.run()
 	}
@@ -66,7 +62,6 @@ func (containers Containers) runOrStart(force bool) {
 	if force {
 		containers.rm(force)
 	}
-	fmt.Println("Running/starting containers ...")
 	for _, container := range containers.reversed() {
 		container.runOrStart()
 	}
@@ -74,7 +69,6 @@ func (containers Containers) runOrStart(force bool) {
 
 // Start containers.
 func (containers Containers) start() {
-	fmt.Println("Starting containers ...")
 	for _, container := range containers.reversed() {
 		container.start()
 	}
@@ -82,7 +76,6 @@ func (containers Containers) start() {
 
 // Kill containers.
 func (containers Containers) kill() {
-	fmt.Println("Killing containers ...")
 	for _, container := range containers {
 		container.kill()
 	}
@@ -90,7 +83,6 @@ func (containers Containers) kill() {
 
 // Stop containers.
 func (containers Containers) stop() {
-	fmt.Println("Stopping containers ...")
 	for _, container := range containers {
 		container.stop()
 	}
@@ -102,7 +94,6 @@ func (containers Containers) rm(force bool) {
 	if force {
 		containers.stop()
 	}
-	fmt.Println("Removing containers ...")
 	for _, container := range containers {
 		container.rm()
 	}

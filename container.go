@@ -116,12 +116,14 @@ func (container *Container) imageExists() bool {
 
 // Pull image for container
 func (container *Container) pullImage() {
+	fmt.Printf("Pulling image %s ... ", container.Image)
 	args := []string{"pull", container.Image}
 	executeCommand("docker", args)
 }
 
 // Build image for container
 func (container *Container) buildImage() {
+	fmt.Printf("Building image %s ... ", container.Image)
 	args := []string{"build", "-rm", "-t=" + container.Image, container.Dockerfile}
 	executeCommand("docker", args)
 }
@@ -148,8 +150,9 @@ func (container Container) runOrStart() {
 // Run container
 func (container Container) run() {
 	if container.exists() {
-		fmt.Printf(" ! %s does already exist. Use --force to recreate.\n", container.Name)
+		fmt.Printf(" ! Container %s does already exist. Use --force to recreate.\n", container.Name)
 	} else {
+		fmt.Printf("Running container %s ... ", container.Name)
 		// Assemble command arguments
 		args := []string{"run"}
 		// Cidfile
@@ -258,34 +261,31 @@ func (container Container) run() {
 // Start container
 func (container Container) start() {
 	if container.exists() {
-		if container.running() {
-			fmt.Printf(" i %s skipped as container is already running.\n", container.Name)
-		} else {
+		if !container.running() {
+			fmt.Printf("Starting container %s ... ", container.Name)
 			args := []string{"start", container.Name}
 			executeCommand("docker", args)
 		}
 	} else {
-		fmt.Printf(" ! %s does not exist.\n", container.Name)
+		fmt.Printf(" ! Container %s does not exist.\n", container.Name)
 	}
 }
 
 // Kill container
 func (container Container) kill() {
 	if container.running() {
+		fmt.Printf("Killing container %s ... ", container.Name)
 		args := []string{"kill", container.Name}
 		executeCommand("docker", args)
-	} else {
-		fmt.Printf(" i %s skipped as container is not running.\n", container.Name)
 	}
 }
 
 // Stop container
 func (container Container) stop() {
 	if container.running() {
+		fmt.Printf("Stopping container %s ... ", container.Name)
 		args := []string{"stop", container.Name}
 		executeCommand("docker", args)
-	} else {
-		fmt.Printf(" i %s skipped as container is not running.\n", container.Name)
 	}
 }
 
@@ -293,12 +293,11 @@ func (container Container) stop() {
 func (container Container) rm() {
 	if container.exists() {
 		if container.running() {
-			fmt.Printf(" ! Can't remove running container %s.\n", container.Name)
+			fmt.Printf(" ! Container %s is running and cannot be removed.\n", container.Name)
 		} else {
+			fmt.Printf("Removing container %s ... ", container.Name)
 			args := []string{"rm", container.Name}
 			executeCommand("docker", args)
 		}
-	} else {
-		fmt.Printf(" i %s skipped as container does not exist.\n", container.Name)
 	}
 }

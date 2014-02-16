@@ -125,7 +125,7 @@ See the corresponding docker commands for more information.
 
 func executeCommand(name string, args []string) {
 	if verbose {
-		fmt.Printf("--> %s %s\n", name, strings.Join(args, " "))
+		fmt.Printf("\n--> %s %s\n", name, strings.Join(args, " "))
 	}
 	cmd := exec.Command(name, args...)
 	cmd.Stdout = os.Stdout
