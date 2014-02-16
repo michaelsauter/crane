@@ -135,6 +135,8 @@ func (container Container) provision(force bool) {
 		} else {
 			container.pullImage()
 		}
+	} else {
+		fmt.Printf(" ! Image %s does already exist. Use --force to recreate.\n", container.Image)
 	}
 }
 
