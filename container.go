@@ -6,6 +6,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"text/tabwriter"
 )
 
 type Container struct {
@@ -112,6 +113,16 @@ func (container *Container) imageExists() bool {
 	} else {
 		return false
 	}
+}
+
+func (container *Container) status(w *tabwriter.Writer) {
+	args := []string{"inspect", "-format={{.State.Running}}\t{{.ID}}\t{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}\t{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{end}}", container.Name}
+	output, err := commandOutput("docker", args)
+	if err != nil {
+		fmt.Fprintf(w, "%s\tError!\n", container.Name)
+		return
+	}
+	fmt.Fprintf(w, "%s\t%s\n", container.Name, output)
 }
 
 // Pull image for container

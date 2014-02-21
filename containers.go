@@ -2,7 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"os"
+	"text/tabwriter"
 )
 
 type Containers []Container
@@ -101,4 +104,15 @@ func (containers Containers) rm(force bool, kill bool) {
 	for _, container := range containers {
 		container.rm()
 	}
+}
+
+// Status of containers.
+func (containers Containers) status() {
+	w := new(tabwriter.Writer)
+	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
+	fmt.Fprintln(w, "Name\tRunning\tID\tIP\tPorts")
+	for _, container := range containers {
+		container.status(w)
+	}
+	w.Flush()
 }

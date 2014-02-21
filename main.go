@@ -96,6 +96,16 @@ If no Dockerfile is given, it will pull the image from the index.
 		},
 	}
 
+	var cmdStatus = &cobra.Command{
+		Use:   "status",
+		Short: "Displays status of containers",
+		Long:  `Displays the current status of containers referenced in the Cranefile.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			containers := readCranefile("Cranefile")
+			containers.status()
+		},
+	}
+
 	var cmdVersion = &cobra.Command{
 		Use:   "version",
 		Short: "Display version",
@@ -123,7 +133,7 @@ See the corresponding docker commands for more information.
 	cmdRun.Flags().BoolVarP(&kill, "kill", "k", false, "kill containers")
 	cmdRm.Flags().BoolVarP(&force, "force", "f", false, "force")
 	cmdRm.Flags().BoolVarP(&kill, "kill", "k", false, "kill containers")
-	craneCmd.AddCommand(cmdLift, cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdVersion)
+	craneCmd.AddCommand(cmdLift, cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdStatus, cmdVersion)
 	craneCmd.Execute()
 }
 
