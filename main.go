@@ -10,6 +10,7 @@ import (
 
 var verbose bool
 var force bool
+var kill bool
 
 func main() {
 	// On panic, recover the error and display it
@@ -28,7 +29,7 @@ If no Dockerfile is given, it will pull the image from the index.
        `,
 		Run: func(cmd *cobra.Command, args []string) {
 			containers := readCranefile("Cranefile")
-			containers.lift(force)
+			containers.lift(force, kill)
 		},
 	}
 
@@ -51,7 +52,7 @@ If no Dockerfile is given, it will pull the image from the index.
 		Long:  `run will call docker run on all containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			containers := readCranefile("Cranefile")
-			containers.run(force)
+			containers.run(force, kill)
 		},
 	}
 
@@ -61,7 +62,7 @@ If no Dockerfile is given, it will pull the image from the index.
 		Long:  `rm will call docker rm on all containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			containers := readCranefile("Cranefile")
-			containers.rm(force)
+			containers.rm(force, kill)
 		},
 	}
 
@@ -116,9 +117,12 @@ See the corresponding docker commands for more information.
 
 	craneCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
 	cmdLift.Flags().BoolVarP(&force, "force", "f", false, "force")
+	cmdLift.Flags().BoolVarP(&kill, "kill", "k", false, "kill containers")
 	cmdProvision.Flags().BoolVarP(&force, "force", "f", false, "force")
 	cmdRun.Flags().BoolVarP(&force, "force", "f", false, "force")
+	cmdRun.Flags().BoolVarP(&kill, "kill", "k", false, "kill containers")
 	cmdRm.Flags().BoolVarP(&force, "force", "f", false, "force")
+	cmdRm.Flags().BoolVarP(&kill, "kill", "k", false, "kill containers")
 	craneCmd.AddCommand(cmdLift, cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdVersion)
 	craneCmd.Execute()
 }
