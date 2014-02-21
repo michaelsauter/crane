@@ -147,7 +147,7 @@ func (container Container) provision(force bool) {
 			container.pullImage()
 		}
 	} else {
-		fmt.Printf(" ! Image %s does already exist. Use --force to recreate.\n", container.Image)
+		printNotice("Image %s does already exist. Use --force to recreate.\n", container.Image)
 	}
 }
 
@@ -163,7 +163,10 @@ func (container Container) runOrStart() {
 // Run container
 func (container Container) run() {
 	if container.exists() {
-		fmt.Printf(" ! Container %s does already exist. Use --force to recreate.\n", container.Name)
+		printNotice("Container %s does already exist. Use --force to recreate.\n", container.Name)
+		if !container.running() {
+			container.start()
+		}
 	} else {
 		fmt.Printf("Running container %s ... ", container.Name)
 		// Assemble command arguments
@@ -280,7 +283,7 @@ func (container Container) start() {
 			executeCommand("docker", args)
 		}
 	} else {
-		fmt.Printf(" ! Container %s does not exist.\n", container.Name)
+		printError("Container %s does not exist.\n", container.Name)
 	}
 }
 
@@ -306,7 +309,7 @@ func (container Container) stop() {
 func (container Container) rm() {
 	if container.exists() {
 		if container.running() {
-			fmt.Printf(" ! Container %s is running and cannot be removed.\n", container.Name)
+			printError("Container %s is running and cannot be removed.\n", container.Name)
 		} else {
 			fmt.Printf("Removing container %s ... ", container.Name)
 			args := []string{"rm", container.Name}

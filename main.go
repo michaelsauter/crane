@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"os"
 	"os/exec"
@@ -11,12 +12,19 @@ import (
 var verbose bool
 var force bool
 var kill bool
+var printNotice func(format string, a ...interface{})
+var printError func(format string, a ...interface{})
+
+func init() {
+	printNotice = color.New(color.FgYellow).PrintfFunc()
+	printError = color.New(color.FgRed).PrintfFunc()
+}
 
 func main() {
 	// On panic, recover the error and display it
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Println("ERROR: ", err)
+			printError("ERROR: %s", err)
 		}
 	}()
 
