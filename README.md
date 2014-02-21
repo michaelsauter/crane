@@ -10,9 +10,14 @@ Dowload [the latest release](https://github.com/michaelsauter/crane/releases/dow
 Of course, you will need to have Docker (> 0.8) installed on your system. If you are on OS X, I recommend using [docker-osx](https://github.com/noplay/docker-osx).
 
 ## Usage
-Crane is a very light wrapper around the Docker commands. This means that e.g. `run`, `rm`, `kill`, `start`, `stop` just call the corresponding Docker commands, but for all defined containers. There are only two exception: `provision` which either calls Docker's `build` or `pull` (depending on whether a Dockerfile is specified) and `lift`, which will build and run the containers in one go.
+Crane is a very light wrapper around the Docker commands. This means that e.g. `run`, `rm`, `kill`, `start`, `stop` just call the corresponding Docker commands, but for all defined containers. Additionally, there are a few special commands:
+
+* `provision` either calls Docker's `build` or `pull` (depending on whether a Dockerfile is specified)
+* `lift` will build and run the containers in one go
+* `status` will display information about the state of the containers
+
 You can get more information about what's happening behind the scenes by using `--verbose`.
-Some commands have a `--force` flag, which will save you intermediate steps, such as stopping the containers before removing them, or rebuilding images even though they exist already.
+Some commands have a `--force` flag, which will save you intermediate steps, such as stopping the containers before removing them, or rebuilding images when they exist already. When you use `--force` to remove containers first, you can also use `--kill` if you're impatient.
 For all available commands and details on usage, just type `crane`.
 
 ## Cranefile
