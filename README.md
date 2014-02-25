@@ -105,4 +105,5 @@ In the folder where the Cranefile is, type:
 This will bring up the containers. The container running Apache has the MySQL and Memcached containers automatically linked. Open `http://localhost` and you should be greeted with "Hello World".
 
 ## Other Crane-backed environments
-* [Silex + Nginx/php-fpm](https://github.com/michaelsauter/silex-crane-env)
+* [Silex + Nginx/php-fpm + MySQL](https://github.com/michaelsauter/silex-crane-env)
+* [Sinatra](https://github.com/michaelsauter/sinatra-crane-env)
