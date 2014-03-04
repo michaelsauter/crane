@@ -10,14 +10,25 @@ import (
 
 type Containers []Container
 
+func getContainers(config string) Containers {
+	if len(config) > 0 {
+		return unmarshal([]byte(config))
+	}
+	return readCranefile("Cranefile")
+}
+
 func readCranefile(filename string) Containers {
 	file, err := ioutil.ReadFile(filename)
 	if err != nil {
 		panic(err)
 	}
 
+	return unmarshal(file)
+}
+
+func unmarshal(data []byte) Containers {
 	var containers Containers
-	err = json.Unmarshal(file, &containers)
+	err := json.Unmarshal(data, &containers)
 	if err != nil {
 		panic(err)
 	}

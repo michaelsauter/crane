@@ -12,6 +12,8 @@ import (
 var verbose bool
 var force bool
 var kill bool
+var config string
+
 var printNotice func(format string, a ...interface{})
 var printError func(format string, a ...interface{})
 
@@ -36,7 +38,7 @@ provision will use specified Dockerfiles to build the images.
 If no Dockerfile is given, it will pull the image from the index.
        `,
 		Run: func(cmd *cobra.Command, args []string) {
-			containers := readCranefile("Cranefile")
+			containers := getContainers(config)
 			containers.lift(force, kill)
 		},
 	}
@@ -49,7 +51,7 @@ provision will use specified Dockerfiles to build the images.
 If no Dockerfile is given, it will pull the image from the index.
         `,
 		Run: func(cmd *cobra.Command, args []string) {
-			containers := readCranefile("Cranefile")
+			containers := getContainers(config)
 			containers.provision(force)
 		},
 	}
@@ -59,7 +61,7 @@ If no Dockerfile is given, it will pull the image from the index.
 		Short: "Run the containers",
 		Long:  `run will call docker run on all containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			containers := readCranefile("Cranefile")
+			containers := getContainers(config)
 			containers.run(force, kill)
 		},
 	}
@@ -69,7 +71,7 @@ If no Dockerfile is given, it will pull the image from the index.
 		Short: "Remove the containers",
 		Long:  `rm will call docker rm on all containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			containers := readCranefile("Cranefile")
+			containers := getContainers(config)
 			containers.rm(force, kill)
 		},
 	}
@@ -79,7 +81,7 @@ If no Dockerfile is given, it will pull the image from the index.
 		Short: "Kill the containers",
 		Long:  `kill will call docker kill on all containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			containers := readCranefile("Cranefile")
+			containers := getContainers(config)
 			containers.kill()
 		},
 	}
@@ -89,7 +91,7 @@ If no Dockerfile is given, it will pull the image from the index.
 		Short: "Start the containers",
 		Long:  `start will call docker start on all containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			containers := readCranefile("Cranefile")
+			containers := getContainers(config)
 			containers.start()
 		},
 	}
@@ -99,7 +101,7 @@ If no Dockerfile is given, it will pull the image from the index.
 		Short: "Stop the containers",
 		Long:  `stop will call docker stop on all containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			containers := readCranefile("Cranefile")
+			containers := getContainers(config)
 			containers.stop()
 		},
 	}
@@ -107,9 +109,9 @@ If no Dockerfile is given, it will pull the image from the index.
 	var cmdStatus = &cobra.Command{
 		Use:   "status",
 		Short: "Displays status of containers",
-		Long:  `Displays the current status of containers referenced in the Cranefile.`,
+		Long:  `Displays the current status of the containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			containers := readCranefile("Cranefile")
+			containers := getContainers(config)
 			containers.status()
 		},
 	}
@@ -128,12 +130,13 @@ If no Dockerfile is given, it will pull the image from the index.
 		Short: "crane - Lift containers with ease",
 		Long: `
 Crane is a little tool to orchestrate Docker containers.
-It works by reading in a Cranefile (a JSON file) which describes how to obtain container images and how to run them.
+It works by reading in JSON (either from a Cranefile or --config) which describes how to obtain container images and how to run them.
 See the corresponding docker commands for more information.
 		`,
 	}
 
 	craneCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
+	craneCmd.PersistentFlags().StringVarP(&config, "config", "c", "", "config to read from")
 	cmdLift.Flags().BoolVarP(&force, "force", "f", false, "force")
 	cmdLift.Flags().BoolVarP(&kill, "kill", "k", false, "kill containers")
 	cmdProvision.Flags().BoolVarP(&force, "force", "f", false, "force")
