@@ -52,7 +52,12 @@ Every container consists of:
 
 See the [Docker documentation](http://docs.docker.io/en/latest/reference/commandline/cli/#run) for more details about the parameters.
 
-As Crane specifies containers in JSON, we can also read in a string (given via `--config`) instead of the Cranefile. This is handy if you want to use Crane to lift containers over SSH. For example, you can bring up a container (running Pry in this case) like this: `crane lift --config='[{"name":"pry", "image":"d11wtq/ruby", "run":{"tty": true, "interactive": true, "cmd": "pry"} }]'`. At the moment, there is no easy way to read in a local Cranefile and execute it remotely, but that is certainly possible and might be added in the future.
+As Crane specifies containers in JSON, we can also read in a string (given via `--config`) instead of the Cranefile. This is handy if you want to use Crane to lift containers over SSH. For example, you can bring up a container (running Pry in this case) like this:
+
+```
+crane lift --config='[{"name":"pry", "image":"d11wtq/ruby", "run":{"tty": true, "interactive": true, "cmd": "pry"} }]'
+```
+At the moment, there is no easy way to read in a local Cranefile and execute it remotely, but that is certainly possible and might be added in the future.
 
 ## Example
 For demonstration purposes, we'll bring up a PHP app (served by Apache) that depends both on a MySQL database and a Memcached server. The source code is available at http://github.com/michaelsauter/crane-example. Here's what the Cranefile looks like:
