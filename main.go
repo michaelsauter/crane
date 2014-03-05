@@ -26,7 +26,7 @@ func main() {
 	// On panic, recover the error and display it
 	defer func() {
 		if err := recover(); err != nil {
-			printError("ERROR: %s", err)
+			printError("ERROR: %s\n", err)
 		}
 	}()
 
