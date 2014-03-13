@@ -18,28 +18,28 @@ type Container struct {
 }
 
 type RunParameters struct {
-	Cidfile     string   `json:"cidfile"`
-	CpuShares   int      `json:"cpu-shares"`
-	Detach      bool     `json:"detach"`
-	Dns         []string `json:"dns"`
-	Entrypoint  string   `json:"entrypoint"`
-	Env         []string `json:"env"`
-	Expose      []string `json:"expose"`
-	Host        string   `json:"host"`
-	Interactive bool     `json:"interactive"`
-	Link        []string `json:"link"`
-	LxcConf     []string `json:"lxc-conf"`
-	Memory      string   `json:"memory"`
-	Privileged  bool     `json:"privileged"`
-	Publish     []string `json:"publish"`
-	PublishAll  bool     `json:"publish-all"`
-	Rm          bool     `json:"rm"`
-	Tty         bool     `json:"tty"`
-	User        string   `json:"user"`
-	Volume      []string `json:"volume"`
-	VolumesFrom []string `json:"volumes-from"`
-	Workdir     string   `json:"workdir"`
-	Command     string   `json:"cmd"`
+	Cidfile     string      `json:"cidfile"`
+	CpuShares   int         `json:"cpu-shares"`
+	Detach      bool        `json:"detach"`
+	Dns         []string    `json:"dns"`
+	Entrypoint  string      `json:"entrypoint"`
+	Env         []string    `json:"env"`
+	Expose      []string    `json:"expose"`
+	Host        string      `json:"host"`
+	Interactive bool        `json:"interactive"`
+	Link        []string    `json:"link"`
+	LxcConf     []string    `json:"lxc-conf"`
+	Memory      string      `json:"memory"`
+	Privileged  bool        `json:"privileged"`
+	Publish     []string    `json:"publish"`
+	PublishAll  bool        `json:"publish-all"`
+	Rm          bool        `json:"rm"`
+	Tty         bool        `json:"tty"`
+	User        string      `json:"user"`
+	Volume      []string    `json:"volume"`
+	VolumesFrom []string    `json:"volumes-from"`
+	Workdir     string      `json:"workdir"`
+	Command     interface{} `json:"cmd"`
 }
 
 func (container *Container) getId() (id string, err error) {
@@ -266,8 +266,21 @@ func (container Container) run() {
 		// Image
 		args = append(args, container.Image)
 		// Command
-		if len(container.Run.Command) > 0 {
-			args = append(args, strings.Split(container.Run.Command, " ")...)
+		if container.Run.Command != nil {
+			switch cmd := container.Run.Command.(type) {
+			case string:
+				if len(cmd) > 0 {
+					args = append(args, cmd)
+				}
+			case []interface{}:
+				cmds := make([]string, len(cmd))
+				for i, v := range cmd {
+					cmds[i] = v.(string)
+				}
+				args = append(args, cmds...)
+			default:
+				printError("cmd is of unknown type!")
+			}
 		}
 		// Execute command
 		executeCommand("docker", args)
