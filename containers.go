@@ -15,7 +15,14 @@ func getContainers(config string) Containers {
 	if len(config) > 0 {
 		return unmarshal([]byte(config))
 	}
-	return readCranefile("Cranefile")
+	if _, err := os.Stat("crane.json"); err == nil {
+		return readCranefile("crane.json")
+	}
+	if _, err := os.Stat("Cranefile"); err == nil {
+		printNotice("Using a Cranefile is deprecated. Please use crane.json instead.\n")
+		return readCranefile("Cranefile")
+	}
+	panic("No crane.json found!")
 }
 
 func readCranefile(filename string) Containers {
