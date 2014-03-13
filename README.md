@@ -21,7 +21,7 @@ Some commands have a `--force` flag, which will save you intermediate steps, suc
 For all available commands and details on usage, just type `crane`.
 
 ## Cranefile
-A `Cranefile` defines the containers, one after the other. One caveat: if a container depends on another one, it must appear before that container in the file.
+A `Cranefile` defines containers ordered by dependencies.  If a container depends on another one, it must appear before its dependency in the file.
 Every container consists of:
 
 * `name` (string, required): Name of the container
