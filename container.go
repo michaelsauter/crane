@@ -173,11 +173,11 @@ func (container Container) run() {
 		args := []string{"run"}
 		// Cidfile
 		if len(container.Run.Cidfile) > 0 {
-			args = append(args, "--cidfile", container.Run.Cidfile)
+			args = append(args, "--cidfile", os.ExpandEnv(container.Run.Cidfile))
 		}
 		// CPU shares
 		if container.Run.CpuShares > 0 {
-			args = append(args, "--cpu-shares", strconv.Itoa(container.Run.CpuShares))
+			args = append(args, "--cpu-shares", os.ExpandEnv(strconv.Itoa(container.Run.CpuShares)))
 		}
 		// Detach
 		if container.Run.Detach {
@@ -185,23 +185,23 @@ func (container Container) run() {
 		}
 		// Dns
 		for _, dns := range container.Run.Dns {
-			args = append(args, "--dns", dns)
+			args = append(args, "--dns", os.ExpandEnv(dns))
 		}
 		// Entrypoint
 		if len(container.Run.Entrypoint) > 0 {
-			args = append(args, "--workdir", container.Run.Entrypoint)
+			args = append(args, "--entrypoint", os.ExpandEnv(container.Run.Entrypoint))
 		}
 		// Env
 		for _, env := range container.Run.Env {
-			args = append(args, "--env", env)
+			args = append(args, "--env", os.ExpandEnv(env))
 		}
 		// Expose
 		for _, expose := range container.Run.Expose {
-			args = append(args, "--expose", expose)
+			args = append(args, "--expose", os.ExpandEnv(expose))
 		}
 		// Host
 		if len(container.Run.Host) > 0 {
-			args = append(args, "--host", container.Run.Host)
+			args = append(args, "--host", os.ExpandEnv(container.Run.Host))
 		}
 		// Interactive
 		if container.Run.Interactive {
@@ -213,11 +213,11 @@ func (container Container) run() {
 		}
 		// LxcConf
 		for _, lxcConf := range container.Run.LxcConf {
-			args = append(args, "--lxc-conf", lxcConf)
+			args = append(args, "--lxc-conf", os.ExpandEnv(lxcConf))
 		}
 		// Memory
 		if len(container.Run.Memory) > 0 {
-			args = append(args, "--memory", container.Run.Memory)
+			args = append(args, "--memory", os.ExpandEnv(container.Run.Memory))
 		}
 		// Privileged
 		if container.Run.Privileged {
@@ -225,7 +225,7 @@ func (container Container) run() {
 		}
 		// Publish
 		for _, port := range container.Run.Publish {
-			args = append(args, "--publish", port)
+			args = append(args, "--publish", os.ExpandEnv(port))
 		}
 		// PublishAll
 		if container.Run.PublishAll {
@@ -241,7 +241,7 @@ func (container Container) run() {
 		}
 		// User
 		if len(container.Run.User) > 0 {
-			args = append(args, "--user", container.Run.User)
+			args = append(args, "--user", os.ExpandEnv(container.Run.User))
 		}
 		// Volumes
 		for _, volume := range container.Run.Volume {
@@ -250,15 +250,15 @@ func (container Container) run() {
 				cwd, _ := os.Getwd()
 				paths[0] = cwd + "/" + paths[0]
 			}
-			args = append(args, "--volume", strings.Join(paths, ":"))
+			args = append(args, "--volume", os.ExpandEnv(strings.Join(paths, ":")))
 		}
 		// VolumesFrom
 		for _, volumeFrom := range container.Run.VolumesFrom {
-			args = append(args, "--volumes-from", volumeFrom)
+			args = append(args, "--volumes-from", os.ExpandEnv(volumeFrom))
 		}
 		// Workdir
 		if len(container.Run.Workdir) > 0 {
-			args = append(args, "--workdir", container.Run.Workdir)
+			args = append(args, "--workdir", os.ExpandEnv(container.Run.Workdir))
 		}
 
 		// Name
