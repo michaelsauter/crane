@@ -267,7 +267,7 @@ func (container Container) run() {
 		args = append(args, container.Image)
 		// Command
 		if len(container.Run.Command) > 0 {
-			args = append(args, container.Run.Command)
+			args = append(args, strings.Split(container.Run.Command, " ")...)
 		}
 		// Execute command
 		executeCommand("docker", args)
