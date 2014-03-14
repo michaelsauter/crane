@@ -35,8 +35,7 @@ func main() {
 		Short: "Build or pull images, then run or start the containers",
 		Long: `
 provision will use specified Dockerfiles to build the images.
-If no Dockerfile is given, it will pull the image from the index.
-       `,
+If no Dockerfile is given, it will pull the image from the index.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			containers := getContainers(config)
 			containers.lift(force, kill)
@@ -48,8 +47,7 @@ If no Dockerfile is given, it will pull the image from the index.
 		Short: "Build or pull images",
 		Long: `
 provision will use specified Dockerfiles to build the images.
-If no Dockerfile is given, it will pull the image from the index.
-        `,
+If no Dockerfile is given, it will pull the image from the index.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			containers := getContainers(config)
 			containers.provision(force)
@@ -131,8 +129,7 @@ If no Dockerfile is given, it will pull the image from the index.
 		Long: `
 Crane is a little tool to orchestrate Docker containers.
 It works by reading in JSON (either from a Cranefile or --config) which describes how to obtain container images and how to run them.
-See the corresponding docker commands for more information.
-		`,
+See the corresponding docker commands for more information.`,
 	}
 
 	craneCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
