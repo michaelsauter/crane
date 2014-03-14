@@ -2,12 +2,12 @@
 Lift containers with ease
 
 ## Overview
-Crane is a little tool to orchestrate Docker containers. It works by reading in a `Cranefile` (a JSON file) which describes how to obtain container images and how to run them. This simplifies setting up a development environemt a lot as you don't have to bring up every container manually, remembering all the arguments you need to pass. By storing the `Cranefile` next to the data and the app(s) in a repository, you can easily share the whole development environment.
+Crane is a little tool to orchestrate Docker containers. It works by reading in some configuration (JSON or YAML) which describes how to obtain images and how to run the containers. This simplifies setting up a development environemt a lot as you don't have to bring up every container manually, remembering all the arguments you need to pass. By storing the configuration next to the data and the app(s) in a repository, you can easily share the whole environment.
 
 ## Installation
 Dowload [the latest release](https://github.com/michaelsauter/crane/releases) of `crane` and put it in your path, e.g. in `/usr/local/bin`.
 
-Of course, you will need to have Docker (> 0.8) installed on your system. If you are on OS X, I recommend using [docker-osx](https://github.com/noplay/docker-osx). [boot2docker](https://github.com/boot2docker/boot2docker) is nice, but unfortunately, it does not support bind-mounting volumes yet.
+Of course, you will need to have Docker (>= 0.8) installed on your system. If you are on OS X, I recommend using [docker-osx](https://github.com/noplay/docker-osx). [boot2docker](https://github.com/boot2docker/boot2docker) is nice, but unfortunately, it does not support bind-mounting volumes yet.
 
 ## Usage
 Crane is a very light wrapper around the Docker commands. This means that e.g. `run`, `rm`, `kill`, `start`, `stop` just call the corresponding Docker commands, but for all defined containers. Additionally, there are a few special commands:
@@ -20,8 +20,8 @@ You can get more information about what's happening behind the scenes by using `
 Some commands have a `--force` flag, which will save you intermediate steps, such as stopping the containers before removing them, or rebuilding images when they exist already. When you use `--force` to remove containers first, you can also use `--kill` if you're impatient.
 For all available commands and details on usage, just type `crane`.
 
-## Cranefile
-A `Cranefile` defines an array of containers. If a container depends on another one, it must appear before that container in the file.
+## crane.json / crane.yaml
+The configuration defines an array of containers, either stored in JSON (`crane.json`) or YAML (`crane.yaml`). If a container depends on another one, it must appear before that container in the file.
 Every container consists of:
 
 * `name` (string, required): Name of the container
@@ -48,19 +48,19 @@ Every container consists of:
 	* `volume` (array) In contrast to plain Docker, the host path can be relative.
 	* `volumes-from` (array) Mount volumes from other containers
 	* `workdir` (string)
-	* `cmd` (string) Command to append to `docker run` (overwriting `CMD`).
+	* `cmd` (array/string) Command to append to `docker run` (overwriting `CMD`).
 
 See the [Docker documentation](http://docs.docker.io/en/latest/reference/commandline/cli/#run) for more details about the parameters.
 
-As Crane specifies containers in JSON, we can also read in a string (given via `--config`) instead of the Cranefile. This is handy if you want to use Crane to lift containers over SSH. For example, you can bring up a container (running Pry in this case) like this:
+The container configruation can also be read from a string (given via `--config`). This is handy if you want to use Crane to lift containers over SSH. For example, you can bring up a container (running Pry in this case) like this:
 
 ```
 crane lift --config='[{"name":"pry", "image":"d11wtq/ruby", "run":{"tty": true, "interactive": true, "cmd": "pry"} }]'
 ```
-At the moment, there is no easy way to read in a local Cranefile and execute it remotely, but that is certainly possible and might be added in the future.
+At the moment, there is no easy way to read in a local configuration and execute it remotely, but that is certainly possible and might be added in the future.
 
 ## Example
-For demonstration purposes, we'll bring up a PHP app (served by Apache) that depends both on a MySQL database and a Memcached server. The source code is available at http://github.com/michaelsauter/crane-example. Here's what the Cranefile looks like:
+For demonstration purposes, we'll bring up a PHP app (served by Apache) that depends both on a MySQL database and a Memcached server. The source code is available at http://github.com/michaelsauter/crane-example. Here's what the `crane.json` looks like:
 
 ```
 [
@@ -103,7 +103,7 @@ For demonstration purposes, we'll bring up a PHP app (served by Apache) that dep
 ]
 ```
 If you have Docker installed, you can just clone that repository and bring up the environment right now.
-In the folder where the Cranefile is, type:
+In the folder where the `crane.json` is, type:
 
 ```
 [sudo] crane lift
