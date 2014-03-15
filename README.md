@@ -111,6 +111,18 @@ In the folder where the `crane.json` is, type:
 
 This will bring up the containers. The container running Apache has the MySQL and Memcached containers automatically linked. Open `http://localhost` and you should be greeted with "Hello World".
 
+If you want to use YAML instead of JSON, here's what a simple configuration looks like:
+
+```
+- name: pry
+	image: d11wtq/ruby
+	run:
+		interactive: true
+		tty: true
+		cmd: pry
+
+```
+
 ## Other Crane-backed environments
 * [Silex + Nginx/php-fpm + MySQL](https://github.com/michaelsauter/silex-crane-env)
 * [Sinatra + PostrgeSQL](https://github.com/michaelsauter/sinatra-crane-env)
