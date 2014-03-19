@@ -135,7 +135,7 @@ func (container *Container) pullImage() {
 // Build image for container
 func (container *Container) buildImage() {
 	fmt.Printf("Building image %s ... ", container.Image)
-	args := []string{"build", "-rm", "-t=" + container.Image, container.Dockerfile}
+	args := []string{"build", "-rm", "-t=" + container.Image, os.ExpandEnv(container.Dockerfile)}
 	executeCommand("docker", args)
 }
 
