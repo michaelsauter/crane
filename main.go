@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/fatih/color"
+	"github.com/michaelsauter/crane/print"
 	"github.com/spf13/cobra"
 	"os"
 	"os/exec"
@@ -14,19 +14,11 @@ var force bool
 var kill bool
 var config string
 
-var printNotice func(format string, a ...interface{})
-var printError func(format string, a ...interface{})
-
-func init() {
-	printNotice = color.New(color.FgYellow).PrintfFunc()
-	printError = color.New(color.FgRed).PrintfFunc()
-}
-
 func main() {
 	// On panic, recover the error and display it
 	defer func() {
 		if err := recover(); err != nil {
-			printError("ERROR: %s\n", err)
+			print.Error("ERROR: %s\n", err)
 		}
 	}()
 

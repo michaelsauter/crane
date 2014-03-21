@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/michaelsauter/crane/print"
 	"fmt"
 	"os"
 	"path"
@@ -147,7 +148,7 @@ func (container Container) provision(force bool) {
 			container.pullImage()
 		}
 	} else {
-		printNotice("Image %s does already exist. Use --force to recreate.\n", container.Image)
+		print.Notice("Image %s does already exist. Use --force to recreate.\n", container.Image)
 	}
 }
 
@@ -163,7 +164,7 @@ func (container Container) runOrStart() {
 // Run container
 func (container Container) run() {
 	if container.exists() {
-		printNotice("Container %s does already exist. Use --force to recreate.\n", container.Name)
+		print.Notice("Container %s does already exist. Use --force to recreate.\n", container.Name)
 		if !container.running() {
 			container.start()
 		}
@@ -279,7 +280,7 @@ func (container Container) run() {
 				}
 				args = append(args, cmds...)
 			default:
-				printError("cmd is of unknown type!")
+				print.Error("cmd is of unknown type!")
 			}
 		}
 		// Execute command
@@ -296,7 +297,7 @@ func (container Container) start() {
 			executeCommand("docker", args)
 		}
 	} else {
-		printError("Container %s does not exist.\n", container.Name)
+		print.Error("Container %s does not exist.\n", container.Name)
 	}
 }
 
@@ -322,7 +323,7 @@ func (container Container) stop() {
 func (container Container) rm() {
 	if container.exists() {
 		if container.running() {
-			printError("Container %s is running and cannot be removed.\n", container.Name)
+			print.Error("Container %s is running and cannot be removed.\n", container.Name)
 		} else {
 			fmt.Printf("Removing container %s ... ", container.Name)
 			args := []string{"rm", container.Name}

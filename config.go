@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/michaelsauter/crane/print"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -20,7 +21,7 @@ func getContainers(config string) Containers {
 		return readCraneYAML("crane.yaml")
 	}
 	if _, err := os.Stat("Cranefile"); err == nil {
-		printNotice("Using a Cranefile is deprecated. Please use crane.json/crane.yaml instead.\n")
+		print.Notice("Using a Cranefile is deprecated. Please use crane.json/crane.yaml instead.\n")
 		return readCraneJSON("Cranefile")
 	}
 	panic("No crane.json/crane.yaml found!")
