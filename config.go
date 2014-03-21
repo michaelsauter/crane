@@ -73,6 +73,9 @@ func unmarshalJSON(data []byte) Containers {
 		err = displaySyntaxError(data, err)
 		panic(err)
 	}
+	if verbose {
+		fmt.Printf("Containers from json %v\n", containers)
+	}
 	return containers
 }
 
@@ -82,6 +85,9 @@ func unmarshalYAML(data []byte) Containers {
 	if err != nil {
 		err = displaySyntaxError(data, err)
 		panic(err)
+	}
+	if verbose {
+		fmt.Printf("Containers from yaml %v\n", containers)
 	}
 	return containers
 }
