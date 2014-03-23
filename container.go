@@ -49,7 +49,7 @@ func (container *Container) getId() (id string, err error) {
 	} else {
 		// Inspect container, extracting the ID.
 		// This will return gibberish if no container is found.
-		args := []string{"inspect", "-format={{.ID}}", container.Name}
+		args := []string{"inspect", "--format={{.ID}}", container.Name}
 		output, outErr := commandOutput("docker", args)
 		if err == nil {
 			id = output
@@ -67,7 +67,7 @@ func (container *Container) exists() bool {
 	if err != nil || len(id) == 0 {
 		return false
 	}
-	dockerCmd := []string{"docker", "ps", "-q", "-a", "-notrunc"}
+	dockerCmd := []string{"docker", "ps", "--quit", "--all", "--no-trunc"}
 	grepCmd := []string{"grep", "-wF", id}
 	output, err := pipedCommandOutput(dockerCmd, grepCmd)
 	if err != nil {
@@ -87,7 +87,7 @@ func (container *Container) running() bool {
 	if err != nil || len(id) == 0 {
 		return false
 	}
-	dockerCmd := []string{"docker", "ps", "-q", "-notrunc"}
+	dockerCmd := []string{"docker", "ps", "--quiet", "--no-trunc"}
 	grepCmd := []string{"grep", "-wF", id}
 	output, err := pipedCommandOutput(dockerCmd, grepCmd)
 	if err != nil {
@@ -102,7 +102,7 @@ func (container *Container) running() bool {
 }
 
 func (container *Container) imageExists() bool {
-	dockerCmd := []string{"docker", "images", "-notrunc"}
+	dockerCmd := []string{"docker", "images", "--no-trunc"}
 	grepCmd := []string{"grep", "-wF", container.Image}
 	output, err := pipedCommandOutput(dockerCmd, grepCmd)
 	if err != nil {
@@ -117,7 +117,7 @@ func (container *Container) imageExists() bool {
 }
 
 func (container *Container) status(w *tabwriter.Writer) {
-	args := []string{"inspect", "-format={{.State.Running}}\t{{.ID}}\t{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}\t{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{end}}", container.Name}
+	args := []string{"inspect", "--format={{.State.Running}}\t{{.ID}}\t{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}\t{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{end}}", container.Name}
 	output, err := commandOutput("docker", args)
 	if err != nil {
 		fmt.Fprintf(w, "%s\tError!\n", container.Name)
@@ -136,7 +136,7 @@ func (container *Container) pullImage() {
 // Build image for container
 func (container *Container) buildImage() {
 	fmt.Printf("Building image %s ... ", container.Image)
-	args := []string{"build", "-rm", "-t=" + container.Image, os.ExpandEnv(container.Dockerfile)}
+	args := []string{"build", "--rm", "--tag=" + container.Image, os.ExpandEnv(container.Dockerfile)}
 	executeCommand("docker", args)
 }
 
