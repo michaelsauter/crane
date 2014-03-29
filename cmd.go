@@ -5,13 +5,35 @@ import (
 	"fmt"
 )
 
-var verbose bool
-var force bool
-var kill bool
-var config string
+type Config struct {
+	verbose bool
+	force bool
+	kill bool
+	config string
+	manifest string
+	configFiles []string
+}
+var config = Config{
+	false,
+	false,
+	false,
+	"",
+	"",
+	[]string{"crane.json","crane.json","crane.yaml","Cranefile"},
+}
+func configFiles() []string {
+	var result = []string(nil)
+	if len(config.manifest) > 0 {
+		//result = append([]string(nil), config.manifest, result)
+		result = []string{config.manifest}
+	} else {
+		result = config.configFiles
+	}
+	return result
+}
 
 func isVerbose() bool {
-	return verbose
+	return config.verbose
 }
 
 func handleCmd() {
@@ -23,7 +45,7 @@ provision will use specified Dockerfiles to build the images.
 If no Dockerfile is given, it will pull the image from the index.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			containers := getContainers(config)
-			containers.lift(force, kill)
+			containers.lift(config.force, config.kill)
 		},
 	}
 
@@ -35,7 +57,7 @@ provision will use specified Dockerfiles to build the images.
 If no Dockerfile is given, it will pull the image from the index.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			containers := getContainers(config)
-			containers.provision(force)
+			containers.provision(config.force)
 		},
 	}
 
@@ -45,7 +67,7 @@ If no Dockerfile is given, it will pull the image from the index.`,
 		Long:  `run will call docker run on all containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			containers := getContainers(config)
-			containers.run(force, kill)
+			containers.run(config.force, config.kill)
 		},
 	}
 
@@ -55,7 +77,7 @@ If no Dockerfile is given, it will pull the image from the index.`,
 		Long:  `rm will call docker rm on all containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			containers := getContainers(config)
-			containers.rm(force, kill)
+			containers.rm(config.force, config.kill)
 		},
 	}
 
@@ -113,19 +135,20 @@ If no Dockerfile is given, it will pull the image from the index.`,
 		Short: "crane - Lift containers with ease",
 		Long: `
 Crane is a little tool to orchestrate Docker containers.
-It works by reading in JSON (either from a Cranefile or --config) which describes how to obtain container images and how to run them.
+It works by reading in JSON or YAML (either from crane.json, crane.yaml, the string specified in --config, or a json or yml file specified by --manifest) which describes how to obtain container images and how to run them.
 See the corresponding docker commands for more information.`,
 	}
 
-	craneCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
-	craneCmd.PersistentFlags().StringVarP(&config, "config", "c", "", "config to read from")
-	cmdLift.Flags().BoolVarP(&force, "force", "f", false, "force")
-	cmdLift.Flags().BoolVarP(&kill, "kill", "k", false, "kill containers")
-	cmdProvision.Flags().BoolVarP(&force, "force", "f", false, "force")
-	cmdRun.Flags().BoolVarP(&force, "force", "f", false, "force")
-	cmdRun.Flags().BoolVarP(&kill, "kill", "k", false, "kill containers")
-	cmdRm.Flags().BoolVarP(&force, "force", "f", false, "force")
-	cmdRm.Flags().BoolVarP(&kill, "kill", "k", false, "kill containers")
+	craneCmd.PersistentFlags().BoolVarP(&config.verbose, "verbose", "v", false, "verbose output")
+	craneCmd.PersistentFlags().StringVarP(&config.config, "config", "c", "", "config to read from")
+	craneCmd.PersistentFlags().StringVarP(&config.manifest, "manifest", "m", "", "config file to read from")
+	cmdLift.Flags().BoolVarP(&config.force, "force", "f", false, "force")
+	cmdLift.Flags().BoolVarP(&config.kill, "kill", "k", false, "kill containers")
+	cmdProvision.Flags().BoolVarP(&config.force, "force", "f", false, "force")
+	cmdRun.Flags().BoolVarP(&config.force, "force", "f", false, "force")
+	cmdRun.Flags().BoolVarP(&config.kill, "kill", "k", false, "kill containers")
+	cmdRm.Flags().BoolVarP(&config.force, "force", "f", false, "force")
+	cmdRm.Flags().BoolVarP(&config.kill, "kill", "k", false, "kill containers")
 	craneCmd.AddCommand(cmdLift, cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdStatus, cmdVersion)
 	craneCmd.Execute()
 }
