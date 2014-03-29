@@ -120,6 +120,17 @@ If no Dockerfile is given, it will pull the image from the index.`,
 		},
 	}
 
+	var cmdCheck = &cobra.Command{
+		Use:   "check",
+		Short: "Check configuration",
+		Long: `check will read the configuration and print it to stdout for debugging.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			containers := getContainers(options)
+			fmt.Printf("%v\n", containers)
+		},
+	}
+
+
 	var cmdVersion = &cobra.Command{
 		Use:   "version",
 		Short: "Display version",
@@ -148,6 +159,6 @@ See the corresponding docker commands for more information.`,
 	cmdRun.Flags().BoolVarP(&options.kill, "kill", "k", false, "kill containers")
 	cmdRm.Flags().BoolVarP(&options.force, "force", "f", false, "force")
 	cmdRm.Flags().BoolVarP(&options.kill, "kill", "k", false, "kill containers")
-	craneCmd.AddCommand(cmdLift, cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdStatus, cmdVersion)
+	craneCmd.AddCommand(cmdLift, cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdStatus, cmdVersion, cmdCheck)
 	craneCmd.Execute()
 }
