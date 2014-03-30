@@ -11,10 +11,10 @@ import (
 	"os"
 )
 
-func getContainers(config Config) Containers {
+func getContainers(options Options) Containers {
 
-	if len(config.config) > 0 {
-		return unmarshalJSON([]byte(config.config))
+	if len(options.config) > 0 {
+		return unmarshalJSON([]byte(options.config))
 	}
 
 	for _, f := range configFiles() {

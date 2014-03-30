@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-type Config struct {
+type Options struct {
 	verbose bool
 	force bool
 	kill bool
@@ -13,7 +13,7 @@ type Config struct {
 	manifest string
 	configFiles []string
 }
-var config = Config{
+var options = Options{
 	false,
 	false,
 	false,
@@ -23,17 +23,17 @@ var config = Config{
 }
 func configFiles() []string {
 	var result = []string(nil)
-	if len(config.manifest) > 0 {
+	if len(options.manifest) > 0 {
 		//result = append([]string(nil), config.manifest, result)
-		result = []string{config.manifest}
+		result = []string{options.manifest}
 	} else {
-		result = config.configFiles
+		result = options.configFiles
 	}
 	return result
 }
 
 func isVerbose() bool {
-	return config.verbose
+	return options.verbose
 }
 
 func handleCmd() {
@@ -44,8 +44,8 @@ func handleCmd() {
 provision will use specified Dockerfiles to build the images.
 If no Dockerfile is given, it will pull the image from the index.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			containers := getContainers(config)
-			containers.lift(config.force, config.kill)
+			containers := getContainers(options)
+			containers.lift(options.force, options.kill)
 		},
 	}
 
@@ -56,8 +56,8 @@ If no Dockerfile is given, it will pull the image from the index.`,
 provision will use specified Dockerfiles to build the images.
 If no Dockerfile is given, it will pull the image from the index.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			containers := getContainers(config)
-			containers.provision(config.force)
+			containers := getContainers(options)
+			containers.provision(options.force)
 		},
 	}
 
@@ -66,8 +66,8 @@ If no Dockerfile is given, it will pull the image from the index.`,
 		Short: "Run the containers",
 		Long:  `run will call docker run on all containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			containers := getContainers(config)
-			containers.run(config.force, config.kill)
+			containers := getContainers(options)
+			containers.run(options.force, options.kill)
 		},
 	}
 
@@ -76,8 +76,8 @@ If no Dockerfile is given, it will pull the image from the index.`,
 		Short: "Remove the containers",
 		Long:  `rm will call docker rm on all containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			containers := getContainers(config)
-			containers.rm(config.force, config.kill)
+			containers := getContainers(options)
+			containers.rm(options.force, options.kill)
 		},
 	}
 
@@ -86,7 +86,7 @@ If no Dockerfile is given, it will pull the image from the index.`,
 		Short: "Kill the containers",
 		Long:  `kill will call docker kill on all containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			containers := getContainers(config)
+			containers := getContainers(options)
 			containers.kill()
 		},
 	}
@@ -96,7 +96,7 @@ If no Dockerfile is given, it will pull the image from the index.`,
 		Short: "Start the containers",
 		Long:  `start will call docker start on all containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			containers := getContainers(config)
+			containers := getContainers(options)
 			containers.start()
 		},
 	}
@@ -106,7 +106,7 @@ If no Dockerfile is given, it will pull the image from the index.`,
 		Short: "Stop the containers",
 		Long:  `stop will call docker stop on all containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			containers := getContainers(config)
+			containers := getContainers(options)
 			containers.stop()
 		},
 	}
@@ -116,7 +116,7 @@ If no Dockerfile is given, it will pull the image from the index.`,
 		Short: "Displays status of containers",
 		Long:  `Displays the current status of the containers.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			containers := getContainers(config)
+			containers := getContainers(options)
 			containers.status()
 		},
 	}
@@ -139,16 +139,16 @@ It works by reading in JSON or YAML (either from crane.json, crane.yaml, the str
 See the corresponding docker commands for more information.`,
 	}
 
-	craneCmd.PersistentFlags().BoolVarP(&config.verbose, "verbose", "v", false, "verbose output")
-	craneCmd.PersistentFlags().StringVarP(&config.config, "config", "c", "", "config to read from")
-	craneCmd.PersistentFlags().StringVarP(&config.manifest, "manifest", "m", "", "config file to read from")
-	cmdLift.Flags().BoolVarP(&config.force, "force", "f", false, "force")
-	cmdLift.Flags().BoolVarP(&config.kill, "kill", "k", false, "kill containers")
-	cmdProvision.Flags().BoolVarP(&config.force, "force", "f", false, "force")
-	cmdRun.Flags().BoolVarP(&config.force, "force", "f", false, "force")
-	cmdRun.Flags().BoolVarP(&config.kill, "kill", "k", false, "kill containers")
-	cmdRm.Flags().BoolVarP(&config.force, "force", "f", false, "force")
-	cmdRm.Flags().BoolVarP(&config.kill, "kill", "k", false, "kill containers")
+	craneCmd.PersistentFlags().BoolVarP(&options.verbose, "verbose", "v", false, "verbose output")
+	craneCmd.PersistentFlags().StringVarP(&options.config, "config", "c", "", "config to read from")
+	craneCmd.PersistentFlags().StringVarP(&options.manifest, "manifest", "m", "", "config file to read from")
+	cmdLift.Flags().BoolVarP(&options.force, "force", "f", false, "force")
+	cmdLift.Flags().BoolVarP(&options.kill, "kill", "k", false, "kill containers")
+	cmdProvision.Flags().BoolVarP(&options.force, "force", "f", false, "force")
+	cmdRun.Flags().BoolVarP(&options.force, "force", "f", false, "force")
+	cmdRun.Flags().BoolVarP(&options.kill, "kill", "k", false, "kill containers")
+	cmdRm.Flags().BoolVarP(&options.force, "force", "f", false, "force")
+	cmdRm.Flags().BoolVarP(&options.kill, "kill", "k", false, "kill containers")
 	craneCmd.AddCommand(cmdLift, cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdStatus, cmdVersion)
 	craneCmd.Execute()
 }
