@@ -202,7 +202,7 @@ func (container Container) run() {
 		}
 		// Host
 		if len(container.Run.Host) > 0 {
-			args = append(args, "--host", os.ExpandEnv(container.Run.Host))
+			args = append(args, "--hostname", os.ExpandEnv(container.Run.Host))
 		}
 		// Interactive
 		if container.Run.Interactive {
