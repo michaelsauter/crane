@@ -17,12 +17,12 @@ func getContainers(options Options) Containers {
 		return unmarshalJSON([]byte(options.config))
 	}
 
-	for _, f := range configFiles() {
+	for _, f := range manifestFiles() {
 		if _, err := os.Stat(f); err == nil {
 			return readCraneData(f)
 		}
 	}
-	panic(fmt.Sprintf("No configuration found %v", configFiles()))
+	panic(fmt.Sprintf("No configuration found %v", manifestFiles()))
 }
 
 func readCraneData(filename string) Containers {

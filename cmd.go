@@ -11,7 +11,6 @@ type Options struct {
 	kill bool
 	config string
 	manifest string
-	configFiles []string
 }
 var options = Options{
 	false,
@@ -19,15 +18,15 @@ var options = Options{
 	false,
 	"",
 	"",
-	[]string{"crane.json","crane.json","crane.yaml","Cranefile"},
 }
-func configFiles() []string {
+var defaultManifests = []string{"crane.json","crane.yaml","crane.yml","Cranefile"}
+
+func manifestFiles() []string {
 	var result = []string(nil)
 	if len(options.manifest) > 0 {
-		//result = append([]string(nil), config.manifest, result)
 		result = []string{options.manifest}
 	} else {
-		result = options.configFiles
+		result = defaultManifests
 	}
 	return result
 }
