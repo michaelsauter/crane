@@ -4,46 +4,49 @@ import (
 	"github.com/michaelsauter/crane/print"
 	"bytes"
 	"encoding/json"
+	"path/filepath"
 	"fmt"
 	"gopkg.in/v1/yaml"
 	"io/ioutil"
 	"os"
 )
 
-func getContainers(config string) Containers {
-	if len(config) > 0 {
-		return unmarshalJSON([]byte(config))
+func getContainers(options Options) Containers {
+
+	if len(options.config) > 0 {
+		return unmarshalJSON([]byte(options.config))
 	}
-	if _, err := os.Stat("crane.json"); err == nil {
-		return readCraneJSON("crane.json")
+
+	for _, f := range manifestFiles() {
+		if _, err := os.Stat(f); err == nil {
+			return readCraneData(f)
+		}
 	}
-	if _, err := os.Stat("crane.yaml"); err == nil {
-		return readCraneYAML("crane.yaml")
+	panic(fmt.Sprintf("No configuration found %v", manifestFiles()))
+}
+
+func readCraneData(filename string) Containers {
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		panic(err)
 	}
-	if _, err := os.Stat("Cranefile"); err == nil {
+
+	if filename == "Cranefile" {
 		print.Notice("Using a Cranefile is deprecated. Please use crane.json/crane.yaml instead.\n")
-		return readCraneJSON("Cranefile")
-	}
-	panic("No crane.json/crane.yaml found!")
-}
-
-func readCraneJSON(filename string) Containers {
-	file, err := ioutil.ReadFile(filename)
-	if err != nil {
-		panic(err)
 	}
 
-	return unmarshalJSON(file)
-}
-
-func readCraneYAML(filename string) Containers {
-	file, err := ioutil.ReadFile(filename)
-	if err != nil {
-		panic(err)
+	ext := filepath.Ext(filename)
+	if ext == ".json" {
+		return unmarshalJSON(data)
+	} else if ext == ".yml" || ext == ".yaml" {
+		return unmarshalYAML(data)
+	} else if ext == "" {
+		return unmarshalJSON(data)
+	} else {
+		panic("Unrecognized file extension")
 	}
-
-	return unmarshalYAML(file)
 }
+
 
 // Thanks to https://github.com/markpeek/packer/commit/5bf33a0e91b2318a40c42e9bf855dcc8dd4cdec5
 func displaySyntaxError(data []byte, syntaxError error) (err error) {
