@@ -34,7 +34,7 @@ func executeCommand(name string, args []string) {
 }
 
 func commandOutput(name string, args []string) (string, error) {
-	out, err := exec.Command(name, args...).Output()
+	out, err := exec.Command(name, args...).CombinedOutput()
 	return strings.TrimSpace(string(out)), err
 }
 

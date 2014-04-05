@@ -120,7 +120,7 @@ func (container *Container) status(w *tabwriter.Writer) {
 	args := []string{"inspect", "--format={{.State.Running}}\t{{.ID}}\t{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}\t{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{end}}", container.Name}
 	output, err := commandOutput("docker", args)
 	if err != nil {
-		fmt.Fprintf(w, "%s\tError!\n", container.Name)
+		fmt.Fprintf(w, "%s\tError:%v\t%v\n", container.Name, err, output)
 		return
 	}
 	fmt.Fprintf(w, "%s\t%s\n", container.Name, output)
