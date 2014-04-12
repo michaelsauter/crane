@@ -20,8 +20,17 @@ You can get more information about what's happening behind the scenes by using `
 Some commands have a `--force` flag, which will save you intermediate steps, such as stopping the containers before removing them, or rebuilding images when they exist already. When you use `--force` to remove containers first, you can also use `--kill` if you're impatient.
 For all available commands and details on usage, just type `crane`.
 
-## crane.json / crane.yaml
-The configuration defines an array of containers, either stored in JSON (`crane.json`) or YAML (`crane.yaml`). If a container depends on another one, it must appear before that container in the file.
+## crane.json / crane.yaml / crane.yml
+The configuration defines an array of containers, either stored in JSON (`crane.json`) or YAML (`crane.yaml`). The configuration can also be read from a file specified using the --manifest option, or specified in an environment variable CRANE_FILE.
+
+The configuration is determined by, in order of priority:
+  a. command line config in --config option, if provided
+  b. the --manifest option, if provided
+  c. the file specified in CRANE_FILE environment variable, if exists,
+  d. the defaults (crane.json, crane.yaml, crane.yml, Cranefile)
+
+If a container depends on another one, it must appear before that container in the file.
+
 Every container consists of:
 
 * `name` (string, required): Name of the container
