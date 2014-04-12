@@ -3,7 +3,10 @@ package main
 import (
 	"github.com/spf13/cobra"
 	"fmt"
+	"os"
 )
+
+var CRANE_FILE = "CRANE_FILE"
 
 type Options struct {
 	verbose bool
@@ -22,13 +25,16 @@ var options = Options{
 var defaultManifests = []string{"crane.json","crane.yaml","crane.yml","Cranefile"}
 
 func manifestFiles() []string {
-	var result = []string(nil)
 	if len(options.manifest) > 0 {
-		result = []string{options.manifest}
+		return []string{options.manifest}
 	} else {
-		result = defaultManifests
+		manifestFile := os.Getenv(CRANE_FILE)
+		if len(manifestFile) > 0 {
+			return []string{manifestFile}
+		} else {
+			return defaultManifests
+		}
 	}
-	return result
 }
 
 func isVerbose() bool {
