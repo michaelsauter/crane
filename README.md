@@ -125,4 +125,5 @@ If you want to use YAML instead of JSON, here's what a simple configuration look
 
 ## Other Crane-backed environments
 * [Silex + Nginx/php-fpm + MySQL](https://github.com/michaelsauter/silex-crane-env)
+* [Symfony2 + Apache + MySQL](https://github.com/michaelsauter/symfony2-crane-env)
 * [Sinatra + PostrgeSQL](https://github.com/michaelsauter/sinatra-crane-env)
