@@ -12,6 +12,8 @@ import (
 	"strings"
 )
 
+var targetsSpecifiedManually = false
+
 func getContainers(options Options) Containers {
 
 	if len(options.config) > 0 {
@@ -125,6 +127,8 @@ func NewTargets(target_spec string) Targets  {
 	if len(target_spec) == 0 {
 		return AllTargets("")
 	}
+
+	targetsSpecifiedManually = true
 	result := make(TargetSet)
 	for _, t := range strings.Split(target_spec, ",") {
 		t = strings.TrimSpace(t)
@@ -133,3 +137,6 @@ func NewTargets(target_spec string) Targets  {
 	return result
 }
 
+func isManualTargetting() bool {
+	return  targetsSpecifiedManually
+}

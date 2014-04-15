@@ -15,6 +15,7 @@ type Container struct {
 	Name       string `json:"name" yaml:"name"`
 	Dockerfile string `json:"dockerfile" yaml:"dockerfile"`
 	Image      string `json:"image" yaml:"image"`
+	Manual     bool `json:"manual" yaml:"manual"`
 	Run        RunParameters
 }
 
@@ -163,6 +164,10 @@ func (container Container) runOrStart() {
 
 // Run container
 func (container Container) run() {
+	if !isManualTargetting() && container.Manual {
+		return
+	}
+
 	if container.exists() {
 		print.Notice("Container %s does already exist. Use --force to recreate.\n", container.Name)
 		if !container.running() {
@@ -290,6 +295,10 @@ func (container Container) run() {
 
 // Start container
 func (container Container) start() {
+	if !isManualTargetting() && container.Manual {
+		return
+	}
+
 	if container.exists() {
 		if !container.running() {
 			fmt.Printf("Starting container %s ... ", container.Name)
