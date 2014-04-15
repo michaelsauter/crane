@@ -148,6 +148,32 @@ It works by reading in JSON or YAML (either from crane.json, crane.yaml, the str
 See the corresponding docker commands for more information.`,
 	}
 
+	var cmdHelp = &cobra.Command{
+		Use:   "help",
+		Short: "display help and usage",
+		Long: "display help and usage",
+		Run: func(c *cobra.Command, args []string) {
+			if len(args) == 0 {
+				// Help called without any topic, calling on root
+				c.Root().Help()
+				c.Root().Usage()
+				return
+			}
+
+			cmd, _, e := c.Root().Find(args)
+			if cmd == nil || e != nil {
+				c.Printf("Unknown help topic %#q.", args)
+
+				c.Root().Usage()
+			} else {
+				err := cmd.Help()
+				if err != nil {
+					c.Println(err)
+				}
+			}
+		},
+	}
+
 	craneCmd.PersistentFlags().BoolVarP(&options.verbose, "verbose", "v", false, "verbose output")
 	craneCmd.PersistentFlags().StringVarP(&options.config, "config", "c", "", "config to read from")
 	craneCmd.PersistentFlags().StringVarP(&options.manifest, "manifest", "m", "", "config file to read from")
@@ -158,6 +184,6 @@ See the corresponding docker commands for more information.`,
 	cmdRun.Flags().BoolVarP(&options.kill, "kill", "k", false, "kill containers")
 	cmdRm.Flags().BoolVarP(&options.force, "force", "f", false, "force")
 	cmdRm.Flags().BoolVarP(&options.kill, "kill", "k", false, "kill containers")
-	craneCmd.AddCommand(cmdLift, cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdStatus, cmdVersion)
+	craneCmd.AddCommand(cmdLift, cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdStatus, cmdVersion, cmdHelp)
 	craneCmd.Execute()
 }
