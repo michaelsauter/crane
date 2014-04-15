@@ -9,7 +9,10 @@ import (
 	"gopkg.in/v1/yaml"
 	"io/ioutil"
 	"os"
+	"strings"
 )
+
+var targetsSpecifiedManually = false
 
 func getContainers(options Options) Containers {
 
@@ -17,12 +20,29 @@ func getContainers(options Options) Containers {
 		return unmarshalJSON([]byte(options.config))
 	}
 
+	targets := NewTargets(options.targets)
 	for _, f := range manifestFiles() {
 		if _, err := os.Stat(f); err == nil {
-			return readCraneData(f)
+			return getContainersFromManifestFile(f, targets)
 		}
 	}
 	panic(fmt.Sprintf("No configuration found %v", manifestFiles()))
+}
+
+func getContainersFromManifestFile(filename string, targets Targets) Containers {
+	result := Containers{}
+	all_containers := readCraneData(filename)
+
+	for _, c := range all_containers {
+		if targets.Includes(c.Name) {
+			result = append(result, c)
+		}
+	}
+	if len(result) == 0 {
+		panic(fmt.Sprintf("No matching targets found."))
+	}
+
+	return result
 }
 
 func readCraneData(filename string) Containers {
@@ -87,4 +107,36 @@ func unmarshalYAML(data []byte) Containers {
 		panic(err)
 	}
 	return containers
+}
+
+type Targets interface {
+	Includes(name string) bool
+}
+
+type AllTargets string
+func (AllTargets) Includes(name string) bool {
+	return true
+}
+
+type TargetSet map[string]bool
+func (t TargetSet) Includes(name string) bool {
+	return t[name]
+}
+
+func NewTargets(target_spec string) Targets  {
+	if len(target_spec) == 0 {
+		return AllTargets("")
+	}
+
+	targetsSpecifiedManually = true
+	result := make(TargetSet)
+	for _, t := range strings.Split(target_spec, ",") {
+		t = strings.TrimSpace(t)
+		result[t] = true
+	}
+	return result
+}
+
+func isManualTargetting() bool {
+	return  targetsSpecifiedManually
 }

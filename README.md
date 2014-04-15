@@ -27,6 +27,8 @@ Every container consists of:
 * `name` (string, required): Name of the container
 * `image` (string, required): Name of the image to build/pull
 * `dockerfile` (string, optional): Relative path to the Dockerfile
+* `manual` (string, optional): When true, this container will not be included for run or start
+commands unless specifically listed using the --target flag.  Default is false.
 * `run` (object, optional): Parameters mapped to Docker's `run`.
 	* `cidfile` (string)
 	* `cpu-shares` (integer)
