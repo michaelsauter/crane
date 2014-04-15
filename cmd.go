@@ -11,11 +11,13 @@ type Options struct {
 	kill bool
 	config string
 	manifest string
+	targets string
 }
 var options = Options{
 	false,
 	false,
 	false,
+	"",
 	"",
 	"",
 }
@@ -141,6 +143,8 @@ See the corresponding docker commands for more information.`,
 	craneCmd.PersistentFlags().BoolVarP(&options.verbose, "verbose", "v", false, "verbose output")
 	craneCmd.PersistentFlags().StringVarP(&options.config, "config", "c", "", "config to read from")
 	craneCmd.PersistentFlags().StringVarP(&options.manifest, "manifest", "m", "", "config file to read from")
+	craneCmd.PersistentFlags().StringVarP(&options.targets, "target", "t", "", "execute crane against only some targets. Comma separated.")
+
 	cmdLift.Flags().BoolVarP(&options.force, "force", "f", false, "force")
 	cmdLift.Flags().BoolVarP(&options.kill, "kill", "k", false, "kill containers")
 	cmdProvision.Flags().BoolVarP(&options.force, "force", "f", false, "force")
