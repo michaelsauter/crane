@@ -1,14 +1,14 @@
 package main
 
 import (
-	"github.com/michaelsauter/crane/print"
 	"bytes"
 	"encoding/json"
-	"path/filepath"
 	"fmt"
+	"github.com/michaelsauter/crane/print"
 	"gopkg.in/v1/yaml"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 )
 
 func getContainers(options Options) Containers {
@@ -46,7 +46,6 @@ func readCraneData(filename string) Containers {
 		panic("Unrecognized file extension")
 	}
 }
-
 
 // Thanks to https://github.com/markpeek/packer/commit/5bf33a0e91b2318a40c42e9bf855dcc8dd4cdec5
 func displaySyntaxError(data []byte, syntaxError error) (err error) {

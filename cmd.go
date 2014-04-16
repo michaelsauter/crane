@@ -1,17 +1,18 @@
 package main
 
 import (
-	"github.com/spf13/cobra"
 	"fmt"
+	"github.com/spf13/cobra"
 )
 
 type Options struct {
-	verbose bool
-	force bool
-	kill bool
-	config string
+	verbose  bool
+	force    bool
+	kill     bool
+	config   string
 	manifest string
 }
+
 var options = Options{
 	false,
 	false,
@@ -19,7 +20,7 @@ var options = Options{
 	"",
 	"",
 }
-var defaultManifests = []string{"crane.json","crane.yaml","crane.yml","Cranefile"}
+var defaultManifests = []string{"crane.json", "crane.yaml", "crane.yml", "Cranefile"}
 
 func manifestFiles() []string {
 	var result = []string(nil)

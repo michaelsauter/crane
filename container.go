@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/michaelsauter/crane/print"
 	"fmt"
+	"github.com/michaelsauter/crane/print"
 	"os"
 	"path"
 	"strconv"
