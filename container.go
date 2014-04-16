@@ -67,7 +67,7 @@ func (container *Container) exists() bool {
 	if err != nil || len(id) == 0 {
 		return false
 	}
-	dockerCmd := []string{"docker", "ps", "--quit", "--all", "--no-trunc"}
+	dockerCmd := []string{"docker", "ps", "--quiet", "--all", "--no-trunc"}
 	grepCmd := []string{"grep", "-wF", id}
 	output, err := pipedCommandOutput(dockerCmd, grepCmd)
 	if err != nil {
