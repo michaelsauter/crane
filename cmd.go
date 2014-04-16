@@ -3,7 +3,10 @@ package main
 import (
 	"github.com/spf13/cobra"
 	"fmt"
+	"os"
 )
+
+var CRANE_FILE = "CRANE_FILE"
 
 type Options struct {
 	verbose bool
@@ -22,13 +25,16 @@ var options = Options{
 var defaultManifests = []string{"crane.json","crane.yaml","crane.yml","Cranefile"}
 
 func manifestFiles() []string {
-	var result = []string(nil)
 	if len(options.manifest) > 0 {
-		result = []string{options.manifest}
+		return []string{options.manifest}
 	} else {
-		result = defaultManifests
+		manifestFile := os.Getenv(CRANE_FILE)
+		if len(manifestFile) > 0 {
+			return []string{manifestFile}
+		} else {
+			return defaultManifests
+		}
 	}
-	return result
 }
 
 func isVerbose() bool {
@@ -134,8 +140,38 @@ If no Dockerfile is given, it will pull the image from the index.`,
 		Short: "crane - Lift containers with ease",
 		Long: `
 Crane is a little tool to orchestrate Docker containers.
-It works by reading in JSON or YAML (either from crane.json, crane.yaml, the string specified in --config, or a json or yml file specified by --manifest) which describes how to obtain container images and how to run them.
+It works by reading in JSON or YAML (either from crane.json, crane.yaml, the string specified in --config, or a json or yml file specified by --manifest) which describes how to obtain container images and how to run them.  The configuration is determined by:
+  a. command line config in --config option, if provided
+  b. the --manifest option, if provided
+  c. the file specified in CRANE_FILE environment variable, if exists,
+  d. the defaults (crane.json, crane.yaml, crane.yml, Cranefile)
 See the corresponding docker commands for more information.`,
+	}
+
+	var cmdHelp = &cobra.Command{
+		Use:   "help",
+		Short: "display help and usage",
+		Long: "display help and usage",
+		Run: func(c *cobra.Command, args []string) {
+			if len(args) == 0 {
+				// Help called without any topic, calling on root
+				c.Root().Help()
+				c.Root().Usage()
+				return
+			}
+
+			cmd, _, e := c.Root().Find(args)
+			if cmd == nil || e != nil {
+				c.Printf("Unknown help topic %#q.", args)
+
+				c.Root().Usage()
+			} else {
+				err := cmd.Help()
+				if err != nil {
+					c.Println(err)
+				}
+			}
+		},
 	}
 
 	craneCmd.PersistentFlags().BoolVarP(&options.verbose, "verbose", "v", false, "verbose output")
@@ -148,6 +184,6 @@ See the corresponding docker commands for more information.`,
 	cmdRun.Flags().BoolVarP(&options.kill, "kill", "k", false, "kill containers")
 	cmdRm.Flags().BoolVarP(&options.force, "force", "f", false, "force")
 	cmdRm.Flags().BoolVarP(&options.kill, "kill", "k", false, "kill containers")
-	craneCmd.AddCommand(cmdLift, cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdStatus, cmdVersion)
+	craneCmd.AddCommand(cmdLift, cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdStatus, cmdVersion, cmdHelp)
 	craneCmd.Execute()
 }
