@@ -11,21 +11,50 @@ import (
 	"path/filepath"
 )
 
-func getContainers(options Options) Containers {
+type Manifest struct {
+	Containers Containers          `json:"containers" yaml:"containers"`
+	Groups     map[string][]string `json:"groups" yaml:"groups"`
+}
 
+func determineTargetedContainers(manifest Manifest, specifiedGroup string) []string {
+	// If group is not given, all containers
+	if len(specifiedGroup) == 0 {
+		var containers []string
+		for i := 0; i < len(manifest.Containers); i++ {
+			containers = append(containers, manifest.Containers[i].Name)
+		}
+		return containers
+	}
+	// Select specified group from listed groups
+	for name, containers := range manifest.Groups {
+		if name == specifiedGroup {
+			return containers
+		}
+	}
+	// Otherwise, the group is just the specified container
+	return append([]string{}, specifiedGroup)
+}
+
+func getManifest(options Options) Manifest {
 	if len(options.config) > 0 {
 		return unmarshalJSON([]byte(options.config))
-	}
-
-	for _, f := range manifestFiles() {
-		if _, err := os.Stat(f); err == nil {
-			return readCraneData(f)
+	} else {
+		for _, f := range manifestFiles() {
+			if _, err := os.Stat(f); err == nil {
+				return readCraneData(f)
+			}
 		}
 	}
 	panic(fmt.Sprintf("No configuration found %v", manifestFiles()))
 }
 
-func readCraneData(filename string) Containers {
+func getContainers(options Options) Containers {
+	manifest := getManifest(options)
+	targetedContainers := determineTargetedContainers(manifest, options.group)
+	return manifest.Containers.filter(targetedContainers)
+}
+
+func readCraneData(filename string) Manifest {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		panic(err)
@@ -68,22 +97,22 @@ func displaySyntaxError(data []byte, syntaxError error) (err error) {
 	return
 }
 
-func unmarshalJSON(data []byte) Containers {
-	var containers Containers
-	err := json.Unmarshal(data, &containers)
+func unmarshalJSON(data []byte) Manifest {
+	var manifest Manifest
+	err := json.Unmarshal(data, &manifest)
 	if err != nil {
 		err = displaySyntaxError(data, err)
 		panic(err)
 	}
-	return containers
+	return manifest
 }
 
-func unmarshalYAML(data []byte) Containers {
-	var containers Containers
-	err := yaml.Unmarshal(data, &containers)
+func unmarshalYAML(data []byte) Manifest {
+	var manifest Manifest
+	err := yaml.Unmarshal(data, &manifest)
 	if err != nil {
 		err = displaySyntaxError(data, err)
 		panic(err)
 	}
-	return containers
+	return manifest
 }
