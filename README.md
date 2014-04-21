@@ -33,8 +33,9 @@ Every container consists of:
 	* `detach` (boolean) `sudo docker attach <container name>` will work as normal.
 	* `dns` (array)
 	* `env` (array)
+	* `env-file` (string)
 	* `expose` (array) Ports to expose to linked containers.
-	* `host` (string)
+	* `hostname` (string)
 	* `interactive` (boolean)
 	* `link` (array) Link containers.
 	* `lxc-conf` (array)
