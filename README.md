@@ -5,7 +5,7 @@ Lift containers with ease
 Crane is a little tool to orchestrate Docker containers. It works by reading in some configuration (JSON or YAML) which describes how to obtain images and how to run the containers. This simplifies setting up a development environemt a lot as you don't have to bring up every container manually, remembering all the arguments you need to pass. By storing the configuration next to the data and the app(s) in a repository, you can easily share the whole environment.
 
 ## Installation
-Dowload [the latest release](https://github.com/michaelsauter/crane/releases) of `crane` and put it in your path, e.g. in `/usr/local/bin`.
+Dowload [the latest release](https://github.com/michaelsauter/crane/releases), rename it to `crane` and put it in your path, e.g. in `/usr/local/bin`.
 
 Of course, you will need to have Docker (>= 0.8) installed on your system. I generally recommend to do this on Ubuntu, but if you are on OS X, you can also try [docker-osx](https://github.com/noplay/docker-osx). [boot2docker](https://github.com/boot2docker/boot2docker) is nice, but unfortunately, it does not support bind-mounting volumes yet.
 
