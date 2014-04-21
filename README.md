@@ -64,44 +64,46 @@ At the moment, there is no easy way to read in a local configuration and execute
 For demonstration purposes, we'll bring up a PHP app (served by Apache) that depends both on a MySQL database and a Memcached server. The source code is available at http://github.com/michaelsauter/crane-example. Here's what the `crane.json` looks like:
 
 ```
-containers: [
-	{
-		"name": "crane_apache",
-		"dockerfile": "apache",
-		"image": "icrane_apache",
-		"run": {
-			"volumes-from": ["crane_app"],
-			"publish": ["80:80"],
-			"link": ["crane_mysql:db", "crane_memcached:cache"],
-			"detach": true
+{
+	"containers": [
+		{
+			"name": "crane_apache",
+			"dockerfile": "apache",
+			"image": "icrane_apache",
+			"run": {
+				"volumes-from": ["crane_app"],
+				"publish": ["80:80"],
+				"link": ["crane_mysql:db", "crane_memcached:cache"],
+				"detach": true
+			}
+		},
+		{
+			"name": "crane_app",
+			"dockerfile": "app",
+			"image": "icrane_app",
+			"run": {
+				"volume": ["app/www:/srv/www:rw"],
+				"detach": true
+			}
+		},
+		{
+			"name": "crane_mysql",
+			"dockerfile": "mysql",
+			"image": "icrane_mysql",
+			"run": {
+				"detach": true
+			}
+		},
+		{
+			"name": "crane_memcached",
+			"dockerfile": "memcached",
+			"image": "icrane_memcached",
+			"run": {
+				"detach": true
+			}
 		}
-	},
-	{
-		"name": "crane_app",
-		"dockerfile": "app",
-		"image": "icrane_app",
-		"run": {
-			"volume": ["app/www:/srv/www:rw"],
-			"detach": true
-		}
-	},
-	{
-		"name": "crane_mysql",
-		"dockerfile": "mysql",
-		"image": "icrane_mysql",
-		"run": {
-			"detach": true
-		}
-	},
-	{
-		"name": "crane_memcached",
-		"dockerfile": "memcached",
-		"image": "icrane_memcached",
-		"run": {
-			"detach": true
-		}
-	}
-]
+	]
+}
 ```
 If you have Docker installed, you can just clone that repository and bring up the environment right now.
 In the folder where the `crane.json` is, type:
