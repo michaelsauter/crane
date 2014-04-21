@@ -25,6 +25,7 @@ type RunParameters struct {
 	Dns         []string    `json:"dns" yaml:"dns"`
 	Entrypoint  string      `json:"entrypoint" yaml:"entrypoint"`
 	Env         []string    `json:"env" yaml:"env"`
+	EnvFile     string      `json:"env-file" yaml:"env-file"`
 	Expose      []string    `json:"expose" yaml:"expose"`
 	Host        string      `json:"host" yaml:"host"`
 	Interactive bool        `json:"interactive" yaml:"interactive"`
@@ -195,6 +196,10 @@ func (container Container) run() {
 		// Env
 		for _, env := range container.Run.Env {
 			args = append(args, "--env", os.ExpandEnv(env))
+		}
+		// Env file
+		if len(container.Run.EnvFile) > 0 {
+			args = append(args, "--env-file", os.ExpandEnv(container.Run.EnvFile))
 		}
 		// Expose
 		for _, expose := range container.Run.Expose {
