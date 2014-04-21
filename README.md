@@ -63,7 +63,7 @@ At the moment, there is no easy way to read in a local configuration and execute
 For demonstration purposes, we'll bring up a PHP app (served by Apache) that depends both on a MySQL database and a Memcached server. The source code is available at http://github.com/michaelsauter/crane-example. Here's what the `crane.json` looks like:
 
 ```
-[
+containers: [
 	{
 		"name": "crane_apache",
 		"dockerfile": "apache",
@@ -114,14 +114,27 @@ This will bring up the containers. The container running Apache has the MySQL an
 If you want to use YAML instead of JSON, here's what a simple configuration looks like:
 
 ```
-- name: pry
-	image: d11wtq/ruby
-	run:
-		interactive: true
-		tty: true
-		cmd: pry
+containers:
+	- name: pry
+		image: d11wtq/ruby
+		run:
+			interactive: true
+			tty: true
+			cmd: pry
 
 ```
+
+## Advanced Usage
+Next to containers, you can also specify groups, and then execute Crane commands that only target those groups. If you do not specify a group, the command will apply to all containers. Also, every container automatically forms a group, so you can use the name of each container as an argument to the group option. Additionally, you can specify more groups like this (YAML shown):
+
+```
+groups:
+	databases: ["database1", "database2"],
+	development; ["container1", "container2"]
+
+```
+
+This could be used like so: `crane provision --group="container1"` or `crane run --group="databases"`.
 
 ## Other Crane-backed environments
 * [Silex + Nginx/php-fpm + MySQL](https://github.com/michaelsauter/silex-crane-env)
