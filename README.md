@@ -56,7 +56,7 @@ See the [Docker documentation](http://docs.docker.io/en/latest/reference/command
 The container configruation can also be read from a string (given via `--config`). This is handy if you want to use Crane to lift containers over SSH. For example, you can bring up a container (running Pry in this case) like this:
 
 ```
-crane lift --config='[{"name":"pry", "image":"d11wtq/ruby", "run":{"tty": true, "interactive": true, "cmd": "pry"} }]'
+crane lift --config='{"containers":[{"name":"pry", "image":"d11wtq/ruby", "run":{"tty": true, "interactive": true, "cmd": "pry"}}]}'
 ```
 At the moment, there is no easy way to read in a local configuration and execute it remotely, but that is certainly possible and might be added in the future.
 
