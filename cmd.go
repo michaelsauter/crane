@@ -43,7 +43,7 @@ func handleCmd() {
 		Use:   "lift",
 		Short: "Build or pull images, then run or start the containers",
 		Long: `
-lift will use specified Dockerfiles to build the images.
+lift will use specified Dockerfiles to build all the containers, or the specified one(s).
 If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			containers := getContainers(options)
@@ -55,7 +55,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Use:   "provision",
 		Short: "Build or pull images",
 		Long: `
-provision will use specified Dockerfiles to build the images.
+provision will use specified Dockerfiles to build all the containers, or the specified one(s).
 If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			containers := getContainers(options)
@@ -66,7 +66,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 	var cmdRun = &cobra.Command{
 		Use:   "run",
 		Short: "Run the containers",
-		Long:  `run will call docker run on all containers.`,
+		Long:  `run will call docker run on all containers, or the specified one(s).`,
 		Run: func(cmd *cobra.Command, args []string) {
 			containers := getContainers(options)
 			containers.run(options.force, options.kill)
@@ -76,7 +76,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 	var cmdRm = &cobra.Command{
 		Use:   "rm",
 		Short: "Remove the containers",
-		Long:  `rm will call docker rm on all containers.`,
+		Long:  `rm will call docker rm on all containers, or the specified one(s).`,
 		Run: func(cmd *cobra.Command, args []string) {
 			containers := getContainers(options)
 			containers.rm(options.force, options.kill)
@@ -86,7 +86,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 	var cmdKill = &cobra.Command{
 		Use:   "kill",
 		Short: "Kill the containers",
-		Long:  `kill will call docker kill on all containers.`,
+		Long:  `kill will call docker kill on all containers, or the specified one(s).`,
 		Run: func(cmd *cobra.Command, args []string) {
 			containers := getContainers(options)
 			containers.kill()
@@ -96,7 +96,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 	var cmdStart = &cobra.Command{
 		Use:   "start",
 		Short: "Start the containers",
-		Long:  `start will call docker start on all containers.`,
+		Long:  `start will call docker start on all containers, or the specified one(s).`,
 		Run: func(cmd *cobra.Command, args []string) {
 			containers := getContainers(options)
 			containers.start()
@@ -106,7 +106,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 	var cmdStop = &cobra.Command{
 		Use:   "stop",
 		Short: "Stop the containers",
-		Long:  `stop will call docker stop on all containers.`,
+		Long:  `stop will call docker stop on all containers, or the specified one(s).`,
 		Run: func(cmd *cobra.Command, args []string) {
 			containers := getContainers(options)
 			containers.stop()
@@ -116,7 +116,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 	var cmdStatus = &cobra.Command{
 		Use:   "status",
 		Short: "Displays status of containers",
-		Long:  `Displays the current status of the containers.`,
+		Long:  `Displays the current status of all the containers, or the specified one(s).`,
 		Run: func(cmd *cobra.Command, args []string) {
 			containers := getContainers(options)
 			containers.status()
