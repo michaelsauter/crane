@@ -43,7 +43,7 @@ func handleCmd() {
 		Use:   "lift",
 		Short: "Build or pull images, then run or start the containers",
 		Long: `
-provision will use specified Dockerfiles to build the images.
+lift will use specified Dockerfiles to build the images.
 If no Dockerfile is given, it will pull the image from the index.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			containers := getContainers(options)
