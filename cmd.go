@@ -38,17 +38,30 @@ func isVerbose() bool {
 	return options.verbose
 }
 
+// returns a function to be set as a cobra command run, wrapping a command meant to be run on a set of containers
+func containersCommand(wrapped func(containers Containers)) func(cmd *cobra.Command, args []string) {
+	return func(cmd *cobra.Command, args []string) {
+		if len(args) > 0 {
+			cmd.Printf("Error: too many arguments given: %#q", args)
+			cmd.Usage()
+			return
+		}
+		containers := getContainers(options)
+		wrapped(containers)
+	}
+}
+
 func handleCmd() {
+
 	var cmdLift = &cobra.Command{
 		Use:   "lift",
 		Short: "Build or pull images, then run or start the containers",
 		Long: `
 lift will use specified Dockerfiles to build all the containers, or the specified one(s).
 If no Dockerfile is given, it will pull the image(s) from the given registry.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			containers := getContainers(options)
+		Run: containersCommand(func(containers Containers) {
 			containers.lift(options.force, options.kill)
-		},
+		}),
 	}
 
 	var cmdProvision = &cobra.Command{
@@ -57,70 +70,63 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Long: `
 provision will use specified Dockerfiles to build all the containers, or the specified one(s).
 If no Dockerfile is given, it will pull the image(s) from the given registry.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			containers := getContainers(options)
+		Run: containersCommand(func(containers Containers) {
 			containers.provision(options.force)
-		},
+		}),
 	}
 
 	var cmdRun = &cobra.Command{
 		Use:   "run",
 		Short: "Run the containers",
 		Long:  `run will call docker run on all containers, or the specified one(s).`,
-		Run: func(cmd *cobra.Command, args []string) {
-			containers := getContainers(options)
+		Run: containersCommand(func(containers Containers) {
 			containers.run(options.force, options.kill)
-		},
+		}),
 	}
 
 	var cmdRm = &cobra.Command{
 		Use:   "rm",
 		Short: "Remove the containers",
 		Long:  `rm will call docker rm on all containers, or the specified one(s).`,
-		Run: func(cmd *cobra.Command, args []string) {
-			containers := getContainers(options)
+		Run: containersCommand(func(containers Containers) {
 			containers.rm(options.force, options.kill)
-		},
+		}),
 	}
 
 	var cmdKill = &cobra.Command{
 		Use:   "kill",
 		Short: "Kill the containers",
 		Long:  `kill will call docker kill on all containers, or the specified one(s).`,
-		Run: func(cmd *cobra.Command, args []string) {
-			containers := getContainers(options)
+		Run: containersCommand(func(containers Containers) {
 			containers.kill()
-		},
+		}),
 	}
 
 	var cmdStart = &cobra.Command{
 		Use:   "start",
 		Short: "Start the containers",
 		Long:  `start will call docker start on all containers, or the specified one(s).`,
-		Run: func(cmd *cobra.Command, args []string) {
-			containers := getContainers(options)
+		Run: containersCommand(func(containers Containers) {
 			containers.start()
-		},
+		}),
 	}
 
 	var cmdStop = &cobra.Command{
 		Use:   "stop",
 		Short: "Stop the containers",
 		Long:  `stop will call docker stop on all containers, or the specified one(s).`,
-		Run: func(cmd *cobra.Command, args []string) {
-			containers := getContainers(options)
+		Run: containersCommand(func(containers Containers) {
 			containers.stop()
-		},
+		}),
 	}
 
 	var cmdStatus = &cobra.Command{
 		Use:   "status",
 		Short: "Displays status of containers",
 		Long:  `Displays the current status of all the containers, or the specified one(s).`,
-		Run: func(cmd *cobra.Command, args []string) {
-			containers := getContainers(options)
+		Run: containersCommand(func(containers Containers) {
 			containers.status()
-		},
+		}),
 	}
 
 	var cmdVersion = &cobra.Command{
