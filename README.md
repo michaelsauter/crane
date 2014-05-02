@@ -132,8 +132,8 @@ Next to containers, you can also specify groups, and then execute Crane commands
 
 ```
 groups:
-	databases: ["database1", "database2"],
-	development; ["container1", "container2"]
+	databases: ["database1", "database2"]
+	development: ["container1", "container2"]
 
 ```
 
