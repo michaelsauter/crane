@@ -32,8 +32,14 @@ func determineTargetedContainers(manifest Manifest, specifiedGroup string) []str
 			return containers
 		}
 	}
-	// Otherwise, the group is just the specified container
-	return append([]string{}, specifiedGroup)
+	// The group might just be a container reference itself
+	for i := 0; i < len(manifest.Containers); i++ {
+		if manifest.Containers[i].Name == specifiedGroup {
+			return append([]string{}, specifiedGroup)
+		}
+	}
+	// Otherwise, fail verbosely
+	panic(StatusError{fmt.Errorf("no group nor container matching `%s`", specifiedGroup), 64})
 }
 
 func getManifest(options Options) Manifest {
