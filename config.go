@@ -57,7 +57,7 @@ func getContainers(options Options) Containers {
 func readCraneData(filename string) Manifest {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
-		panic(err)
+		panic(StatusError{err, 74})
 	}
 
 	if filename == "Cranefile" {
