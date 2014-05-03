@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/michaelsauter/crane/print"
 	"gopkg.in/v1/yaml"
@@ -72,7 +73,7 @@ func readCraneData(filename string) Manifest {
 	} else if ext == "" {
 		return unmarshalJSON(data)
 	} else {
-		panic("Unrecognized file extension")
+		panic(StatusError{errors.New("Unrecognized file extension"), 65})
 	}
 }
 
@@ -102,7 +103,7 @@ func unmarshalJSON(data []byte) Manifest {
 	err := json.Unmarshal(data, &manifest)
 	if err != nil {
 		err = displaySyntaxError(data, err)
-		panic(err)
+		panic(StatusError{err, 65})
 	}
 	return manifest
 }
@@ -112,7 +113,7 @@ func unmarshalYAML(data []byte) Manifest {
 	err := yaml.Unmarshal(data, &manifest)
 	if err != nil {
 		err = displaySyntaxError(data, err)
-		panic(err)
+		panic(StatusError{err, 65})
 	}
 	return manifest
 }
