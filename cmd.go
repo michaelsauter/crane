@@ -44,7 +44,7 @@ func containersCommand(wrapped func(containers Containers)) func(cmd *cobra.Comm
 		if len(args) > 0 {
 			cmd.Printf("Error: too many arguments given: %#q", args)
 			cmd.Usage()
-			return
+			panic(StatusError{status: 64})
 		}
 		containers := getContainers(options)
 		wrapped(containers)
