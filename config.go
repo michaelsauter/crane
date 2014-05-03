@@ -45,7 +45,7 @@ func getManifest(options Options) Manifest {
 			}
 		}
 	}
-	panic(fmt.Sprintf("No configuration found %v", manifestFiles()))
+	panic(StatusError{fmt.Errorf("No configuration found %v", manifestFiles()), 78})
 }
 
 func getContainers(options Options) Containers {
