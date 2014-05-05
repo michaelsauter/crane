@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 )
 
 type StatusError struct {
@@ -49,7 +50,8 @@ func executeCommand(name string, args []string) {
 	cmd.Stdin = os.Stdin
 	cmd.Run()
 	if !cmd.ProcessState.Success() {
-		panic(cmd.ProcessState.String()) // pass the error?
+		status := cmd.ProcessState.Sys().(syscall.WaitStatus).ExitStatus()
+		panic(StatusError{errors.New(cmd.ProcessState.String()), status})
 	}
 }
 
