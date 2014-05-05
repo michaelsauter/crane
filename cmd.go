@@ -44,7 +44,7 @@ func containersCommand(wrapped func(containers Containers)) func(cmd *cobra.Comm
 		if len(args) > 0 {
 			cmd.Printf("Error: too many arguments given: %#q", args)
 			cmd.Usage()
-			return
+			panic(StatusError{status: 64})
 		}
 		containers := getContainers(options)
 		wrapped(containers)
@@ -159,5 +159,8 @@ See the corresponding docker commands for more information.`,
 	cmdRm.Flags().BoolVarP(&options.force, "force", "f", false, "stop running containers first")
 	cmdRm.Flags().BoolVarP(&options.kill, "kill", "k", false, "when using --force, kill containers instead of stopping them")
 	craneCmd.AddCommand(cmdLift, cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdStatus, cmdVersion)
-	craneCmd.Execute()
+	err := craneCmd.Execute()
+	if err != nil {
+		panic(StatusError{status: 64})
+	}
 }

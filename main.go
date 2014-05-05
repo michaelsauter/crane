@@ -1,19 +1,40 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/michaelsauter/crane/print"
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 )
 
+type StatusError struct {
+	error  error
+	status int
+}
+
 func main() {
-	// On panic, recover the error and display it
+	// On panic, recover the error, display it and return the given status code if any
 	defer func() {
-		if err := recover(); err != nil {
-			print.Error("ERROR: %s\n", err)
+		var statusError StatusError
+
+		switch err := recover().(type) {
+		case StatusError:
+			statusError = err
+		case error:
+			statusError = StatusError{err, 1}
+		case string:
+			statusError = StatusError{errors.New(err), 1}
+		default:
+			statusError = StatusError{}
 		}
+
+		if statusError.error != nil {
+			print.Error("ERROR: %s\n", statusError.error)
+		}
+		os.Exit(statusError.status)
 	}()
 
 	handleCmd()
@@ -29,7 +50,8 @@ func executeCommand(name string, args []string) {
 	cmd.Stdin = os.Stdin
 	cmd.Run()
 	if !cmd.ProcessState.Success() {
-		panic(cmd.ProcessState.String()) // pass the error?
+		status := cmd.ProcessState.Sys().(syscall.WaitStatus).ExitStatus()
+		panic(StatusError{errors.New(cmd.ProcessState.String()), status})
 	}
 }
 

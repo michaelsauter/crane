@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/michaelsauter/crane/print"
 	"gopkg.in/v1/yaml"
@@ -31,8 +32,14 @@ func determineTargetedContainers(manifest Manifest, specifiedGroup string) []str
 			return containers
 		}
 	}
-	// Otherwise, the group is just the specified container
-	return append([]string{}, specifiedGroup)
+	// The group might just be a container reference itself
+	for i := 0; i < len(manifest.Containers); i++ {
+		if manifest.Containers[i].Name == specifiedGroup {
+			return append([]string{}, specifiedGroup)
+		}
+	}
+	// Otherwise, fail verbosely
+	panic(StatusError{fmt.Errorf("no group nor container matching `%s`", specifiedGroup), 64})
 }
 
 func getManifest(options Options) Manifest {
@@ -45,7 +52,7 @@ func getManifest(options Options) Manifest {
 			}
 		}
 	}
-	panic(fmt.Sprintf("No configuration found %v", manifestFiles()))
+	panic(StatusError{fmt.Errorf("No configuration found %v", manifestFiles()), 78})
 }
 
 func getContainers(options Options) Containers {
@@ -57,7 +64,7 @@ func getContainers(options Options) Containers {
 func readCraneData(filename string) Manifest {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
-		panic(err)
+		panic(StatusError{err, 74})
 	}
 
 	if filename == "Cranefile" {
@@ -72,7 +79,7 @@ func readCraneData(filename string) Manifest {
 	} else if ext == "" {
 		return unmarshalJSON(data)
 	} else {
-		panic("Unrecognized file extension")
+		panic(StatusError{errors.New("Unrecognized file extension"), 65})
 	}
 }
 
@@ -102,7 +109,7 @@ func unmarshalJSON(data []byte) Manifest {
 	err := json.Unmarshal(data, &manifest)
 	if err != nil {
 		err = displaySyntaxError(data, err)
-		panic(err)
+		panic(StatusError{err, 65})
 	}
 	return manifest
 }
@@ -112,7 +119,7 @@ func unmarshalYAML(data []byte) Manifest {
 	err := yaml.Unmarshal(data, &manifest)
 	if err != nil {
 		err = displaySyntaxError(data, err)
-		panic(err)
+		panic(StatusError{err, 65})
 	}
 	return manifest
 }
