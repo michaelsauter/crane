@@ -130,7 +130,7 @@ func (container *Container) status(w *tabwriter.Writer) {
 // Pull image for container
 func (container *Container) pullImage() {
 	fmt.Printf("Pulling image %s ... ", container.Image)
-	args := []string{"pull", container.Image}
+	args := []string{"pull", os.ExpandEnv(container.Image)}
 	executeCommand("docker", args)
 }
 
@@ -270,7 +270,7 @@ func (container Container) run() {
 		// Name
 		args = append(args, "--name", container.Name)
 		// Image
-		args = append(args, container.Image)
+		args = append(args, os.ExpandEnv(container.Image))
 		// Command
 		if container.Run.Command != nil {
 			switch cmd := container.Run.Command.(type) {
