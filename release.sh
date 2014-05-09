@@ -7,15 +7,17 @@ if [ -z "$version" ]; then
   exit 1
 fi
 
-echo "Update version command..."
+echo "Update version..."
 sed -i.bak 's/fmt\.Println("v[0-9]\.[0-9]\.[0-9]")/fmt.Println("v'$version'")/' cmd.go
 rm cmd.go.bak
+sed -i.bak 's/VERSION="[0-9]\.[0-9]\.[0-9]"/VERSION="'$version'"/' download.sh
+rm download.sh.bak
 
 echo "Build binary..."
 ../../../../bin/gox -osarch="darwin/amd64" -osarch="linux/amd64"
 
 echo "Update repository..."
-git add cmd.go
+git add cmd.go download.sh
 git commit -m "Bump version to ${version}"
 git tag "v$version"
 
