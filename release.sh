@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 version=$1
 
 if [ -z "$version" ]; then
@@ -10,10 +12,10 @@ sed -i.bak 's/fmt\.Println("v[0-9]\.[0-9]\.[0-9]")/fmt.Println("v'$version'")/' 
 rm cmd.go.bak
 
 echo "Build binary..."
-../../../../bin/gox -osarch="darwin/amd64" -osarch="linux/amd64" 
+../../../../bin/gox -osarch="darwin/amd64" -osarch="linux/amd64"
 
 echo "Update repository..."
-git add cmd.go 
+git add cmd.go
 git commit -m "Bump version to ${version}"
 git tag "v$version"
 
