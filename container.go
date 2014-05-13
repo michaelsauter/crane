@@ -11,7 +11,7 @@ import (
 )
 
 type Container struct {
-	Id         string
+	id         string
 	Name       string `json:"name" yaml:"name"`
 	Dockerfile string `json:"dockerfile" yaml:"dockerfile"`
 	Image      string `json:"image" yaml:"image"`
@@ -44,9 +44,9 @@ type RunParameters struct {
 	Command     interface{} `json:"cmd" yaml:"cmd"`
 }
 
-func (container *Container) getId() (id string, err error) {
-	if len(container.Id) > 0 {
-		id = container.Id
+func (container *Container) Id() (id string, err error) {
+	if len(container.id) > 0 {
+		id = container.id
 	} else {
 		// Inspect container, extracting the ID.
 		// This will return gibberish if no container is found.
@@ -54,7 +54,7 @@ func (container *Container) getId() (id string, err error) {
 		output, outErr := commandOutput("docker", args)
 		if err == nil {
 			id = output
-			container.Id = output
+			container.id = output
 		} else {
 			err = outErr
 		}
@@ -64,7 +64,7 @@ func (container *Container) getId() (id string, err error) {
 
 func (container *Container) exists() bool {
 	// `ps -a` returns all existant containers
-	id, err := container.getId()
+	id, err := container.Id()
 	if err != nil || len(id) == 0 {
 		return false
 	}
@@ -84,7 +84,7 @@ func (container *Container) exists() bool {
 
 func (container *Container) running() bool {
 	// `ps` returns all running containers
-	id, err := container.getId()
+	id, err := container.Id()
 	if err != nil || len(id) == 0 {
 		return false
 	}
