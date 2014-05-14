@@ -10,7 +10,7 @@ type Containers []Container
 
 func containerInGroup(container Container, group []string) bool {
 	for _, groupContainerName := range group {
-		if groupContainerName == container.Name {
+		if groupContainerName == container.Name() {
 			return true
 		}
 	}

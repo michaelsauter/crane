@@ -22,7 +22,7 @@ func determineTargetedContainers(manifest Manifest, specifiedGroup string) []str
 	if len(specifiedGroup) == 0 {
 		var containers []string
 		for i := 0; i < len(manifest.Containers); i++ {
-			containers = append(containers, manifest.Containers[i].Name)
+			containers = append(containers, manifest.Containers[i].Name())
 		}
 		return containers
 	}
@@ -34,7 +34,7 @@ func determineTargetedContainers(manifest Manifest, specifiedGroup string) []str
 	}
 	// The group might just be a container reference itself
 	for i := 0; i < len(manifest.Containers); i++ {
-		if manifest.Containers[i].Name == specifiedGroup {
+		if manifest.Containers[i].Name() == specifiedGroup {
 			return append([]string{}, specifiedGroup)
 		}
 	}
