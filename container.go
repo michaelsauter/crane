@@ -32,6 +32,7 @@ type RunParameters struct {
 	RawLink        []string    `json:"link" yaml:"link"`
 	RawLxcConf     []string    `json:"lxc-conf" yaml:"lxc-conf"`
 	RawMemory      string      `json:"memory" yaml:"memory"`
+	RawNet         string      `json:"net" yaml:"net"`
 	Privileged     bool        `json:"privileged" yaml:"privileged"`
 	RawPublish     []string    `json:"publish" yaml:"publish"`
 	PublishAll     bool        `json:"publish-all" yaml:"publish-all"`
@@ -114,6 +115,15 @@ func (r *RunParameters) LxcConf() []string {
 
 func (r *RunParameters) Memory() string {
 	return os.ExpandEnv(r.RawMemory)
+}
+
+func (r *RunParameters) Net() string {
+	// Default to bridge
+	if len(r.RawNet) == 0 {
+		return "bridge"
+	} else {
+		return os.ExpandEnv(r.RawNet)
+	}
 }
 
 func (r *RunParameters) Publish() []string {
@@ -354,6 +364,10 @@ func (container Container) run() {
 		// Memory
 		if len(container.Run.Memory()) > 0 {
 			args = append(args, "--memory", container.Run.Memory())
+		}
+		// Net
+		if container.Run.Net() != "bridge" {
+			args = append(args, "--net", container.Run.Net())
 		}
 		// Privileged
 		if container.Run.Privileged {
