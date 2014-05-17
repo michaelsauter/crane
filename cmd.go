@@ -134,7 +134,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Display version",
 		Long:  `Displays the version of Crane.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("v0.7.2")
+			fmt.Println("v0.7.3")
 		},
 	}
 
