@@ -9,8 +9,8 @@ import (
 type Containers []Container
 
 func containerInGroup(container Container, group []string) bool {
-	for _, groupContainerName := range group {
-		if groupContainerName == container.Name() {
+	for _, groupRawContainerName := range group {
+		if os.ExpandEnv(groupRawContainerName) == container.Name() {
 			return true
 		}
 	}
