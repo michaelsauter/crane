@@ -19,7 +19,6 @@ var options = Options{
 	false,
 	"",
 	"",
-	"",
 }
 var defaultConfigFiles = []string{"crane.json", "crane.yaml", "crane.yml", "Cranefile"}
 
