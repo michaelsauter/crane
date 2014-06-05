@@ -6,12 +6,11 @@ import (
 )
 
 type Options struct {
-	verbose  bool
-	force    bool
-	kill     bool
-	config   string
-	manifest string
-	group    string
+	verbose bool
+	force   bool
+	kill    bool
+	config  string
+	group   string
 }
 
 var options = Options{
@@ -22,16 +21,14 @@ var options = Options{
 	"",
 	"",
 }
-var defaultManifests = []string{"crane.json", "crane.yaml", "crane.yml", "Cranefile"}
+var defaultConfigFiles = []string{"crane.json", "crane.yaml", "crane.yml", "Cranefile"}
 
-func manifestFiles() []string {
-	var result = []string(nil)
-	if len(options.manifest) > 0 {
-		result = []string{options.manifest}
+func configFiles() []string {
+	if len(options.config) > 0 {
+		return []string{options.config}
 	} else {
-		result = defaultManifests
+		return defaultConfigFiles
 	}
-	return result
 }
 
 func isVerbose() bool {
@@ -143,13 +140,12 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "crane - Lift containers with ease",
 		Long: `
 Crane is a little tool to orchestrate Docker containers.
-It works by reading in JSON or YAML (either from crane.json, crane.yaml, the string specified in --config, or a json or yml file specified by --manifest) which describes how to obtain container images and how to run them.
+It works by reading in JSON or YAML which describes how to obtain container images and how to run them.
 See the corresponding docker commands for more information.`,
 	}
 
 	craneCmd.PersistentFlags().BoolVarP(&options.verbose, "verbose", "v", false, "verbose output")
-	craneCmd.PersistentFlags().StringVarP(&options.config, "config", "c", "", "config to read from")
-	craneCmd.PersistentFlags().StringVarP(&options.manifest, "manifest", "m", "", "config file to read from")
+	craneCmd.PersistentFlags().StringVarP(&options.config, "config", "c", "", "config file to read from")
 	craneCmd.PersistentFlags().StringVarP(&options.group, "group", "g", "", "group or container to restrict the command to")
 	cmdLift.Flags().BoolVarP(&options.force, "force", "f", false, "rebuild all images")
 	cmdLift.Flags().BoolVarP(&options.kill, "kill", "k", false, "kill containers")

@@ -26,7 +26,7 @@ Some commands have a `--force` flag, which will save you intermediate steps, suc
 For all available commands and details on usage, just type `crane`.
 
 ## crane.json / crane.yaml
-The configuration defines an array of containers, either stored in JSON (`crane.json`) or YAML (`crane.yaml`). If a container depends on another one, it must appear before that container in the file.
+The configuration defines an array of containers in either JSON or YAML. By default, the configuration is expected in the current directory (`crane.json` or `crane.yaml`/`crane.yml`), but it can also be specified via `--config`. If a container depends on another one, it must appear before that container in the configuration file.
 Every container consists of:
 
 * `name` (string, required): Name of the container
@@ -57,13 +57,6 @@ Every container consists of:
 	* `cmd` (array/string) Command to append to `docker run` (overwriting `CMD`).
 
 See the [Docker documentation](http://docs.docker.io/en/latest/reference/commandline/cli/#run) for more details about the parameters.
-
-The container configruation can also be read from a string (given via `--config`). This is handy if you want to use Crane to lift containers over SSH. For example, you can bring up a container (running Pry in this case) like this:
-
-```
-crane lift --config='{"containers":[{"name":"pry", "image":"d11wtq/ruby", "run":{"tty": true, "interactive": true, "cmd": "pry"}}]}'
-```
-At the moment, there is no easy way to read in a local configuration and execute it remotely, but that is certainly possible and might be added in the future.
 
 ## Example
 For demonstration purposes, we'll bring up a PHP app (served by Apache) that depends both on a MySQL database and a Memcached server. The source code is available at http://github.com/michaelsauter/crane-example. Here's what the `crane.json` looks like:
