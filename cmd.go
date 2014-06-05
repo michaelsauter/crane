@@ -10,7 +10,7 @@ type Options struct {
 	force   bool
 	kill    bool
 	config  string
-	group   string
+	target  string
 }
 
 var options = Options{
@@ -146,7 +146,7 @@ See the corresponding docker commands for more information.`,
 
 	craneCmd.PersistentFlags().BoolVarP(&options.verbose, "verbose", "v", false, "verbose output")
 	craneCmd.PersistentFlags().StringVarP(&options.config, "config", "c", "", "config file to read from")
-	craneCmd.PersistentFlags().StringVarP(&options.group, "group", "g", "", "group or container to restrict the command to")
+	craneCmd.PersistentFlags().StringVarP(&options.target, "target", "t", "", "group or container to execute the command for")
 	cmdLift.Flags().BoolVarP(&options.force, "force", "f", false, "rebuild all images")
 	cmdLift.Flags().BoolVarP(&options.kill, "kill", "k", false, "kill containers")
 	cmdProvision.Flags().BoolVarP(&options.force, "force", "f", false, "rebuild all images")

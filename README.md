@@ -126,7 +126,7 @@ containers:
 ```
 
 ## Advanced Usage
-Next to containers, you can also specify groups, and then execute Crane commands that only target those groups. If you do not specify a group, the command will apply to all containers. Also, every container automatically forms a group, so you can use the name of each container as an argument to the group option. Additionally, you can specify more groups like this (YAML shown):
+Next to containers, you can also specify groups, and then execute Crane commands that only target those groups. If you do not specify `--target`, the command will apply to all containers. Also, every container can be targeted by using the name of the container as an argument to `--target`. Groups of containers can be specifiec like this (YAML shown):
 
 ```
 groups:
@@ -135,7 +135,7 @@ groups:
 
 ```
 
-This could be used like so: `crane provision --group="container1"` or `crane run --group="databases"`.
+This could be used like so: `crane provision --target="container1"` or `crane run --target="databases"`.
 
 ## Other Crane-backed environments
 * [Silex + Nginx/php-fpm + MySQL](https://github.com/michaelsauter/silex-crane-env)

@@ -17,29 +17,29 @@ type Config struct {
 	Groups     map[string][]string `json:"groups" yaml:"groups"`
 }
 
-func determineTargetedContainers(config Config, specifiedGroup string) []string {
-	// If group is not given, all containers
-	if len(specifiedGroup) == 0 {
+func targetedContainers(config Config, target string) []string {
+	// If target is not given, all containers
+	if len(target) == 0 {
 		var containers []string
 		for i := 0; i < len(config.Containers); i++ {
 			containers = append(containers, config.Containers[i].Name())
 		}
 		return containers
 	}
-	// Select specified group from listed groups
-	for name, containers := range config.Groups {
-		if name == specifiedGroup {
+	// Select target from listed groups
+	for group, containers := range config.Groups {
+		if group == target {
 			return containers
 		}
 	}
-	// The group might just be a container reference itself
+	// The target might just be one container
 	for i := 0; i < len(config.Containers); i++ {
-		if config.Containers[i].Name() == specifiedGroup {
-			return append([]string{}, specifiedGroup)
+		if config.Containers[i].Name() == target {
+			return append([]string{}, target)
 		}
 	}
 	// Otherwise, fail verbosely
-	panic(StatusError{fmt.Errorf("no group nor container matching `%s`", specifiedGroup), 64})
+	panic(StatusError{fmt.Errorf("No group or container matching `%s`", target), 64})
 }
 
 func getConfig(options Options) Config {
@@ -57,8 +57,7 @@ func getConfig(options Options) Config {
 
 func getContainers(options Options) Containers {
 	config := getConfig(options)
-	targetedContainers := determineTargetedContainers(config, options.group)
-	return config.Containers.filter(targetedContainers)
+	return config.Containers.filter(targetedContainers(config, options.target))
 }
 
 func readCraneData(filename string) Config {
