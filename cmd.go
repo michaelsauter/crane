@@ -8,6 +8,7 @@ import (
 type Options struct {
 	verbose  bool
 	force    bool
+	nocache  bool
 	kill     bool
 	config   string
 	manifest string
@@ -15,6 +16,7 @@ type Options struct {
 }
 
 var options = Options{
+	false,
 	false,
 	false,
 	false,
@@ -60,7 +62,7 @@ func handleCmd() {
 lift will use specified Dockerfiles to build all the containers, or the specified one(s).
 If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Run: containersCommand(func(containers Containers) {
-			containers.lift(options.force, options.kill)
+			containers.lift(options.force, options.kill, options.nocache)
 		}),
 	}
 
@@ -71,7 +73,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 provision will use specified Dockerfiles to build all the containers, or the specified one(s).
 If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Run: containersCommand(func(containers Containers) {
-			containers.provision(options.force)
+			containers.provision(options.force, options.nocache)
 		}),
 	}
 
@@ -153,7 +155,9 @@ See the corresponding docker commands for more information.`,
 	craneCmd.PersistentFlags().StringVarP(&options.group, "group", "g", "", "group or container to restrict the command to")
 	cmdLift.Flags().BoolVarP(&options.force, "force", "f", false, "rebuild all images")
 	cmdLift.Flags().BoolVarP(&options.kill, "kill", "k", false, "kill containers")
+	cmdLift.Flags().BoolVarP(&options.nocache, "nocache", "n", false, "Build the image without any cache")
 	cmdProvision.Flags().BoolVarP(&options.force, "force", "f", false, "rebuild all images")
+	cmdProvision.Flags().BoolVarP(&options.nocache, "nocache", "n", false, "Build the image without any cache")
 	cmdRun.Flags().BoolVarP(&options.force, "force", "f", false, "stop and remove running containers first")
 	cmdRun.Flags().BoolVarP(&options.kill, "kill", "k", false, "when using --force, kill containers instead of stopping them")
 	cmdRm.Flags().BoolVarP(&options.force, "force", "f", false, "stop running containers first")
