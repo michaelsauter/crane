@@ -275,16 +275,20 @@ func (container *Container) pullImage() {
 }
 
 // Build image for container
-func (container *Container) buildImage() {
+func (container *Container) buildImage(nocache bool) {
 	fmt.Printf("Building image %s ... ", container.Image())
-	args := []string{"build", "--rm", "--tag=" + container.Image(), container.Dockerfile()}
+	args := []string{"build"}
+	if nocache {
+		args = append(args, "--no-cache")
+	}
+	args = append(args, "--rm", "--tag="+container.Image(), container.Dockerfile())
 	executeCommand("docker", args)
 }
 
-func (container Container) provision(force bool) {
+func (container Container) provision(force bool, nocache bool) {
 	if force || !container.imageExists() {
 		if len(container.Dockerfile()) > 0 {
-			container.buildImage()
+			container.buildImage(nocache)
 		} else {
 			container.pullImage()
 		}

@@ -38,16 +38,16 @@ func (containers Containers) reversed() []Container {
 // Lift containers (provision + run).
 // When forced, this will rebuild all images
 // and recreate all containers.
-func (containers Containers) lift(force bool) {
-	containers.provision(force)
+func (containers Containers) lift(force bool, nocache bool) {
+	containers.provision(force, nocache)
 	containers.runOrStart(force)
 }
 
 // Provision containers.
 // When forced, this will rebuild all images.
-func (containers Containers) provision(force bool) {
+func (containers Containers) provision(force bool, nocache bool) {
 	for _, container := range containers.reversed() {
-		container.provision(force)
+		container.provision(force, nocache)
 	}
 }
 
