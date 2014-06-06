@@ -8,13 +8,11 @@ import (
 type Options struct {
 	verbose bool
 	force   bool
-	kill    bool
 	config  string
 	target  string
 }
 
 var options = Options{
-	false,
 	false,
 	false,
 	"",
@@ -56,7 +54,7 @@ func handleCmd() {
 lift will use specified Dockerfiles to build all the containers, or the specified one(s).
 If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Run: containersCommand(func(containers Containers) {
-			containers.lift(options.force, options.kill)
+			containers.lift(options.force)
 		}),
 	}
 
@@ -76,7 +74,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Run the containers",
 		Long:  `run will call docker run on all containers, or the specified one(s).`,
 		Run: containersCommand(func(containers Containers) {
-			containers.run(options.force, options.kill)
+			containers.run(options.force)
 		}),
 	}
 
@@ -85,7 +83,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Remove the containers",
 		Long:  `rm will call docker rm on all containers, or the specified one(s).`,
 		Run: containersCommand(func(containers Containers) {
-			containers.rm(options.force, options.kill)
+			containers.rm(options.force)
 		}),
 	}
 
@@ -147,12 +145,9 @@ See the corresponding docker commands for more information.`,
 	craneCmd.PersistentFlags().StringVarP(&options.config, "config", "c", "", "config file to read from")
 	craneCmd.PersistentFlags().StringVarP(&options.target, "target", "t", "", "group or container to execute the command for")
 	cmdLift.Flags().BoolVarP(&options.force, "force", "f", false, "rebuild all images")
-	cmdLift.Flags().BoolVarP(&options.kill, "kill", "k", false, "kill containers")
 	cmdProvision.Flags().BoolVarP(&options.force, "force", "f", false, "rebuild all images")
 	cmdRun.Flags().BoolVarP(&options.force, "force", "f", false, "stop and remove running containers first")
-	cmdRun.Flags().BoolVarP(&options.kill, "kill", "k", false, "when using --force, kill containers instead of stopping them")
 	cmdRm.Flags().BoolVarP(&options.force, "force", "f", false, "stop running containers first")
-	cmdRm.Flags().BoolVarP(&options.kill, "kill", "k", false, "when using --force, kill containers instead of stopping them")
 	craneCmd.AddCommand(cmdLift, cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdStatus, cmdVersion)
 	err := craneCmd.Execute()
 	if err != nil {
