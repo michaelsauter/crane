@@ -126,7 +126,7 @@ containers:
 ```
 
 ## Advanced Usage
-Next to containers, you can also specify groups, and then execute Crane commands that only target those groups. If you do not specify `--target`, the command will apply to all containers. Also, every container can be targeted by using the name of the container as an argument to `--target`. Groups of containers can be specifiec like this (YAML shown):
+Next to containers, you can also specify groups, and then execute Crane commands that only target those groups. If you do not specify `--target`, the command will apply to all containers. However, you can override the default by specifying a `default` group. Also, every container can be targeted by using the name of the container as an argument to `--target`. Groups of containers can be specifiec like this (YAML shown):
 
 ```
 groups:

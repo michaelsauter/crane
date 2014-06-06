@@ -18,14 +18,22 @@ type Config struct {
 }
 
 func targetedContainers(config Config, target string) []string {
-	// If target is not given, all containers
+	// target not given
 	if len(target) == 0 {
+		// If default group exists, return its containers
+		for group, containers := range config.Groups {
+			if group == "default" {
+				return containers
+			}
+		}
+		// If no default group exists, return all containers
 		var containers []string
 		for i := 0; i < len(config.Containers); i++ {
 			containers = append(containers, config.Containers[i].Name())
 		}
 		return containers
 	}
+	// target given
 	// Select target from listed groups
 	for group, containers := range config.Groups {
 		if group == target {
