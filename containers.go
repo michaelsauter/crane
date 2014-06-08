@@ -38,9 +38,9 @@ func (containers Containers) reversed() []Container {
 // Lift containers (provision + run).
 // When forced, this will rebuild all images
 // and recreate all containers.
-func (containers Containers) lift(force bool, nocache bool) {
+func (containers Containers) lift(force bool, nocache bool, kill bool) {
 	containers.provision(force, nocache)
-	containers.runOrStart(force)
+	containers.runOrStart(force, kill)
 }
 
 // Provision containers.
@@ -53,9 +53,9 @@ func (containers Containers) provision(force bool, nocache bool) {
 
 // Run containers.
 // When forced, removes existing containers first.
-func (containers Containers) run(force bool) {
+func (containers Containers) run(force bool, kill bool) {
 	if force {
-		containers.rm(force)
+		containers.rm(force, kill)
 	}
 	for _, container := range containers.reversed() {
 		container.run()
@@ -64,9 +64,9 @@ func (containers Containers) run(force bool) {
 
 // Run or start containers.
 // When forced, removes existing containers first.
-func (containers Containers) runOrStart(force bool) {
+func (containers Containers) runOrStart(force bool, kill bool) {
 	if force {
-		containers.rm(force)
+		containers.rm(force, kill)
 	}
 	for _, container := range containers.reversed() {
 		container.runOrStart()
@@ -96,9 +96,13 @@ func (containers Containers) stop() {
 
 // Remove containers.
 // When forced, stops existing containers first.
-func (containers Containers) rm(force bool) {
+func (containers Containers) rm(force bool, kill bool) {
 	if force {
-		containers.stop()
+		if kill {
+			containers.kill()
+		} else {
+			containers.stop()
+		}
 	}
 	for _, container := range containers {
 		container.rm()

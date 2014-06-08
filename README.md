@@ -22,7 +22,7 @@ Crane is a very light wrapper around the Docker commands. This means that e.g. `
 * `status` will display information about the state of the containers
 
 You can get more information about what's happening behind the scenes by using `--verbose`.
-Some commands have a `--force` flag, which will save you intermediate steps, such as stopping the containers before removing them, or rebuilding images when they exist already.
+Some commands have a `--force` flag, which will save you intermediate steps, such as stopping the containers before removing them, or rebuilding images when they exist already. When you use `--force` to remove containers first, you can also use `--kill` if you're impatient.
 For all available commands and details on usage, just type `crane`.
 
 ## crane.json / crane.yaml
