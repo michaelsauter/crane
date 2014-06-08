@@ -118,6 +118,15 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		}),
 	}
 
+	var cmdPush = &cobra.Command{
+		Use:   "push",
+		Short: "Push the containers",
+		Long:  `push will call docker push on all containers, or the specified one(s).`,
+		Run: containersCommand(func(containers Containers) {
+			containers.push()
+		}),
+	}
+
 	var cmdStatus = &cobra.Command{
 		Use:   "status",
 		Short: "Displays status of containers",
@@ -157,7 +166,7 @@ See the corresponding docker commands for more information.`,
 	cmdRun.Flags().BoolVarP(&options.kill, "kill", "k", false, "when using --force, kill containers instead of stopping them")
 	cmdRm.Flags().BoolVarP(&options.force, "force", "f", false, "stop running containers first")
 	cmdRm.Flags().BoolVarP(&options.kill, "kill", "k", false, "when using --force, kill containers instead of stopping them")
-	craneCmd.AddCommand(cmdLift, cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdStatus, cmdVersion)
+	craneCmd.AddCommand(cmdLift, cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdPush, cmdStatus, cmdVersion)
 	err := craneCmd.Execute()
 	if err != nil {
 		panic(StatusError{status: 64})

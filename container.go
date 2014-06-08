@@ -463,3 +463,14 @@ func (container Container) rm() {
 		}
 	}
 }
+
+// Push container
+func (container Container) push() {
+	if len(container.Image()) > 0 {
+		fmt.Printf("Pushing image %s ... ", container.Image())
+		args := []string{"push", container.Image()}
+		executeCommand("docker", args)
+	} else {
+		print.Notice("Skipping %s as it does not have an image name.\n", container.Name())
+	}
+}

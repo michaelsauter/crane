@@ -109,6 +109,13 @@ func (containers Containers) rm(force bool, kill bool) {
 	}
 }
 
+// Push containers.
+func (containers Containers) push() {
+	for _, container := range containers {
+		container.push()
+	}
+}
+
 // Status of containers.
 func (containers Containers) status() {
 	w := new(tabwriter.Writer)
