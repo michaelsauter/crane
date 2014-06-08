@@ -15,12 +15,12 @@ type Options struct {
 }
 
 var options = Options{
-	false,
-	false,
-	false,
-	false,
-	"",
-	"",
+	verbose: false,
+	force:   false,
+	nocache: false,
+	kill:    false,
+	config:  "",
+	target:  "",
 }
 var defaultConfigFiles = []string{"crane.json", "crane.yaml", "crane.yml", "Cranefile"}
 
@@ -157,15 +157,20 @@ See the corresponding docker commands for more information.`,
 	craneCmd.PersistentFlags().BoolVarP(&options.verbose, "verbose", "v", false, "verbose output")
 	craneCmd.PersistentFlags().StringVarP(&options.config, "config", "c", "", "config file to read from")
 	craneCmd.PersistentFlags().StringVarP(&options.target, "target", "t", "", "group or container to execute the command for")
+
 	cmdLift.Flags().BoolVarP(&options.force, "force", "f", false, "rebuild all images")
 	cmdLift.Flags().BoolVarP(&options.nocache, "nocache", "n", false, "Build the image without any cache")
 	cmdLift.Flags().BoolVarP(&options.kill, "kill", "k", false, "kill containers")
+
 	cmdProvision.Flags().BoolVarP(&options.force, "force", "f", false, "rebuild all images")
 	cmdProvision.Flags().BoolVarP(&options.nocache, "nocache", "n", false, "Build the image without any cache")
+
 	cmdRun.Flags().BoolVarP(&options.force, "force", "f", false, "stop and remove running containers first")
 	cmdRun.Flags().BoolVarP(&options.kill, "kill", "k", false, "when using --force, kill containers instead of stopping them")
+
 	cmdRm.Flags().BoolVarP(&options.force, "force", "f", false, "stop running containers first")
 	cmdRm.Flags().BoolVarP(&options.kill, "kill", "k", false, "when using --force, kill containers instead of stopping them")
+
 	craneCmd.AddCommand(cmdLift, cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdPush, cmdStatus, cmdVersion)
 	err := craneCmd.Execute()
 	if err != nil {
