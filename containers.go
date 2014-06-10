@@ -36,27 +36,30 @@ func (containers Containers) reversed() []Container {
 }
 
 // Lift containers (provision + run).
-// When forced, this will rebuild all images
+// When rebuild set, this will rebuild all images
 // and recreate all containers.
-// TODO: re-add force ability to rebuild the images
-func (containers Containers) lift(nocache bool, kill bool) {
-	containers.provision(nocache)
+func (containers Containers) lift(nocache bool, kill bool, rebuild bool) {
+	if rebuild {
+		containers.provision(nocache, rebuild)
+	}
 	containers.runOrStart(kill)
 }
 
 // Provision containers.
-// TODO: re-add the force ability
-func (containers Containers) provision(nocache bool) {
+func (containers Containers) provision(nocache bool, rebuild bool) {
 	for _, container := range containers.reversed() {
-		container.provision(nocache)
+		container.provision(nocache, rebuild)
 	}
 }
 
 // Run containers.
 // When killed, removes existing containers first.
-func (containers Containers) run(kill bool) {
+func (containers Containers) run(kill bool, rebuild bool, nocache bool) {
 	if kill {
 		containers.rm(kill)
+	}
+	if rebuild {
+		containers.provision(rebuild, nocache)
 	}
 	for _, container := range containers.reversed() {
 		container.run()

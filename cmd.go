@@ -9,6 +9,7 @@ type Options struct {
 	verbose bool
 	nocache bool
 	kill    bool
+	rebuild bool
 	config  string
 	target  string
 }
@@ -17,6 +18,7 @@ var options = Options{
 	verbose: false,
 	nocache: false,
 	kill:    false,
+	rebuild: false,
 	config:  "",
 	target:  "",
 }
@@ -56,7 +58,7 @@ func handleCmd() {
 lift will use specified Dockerfiles to build all the containers, or the specified one(s).
 If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Run: containersCommand(func(containers Containers) {
-			containers.lift(options.nocache, options.kill)
+			containers.lift(options.nocache, options.kill, options.rebuild)
 		}),
 	}
 
@@ -67,7 +69,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 provision will use specified Dockerfiles to build all the containers, or the specified one(s).
 If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Run: containersCommand(func(containers Containers) {
-			containers.provision(options.nocache)
+			containers.provision(options.nocache, options.rebuild)
 		}),
 	}
 
@@ -76,7 +78,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Run the containers",
 		Long:  `run will call docker run on all containers, or the specified one(s).`,
 		Run: containersCommand(func(containers Containers) {
-			containers.run(options.kill)
+			containers.run(options.kill, options.rebuild, options.nocache)
 		}),
 	}
 
@@ -156,12 +158,15 @@ See the corresponding docker commands for more information.`,
 	craneCmd.PersistentFlags().StringVarP(&options.config, "config", "c", "", "config file to read from")
 	craneCmd.PersistentFlags().StringVarP(&options.target, "target", "t", "", "group or container to execute the command for")
 
+	cmdLift.Flags().BoolVarP(&options.rebuild, "rebuild", "r", false, "Specifies to rebuild the image before launching the container")
 	cmdLift.Flags().BoolVarP(&options.nocache, "nocache", "n", false, "Build the image without any cache")
 	cmdLift.Flags().BoolVarP(&options.kill, "kill", "k", false, "kill containers")
 
 	cmdProvision.Flags().BoolVarP(&options.nocache, "nocache", "n", false, "Build the image without any cache")
+	cmdProvision.Flags().BoolVarP(&options.rebuild, "rebuild", "r", true, "Specifies to rebuild the image before launching the container")
 
 	cmdRun.Flags().BoolVarP(&options.kill, "kill", "k", false, "kill the containers instea dof stopping them")
+	cmdRun.Flags().BoolVarP(&options.rebuild, "rebuild", "r", false, "Specifies to re-pull rebuild the image before launching the container")
 
 	cmdRm.Flags().BoolVarP(&options.kill, "kill", "k", false, "kill containers instead of stopping them")
 
