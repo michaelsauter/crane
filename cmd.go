@@ -58,7 +58,7 @@ func handleCmd() {
 lift will use specified Dockerfiles to build all the containers, or the specified one(s).
 If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Run: containersCommand(func(containers Containers) {
-			containers.lift(options.nocache, options.kill, options.rebuild)
+			containers.lift(options.rebuild, options.nocache, options.kill)
 		}),
 	}
 
