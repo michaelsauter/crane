@@ -60,6 +60,7 @@ func (containers Containers) run(kill bool, rebuild bool, nocache bool) {
 	}
 	if rebuild {
 		containers.provision(rebuild, nocache)
+		containers.rm(kill)
 	}
 	for _, container := range containers.reversed() {
 		container.run()
