@@ -8,7 +8,7 @@ Crane is a little tool to orchestrate Docker containers. It works by reading in 
 The latest release can be installed via:
 
 ```
-bash -c "`curl -sL https://raw.github.com/michaelsauter/crane/master/download.sh`" && sudo mv crane /usr/local/bin/crane
+bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/master/download.sh`" && sudo mv crane /usr/local/bin/crane
 ```
 You can also build Crane yourself by using the Go toolchain (`go get` and `go install`).
 
