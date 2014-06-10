@@ -285,7 +285,7 @@ func (container *Container) buildImage(nocache bool) {
 	executeCommand("docker", args)
 }
 
-func (container Container) provision(nocache bool, rebuild bool) {
+func (container Container) provision(nocache bool) {
 	if len(container.Dockerfile()) > 0 {
 		container.buildImage(nocache)
 	} else {
