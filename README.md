@@ -15,6 +15,8 @@ You can also build Crane yourself by using the Go toolchain (`go get` and `go in
 Of course, you will need to have Docker (>= 0.8) installed on your system. I generally recommend to do this on Ubuntu, but if you are on OS X, you can also try [docker-osx](https://github.com/noplay/docker-osx). [boot2docker](https://github.com/boot2docker/boot2docker) is nice, but unfortunately, it does not support bind-mounting volumes yet.
 
 ## Usage
+**Please note that this readme, refers to the current master. Have a look at the latest tag for a readme for the latest release.**
+
 Crane is a very light wrapper around the Docker commands. This means that most commands just call the corresponding Docker commands, but for all targeted containers. Additionally, there are a few special commands.
 
 ### `run`
