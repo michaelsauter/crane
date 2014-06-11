@@ -15,7 +15,7 @@ You can also build Crane yourself by using the Go toolchain (`go get` and `go in
 Of course, you will need to have Docker (>= 0.8) installed on your system. I generally recommend to do this on Ubuntu, but if you are on OS X, you can also try [docker-osx](https://github.com/noplay/docker-osx). [boot2docker](https://github.com/boot2docker/boot2docker) is nice, but unfortunately, it does not support bind-mounting volumes yet.
 
 ## Usage
-**Please note that this readme, refers to the current master. Have a look at the latest tag for a readme for the latest release.**
+**Please note that this readme refers to the current master. Have a look at the latest tag for a readme for the latest release.**
 
 Crane is a very light wrapper around the Docker commands. This means that most commands just call the corresponding Docker commands, but for all targeted containers. Additionally, there are a few special commands.
 
@@ -38,12 +38,12 @@ Maps to `docker stop`.
 Either calls Docker's `build` or `pull`, depending on whether a Dockerfile is specified. The Docker cache can be disabled by passing `--nocache`.
 
 ### `lift`
-Will provision and run the containers in one go. By default, it does as little as possible to get the containers running. This means it only provisions images if necessary and starts containers if they already exist. If you want to update the images and recreate the containers, pass `--recreate` (and optionally `--nocache` as well).
+Will provision and run the containers in one go. By default, it does as little as possible to get the containers running. This means it only provisions images if necessary and just starts containers if they already exist. To update the images and recreate the containers, pass `--recreate` (and optionally `--nocache`).
 
 ### `status`
 Displays information about the state of the containers.
 
-You can get more information about what's happening behind the scenes by using `--verbose`.
+You can get more information about what's happening behind the scenes for all commands by using `--verbose`. All options have a short version as well, e.g. `lift -rn`.
 
 ## crane.json / crane.yaml
 The configuration defines an array of containers in either JSON or YAML. By default, the configuration is expected in the current directory (`crane.json` or `crane.yaml`/`crane.yml`), but it can also be specified via `--config`. If a container depends on another one, it must appear before that container in the configuration file.
