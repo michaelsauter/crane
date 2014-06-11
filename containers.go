@@ -36,11 +36,11 @@ func (containers Containers) reversed() []Container {
 }
 
 // Lift containers (provision + run).
-// When forced, this will rebuild all images
+// When recreate is set, this will re-provision all images
 // and recreate all containers.
-func (containers Containers) lift(force bool, nocache bool, kill bool) {
-	containers.provision(nocache)
-	containers.runOrStart(force, kill)
+func (containers Containers) lift(recreate bool, nocache bool) {
+	containers.provisionOrSkip(recreate, nocache)
+	containers.runOrStart(recreate)
 }
 
 // Provision containers.
@@ -51,10 +51,10 @@ func (containers Containers) provision(nocache bool) {
 }
 
 // Run containers.
-// When forced, removes existing containers first.
-func (containers Containers) run(force bool, kill bool) {
-	if force {
-		containers.rm(force, kill)
+// When recreate is true, removes existing containers first.
+func (containers Containers) run(recreate bool) {
+	if recreate {
+		containers.rm(true)
 	}
 	for _, container := range containers.reversed() {
 		container.run()
@@ -62,13 +62,21 @@ func (containers Containers) run(force bool, kill bool) {
 }
 
 // Run or start containers.
-// When forced, removes existing containers first.
-func (containers Containers) runOrStart(force bool, kill bool) {
-	if force {
-		containers.rm(force, kill)
+// When recreate is true, removes existing containers first.
+func (containers Containers) runOrStart(recreate bool) {
+	if recreate {
+		containers.rm(true)
 	}
 	for _, container := range containers.reversed() {
 		container.runOrStart()
+	}
+}
+
+// Provision or skip images.
+// When update is true, provisions all images.
+func (containers Containers) provisionOrSkip(update bool, nocache bool) {
+	for _, container := range containers.reversed() {
+		container.provisionOrSkip(update, nocache)
 	}
 }
 
@@ -94,14 +102,10 @@ func (containers Containers) stop() {
 }
 
 // Remove containers.
-// When forced, stops existing containers first.
-func (containers Containers) rm(force bool, kill bool) {
-	if force {
-		if kill {
-			containers.kill()
-		} else {
-			containers.stop()
-		}
+// When kill is true, kills existing containers first.
+func (containers Containers) rm(kill bool) {
+	if kill {
+		containers.kill()
 	}
 	for _, container := range containers {
 		container.rm()

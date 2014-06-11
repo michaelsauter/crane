@@ -302,10 +302,17 @@ func (container Container) runOrStart() {
 	}
 }
 
+// Provision or skip container
+func (container Container) provisionOrSkip(update bool, nocache bool) {
+	if update || !container.imageExists() {
+		container.provision(nocache)
+	}
+}
+
 // Run container
 func (container Container) run() {
 	if container.exists() {
-		print.Notice("Container %s does already exist. Use --force to recreate.\n", container.Name())
+		print.Notice("Container %s does already exist. Use --recreate to recreate.\n", container.Name())
 		if !container.running() {
 			container.start()
 		}

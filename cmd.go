@@ -6,21 +6,21 @@ import (
 )
 
 type Options struct {
-	verbose bool
-	force   bool
-	nocache bool
-	kill    bool
-	config  string
-	target  string
+	verbose  bool
+	recreate bool
+	nocache  bool
+	kill     bool
+	config   string
+	target   string
 }
 
 var options = Options{
-	verbose: false,
-	force:   false,
-	nocache: false,
-	kill:    false,
-	config:  "",
-	target:  "",
+	verbose:  false,
+	recreate: false,
+	nocache:  false,
+	kill:     false,
+	config:   "",
+	target:   "",
 }
 var defaultConfigFiles = []string{"crane.json", "crane.yaml", "crane.yml", "Cranefile"}
 
@@ -58,7 +58,7 @@ func handleCmd() {
 lift will use specified Dockerfiles to build all the containers, or the specified one(s).
 If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Run: containersCommand(func(containers Containers) {
-			containers.lift(options.force, options.nocache, options.kill)
+			containers.lift(options.recreate, options.nocache)
 		}),
 	}
 
@@ -78,7 +78,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Run the containers",
 		Long:  `run will call docker run on all containers, or the specified one(s).`,
 		Run: containersCommand(func(containers Containers) {
-			containers.run(options.force, options.kill)
+			containers.run(options.recreate)
 		}),
 	}
 
@@ -87,7 +87,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Remove the containers",
 		Long:  `rm will call docker rm on all containers, or the specified one(s).`,
 		Run: containersCommand(func(containers Containers) {
-			containers.rm(options.force, options.kill)
+			containers.rm(options.kill)
 		}),
 	}
 
@@ -158,17 +158,14 @@ See the corresponding docker commands for more information.`,
 	craneCmd.PersistentFlags().StringVarP(&options.config, "config", "c", "", "config file to read from")
 	craneCmd.PersistentFlags().StringVarP(&options.target, "target", "t", "", "group or container to execute the command for")
 
-	cmdLift.Flags().BoolVarP(&options.force, "force", "f", false, "rebuild all images")
+	cmdLift.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "recreate containers (kill and remove containers, provision images, run containers)")
 	cmdLift.Flags().BoolVarP(&options.nocache, "nocache", "n", false, "Build the image without any cache")
-	cmdLift.Flags().BoolVarP(&options.kill, "kill", "k", false, "kill containers")
 
 	cmdProvision.Flags().BoolVarP(&options.nocache, "nocache", "n", false, "Build the image without any cache")
 
-	cmdRun.Flags().BoolVarP(&options.force, "force", "f", false, "stop and remove running containers first")
-	cmdRun.Flags().BoolVarP(&options.kill, "kill", "k", false, "when using --force, kill containers instead of stopping them")
+	cmdRun.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "recreate containers (kill and remove containers first)")
 
-	cmdRm.Flags().BoolVarP(&options.force, "force", "f", false, "stop running containers first")
-	cmdRm.Flags().BoolVarP(&options.kill, "kill", "k", false, "when using --force, kill containers instead of stopping them")
+	cmdRm.Flags().BoolVarP(&options.kill, "kill", "k", false, "kill containers if they are running first")
 
 	craneCmd.AddCommand(cmdLift, cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdPush, cmdStatus, cmdVersion)
 	err := craneCmd.Execute()
