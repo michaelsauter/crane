@@ -85,9 +85,9 @@ For demonstration purposes, we'll bring up a PHP app (served by Apache) that dep
 {
 	"containers": [
 		{
-			"name": "crane_apache",
+			"name": "apache",
 			"dockerfile": "apache",
-			"image": "icrane_apache",
+			"image": "michaelsauter/apache",
 			"run": {
 				"volumes-from": ["crane_app"],
 				"publish": ["80:80"],
@@ -96,26 +96,26 @@ For demonstration purposes, we'll bring up a PHP app (served by Apache) that dep
 			}
 		},
 		{
-			"name": "crane_app",
+			"name": "app",
 			"dockerfile": "app",
-			"image": "icrane_app",
+			"image": "michaelsauter/app",
 			"run": {
 				"volume": ["app/www:/srv/www:rw"],
 				"detach": true
 			}
 		},
 		{
-			"name": "crane_mysql",
+			"name": "mysql",
 			"dockerfile": "mysql",
-			"image": "icrane_mysql",
+			"image": "michaelsauter/mysql",
 			"run": {
 				"detach": true
 			}
 		},
 		{
-			"name": "crane_memcached",
+			"name": "memcached",
 			"dockerfile": "memcached",
-			"image": "icrane_memcached",
+			"image": "michaelsauter/memcached",
 			"run": {
 				"detach": true
 			}
