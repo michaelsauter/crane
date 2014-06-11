@@ -285,15 +285,11 @@ func (container *Container) buildImage(nocache bool) {
 	executeCommand("docker", args)
 }
 
-func (container Container) provision(force bool, nocache bool) {
-	if force || !container.imageExists() {
-		if len(container.Dockerfile()) > 0 {
-			container.buildImage(nocache)
-		} else {
-			container.pullImage()
-		}
+func (container Container) provision(nocache bool) {
+	if len(container.Dockerfile()) > 0 {
+		container.buildImage(nocache)
 	} else {
-		print.Notice("Image %s does already exist. Use --force to recreate.\n", container.Image())
+		container.pullImage()
 	}
 }
 

@@ -69,7 +69,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 provision will use specified Dockerfiles to build all the containers, or the specified one(s).
 If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Run: containersCommand(func(containers Containers) {
-			containers.provision(options.force, options.nocache)
+			containers.provision(options.nocache)
 		}),
 	}
 
@@ -162,7 +162,6 @@ See the corresponding docker commands for more information.`,
 	cmdLift.Flags().BoolVarP(&options.nocache, "nocache", "n", false, "Build the image without any cache")
 	cmdLift.Flags().BoolVarP(&options.kill, "kill", "k", false, "kill containers")
 
-	cmdProvision.Flags().BoolVarP(&options.force, "force", "f", false, "rebuild all images")
 	cmdProvision.Flags().BoolVarP(&options.nocache, "nocache", "n", false, "Build the image without any cache")
 
 	cmdRun.Flags().BoolVarP(&options.force, "force", "f", false, "stop and remove running containers first")
