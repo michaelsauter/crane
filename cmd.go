@@ -55,8 +55,7 @@ func handleCmd() {
 		Use:   "lift",
 		Short: "Build or pull images, then run or start the containers",
 		Long: `
-lift will use specified Dockerfiles to build all the containers, or the specified one(s).
-If no Dockerfile is given, it will pull the image(s) from the given registry.`,
+lift will provision and run all targeted containers.`,
 		Run: containersCommand(func(containers Containers) {
 			containers.lift(options.recreate, options.nocache)
 		}),
@@ -66,7 +65,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Use:   "provision",
 		Short: "Build or pull images",
 		Long: `
-provision will use specified Dockerfiles to build all the containers, or the specified one(s).
+provision will use specified Dockerfiles to build all targeted images.
 If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Run: containersCommand(func(containers Containers) {
 			containers.provision(options.nocache)
@@ -76,7 +75,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 	var cmdRun = &cobra.Command{
 		Use:   "run",
 		Short: "Run the containers",
-		Long:  `run will call docker run on all containers, or the specified one(s).`,
+		Long:  `run will call docker run for all targeted containers.`,
 		Run: containersCommand(func(containers Containers) {
 			containers.run(options.recreate)
 		}),
@@ -85,7 +84,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 	var cmdRm = &cobra.Command{
 		Use:   "rm",
 		Short: "Remove the containers",
-		Long:  `rm will call docker rm on all containers, or the specified one(s).`,
+		Long:  `rm will call docker rm for all targeted containers.`,
 		Run: containersCommand(func(containers Containers) {
 			containers.rm(options.kill)
 		}),
@@ -94,7 +93,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 	var cmdKill = &cobra.Command{
 		Use:   "kill",
 		Short: "Kill the containers",
-		Long:  `kill will call docker kill on all containers, or the specified one(s).`,
+		Long:  `kill will call docker kill for all targeted containers.`,
 		Run: containersCommand(func(containers Containers) {
 			containers.kill()
 		}),
@@ -103,7 +102,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 	var cmdStart = &cobra.Command{
 		Use:   "start",
 		Short: "Start the containers",
-		Long:  `start will call docker start on all containers, or the specified one(s).`,
+		Long:  `start will call docker start for all targeted containers.`,
 		Run: containersCommand(func(containers Containers) {
 			containers.start()
 		}),
@@ -112,7 +111,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 	var cmdStop = &cobra.Command{
 		Use:   "stop",
 		Short: "Stop the containers",
-		Long:  `stop will call docker stop on all containers, or the specified one(s).`,
+		Long:  `stop will call docker stop for all targeted containers.`,
 		Run: containersCommand(func(containers Containers) {
 			containers.stop()
 		}),
@@ -121,7 +120,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 	var cmdPush = &cobra.Command{
 		Use:   "push",
 		Short: "Push the containers",
-		Long:  `push will call docker push on all containers, or the specified one(s).`,
+		Long:  `push will call docker push for all targeted containers.`,
 		Run: containersCommand(func(containers Containers) {
 			containers.push()
 		}),
@@ -130,7 +129,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 	var cmdStatus = &cobra.Command{
 		Use:   "status",
 		Short: "Displays status of containers",
-		Long:  `Displays the current status of all the containers, or the specified one(s).`,
+		Long:  `Displays the current status of all targeted containers.`,
 		Run: containersCommand(func(containers Containers) {
 			containers.status()
 		}),
@@ -154,18 +153,18 @@ It works by reading in JSON or YAML which describes how to obtain container imag
 See the corresponding docker commands for more information.`,
 	}
 
-	craneCmd.PersistentFlags().BoolVarP(&options.verbose, "verbose", "v", false, "verbose output")
-	craneCmd.PersistentFlags().StringVarP(&options.config, "config", "c", "", "config file to read from")
-	craneCmd.PersistentFlags().StringVarP(&options.target, "target", "t", "", "group or container to execute the command for")
+	craneCmd.PersistentFlags().BoolVarP(&options.verbose, "verbose", "v", false, "Verbose output")
+	craneCmd.PersistentFlags().StringVarP(&options.config, "config", "c", "", "Config file to read from")
+	craneCmd.PersistentFlags().StringVarP(&options.target, "target", "t", "", "Group or container to execute the command for")
 
-	cmdLift.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "recreate containers (kill and remove containers, provision images, run containers)")
+	cmdLift.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (kill and remove containers, provision images, run containers)")
 	cmdLift.Flags().BoolVarP(&options.nocache, "nocache", "n", false, "Build the image without any cache")
 
 	cmdProvision.Flags().BoolVarP(&options.nocache, "nocache", "n", false, "Build the image without any cache")
 
-	cmdRun.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "recreate containers (kill and remove containers first)")
+	cmdRun.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (kill and remove containers first)")
 
-	cmdRm.Flags().BoolVarP(&options.kill, "kill", "k", false, "kill containers if they are running first")
+	cmdRm.Flags().BoolVarP(&options.kill, "kill", "k", false, "Kill containers if they are running first")
 
 	craneCmd.AddCommand(cmdLift, cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdPush, cmdStatus, cmdVersion)
 	err := craneCmd.Execute()
