@@ -12,7 +12,7 @@ bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/master/
 ```
 You can also build Crane yourself by using the Go toolchain (`go get` and `go install`).
 
-Of course, you will need to have Docker (>= 0.8) installed on your system. I generally recommend to do this on Ubuntu, but if you are on OS X, you can also try [docker-osx](https://github.com/noplay/docker-osx). [boot2docker](https://github.com/boot2docker/boot2docker) is nice, but unfortunately, it does not support bind-mounting volumes yet.
+Of course, you will need to have Docker (>= 0.12) installed on your system. I generally recommend to do this on Ubuntu, but if you are on OS X, you can also try [docker-osx](https://github.com/noplay/docker-osx). [boot2docker](https://github.com/boot2docker/boot2docker) is nice, but unfortunately, it does not support bind-mounting volumes yet.
 
 ## Usage
 **Please note that this readme refers to the current master. Have a look at the latest tag for a readme for the latest release.**
