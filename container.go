@@ -190,7 +190,7 @@ func (container *Container) Id() (id string, err error) {
 	} else {
 		// Inspect container, extracting the ID.
 		// This will return gibberish if no container is found.
-		args := []string{"inspect", "--format={{.ID}}", container.Name()}
+		args := []string{"inspect", "--format={{.Id}}", container.Name()}
 		output, outErr := commandOutput("docker", args)
 		if err == nil {
 			id = output
@@ -258,7 +258,7 @@ func (container *Container) imageExists() bool {
 }
 
 func (container *Container) status(w *tabwriter.Writer) {
-	args := []string{"inspect", "--format={{.State.Running}}\t{{.ID}}\t{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}\t{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{end}}", container.Name()}
+	args := []string{"inspect", "--format={{.State.Running}}\t{{.Id}}\t{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}\t{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{end}}", container.Name()}
 	output, err := commandOutput("docker", args)
 	if err != nil {
 		fmt.Fprintf(w, "%s\tError:%v\t%v\n", container.Name(), err, output)
