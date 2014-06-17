@@ -12,7 +12,7 @@ import (
 
 type Container struct {
 	id            string
-	RawName       string `json:"name" yaml:"name"`
+	RawName       string
 	RawDockerfile string `json:"dockerfile" yaml:"dockerfile"`
 	RawImage      string `json:"image" yaml:"image"`
 	Run           RunParameters
@@ -43,6 +43,25 @@ type RunParameters struct {
 	RawVolumesFrom []string    `json:"volumes-from" yaml:"volumes-from"`
 	RawWorkdir     string      `json:"workdir" yaml:"workdir"`
 	RawCmd         interface{} `json:"cmd" yaml:"cmd"`
+}
+
+func (container *Container) Dependencies() []string {
+	var linkParts []string
+	var dependencies []string
+	for _, link := range container.Run.Link() {
+		linkParts = strings.Split(link, ":")
+		dependencies = append(dependencies, linkParts[0])
+	}
+	return dependencies
+}
+
+func (container *Container) IsTargeted(targeted []string) bool {
+	for _, target := range targeted {
+		if target == container.Name() {
+			return true
+		}
+	}
+	return false
 }
 
 func (container *Container) Name() string {
