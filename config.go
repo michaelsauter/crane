@@ -102,17 +102,16 @@ func NewConfig(options Options) *Config {
 			break
 		}
 	}
-	if config != nil {
-		config.setNames()
-		config.filter(options.target)
-		err := config.determineOrder()
-		if err != nil {
-			panic(StatusError{err, 78})
-		}
-		return config
-	} else {
+	if config == nil {
 		panic(StatusError{fmt.Errorf("No configuration found %v", configFiles(options)), 78})
 	}
+	config.setNames()
+	config.filter(options.target)
+	err := config.determineOrder()
+	if err != nil {
+		panic(StatusError{err, 78})
+	}
+	return config
 }
 
 // Config methods
