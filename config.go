@@ -21,7 +21,11 @@ type Config struct {
 	Groups       map[string][]string `json:"groups" yaml:"groups"`
 }
 
-// Global functions
+// Package-level functions
+// configFiles returns a slice of
+// files to read the config from.
+// If the --config option was given,
+// it will just use the given file.
 func configFiles(options Options) []string {
 	if len(options.config) > 0 {
 		return []string{options.config}
@@ -30,7 +34,9 @@ func configFiles(options Options) []string {
 	}
 }
 
-func readCraneData(filename string) *Config {
+// readConfig will read the config file
+// and return the created config.
+func readConfig(filename string) *Config {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		panic(StatusError{err, 74})
@@ -52,6 +58,9 @@ func readCraneData(filename string) *Config {
 	}
 }
 
+// displaySyntaxError will display more information
+// such as line and error type given an error and
+// the data that was unmarshalled.
 // Thanks to https://github.com/markpeek/packer/commit/5bf33a0e91b2318a40c42e9bf855dcc8dd4cdec5
 func displaySyntaxError(data []byte, syntaxError error) (err error) {
 	syntax, ok := syntaxError.(*json.SyntaxError)
@@ -73,6 +82,8 @@ func displaySyntaxError(data []byte, syntaxError error) (err error) {
 	return
 }
 
+// unmarshalJSON converts given JSON data
+// into a config object.
 func unmarshalJSON(data []byte) *Config {
 	var config *Config
 	err := json.Unmarshal(data, &config)
@@ -83,6 +94,8 @@ func unmarshalJSON(data []byte) *Config {
 	return config
 }
 
+// unmarshalYAML converts given YAML data
+// into a config object.
 func unmarshalYAML(data []byte) *Config {
 	var config *Config
 	err := yaml.Unmarshal(data, &config)
@@ -93,12 +106,12 @@ func unmarshalYAML(data []byte) *Config {
 	return config
 }
 
-// Constructors
+// Constructor
 func NewConfig(options Options) *Config {
 	var config *Config
 	for _, f := range configFiles(options) {
 		if _, err := os.Stat(f); err == nil {
-			config = readCraneData(f)
+			config = readConfig(f)
 			break
 		}
 	}
