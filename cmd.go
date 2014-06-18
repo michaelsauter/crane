@@ -22,15 +22,6 @@ var options = Options{
 	config:   "",
 	target:   "",
 }
-var defaultConfigFiles = []string{"crane.json", "crane.yaml", "crane.yml", "Cranefile"}
-
-func configFiles() []string {
-	if len(options.config) > 0 {
-		return []string{options.config}
-	} else {
-		return defaultConfigFiles
-	}
-}
 
 func isVerbose() bool {
 	return options.verbose
@@ -44,8 +35,7 @@ func containersCommand(wrapped func(containers Containers)) func(cmd *cobra.Comm
 			cmd.Usage()
 			panic(StatusError{status: 64})
 		}
-		containers := getContainers(options)
-		wrapped(containers)
+		wrapped(NewConfig(options).Containers())
 	}
 }
 

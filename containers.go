@@ -8,26 +8,7 @@ import (
 
 type Containers []Container
 
-func containerInList(container Container, list []string) bool {
-	for _, listItem := range list {
-		if os.ExpandEnv(listItem) == container.Name() {
-			return true
-		}
-	}
-	return false
-}
-
-func (containers Containers) filter(list []string) []Container {
-	var filtered []Container
-	for i := 0; i < len(containers); i++ {
-		if containerInList(containers[i], list) {
-			filtered = append(filtered, containers[i])
-		}
-	}
-	return filtered
-}
-
-func (containers Containers) reversed() []Container {
+func (containers Containers) reversed() Containers {
 	var reversed []Container
 	for i := len(containers) - 1; i >= 0; i-- {
 		reversed = append(reversed, containers[i])
