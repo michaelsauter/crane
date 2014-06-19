@@ -159,3 +159,7 @@ This could be used like so: `crane provision --target="container1"` or `crane ru
 * [Silex + Nginx/php-fpm + MySQL](https://github.com/michaelsauter/silex-crane-env)
 * [Symfony2 + Apache + MySQL](https://github.com/michaelsauter/symfony2-crane-env)
 * [Sinatra + PostrgeSQL](https://github.com/michaelsauter/sinatra-crane-env)
+
+---
+
+[![GoDoc](https://godoc.org/github.com/michaelsauter/crane?status.png)](https://godoc.org/github.com/michaelsauter/crane)
