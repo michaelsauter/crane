@@ -2,7 +2,7 @@
 Lift containers with ease
 
 ## Overview
-Crane is a little tool to orchestrate Docker containers. It works by reading in some configuration (JSON or YAML) which describes how to obtain images and how to run the containers. This simplifies setting up a development environemt a lot as you don't have to bring up every container manually, remembering all the arguments you need to pass. By storing the configuration next to the data and the app(s) in a repository, you can easily share the whole environment.
+Crane is a little tool to orchestrate Docker containers. It works by reading in some configuration (JSON or YAML) which describes how to obtain images and how to run the containers. This simplifies setting up a development environment a lot as you don't have to bring up every container manually, remembering all the arguments you need to pass. By storing the configuration next to the data and the app(s) in a repository, you can easily share the whole environment.
 
 ## Installation
 The latest release can be installed via:
@@ -144,7 +144,7 @@ containers:
 ```
 
 ## Advanced Usage
-Next to containers, you can also specify groups, and then execute Crane commands that only target those groups. If you do not specify `--target`, the command will apply to all containers. However, you can override the default by specifying a `default` group. Also, every container can be targeted by using the name of the container as an argument to `--target`. Groups of containers can be specifiec like this (YAML shown):
+Next to containers, you can also specify groups, and then execute Crane commands that only target those groups. If you do not specify `--target`, the command will apply to all containers. However, you can override the default by specifying a `default` group. Also, every container can be targeted by using the name of the container as an argument to `--target`. Groups of containers can be specified like this (YAML shown):
 
 ```
 groups:
