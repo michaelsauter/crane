@@ -30,7 +30,7 @@ func configFiles(options Options) []string {
 	if len(options.config) > 0 {
 		return []string{options.config}
 	} else {
-		return []string{"crane.json", "crane.yaml", "crane.yml", "Cranefile"}
+		return []string{"crane.json", "crane.yaml", "crane.yml"}
 	}
 }
 
@@ -42,17 +42,11 @@ func readConfig(filename string) *Config {
 		panic(StatusError{err, 74})
 	}
 
-	if filename == "Cranefile" {
-		print.Notice("Using a Cranefile is deprecated. Please use crane.json/crane.yaml instead.\n")
-	}
-
 	ext := filepath.Ext(filename)
 	if ext == ".json" {
 		return unmarshalJSON(data)
 	} else if ext == ".yml" || ext == ".yaml" {
 		return unmarshalYAML(data)
-	} else if ext == "" {
-		return unmarshalJSON(data)
 	} else {
 		panic(StatusError{errors.New("Unrecognized file extension"), 65})
 	}
