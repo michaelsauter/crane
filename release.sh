@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 
+set -e
+
 version=$1
 
 if [ -z "$version" ]; then
   echo "No version passed! Example usage: ./release.sh 1.0.0"
   exit 1
 fi
+
+echo "Running tests..."
+go test ./...
 
 echo "Update version..."
 sed -i.bak 's/fmt\.Println("v[0-9]\.[0-9]\.[0-9]")/fmt.Println("v'$version'")/' cmd.go
