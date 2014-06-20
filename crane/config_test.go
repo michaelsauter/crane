@@ -67,44 +67,44 @@ func TestTargetedContainers(t *testing.T) {
 	var containers []string
 	var groups = make(map[string][]string)
 	containerMap := &ContainerMap{
-		"a": Container{},
-		"b": Container{},
-		"c": Container{},
+		"a":                  Container{},
+		"${DOES_NOT_EXIST}b": Container{},
+		"c":                  Container{},
 	}
 
 	// No target given
 	// If default groups exist, it returns its containers
-	result = []string{"a", "b"}
+	result = []string{"a", "${DOES_NOT_EXIST}b"}
 	groups = map[string][]string{
 		"default": result,
 	}
 	c := &Config{Groups: groups}
 	containers = c.targetedContainers("")
-	if len(containers) != 2 || containers[0] != "a" || containers[1] != "b" {
+	if len(containers) != len(result) || containers[0] != result[0] || containers[1] != result[1] {
 		t.Errorf("Expected %v, got %v", result, containers)
 	}
 	// If no default group, returns all containers
-	result = []string{"a", "b", "c"}
+	result = []string{"a", "${DOES_NOT_EXIST}b", "c"}
 	c = &Config{ContainerMap: containerMap}
 	containers = c.targetedContainers("")
-	if len(containers) != 3 || containers[0] != "a" || containers[1] != "b" || containers[2] != "c" {
+	if len(containers) != len(result) || containers[0] != result[0] || containers[1] != result[1] || containers[2] != result[2] {
 		t.Errorf("Expected %v, got %v", result, containers)
 	}
 	// Target given
 	// Target is a group
-	result = []string{"b", "c"}
+	result = []string{"${DOES_NOT_EXIST}b", "c"}
 	groups = map[string][]string{
 		"second": result,
 	}
 	c = &Config{ContainerMap: containerMap, Groups: groups}
 	containers = c.targetedContainers("second")
-	if len(containers) != 2 || containers[0] != "b" || containers[1] != "c" {
+	if len(containers) != len(result) || containers[0] != result[0] || containers[1] != result[1] {
 		t.Errorf("Expected %v, got %v", result, containers)
 	}
 	// Target is a container
 	result = []string{"a"}
 	containers = c.targetedContainers("a")
-	if len(containers) != 1 || containers[0] != "a" {
+	if len(containers) != len(result) || containers[0] != result[0] {
 		t.Errorf("Expected %v, got %v", result, containers)
 	}
 }

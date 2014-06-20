@@ -191,6 +191,9 @@ func (c *Config) determineOrder() error {
 // from the map which are not targeted.
 func (config Config) filter(target string) {
 	targeted := config.targetedContainers(target)
+	for i, t := range targeted {
+		targeted[i] = os.ExpandEnv(t)
+	}
 	for name, container := range *config.ContainerMap {
 		if !container.IsTargeted(targeted) {
 			delete(*config.ContainerMap, name)
@@ -212,7 +215,7 @@ func (config Config) targetedContainers(target string) []string {
 		// If no default group exists, return all containers
 		var containers []string
 		for name, _ := range *config.ContainerMap {
-			containers = append(containers, os.ExpandEnv(name))
+			containers = append(containers, name)
 		}
 		return containers
 	}
@@ -227,7 +230,7 @@ func (config Config) targetedContainers(target string) []string {
 	// The target might just be one container
 	for name, _ := range *config.ContainerMap {
 		if os.ExpandEnv(name) == target {
-			return append([]string{}, target)
+			return append([]string{}, name)
 		}
 	}
 	// Otherwise, fail verbosely
