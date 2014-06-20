@@ -261,6 +261,19 @@ func (container *Container) running() bool {
 	}
 }
 
+func (container *Container) paused() bool {
+	args := []string{"inspect", "--format={{.State.Paused}}", container.Name()}
+	output, err := commandOutput("docker", args)
+	if err != nil {
+		return false
+	}
+	paused, err := strconv.ParseBool(output)
+	if err != nil {
+		return false
+	}
+	return paused
+}
+
 func (container *Container) imageExists() bool {
 	dockerCmd := []string{"docker", "images", "--no-trunc"}
 	grepCmd := []string{"grep", "-wF", container.Image()}
@@ -469,6 +482,30 @@ func (container Container) stop() {
 	if container.running() {
 		fmt.Printf("Stopping container %s ... ", container.Name())
 		args := []string{"stop", container.Name()}
+		executeCommand("docker", args)
+	}
+}
+
+// Pause container
+func (container Container) pause() {
+	if container.running() {
+		if container.paused() {
+			print.Notice("Container %s is already paused.\n", container.Name())
+		} else {
+			fmt.Printf("Pausing container %s ... ", container.Name())
+			args := []string{"pause", container.Name()}
+			executeCommand("docker", args)
+		}
+	} else {
+		print.Notice("Container %s is not running.\n", container.Name())
+	}
+}
+
+// Unpause container
+func (container Container) unpause() {
+	if container.paused() {
+		fmt.Printf("Unpausing container %s ... ", container.Name())
+		args := []string{"unpause", container.Name()}
 		executeCommand("docker", args)
 	}
 }

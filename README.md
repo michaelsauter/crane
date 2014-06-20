@@ -32,6 +32,12 @@ Maps to `docker start`.
 ### `stop`
 Maps to `docker stop`.
 
+### `pause`
+Maps to `docker pause`.
+
+### `unpause`
+Maps to `docker unpause`.
+
 ### `provision`
 Either calls Docker's `build` or `pull`, depending on whether a Dockerfile is specified. The Docker cache can be disabled by passing `--no-cache`.
 
