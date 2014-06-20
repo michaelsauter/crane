@@ -17,14 +17,14 @@ func TestConfigFiles(t *testing.T) {
 	}
 }
 
-func TestSetNames(t *testing.T) {
+func TestSetContainersByNames(t *testing.T) {
 	containerMap := &ContainerMap{
 		"a": Container{},
 		"b": Container{},
 	}
 	c := &Config{ContainersByRawName: containerMap}
-	c.setNames()
-	cMap := *c.ContainersByRawName
+	c.setContainersByName()
+	cMap := *c.containersByName
 	if cMap["a"].RawName != "a" || cMap["b"].RawName != "b" {
 		t.Errorf("Names should be 'a' and 'b', got %s and %s", cMap["a"].RawName, cMap["b"].RawName)
 	}
@@ -32,21 +32,22 @@ func TestSetNames(t *testing.T) {
 
 func TestDetermineOrder(t *testing.T) {
 	// Order set manually
-	order := []string{"a", "b", "c"}
-	c := &Config{RawOrder: order}
+	rawOrder := []string{"a", "${DOES_NOT_EXIST}b", "c"}
+	c := &Config{RawOrder: rawOrder}
 	c.determineOrder()
-	if order[0] != "a" || order[1] != "b" || order[2] != "c" {
-		t.Errorf("Order should have been %v, got %v", order, c.RawOrder)
+	if c.order[0] != "a" || c.order[1] != "b" || c.order[2] != "c" {
+		t.Errorf("Order should have been %v, got %v", c.order, c.RawOrder)
 	}
 	// Resolvable map
 	containerMap := &ContainerMap{
-		"b": Container{Run: RunParameters{RawLink: []string{"c:c"}}},
-		"a": Container{Run: RunParameters{RawLink: []string{"b:b"}}},
-		"c": Container{},
+		"b":                  Container{Run: RunParameters{RawLink: []string{"${DOES_NOT_EXIST}c:c"}}},
+		"${DOES_NOT_EXIST}a": Container{Run: RunParameters{RawLink: []string{"b:b"}}},
+		"c":                  Container{},
 	}
 	c = &Config{ContainersByRawName: containerMap}
+	c.setContainersByName()
 	err := c.determineOrder()
-	if err != nil || order[0] != "a" || order[1] != "b" || order[2] != "c" {
+	if err != nil || c.order[0] != "a" || c.order[1] != "b" || c.order[2] != "c" {
 		t.Errorf("Order should have been [a, b, c], got %v", c.RawOrder)
 	}
 	// Unresolvable map returns error
@@ -56,6 +57,7 @@ func TestDetermineOrder(t *testing.T) {
 		"c": Container{Run: RunParameters{RawLink: []string{"a:a"}}},
 	}
 	c = &Config{ContainersByRawName: containerMap}
+	c.setContainersByName()
 	err = c.determineOrder()
 	if err == nil {
 		t.Errorf("Cyclic dependency a -> b -> c -> a should not have been resolvable, got %v", c.RawOrder)
