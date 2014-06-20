@@ -22,9 +22,9 @@ func TestSetNames(t *testing.T) {
 		"a": Container{},
 		"b": Container{},
 	}
-	c := &Config{ContainerMap: containerMap}
+	c := &Config{ContainersByRawName: containerMap}
 	c.setNames()
-	cMap := *c.ContainerMap
+	cMap := *c.ContainersByRawName
 	if cMap["a"].RawName != "a" || cMap["b"].RawName != "b" {
 		t.Errorf("Names should be 'a' and 'b', got %s and %s", cMap["a"].RawName, cMap["b"].RawName)
 	}
@@ -33,10 +33,10 @@ func TestSetNames(t *testing.T) {
 func TestDetermineOrder(t *testing.T) {
 	// Order set manually
 	order := []string{"a", "b", "c"}
-	c := &Config{Order: order}
+	c := &Config{RawOrder: order}
 	c.determineOrder()
 	if order[0] != "a" || order[1] != "b" || order[2] != "c" {
-		t.Errorf("Order should have been %v, got %v", order, c.Order)
+		t.Errorf("Order should have been %v, got %v", order, c.RawOrder)
 	}
 	// Resolvable map
 	containerMap := &ContainerMap{
@@ -44,10 +44,10 @@ func TestDetermineOrder(t *testing.T) {
 		"a": Container{Run: RunParameters{RawLink: []string{"b:b"}}},
 		"c": Container{},
 	}
-	c = &Config{ContainerMap: containerMap}
+	c = &Config{ContainersByRawName: containerMap}
 	err := c.determineOrder()
 	if err != nil || order[0] != "a" || order[1] != "b" || order[2] != "c" {
-		t.Errorf("Order should have been [a, b, c], got %v", c.Order)
+		t.Errorf("Order should have been [a, b, c], got %v", c.RawOrder)
 	}
 	// Unresolvable map returns error
 	containerMap = &ContainerMap{
@@ -55,10 +55,10 @@ func TestDetermineOrder(t *testing.T) {
 		"a": Container{Run: RunParameters{RawLink: []string{"b:b"}}},
 		"c": Container{Run: RunParameters{RawLink: []string{"a:a"}}},
 	}
-	c = &Config{ContainerMap: containerMap}
+	c = &Config{ContainersByRawName: containerMap}
 	err = c.determineOrder()
 	if err == nil {
-		t.Errorf("Cyclic dependency a -> b -> c -> a should not have been resolvable, got %v", c.Order)
+		t.Errorf("Cyclic dependency a -> b -> c -> a should not have been resolvable, got %v", c.RawOrder)
 	}
 }
 
@@ -78,14 +78,14 @@ func TestTargetedContainers(t *testing.T) {
 	groups = map[string][]string{
 		"default": result,
 	}
-	c := &Config{Groups: groups}
+	c := &Config{RawGroups: groups}
 	containers = c.targetedContainers("")
 	if len(containers) != len(result) || containers[0] != result[0] || containers[1] != result[1] {
 		t.Errorf("Expected %v, got %v", result, containers)
 	}
 	// If no default group, returns all containers
 	result = []string{"a", "${DOES_NOT_EXIST}b", "c"}
-	c = &Config{ContainerMap: containerMap}
+	c = &Config{ContainersByRawName: containerMap}
 	containers = c.targetedContainers("")
 	if len(containers) != len(result) || containers[0] != result[0] || containers[1] != result[1] || containers[2] != result[2] {
 		t.Errorf("Expected %v, got %v", result, containers)
@@ -96,7 +96,7 @@ func TestTargetedContainers(t *testing.T) {
 	groups = map[string][]string{
 		"second": result,
 	}
-	c = &Config{ContainerMap: containerMap, Groups: groups}
+	c = &Config{ContainersByRawName: containerMap, RawGroups: groups}
 	containers = c.targetedContainers("second")
 	if len(containers) != len(result) || containers[0] != result[0] || containers[1] != result[1] {
 		t.Errorf("Expected %v, got %v", result, containers)
