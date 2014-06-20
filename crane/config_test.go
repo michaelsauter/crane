@@ -64,6 +64,21 @@ func TestDetermineOrder(t *testing.T) {
 	}
 }
 
+func TestFilter(t *testing.T) {
+	containerMap := &ContainerMap{
+		"a":                  Container{},
+		"${DOES_NOT_EXIST}b": Container{},
+		"c":                  Container{},
+	}
+	c := &Config{ContainersByRawName: containerMap}
+	c.setContainersByName()
+	c.filter("b")
+	containersByName := *c.containersByName
+	if len(containersByName) != 1 {
+		t.Errorf("Only one container should remain after filtering, got %v", c.containersByName)
+	}
+}
+
 func TestTargetedContainers(t *testing.T) {
 	var result []string
 	var containers []string
