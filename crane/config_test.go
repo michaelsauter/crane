@@ -12,8 +12,8 @@ func TestConfigFiles(t *testing.T) {
 	}
 	// Without given filename
 	files = configFiles(Options{})
-	if len(files) != 4 {
-		t.Errorf("Config files should be [crane.json, crane.yaml, crane.yml, Cranefile], got %v", files)
+	if len(files) != 3 {
+		t.Errorf("Config files should be [crane.json crane.yaml crane.yml], got %v", files)
 	}
 }
 

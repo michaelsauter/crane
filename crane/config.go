@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/michaelsauter/crane/print"
 	"gopkg.in/v1/yaml"
 	"io/ioutil"
 	"os"
