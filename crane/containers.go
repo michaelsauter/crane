@@ -82,6 +82,20 @@ func (containers Containers) stop() {
 	}
 }
 
+// Pause containers.
+func (containers Containers) pause() {
+	for _, container := range containers {
+		container.pause()
+	}
+}
+
+// Unpause containers.
+func (containers Containers) unpause() {
+	for _, container := range containers.reversed() {
+		container.unpause()
+	}
+}
+
 // Remove containers.
 // When kill is true, kills existing containers first.
 func (containers Containers) rm(kill bool) {
