@@ -52,6 +52,7 @@ func (container *Container) Dependencies() []string {
 		linkParts = strings.Split(link, ":")
 		dependencies = append(dependencies, linkParts[0])
 	}
+	dependencies = append(dependencies, container.Run.VolumesFrom()...)
 	return dependencies
 }
 
