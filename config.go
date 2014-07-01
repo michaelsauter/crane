@@ -12,6 +12,16 @@ import (
 	"path/filepath"
 )
 
+var defaultConfigFiles = []string{"crane.json", "crane.yaml", "crane.yml", "Cranefile"}
+
+func configFiles() []string {
+	if len(options.config) > 0 {
+		return []string{options.config}
+	} else {
+		return defaultConfigFiles
+	}
+}
+
 type Config struct {
 	Containers Containers          `json:"containers" yaml:"containers"`
 	Groups     map[string][]string `json:"groups" yaml:"groups"`
@@ -51,13 +61,9 @@ func targetedContainers(config Config, target string) []string {
 }
 
 func getConfig(options Options) Config {
-	if len(options.config) > 0 {
-		return unmarshalJSON([]byte(options.config))
-	} else {
-		for _, f := range configFiles() {
-			if _, err := os.Stat(f); err == nil {
-				return readCraneData(f)
-			}
+	for _, f := range configFiles() {
+		if _, err := os.Stat(f); err == nil {
+			return readCraneData(f)
 		}
 	}
 	panic(StatusError{fmt.Errorf("No configuration found %v", configFiles()), 78})
