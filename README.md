@@ -50,10 +50,9 @@ Displays information about the state of the containers.
 You can get more information about what's happening behind the scenes for all commands by using `--verbose`. All options have a short version as well, e.g. `lift -rn`.
 
 ## crane.json / crane.yaml
-The configuration defines an array of containers in either JSON or YAML. By default, the configuration is expected in the current directory (`crane.json` or `crane.yaml`/`crane.yml`), but it can also be specified via `--config`. If a container depends on another one, it must appear before that container in the configuration file.
-Every container consists of:
+The configuration defines a map of containers in either JSON or YAML. By default, the configuration is expected in the current directory (`crane.json` or `crane.yaml`/`crane.yml`), but it can also be specified via `--config`. Dependencies between containers are automatically detected and resolved. However, it is possible to determine the order manually by specifying an `order` array in the configuration.
+The map of containers consists of the name of the container mapped to the container configuration, which consists of:
 
-* `name` (string, required): Name of the container
 * `image` (string, required): Name of the image to build/pull
 * `dockerfile` (string, optional): Relative path to the Dockerfile
 * `run` (object, optional): Parameters mapped to Docker's `run`.
@@ -83,52 +82,37 @@ Every container consists of:
 See the [Docker documentation](http://docs.docker.io/en/latest/reference/commandline/cli/#run) for more details about the parameters.
 
 ## Example
-For demonstration purposes, we'll bring up a PHP app (served by Apache) that depends both on a MySQL database and a Memcached server. The source code is available at http://github.com/michaelsauter/crane-example. Here's what the `crane.json` looks like:
+For demonstration purposes, we'll bring up a PHP app (served by Apache) that depends both on a MySQL database and a Memcached server. The source code is available at http://github.com/michaelsauter/crane-example. Here's what the `crane.yaml` looks like:
 
 ```
-{
-	"containers": [
-		{
-			"name": "apache",
-			"dockerfile": "apache",
-			"image": "michaelsauter/apache",
-			"run": {
-				"volumes-from": ["crane_app"],
-				"publish": ["80:80"],
-				"link": ["crane_mysql:db", "crane_memcached:cache"],
-				"detach": true
-			}
-		},
-		{
-			"name": "app",
-			"dockerfile": "app",
-			"image": "michaelsauter/app",
-			"run": {
-				"volume": ["app/www:/srv/www:rw"],
-				"detach": true
-			}
-		},
-		{
-			"name": "mysql",
-			"dockerfile": "mysql",
-			"image": "michaelsauter/mysql",
-			"run": {
-				"detach": true
-			}
-		},
-		{
-			"name": "memcached",
-			"dockerfile": "memcached",
-			"image": "michaelsauter/memcached",
-			"run": {
-				"detach": true
-			}
-		}
-	]
-}
+containers:
+	apache:
+		dockerfile: apache
+		image: michaelsauter/apache
+		run:
+			volumes-from: ["crane_app"]
+			publish: ["80:80"]
+			link: ["crane_mysql:db", "crane_memcached:cache"]
+			detach: true
+	app:
+		dockerfile: app
+		image: michaelsauter/app
+		run:
+			volume: ["app/www:/srv/www:rw"]
+			detach: true
+	mysql:
+		dockerfile: mysql
+		image: michaelsauter/mysql
+		run:
+			detach: true
+	memcached:
+		dockerfile: memcached
+		image: michaelsauter/memcached
+		run:
+			detach: true
 ```
 If you have Docker installed, you can just clone that repository and bring up the environment right now.
-In the folder where the `crane.json` is, type:
+In the folder where the `crane.yaml` is, type:
 
 ```
 [sudo] crane lift
@@ -136,17 +120,21 @@ In the folder where the `crane.json` is, type:
 
 This will bring up the containers. The container running Apache has the MySQL and Memcached containers automatically linked. Open `http://localhost` and you should be greeted with "Hello World".
 
-If you want to use YAML instead of JSON, here's what a simple configuration looks like:
+If you want to use JSON instead of YAML, here's what a simple configuration looks like:
 
 ```
-containers:
-	- name: pry
-		image: d11wtq/ruby
-		run:
-			interactive: true
-			tty: true
-			cmd: pry
-
+{
+	"containers": {
+		"pry": {
+			"image": "d11wtq/ruby",
+			"run": {
+				"interactive": true,
+				"tty": true,
+				"cmd": "pry"
+			}
+		}
+	}
+}
 ```
 
 ## Advanced Usage
