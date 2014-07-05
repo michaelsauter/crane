@@ -140,13 +140,12 @@ If you want to use YAML instead of JSON, here's what a simple configuration look
 
 ```
 containers:
-	- name: pry
-		image: d11wtq/ruby
-		run:
-			interactive: true
-			tty: true
-			cmd: pry
-
+    - name: pry
+      image: d11wtq/ruby
+      run:
+          interactive: true
+          tty: true
+          cmd: pry
 ```
 
 ## Advanced Usage
