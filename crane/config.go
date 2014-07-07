@@ -15,9 +15,11 @@ import (
 type ContainerMap map[string]Container
 
 type Config struct {
-	ContainerMap *ContainerMap       `json:"containers" yaml:"containers"`
-	Order        []string            `json:"order" yaml:"order"`
-	Groups       map[string][]string `json:"groups" yaml:"groups"`
+	ContainersByRawName *ContainerMap       `json:"containers" yaml:"containers"`
+	RawOrder            []string            `json:"order" yaml:"order"`
+	RawGroups           map[string][]string `json:"groups" yaml:"groups"`
+	containersByName    *ContainerMap
+	order               []string
 }
 
 // Package-level functions
@@ -111,7 +113,7 @@ func NewConfig(options Options) *Config {
 	if config == nil {
 		panic(StatusError{fmt.Errorf("No configuration found %v", configFiles(options)), 78})
 	}
-	config.setNames()
+	config.setContainersByName()
 	config.filter(options.target)
 	err := config.determineOrder()
 	if err != nil {
@@ -124,45 +126,53 @@ func NewConfig(options Options) *Config {
 // Containers returns the containers of the config in order
 func (c *Config) Containers() Containers {
 	var containers Containers
-	for _, name := range c.Order {
-		containerMap := *c.ContainerMap
+	for _, name := range c.order {
+		containerMap := *c.containersByName
 		containers = append(containers, containerMap[name])
 	}
 	return containers
 }
 
-// setNames sets the RawName of each container
-// to the container map key.
-func (c *Config) setNames() {
-	for name, container := range *c.ContainerMap {
-		container.RawName = name
-		containerMap := *c.ContainerMap
-		containerMap[name] = container
+// setContainersByName set the containersByName field with
+// containers (with their raw name filled) grouped by expanded
+// name
+func (c *Config) setContainersByName() {
+	containersByName := make(ContainerMap)
+	for rawName, container := range *c.ContainersByRawName {
+		container.RawName = rawName
+		containersByName[os.ExpandEnv(rawName)] = container
 	}
+	c.containersByName = &containersByName
 }
 
-// determineOrder sets the Order field of the config.
+// determineOrder sets the order field of the config.
 // Containers will be ordered so that they can be
 // brought up and down with Docker.
 func (c *Config) determineOrder() error {
-	if len(c.Order) > 0 {
-		return nil // Order was set manually
+	if len(c.RawOrder) > 0 {
+		// Order was set manually, just expand
+		c.order = make([]string, len(c.RawOrder))
+		for i, rawName := range c.RawOrder {
+			c.order[i] = os.ExpandEnv(rawName)
+		}
+		return nil
 	}
 	// Setup dependencies
 	dependencies := make(map[string][]string)
-	for _, container := range *c.ContainerMap {
-		dependencies[container.Name()] = container.Dependencies()
+	for name, container := range *c.containersByName {
+		dependencies[name] = container.Dependencies()
 	}
 
 	// Resolve dependencies
 	success := true
+	var order []string
 	for success && len(dependencies) > 0 {
 		success = false
 		for name, unresolved := range dependencies {
 			if len(unresolved) == 0 {
 				// Resolve "name"
 				success = true
-				c.Order = append([]string{name}, c.Order...)
+				order = append([]string{name}, order...)
 				delete(dependencies, name)
 				// Remove "name" from "unresolved" slices
 				for name2, deps2 := range dependencies {
@@ -184,6 +194,7 @@ func (c *Config) determineOrder() error {
 		return errors.New("Container map cannot be resolved. Check for cyclic or missing dependencies.")
 	}
 	// No error
+	c.order = order
 	return nil
 }
 
@@ -191,9 +202,12 @@ func (c *Config) determineOrder() error {
 // from the map which are not targeted.
 func (config Config) filter(target string) {
 	targeted := config.targetedContainers(target)
-	for name, container := range *config.ContainerMap {
+	for i, t := range targeted {
+		targeted[i] = os.ExpandEnv(t)
+	}
+	for name, container := range *config.containersByName {
 		if !container.IsTargeted(targeted) {
-			delete(*config.ContainerMap, name)
+			delete(*config.containersByName, name)
 		}
 	}
 }
@@ -204,30 +218,30 @@ func (config Config) targetedContainers(target string) []string {
 	// target not given
 	if len(target) == 0 {
 		// If default group exists, return its containers
-		for group, containers := range config.Groups {
+		for group, containers := range config.RawGroups {
 			if os.ExpandEnv(group) == "default" {
 				return containers
 			}
 		}
 		// If no default group exists, return all containers
 		var containers []string
-		for name, _ := range *config.ContainerMap {
-			containers = append(containers, os.ExpandEnv(name))
+		for rawName, _ := range *config.ContainersByRawName {
+			containers = append(containers, rawName)
 		}
 		return containers
 	}
 	// target given
 	target = os.ExpandEnv(target)
 	// Select target from listed groups
-	for group, containers := range config.Groups {
+	for group, containers := range config.RawGroups {
 		if os.ExpandEnv(group) == target {
 			return containers
 		}
 	}
 	// The target might just be one container
-	for name, _ := range *config.ContainerMap {
-		if os.ExpandEnv(name) == target {
-			return append([]string{}, target)
+	for rawName, _ := range *config.ContainersByRawName {
+		if os.ExpandEnv(rawName) == target {
+			return append([]string{}, rawName)
 		}
 	}
 	// Otherwise, fail verbosely
