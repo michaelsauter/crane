@@ -18,51 +18,54 @@ func TestConfigFiles(t *testing.T) {
 }
 
 func TestSetNames(t *testing.T) {
-	containerMap := ContainerMap{
+	rawContainerMap := ContainerMap{
 		"a": Container{},
 		"b": Container{},
 	}
-	c := &Config{RawContainerMap: containerMap}
+	c := &Config{RawContainerMap: rawContainerMap}
 	c.process()
-	if c.ContainerMap["a"].RawName != "a" || c.ContainerMap["b"].RawName != "b" {
-		t.Errorf("Names should be 'a' and 'b', got %s and %s", c.ContainerMap["a"].RawName, c.ContainerMap["b"].RawName)
+	if c.containerMap["a"].RawName != "a" || c.containerMap["b"].RawName != "b" {
+		t.Errorf("Names should be 'a' and 'b', got %s and %s", c.containerMap["a"].RawName, c.containerMap["b"].RawName)
 	}
 }
 
 func TestDetermineOrder(t *testing.T) {
 	// Order set manually
-	order := []string{"a", "b", "c"}
-	c := &Config{Order: order}
+	rawOrder := []string{"a", "b", "c"}
+	c := &Config{RawOrder: rawOrder}
+	c.process()
 	c.determineOrder(false)
-	if c.Order[0] != "a" || c.Order[1] != "b" || c.Order[2] != "c" {
-		t.Errorf("Order should have been %v, got %v", order, c.Order)
+	if c.order[0] != "a" || c.order[1] != "b" || c.order[2] != "c" {
+		t.Errorf("Order should have been %v, got %v", rawOrder, c.order)
 	}
 }
 
 func TestTargetedContainers(t *testing.T) {
 	var result []string
 	var containers []string
-	var groups = make(map[string][]string)
-	containerMap := ContainerMap{
+	var rawGroups = make(map[string][]string)
+	rawContainerMap := ContainerMap{
 		"a": Container{},
 		"b": Container{},
 		"c": Container{},
 	}
 
 	// No target given
-	// If default groups exist, it returns its containers
+	// If default group exist, it returns its containers
 	result = []string{"a", "b"}
-	groups = map[string][]string{
+	rawGroups = map[string][]string{
 		"default": result,
 	}
-	c := &Config{Groups: groups}
+	c := &Config{RawGroups: rawGroups}
+	c.process()
 	containers = c.targetedContainers("")
 	if len(containers) != 2 || containers[0] != "a" || containers[1] != "b" {
 		t.Errorf("Expected %v, got %v", result, containers)
 	}
 	// If no default group, returns all containers
 	result = []string{"a", "b", "c"}
-	c = &Config{ContainerMap: containerMap}
+	c = &Config{RawContainerMap: rawContainerMap}
+	c.process()
 	containers = c.targetedContainers("")
 	if len(containers) != 3 || containers[0] != "a" || containers[1] != "b" || containers[2] != "c" {
 		t.Errorf("Expected %v, got %v", result, containers)
@@ -70,10 +73,11 @@ func TestTargetedContainers(t *testing.T) {
 	// Target given
 	// Target is a group
 	result = []string{"b", "c"}
-	groups = map[string][]string{
+	rawGroups = map[string][]string{
 		"second": result,
 	}
-	c = &Config{ContainerMap: containerMap, Groups: groups}
+	c = &Config{RawContainerMap: rawContainerMap, RawGroups: rawGroups}
+	c.process()
 	containers = c.targetedContainers("second")
 	if len(containers) != 2 || containers[0] != "b" || containers[1] != "c" {
 		t.Errorf("Expected %v, got %v", result, containers)

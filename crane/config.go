@@ -15,9 +15,9 @@ type Config struct {
 	RawContainerMap ContainerMap        `json:"containers" yaml:"containers"`
 	RawOrder        []string            `json:"order" yaml:"order"`
 	RawGroups       map[string][]string `json:"groups" yaml:"groups"`
-	ContainerMap    ContainerMap
-	Order           []string
-	Groups          map[string][]string
+	containerMap    ContainerMap
+	order           []string
+	groups          map[string][]string
 }
 
 // configFiles returns a slice of
@@ -121,8 +121,8 @@ func NewConfig(options Options, reversed bool) *Config {
 // Containers returns the containers of the config in order
 func (c *Config) Containers() Containers {
 	var containers Containers
-	for _, name := range c.Order {
-		containerMap := c.ContainerMap
+	for _, name := range c.order {
+		containerMap := c.containerMap
 		containers = append([]Container{containerMap[name]}, containers...)
 	}
 	return containers
@@ -134,21 +134,21 @@ func (c *Config) Containers() Containers {
 // It also expand variables in the order and the groups.
 func (c *Config) process() {
 	// Container map
-	c.ContainerMap = make(map[string]Container)
+	c.containerMap = make(map[string]Container)
 	for rawName, container := range c.RawContainerMap {
 		container.RawName = rawName
 		name := os.ExpandEnv(rawName)
-		c.ContainerMap[name] = container
+		c.containerMap[name] = container
 	}
 	// Order
 	for _, rawName := range c.RawOrder {
-		c.Order = append(c.Order, os.ExpandEnv(rawName))
+		c.order = append(c.order, os.ExpandEnv(rawName))
 	}
 	// Groups
-	c.Groups = make(map[string][]string)
+	c.groups = make(map[string][]string)
 	for groupRawName, rawNames := range c.RawGroups {
 		for _, rawName := range rawNames {
-			c.Groups[groupRawName] = append(c.Groups[groupRawName], os.ExpandEnv(rawName))
+			c.groups[groupRawName] = append(c.groups[groupRawName], os.ExpandEnv(rawName))
 		}
 	}
 }
@@ -157,15 +157,15 @@ func (c *Config) process() {
 // Containers will be ordered so that they can be
 // brought up and down with Docker.
 func (c *Config) determineOrder(reversed bool) error {
-	if len(c.Order) > 0 {
+	if len(c.order) > 0 {
 		return nil // Order was set manually
 	}
 
-	order, err := c.ContainerMap.order(reversed)
+	order, err := c.containerMap.order(reversed)
 	if err != nil {
 		return err
 	} else {
-		c.Order = order
+		c.order = order
 	}
 	return nil
 }
@@ -174,9 +174,9 @@ func (c *Config) determineOrder(reversed bool) error {
 // from the map which are not targeted.
 func (c *Config) filter(target string) {
 	targeted := c.targetedContainers(target)
-	for name, container := range c.ContainerMap {
+	for name, container := range c.containerMap {
 		if !container.IsTargeted(targeted) {
-			delete(c.ContainerMap, name)
+			delete(c.containerMap, name)
 		}
 	}
 }
@@ -187,14 +187,14 @@ func (c *Config) targetedContainers(target string) []string {
 	// target not given
 	if len(target) == 0 {
 		// If default group exists, return its containers
-		for group, containers := range c.Groups {
+		for group, containers := range c.groups {
 			if group == "default" {
 				return containers
 			}
 		}
 		// If no default group exists, return all containers
 		var containers []string
-		for name, _ := range c.ContainerMap {
+		for name, _ := range c.containerMap {
 			containers = append(containers, name)
 		}
 		return containers
@@ -202,13 +202,13 @@ func (c *Config) targetedContainers(target string) []string {
 	// target given
 	target = os.ExpandEnv(target)
 	// Select target from listed groups
-	for group, containers := range c.Groups {
+	for group, containers := range c.groups {
 		if group == target {
 			return containers
 		}
 	}
 	// The target might just be one container
-	for name, _ := range c.ContainerMap {
+	for name, _ := range c.containerMap {
 		if name == target {
 			return append([]string{}, target)
 		}
