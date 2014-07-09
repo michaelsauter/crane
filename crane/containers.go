@@ -8,14 +8,6 @@ import (
 
 type Containers []Container
 
-func (containers Containers) reversed() Containers {
-	var reversed []Container
-	for i := len(containers) - 1; i >= 0; i-- {
-		reversed = append(reversed, containers[i])
-	}
-	return reversed
-}
-
 // Lift containers (provision + run).
 // When recreate is set, this will re-provision all images
 // and recreate all containers.
@@ -26,7 +18,7 @@ func (containers Containers) lift(recreate bool, nocache bool) {
 
 // Provision containers.
 func (containers Containers) provision(nocache bool) {
-	for _, container := range containers.reversed() {
+	for _, container := range containers {
 		container.provision(nocache)
 	}
 }
@@ -37,7 +29,7 @@ func (containers Containers) run(recreate bool) {
 	if recreate {
 		containers.rm(true)
 	}
-	for _, container := range containers.reversed() {
+	for _, container := range containers {
 		container.run()
 	}
 }
@@ -48,7 +40,7 @@ func (containers Containers) runOrStart(recreate bool) {
 	if recreate {
 		containers.rm(true)
 	}
-	for _, container := range containers.reversed() {
+	for _, container := range containers {
 		container.runOrStart()
 	}
 }
@@ -56,14 +48,14 @@ func (containers Containers) runOrStart(recreate bool) {
 // Provision or skip images.
 // When update is true, provisions all images.
 func (containers Containers) provisionOrSkip(update bool, nocache bool) {
-	for _, container := range containers.reversed() {
+	for _, container := range containers {
 		container.provisionOrSkip(update, nocache)
 	}
 }
 
 // Start containers.
 func (containers Containers) start() {
-	for _, container := range containers.reversed() {
+	for _, container := range containers {
 		container.start()
 	}
 }
@@ -91,7 +83,7 @@ func (containers Containers) pause() {
 
 // Unpause containers.
 func (containers Containers) unpause() {
-	for _, container := range containers.reversed() {
+	for _, container := range containers {
 		container.unpause()
 	}
 }

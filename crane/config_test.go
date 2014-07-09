@@ -18,15 +18,14 @@ func TestConfigFiles(t *testing.T) {
 }
 
 func TestSetNames(t *testing.T) {
-	containerMap := &ContainerMap{
+	containerMap := ContainerMap{
 		"a": Container{},
 		"b": Container{},
 	}
-	c := &Config{ContainerMap: containerMap}
-	c.setNames()
-	cMap := *c.ContainerMap
-	if cMap["a"].RawName != "a" || cMap["b"].RawName != "b" {
-		t.Errorf("Names should be 'a' and 'b', got %s and %s", cMap["a"].RawName, cMap["b"].RawName)
+	c := &Config{RawContainerMap: containerMap}
+	c.process()
+	if c.ContainerMap["a"].RawName != "a" || c.ContainerMap["b"].RawName != "b" {
+		t.Errorf("Names should be 'a' and 'b', got %s and %s", c.ContainerMap["a"].RawName, c.ContainerMap["b"].RawName)
 	}
 }
 
@@ -34,31 +33,9 @@ func TestDetermineOrder(t *testing.T) {
 	// Order set manually
 	order := []string{"a", "b", "c"}
 	c := &Config{Order: order}
-	c.determineOrder()
-	if order[0] != "a" || order[1] != "b" || order[2] != "c" {
+	c.determineOrder(false)
+	if c.Order[0] != "a" || c.Order[1] != "b" || c.Order[2] != "c" {
 		t.Errorf("Order should have been %v, got %v", order, c.Order)
-	}
-	// Resolvable map
-	containerMap := &ContainerMap{
-		"b": Container{Run: RunParameters{RawLink: []string{"c:c"}}},
-		"a": Container{Run: RunParameters{RawLink: []string{"b:b"}}},
-		"c": Container{},
-	}
-	c = &Config{ContainerMap: containerMap}
-	err := c.determineOrder()
-	if err != nil || order[0] != "a" || order[1] != "b" || order[2] != "c" {
-		t.Errorf("Order should have been [a, b, c], got %v", c.Order)
-	}
-	// Unresolvable map returns error
-	containerMap = &ContainerMap{
-		"b": Container{Run: RunParameters{RawLink: []string{"c:c"}}},
-		"a": Container{Run: RunParameters{RawLink: []string{"b:b"}}},
-		"c": Container{Run: RunParameters{RawLink: []string{"a:a"}}},
-	}
-	c = &Config{ContainerMap: containerMap}
-	err = c.determineOrder()
-	if err == nil {
-		t.Errorf("Cyclic dependency a -> b -> c -> a should not have been resolvable, got %v", c.Order)
 	}
 }
 
@@ -66,7 +43,7 @@ func TestTargetedContainers(t *testing.T) {
 	var result []string
 	var containers []string
 	var groups = make(map[string][]string)
-	containerMap := &ContainerMap{
+	containerMap := ContainerMap{
 		"a": Container{},
 		"b": Container{},
 		"c": Container{},
