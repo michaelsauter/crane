@@ -212,7 +212,7 @@ func (container *Container) Id() (id string, err error) {
 		// This will return gibberish if no container is found.
 		args := []string{"inspect", "--format={{.Id}}", container.Name()}
 		output, outErr := commandOutput("docker", args)
-		if err == nil {
+		if outErr == nil {
 			id = output
 			container.id = output
 		} else {
