@@ -79,6 +79,8 @@ Every container consists of:
 	* `volumes-from` (array) Mount volumes from other containers
 	* `workdir` (string)
 	* `cmd` (array/string) Command to append to `docker run` (overwriting `CMD`).
+* `rm` (object, optional): Parameters mapped to Docker's `rm`.
+	* `volumes` (boolean)
 
 See the [Docker documentation](http://docs.docker.io/en/latest/reference/commandline/cli/#run) for more details about the parameters.
 

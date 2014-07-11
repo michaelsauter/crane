@@ -16,6 +16,7 @@ type Container struct {
 	RawDockerfile string `json:"dockerfile" yaml:"dockerfile"`
 	RawImage      string `json:"image" yaml:"image"`
 	Run           RunParameters
+	Rm            RmParameters
 }
 
 type RunParameters struct {
@@ -43,6 +44,10 @@ type RunParameters struct {
 	RawVolumesFrom []string    `json:"volumes-from" yaml:"volumes-from"`
 	RawWorkdir     string      `json:"workdir" yaml:"workdir"`
 	RawCmd         interface{} `json:"cmd" yaml:"cmd"`
+}
+
+type RmParameters struct {
+	Volumes bool `json:"volumes" yaml:"volumes"`
 }
 
 func (container *Container) Dependencies() []string {
@@ -517,8 +522,14 @@ func (container Container) rm() {
 		if container.running() {
 			print.Error("Container %s is running and cannot be removed.\n", container.Name())
 		} else {
-			fmt.Printf("Removing container %s ... ", container.Name())
-			args := []string{"rm", container.Name()}
+			args := []string{"rm"}
+			if container.Rm.Volumes {
+				fmt.Printf("Removing container %s and its volumes ... ", container.Name())
+				args = append(args, "--volumes")
+			} else {
+				fmt.Printf("Removing container %s ... ", container.Name())
+			}
+			args = append(args, container.Name())
 			executeCommand("docker", args)
 		}
 	}
