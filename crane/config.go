@@ -122,8 +122,7 @@ func NewConfig(options Options, reversed bool) *Config {
 func (c *Config) Containers() Containers {
 	var containers Containers
 	for _, name := range c.order {
-		containerMap := c.containerMap
-		containers = append([]Container{containerMap[name]}, containers...)
+		containers = append([]Container{c.containerMap[name]}, containers...)
 	}
 	return containers
 }

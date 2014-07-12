@@ -89,3 +89,14 @@ func TestTargetedContainers(t *testing.T) {
 		t.Errorf("Expected %v, got %v", result, containers)
 	}
 }
+
+func TestContainers(t *testing.T) {
+	c := &Config{
+		containerMap: ContainerMap{"a": Container{RawName: "a"}, "b": Container{RawName: "b"}},
+		order:        []string{"a", "b"},
+	}
+	containers := c.Containers()
+	if containers[0].Name() != "b" || containers[1].Name() != "a" {
+		t.Errorf("Expected [b a], got %v", containers)
+	}
+}
