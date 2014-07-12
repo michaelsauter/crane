@@ -4,11 +4,11 @@ import "testing"
 
 func TestDependencies(t *testing.T) {
 	container := &Container{Run: RunParameters{RawLink: []string{"a:b", "b:d"}, RawVolumesFrom: []string{"c"}}}
-	if deps := container.Dependencies(); deps[0] != "a" || deps[1] != "b" || deps[2] != "c" {
+	if deps := container.Dependencies(); deps.list[0] != "a" || deps.list[1] != "b" || deps.linked[0] != "a" || deps.linked[1] != "b" || deps.list[2] != "c" {
 		t.Errorf("Dependencies should have been a, b and c. Got %v", deps)
 	}
 	container = &Container{Run: RunParameters{RawLink: []string{}, RawVolumesFrom: []string{}}}
-	if deps := container.Dependencies(); len(deps) != 0 {
+	if deps := container.Dependencies(); len(deps.list) != 0 {
 		t.Error("Dependencies should have been empty")
 	}
 }

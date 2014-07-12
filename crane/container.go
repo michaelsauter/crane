@@ -45,14 +45,19 @@ type RunParameters struct {
 	RawCmd         interface{} `json:"cmd" yaml:"cmd"`
 }
 
-func (container *Container) Dependencies() []string {
+func (container *Container) Dependencies() *Dependencies {
 	var linkParts []string
-	var dependencies []string
+	dependencies := &Dependencies{list: []string{}, linked: []string{}}
 	for _, link := range container.Run.Link() {
 		linkParts = strings.Split(link, ":")
-		dependencies = append(dependencies, linkParts[0])
+		dependencies.list = append(dependencies.list, linkParts[0])
+		dependencies.linked = append(dependencies.linked, linkParts[0])
 	}
-	dependencies = append(dependencies, container.Run.VolumesFrom()...)
+	for _, volumeFrom := range container.Run.VolumesFrom() {
+		if !dependencies.includes(volumeFrom) {
+			dependencies.list = append(dependencies.list, volumeFrom)
+		}
+	}
 	return dependencies
 }
 
