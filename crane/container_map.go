@@ -46,17 +46,21 @@ func (d *Dependencies) remove(resolved string) {
 
 func (m ContainerMap) order(reversed bool) (order []string, err error) {
 	unordered := m.unordered(reversed)
+	alphabetical := m.alphabetical(reversed)
 
 	success := true
 	for success && len(unordered) > 0 {
 		success = false
-		for name, dependencies := range unordered {
-			if dependencies.satisfied() {
-				// Resolve "name" and continue with next iteration
-				success = true
-				order = append([]string{name}, order...)
-				unordered.resolve(name)
-				break
+		for _, name := range alphabetical {
+			if _, ok := unordered[name]; ok {
+				dependencies := unordered[name]
+				if dependencies.satisfied() {
+					// Resolve "name" and continue with next iteration
+					success = true
+					order = append([]string{name}, order...)
+					unordered.resolve(name)
+					break
+				}
 			}
 		}
 
@@ -64,25 +68,27 @@ func (m ContainerMap) order(reversed bool) (order []string, err error) {
 			// Could not resolve a dependency so far in this iteration,
 			// but maybe one of the container already runs/exists?
 			// This check does only make sense for the default order.
-			for _, dependencies := range unordered {
-				// Loop over dependencies that need to be running
-				for _, name := range dependencies.list {
-					// Container must not be part of the map that
-					// is currently targeted.
-					if _, ok := m[name]; !ok {
-						// Need to "fake" a container here because
-						// it can't be retrieved from the map (as it was removed).
-						container := &Container{RawName: name}
-						satisfied := false
-						if dependencies.mustRun(name) {
-							satisfied = container.running()
-						} else {
-							satisfied = container.exists()
-						}
-						if satisfied {
-							success = true
-							unordered.resolve(name)
-							break
+			for _, name := range alphabetical {
+				if _, ok := unordered[name]; ok {
+					dependencies := unordered[name]
+					for _, name := range dependencies.list {
+						// Container must not be part of the map that
+						// is currently targeted.
+						if _, ok := m[name]; !ok {
+							// Need to "fake" a container here because
+							// it can't be retrieved from the map (as it was removed).
+							container := &Container{RawName: name}
+							satisfied := false
+							if dependencies.mustRun(name) {
+								satisfied = container.running()
+							} else {
+								satisfied = container.exists()
+							}
+							if satisfied {
+								success = true
+								unordered.resolve(name)
+								break
+							}
 						}
 					}
 				}
@@ -94,8 +100,10 @@ func (m ContainerMap) order(reversed bool) (order []string, err error) {
 	// cannot be resolved (cyclic or missing dependency found).
 	if len(unordered) > 0 {
 		unresolved := []string{}
-		for name, _ := range unordered {
-			unresolved = append(unresolved, name)
+		for _, name := range alphabetical {
+			if _, ok := unordered[name]; ok {
+				unresolved = append(unresolved, name)
+			}
 		}
 		// For reversed order, that is okay.
 		// Otherwise, this is an error that needs
@@ -142,6 +150,34 @@ func (m ContainerMap) unordered(reversed bool) Unordered {
 	}
 
 	return unordered
+}
+
+func (m ContainerMap) alphabetical(reversed bool) []string {
+	alphabetical := []string{}
+	inserted := false
+	for toInsert, _ := range m {
+		inserted = false
+		for i, name := range alphabetical {
+			if name > toInsert {
+				before := make([]string, len(alphabetical[:i]))
+				copy(before, alphabetical[:i])
+				before = append(before, toInsert)
+				alphabetical = append(before, alphabetical[i:]...)
+				inserted = true
+			}
+		}
+		if !inserted {
+			alphabetical = append(alphabetical, toInsert)
+		}
+	}
+	if reversed {
+		reverse := []string{}
+		for _, name := range alphabetical {
+			reverse = append([]string{name}, reverse...)
+		}
+		alphabetical = reverse
+	}
+	return alphabetical
 }
 
 func (u Unordered) resolve(resolved string) {

@@ -41,3 +41,24 @@ func TestOrder(t *testing.T) {
 		t.Errorf("Order should have been [c b a], got %v", order)
 	}
 }
+
+func TestAlphabetical(t *testing.T) {
+	var containerMap ContainerMap
+
+	containerMap = ContainerMap{
+		"b": Container{},
+		"a": Container{},
+		"c": Container{},
+		"e": Container{},
+		"d": Container{},
+	}
+
+	alphabetical := containerMap.alphabetical(false)
+	if alphabetical[0] != "a" || alphabetical[1] != "b" || alphabetical[2] != "c" || alphabetical[3] != "d" || alphabetical[4] != "e" {
+		t.Errorf("Order should have been [a b c d e], got %v", alphabetical)
+	}
+	alphabetical = containerMap.alphabetical(true)
+	if alphabetical[0] != "e" || alphabetical[1] != "d" || alphabetical[2] != "c" || alphabetical[3] != "b" || alphabetical[4] != "a" {
+		t.Errorf("Order should have been [e d c b a], got %v", alphabetical)
+	}
+}
