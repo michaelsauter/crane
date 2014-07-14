@@ -169,16 +169,17 @@ func (r *RunParameters) User() string {
 }
 
 func (r *RunParameters) Volume() []string {
-	var volume []string
+	var volumes []string
 	for _, rawVolume := range r.RawVolume {
-		paths := strings.Split(rawVolume, ":")
+		volume := os.ExpandEnv(rawVolume)
+		paths := strings.Split(volume, ":")
 		if !path.IsAbs(paths[0]) {
 			cwd, _ := os.Getwd()
 			paths[0] = cwd + "/" + paths[0]
 		}
-		volume = append(volume, os.ExpandEnv(strings.Join(paths, ":")))
+		volumes = append(volumes, strings.Join(paths, ":"))
 	}
-	return volume
+	return volumes
 }
 
 func (r *RunParameters) VolumesFrom() []string {

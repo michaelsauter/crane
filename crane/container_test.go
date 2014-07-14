@@ -1,6 +1,9 @@
 package crane
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
 
 func TestDependencies(t *testing.T) {
 	container := &Container{Run: RunParameters{RawLink: []string{"a:b", "b:d"}, RawVolumesFrom: []string{"c"}}}
@@ -20,5 +23,27 @@ func TestIsTargeted(t *testing.T) {
 	}
 	if !container.IsTargeted([]string{"x", "a"}) {
 		t.Error("Container name was a, should have been targeted with a")
+	}
+}
+
+func TestVolume(t *testing.T) {
+	var container *Container
+	// Absolute path
+	container = &Container{Run: RunParameters{RawVolume: []string{"/a:b"}}}
+	if container.Run.Volume()[0] != "/a:b" {
+		t.Error("Volume mapping should have been a:b, was %v", container.Run.Volume()[0])
+	}
+	// Relative path
+	container = &Container{Run: RunParameters{RawVolume: []string{"a:b"}}}
+	dir, _ := os.Getwd()
+	if container.Run.Volume()[0] != (dir + "/a:b") {
+		t.Errorf("Volume mapping should have been pwd/a:b, was %v", container.Run.Volume()[0])
+	}
+	// Environment variable
+	container = &Container{Run: RunParameters{RawVolume: []string{"$HOME/a:b"}}}
+	os.Clearenv()
+	os.Setenv("HOME", "/home")
+	if container.Run.Volume()[0] != (os.Getenv("HOME") + "/a:b") {
+		t.Errorf("Volume mapping should have been $HOME/a:b, was %v", container.Run.Volume()[0])
 	}
 }
