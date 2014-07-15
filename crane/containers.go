@@ -107,12 +107,12 @@ func (containers Containers) push() {
 }
 
 // Status of containers.
-func (containers Containers) status() {
+func (containers Containers) status(notrunc bool) {
 	w := new(tabwriter.Writer)
 	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
 	fmt.Fprintln(w, "Name\tRunning\tID\tIP\tPorts")
 	for _, container := range containers {
-		container.status(w)
+		container.status(w, notrunc)
 	}
 	w.Flush()
 }
