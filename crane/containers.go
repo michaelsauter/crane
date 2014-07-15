@@ -110,7 +110,7 @@ func (containers Containers) push() {
 func (containers Containers) status(notrunc bool) {
 	w := new(tabwriter.Writer)
 	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
-	fmt.Fprintln(w, "Name\tRunning\tID\tIP\tPorts")
+	fmt.Fprintln(w, "NAME\tRUNNING\tID\tIP\tPORTS")
 	for _, container := range containers {
 		container.status(w, notrunc)
 	}
