@@ -302,6 +302,7 @@ func (container *Container) imageExists() bool {
 }
 
 func (container *Container) status(w *tabwriter.Writer, notrunc bool) {
+	fmt.Fprintf(w, "%s\t%s\t", container.Name(), container.Image())
 	var args []string
 	if notrunc {
 		args = []string{"inspect", "--format={{.State.Running}}\t{{.Id}}\t{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}\t{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}", container.Name()}
@@ -310,10 +311,10 @@ func (container *Container) status(w *tabwriter.Writer, notrunc bool) {
 	}
 	output, err := commandOutput("docker", args)
 	if err != nil {
-		fmt.Fprintf(w, "%s\t-\t-\t-\t-\n", container.Name())
+		fmt.Fprintf(w, "-\t-\t-\t-\n")
 		return
 	}
-	fmt.Fprintf(w, "%s\t%s\n", container.Name(), output)
+	fmt.Fprintf(w, "%s\n", output)
 }
 
 // Pull image for container
