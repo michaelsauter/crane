@@ -140,7 +140,7 @@ func (m ContainerMap) order(reversed bool) (order []string, err error) {
 		if reversed {
 			order = append(order, unresolved...)
 		} else {
-			err = fmt.Errorf("Container(s) %s could not be resolved. Check for cyclic or missing dependencies.", strings.Join(unresolved, ", "))
+			err = fmt.Errorf("Dependencies for container(s) %s could not be resolved. Check for cyclic or missing dependencies.", strings.Join(unresolved, ", "))
 		}
 	}
 
