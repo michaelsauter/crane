@@ -9,6 +9,7 @@ type Options struct {
 	verbose  bool
 	recreate bool
 	nocache  bool
+	notrunc  bool
 	kill     bool
 	config   string
 	target   string
@@ -18,6 +19,7 @@ var options = Options{
 	verbose:  false,
 	recreate: false,
 	nocache:  false,
+	notrunc:  false,
 	kill:     false,
 	config:   "",
 	target:   "",
@@ -139,7 +141,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Displays status of containers",
 		Long:  `Displays the current status of all targeted containers.`,
 		Run: containersCommand(func(containers Containers) {
-			containers.status()
+			containers.status(options.notrunc)
 		}, false),
 	}
 
@@ -173,6 +175,8 @@ See the corresponding docker commands for more information.`,
 	cmdRun.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (kill and remove containers first)")
 
 	cmdRm.Flags().BoolVarP(&options.kill, "kill", "k", false, "Kill containers if they are running first")
+
+	cmdStatus.Flags().BoolVarP(&options.notrunc, "no-trunc", "", false, "Don't truncate output")
 
 	craneCmd.AddCommand(cmdLift, cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdPause, cmdUnpause, cmdPush, cmdStatus, cmdVersion)
 	err := craneCmd.Execute()
