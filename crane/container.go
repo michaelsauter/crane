@@ -310,7 +310,7 @@ func (container *Container) status(w *tabwriter.Writer, notrunc bool) {
 	}
 	output, err := commandOutput("docker", args)
 	if err != nil {
-		fmt.Fprintf(w, "%s\tError:%v\t%v\n", container.Name(), err, output)
+		fmt.Fprintf(w, "%s\t-\t-\t-\t-\n", container.Name())
 		return
 	}
 	fmt.Fprintf(w, "%s\t%s\n", container.Name(), output)
