@@ -195,6 +195,7 @@ func (m ContainerMap) alphabetical(reversed bool) []string {
 				before = append(before, toInsert)
 				alphabetical = append(before, alphabetical[i:]...)
 				inserted = true
+				break
 			}
 		}
 		if !inserted {

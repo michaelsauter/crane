@@ -47,8 +47,8 @@ func TestAlphabetical(t *testing.T) {
 
 	containerMap = ContainerMap{
 		"b": Container{},
-		"a": Container{},
 		"c": Container{},
+		"a": Container{},
 		"e": Container{},
 		"d": Container{},
 	}
