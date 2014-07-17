@@ -124,15 +124,11 @@ func (m ContainerMap) order(reversed bool) (order []string, err error) {
 	// If we still have dependencies, the container map
 	// cannot be resolved (cyclic or missing dependency found).
 	if len(unordered) > 0 {
-		unresolvedSet := make(map[string]bool)
+		unresolved := []string{}
 		for _, name := range alphabetical {
 			if _, ok := unordered[name]; ok {
-				unresolvedSet[name] = true
+				unresolved = append(unresolved, name)
 			}
-		}
-		unresolved := []string{}
-		for name, _ := range unresolvedSet {
-			unresolved = append(unresolved, name)
 		}
 		// For reversed order, that is okay.
 		// Otherwise, this is an error that needs
