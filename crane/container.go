@@ -209,7 +209,7 @@ func (r *RunParameters) Cmd() []string {
 			}
 			cmd = append(cmd, cmds...)
 		default:
-			print.Error("cmd is of unknown type!")
+			print.Errorf("cmd is of unknown type!")
 		}
 	}
 	return cmd
@@ -362,7 +362,7 @@ func (container Container) provisionOrSkip(update bool, nocache bool) {
 // Run container
 func (container Container) run() {
 	if container.exists() {
-		print.Notice("Container %s does already exist. Use --recreate to recreate.\n", container.Name())
+		print.Noticef("Container %s does already exist. Use --recreate to recreate.\n", container.Name())
 		if !container.running() {
 			container.start()
 		}
@@ -482,7 +482,7 @@ func (container Container) start() {
 			executeCommand("docker", args)
 		}
 	} else {
-		print.Error("Container %s does not exist.\n", container.Name())
+		print.Errorf("Container %s does not exist.\n", container.Name())
 	}
 }
 
@@ -508,14 +508,14 @@ func (container Container) stop() {
 func (container Container) pause() {
 	if container.running() {
 		if container.paused() {
-			print.Notice("Container %s is already paused.\n", container.Name())
+			print.Noticef("Container %s is already paused.\n", container.Name())
 		} else {
 			fmt.Printf("Pausing container %s ... ", container.Name())
 			args := []string{"pause", container.Name()}
 			executeCommand("docker", args)
 		}
 	} else {
-		print.Notice("Container %s is not running.\n", container.Name())
+		print.Noticef("Container %s is not running.\n", container.Name())
 	}
 }
 
@@ -532,7 +532,7 @@ func (container Container) unpause() {
 func (container Container) rm() {
 	if container.exists() {
 		if container.running() {
-			print.Error("Container %s is running and cannot be removed.\n", container.Name())
+			print.Errorf("Container %s is running and cannot be removed.\n", container.Name())
 		} else {
 			args := []string{"rm"}
 			if container.Rm.Volumes {
@@ -554,6 +554,6 @@ func (container Container) push() {
 		args := []string{"push", container.Image()}
 		executeCommand("docker", args)
 	} else {
-		print.Notice("Skipping %s as it does not have an image name.\n", container.Name())
+		print.Noticef("Skipping %s as it does not have an image name.\n", container.Name())
 	}
 }

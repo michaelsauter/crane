@@ -4,10 +4,10 @@ import (
 	"github.com/fatih/color"
 )
 
-var Notice func(format string, a ...interface{})
-var Error func(format string, a ...interface{})
+var Noticef func(format string, a ...interface{})
+var Errorf func(format string, a ...interface{})
 
 func init() {
-	Notice = color.New(color.FgYellow).PrintfFunc()
-	Error = color.New(color.FgRed).PrintfFunc()
+	Noticef = color.New(color.FgYellow).PrintfFunc()
+	Errorf = color.New(color.FgRed).PrintfFunc()
 }

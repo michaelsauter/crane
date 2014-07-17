@@ -32,7 +32,7 @@ func RealMain() {
 		}
 
 		if statusError.error != nil {
-			print.Error("ERROR: %s\n", statusError.error)
+			print.Errorf("ERROR: %s\n", statusError.error)
 		}
 		os.Exit(statusError.status)
 	}()

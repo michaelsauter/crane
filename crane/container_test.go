@@ -31,7 +31,7 @@ func TestVolume(t *testing.T) {
 	// Absolute path
 	container = &Container{Run: RunParameters{RawVolume: []string{"/a:b"}}}
 	if container.Run.Volume()[0] != "/a:b" {
-		t.Error("Volume mapping should have been a:b, was %v", container.Run.Volume()[0])
+		t.Errorf("Volume mapping should have been a:b, was %v", container.Run.Volume()[0])
 	}
 	// Relative path
 	container = &Container{Run: RunParameters{RawVolume: []string{"a:b"}}}
