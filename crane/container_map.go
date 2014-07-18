@@ -2,6 +2,7 @@ package crane
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -185,23 +186,13 @@ func (m ContainerMap) unordered(reversed bool) Unordered {
 // returns reverse alphabetical order.
 func (m ContainerMap) alphabetical(reversed bool) []string {
 	alphabetical := []string{}
-	inserted := false
-	for toInsert, _ := range m {
-		inserted = false
-		for i, name := range alphabetical {
-			if name > toInsert {
-				before := make([]string, len(alphabetical[:i]))
-				copy(before, alphabetical[:i])
-				before = append(before, toInsert)
-				alphabetical = append(before, alphabetical[i:]...)
-				inserted = true
-				break
-			}
-		}
-		if !inserted {
-			alphabetical = append(alphabetical, toInsert)
-		}
+
+	for name, _ := range m {
+		alphabetical = append(alphabetical, name)
 	}
+
+	sort.Strings(alphabetical)
+
 	if reversed {
 		reverse := []string{}
 		for _, name := range alphabetical {
@@ -209,6 +200,7 @@ func (m ContainerMap) alphabetical(reversed bool) []string {
 		}
 		alphabetical = reverse
 	}
+
 	return alphabetical
 }
 
