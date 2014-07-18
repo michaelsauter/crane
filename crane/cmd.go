@@ -6,23 +6,25 @@ import (
 )
 
 type Options struct {
-	verbose  bool
-	recreate bool
-	nocache  bool
-	notrunc  bool
-	kill     bool
-	config   string
-	target   string
+	verbose       bool
+	recreate      bool
+	skipunchanged bool
+	nocache       bool
+	notrunc       bool
+	kill          bool
+	config        string
+	target        string
 }
 
 var options = Options{
-	verbose:  false,
-	recreate: false,
-	nocache:  false,
-	notrunc:  false,
-	kill:     false,
-	config:   "",
-	target:   "",
+	verbose:       false,
+	recreate:      false,
+	skipunchanged: false,
+	nocache:       false,
+	notrunc:       false,
+	kill:          false,
+	config:        "",
+	target:        "",
 }
 
 func isVerbose() bool {
@@ -49,7 +51,7 @@ func handleCmd() {
 		Long: `
 lift will provision and run all targeted containers.`,
 		Run: containersCommand(func(containers Containers) {
-			containers.lift(options.recreate, options.nocache)
+			containers.lift(options.recreate, options.skipunchanged, options.nocache)
 		}, false),
 	}
 
@@ -69,7 +71,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Run the containers",
 		Long:  `run will call docker run for all targeted containers.`,
 		Run: containersCommand(func(containers Containers) {
-			containers.run(options.recreate)
+			containers.run(options.recreate, options.skipunchanged)
 		}, false),
 	}
 
@@ -168,11 +170,13 @@ See the corresponding docker commands for more information.`,
 	craneCmd.PersistentFlags().StringVarP(&options.target, "target", "t", "", "Group or container to execute the command for")
 
 	cmdLift.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (kill and remove containers, provision images, run containers)")
+	cmdLift.Flags().BoolVarP(&options.skipunchanged, "skip-unchanged", "s", false, "Don't recreate existing containers for which the base image is currently up to date (only affects behavior of -r/--recreate)")
 	cmdLift.Flags().BoolVarP(&options.nocache, "no-cache", "n", false, "Build the image without any cache")
 
 	cmdProvision.Flags().BoolVarP(&options.nocache, "no-cache", "n", false, "Build the image without any cache")
 
 	cmdRun.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (kill and remove containers first)")
+	cmdRun.Flags().BoolVarP(&options.skipunchanged, "skip-unchanged", "s", false, "Don't recreate existing containers for which the base image is currently up to date with the latest provisioned one (only affects behavior of -r/--recreate)")
 
 	cmdRm.Flags().BoolVarP(&options.kill, "kill", "k", false, "Kill containers if they are running first")
 

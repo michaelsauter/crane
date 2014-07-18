@@ -286,6 +286,35 @@ func (container *Container) paused() bool {
 	return paused
 }
 
+// Check if the image declared in the config matches the base image of the container, if it exists
+func (container *Container) baseImageMatchesLatestProvisioned() bool {
+	if !container.exists() {
+		return false
+	}
+	baseImage, err := container.baseImage()
+	if err != nil {
+		return false
+	}
+	return imageIdFromTag(baseImage) == imageIdFromTag(container.Image())
+}
+
+// Get the base image of the container if it exists
+func (container *Container) baseImage() (image string, err error) {
+	id, err := container.Id()
+	if err != nil || len(id) == 0 {
+		return
+	}
+	dockerCmd := []string{"docker", "ps", "-a", "--no-trunc"}
+	grepCmd := []string{"grep", "-wF", id}
+	awkCmd := []string{"awk", "{ print $2 }"}
+	output, err := pipedCommandOutput(dockerCmd, grepCmd, awkCmd)
+	if err != nil {
+		return
+	}
+	image = strings.TrimSpace(string(output))
+	return
+}
+
 func (container *Container) imageExists() bool {
 	dockerCmd := []string{"docker", "images", "--no-trunc"}
 	grepCmd := []string{"grep", "-wF", container.Image()}
@@ -556,4 +585,13 @@ func (container Container) push() {
 	} else {
 		print.Noticef("Skipping %s as it does not have an image name.\n", container.Name())
 	}
+}
+
+func imageIdFromTag(tag string) string {
+	args := []string{"inspect", "--format={{.Id}}", tag}
+	output, err := commandOutput("docker", args)
+	if err != nil {
+		return ""
+	}
+	return string(output)
 }

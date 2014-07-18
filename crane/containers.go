@@ -2,6 +2,7 @@ package crane
 
 import (
 	"fmt"
+	"github.com/michaelsauter/crane/print"
 	"os"
 	"text/tabwriter"
 )
@@ -11,9 +12,9 @@ type Containers []Container
 // Lift containers (provision + run).
 // When recreate is set, this will re-provision all images
 // and recreate all containers.
-func (containers Containers) lift(recreate bool, nocache bool) {
+func (containers Containers) lift(recreate bool, skipunchanged bool, nocache bool) {
 	containers.provisionOrSkip(recreate, nocache)
-	containers.runOrStart(recreate)
+	containers.runOrStart(recreate, skipunchanged)
 }
 
 // Provision containers.
@@ -25,9 +26,9 @@ func (containers Containers) provision(nocache bool) {
 
 // Run containers.
 // When recreate is true, removes existing containers first.
-func (containers Containers) run(recreate bool) {
+func (containers Containers) run(recreate bool, skipunchanged bool) {
 	if recreate {
-		containers.rm(true)
+		containers.killRmOrSkip(skipunchanged)
 	}
 	for _, container := range containers {
 		container.run()
@@ -36,12 +37,32 @@ func (containers Containers) run(recreate bool) {
 
 // Run or start containers.
 // When recreate is true, removes existing containers first.
-func (containers Containers) runOrStart(recreate bool) {
+func (containers Containers) runOrStart(recreate bool, skipunchanged bool) {
 	if recreate {
-		containers.rm(true)
+		containers.killRmOrSkip(skipunchanged)
 	}
 	for _, container := range containers {
 		container.runOrStart()
+	}
+}
+
+// Kill and remove all or a subset of containers.
+// When skipunchanged is true, existing containers started from the
+// same image as the one found by locally resolving the image defined
+// in the config
+func (containers Containers) killRmOrSkip(skipunchanged bool) {
+	if skipunchanged {
+		var staleBaseImageContainers Containers
+		for _, container := range containers {
+			if !container.baseImageMatchesLatestProvisioned() {
+				containers = append(staleBaseImageContainers, container)
+			} else {
+				print.Noticef("Skipping %v as its base image is currently up to date\n", container.Name())
+			}
+		}
+		staleBaseImageContainers.rm(true)
+	} else {
+		containers.rm(true)
 	}
 }
 
