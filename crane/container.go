@@ -305,9 +305,9 @@ func (container *Container) status(w *tabwriter.Writer, notrunc bool) {
 	fmt.Fprintf(w, "%s\t%s\t", container.Name(), container.Image())
 	var args []string
 	if notrunc {
-		args = []string{"inspect", "--format={{.State.Running}}\t{{.Id}}\t{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}\t{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}", container.Name()}
+		args = []string{"inspect", "--format={{.Id}}\t{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}\t{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}\t{{.State.Running}}", container.Name()}
 	} else {
-		args = []string{"inspect", "--format={{.State.Running}}\t{{.Id | printf \"%.12s\"}}\t{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}\t{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}", container.Name()}
+		args = []string{"inspect", "--format={{.Id | printf \"%.12s\"}}\t{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}\t{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}\t{{.State.Running}}", container.Name()}
 	}
 	output, err := commandOutput("docker", args)
 	if err != nil {
