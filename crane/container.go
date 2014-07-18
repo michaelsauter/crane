@@ -7,7 +7,6 @@ import (
 	"path"
 	"strconv"
 	"strings"
-	"text/tabwriter"
 )
 
 type Container struct {
@@ -301,8 +300,8 @@ func (container *Container) imageExists() bool {
 	}
 }
 
-func (container *Container) status(w *tabwriter.Writer, notrunc bool) {
-	fmt.Fprintf(w, "%s\t%s\t", container.Name(), container.Image())
+func (container *Container) status(notrunc bool) []string {
+	fields := []string{container.Name(), container.Image()}
 	var args []string
 	if notrunc {
 		args = []string{"inspect", "--format={{.Id}}\t{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}\t{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}\t{{.State.Running}}", container.Name()}
@@ -310,11 +309,12 @@ func (container *Container) status(w *tabwriter.Writer, notrunc bool) {
 		args = []string{"inspect", "--format={{.Id | printf \"%.12s\"}}\t{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}\t{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}\t{{.State.Running}}", container.Name()}
 	}
 	output, err := commandOutput("docker", args)
-	if err != nil {
-		fmt.Fprintf(w, "-\t-\t-\t-\n")
-		return
+	if err == nil {
+		fields = append(fields, strings.Split(output, "\t")...)
+	} else {
+		fields = append(fields, []string{"-", "-", "-", "-"}...)
 	}
-	fmt.Fprintf(w, "%s\n", output)
+	return fields
 }
 
 // Pull image for container
