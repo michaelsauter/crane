@@ -10,9 +10,9 @@ import (
 // to its configuration
 type ContainerMap map[string]Container
 
-// Unordered maps a container name
+// DependenciesMap maps the container name
 // to its dependencies
-type Unordered map[string]*Dependencies
+type DependenciesMap map[string]*Dependencies
 
 // Dependencies contain two fields:
 // list: contains all dependencies
@@ -71,20 +71,20 @@ func (d *Dependencies) remove(resolved string) {
 // If the map cannot be resolved, and error is returned detailing
 // which containers still have unresolved dependencies.
 func (m ContainerMap) order(reversed bool) (order []string, err error) {
-	unordered := m.unordered(reversed)
+	dependenciesMap := m.dependencies(reversed)
 	alphabetical := m.alphabetical(reversed)
 
 	success := true
-	for success && len(unordered) > 0 {
+	for success && len(dependenciesMap) > 0 {
 		success = false
 		for _, name := range alphabetical {
-			if _, ok := unordered[name]; ok {
-				dependencies := unordered[name]
+			if _, ok := dependenciesMap[name]; ok {
+				dependencies := dependenciesMap[name]
 				if dependencies.satisfied() {
 					// Resolve "name" and continue with next iteration
 					success = true
 					order = append([]string{name}, order...)
-					unordered.resolve(name)
+					dependenciesMap.resolve(name)
 					break
 				}
 			}
@@ -95,8 +95,8 @@ func (m ContainerMap) order(reversed bool) (order []string, err error) {
 			// but maybe one of the container already runs/exists?
 			// This check does only make sense for the default order.
 			for _, name := range alphabetical {
-				if _, ok := unordered[name]; ok {
-					dependencies := unordered[name]
+				if _, ok := dependenciesMap[name]; ok {
+					dependencies := dependenciesMap[name]
 					for _, name := range dependencies.list {
 						// Container must not be part of the map that
 						// is currently targeted.
@@ -112,7 +112,7 @@ func (m ContainerMap) order(reversed bool) (order []string, err error) {
 							}
 							if satisfied {
 								success = true
-								unordered.resolve(name)
+								dependenciesMap.resolve(name)
 								break
 							}
 						}
@@ -124,10 +124,10 @@ func (m ContainerMap) order(reversed bool) (order []string, err error) {
 
 	// If we still have dependencies, the container map
 	// cannot be resolved (cyclic or missing dependency found).
-	if len(unordered) > 0 {
+	if len(dependenciesMap) > 0 {
 		unresolved := []string{}
 		for _, name := range alphabetical {
-			if _, ok := unordered[name]; ok {
+			if _, ok := dependenciesMap[name]; ok {
 				unresolved = append(unresolved, name)
 			}
 		}
@@ -144,41 +144,40 @@ func (m ContainerMap) order(reversed bool) (order []string, err error) {
 	return
 }
 
-// unordered returns a map describing the dependencies
-// between the containers. This is used as a basis to
-// determine the order.
-func (m ContainerMap) unordered(reversed bool) Unordered {
-	unordered := make(map[string]*Dependencies)
+// dependencies returns a map describing the dependencies
+// between the containers.
+func (m ContainerMap) dependencies(reversed bool) DependenciesMap {
+	dependenciesMap := make(DependenciesMap)
 
 	if reversed {
 		// Need to set every "dependency" as the key of the
-		// unordered map and list the containers that depend
+		// dependenciesMap map and list the containers that depend
 		// on it as the dependencies ...
 		// Iterate over map
 		for _, container := range m {
 			// Get dependency list of each container
 			for _, dep := range container.Dependencies().list {
-				// If unordered already has the key, append to the list,
+				// If dependenciesMap already has the key, append to the list,
 				// otherwise create that dependecy
-				if _, ok := unordered[dep]; ok {
-					unordered[dep].list = append(unordered[dep].list, container.Name())
+				if _, ok := dependenciesMap[dep]; ok {
+					dependenciesMap[dep].list = append(dependenciesMap[dep].list, container.Name())
 				} else {
-					unordered[dep] = &Dependencies{list: []string{container.Name()}}
+					dependenciesMap[dep] = &Dependencies{list: []string{container.Name()}}
 				}
 			}
 			// If we haven't created the key yet, do it now
-			if _, ok := unordered[container.Name()]; !ok {
-				unordered[container.Name()] = &Dependencies{list: []string{}}
+			if _, ok := dependenciesMap[container.Name()]; !ok {
+				dependenciesMap[container.Name()] = &Dependencies{list: []string{}}
 			}
 		}
 	} else {
 		// For default order, just map the container names to their dependencies
 		for _, container := range m {
-			unordered[container.Name()] = container.Dependencies()
+			dependenciesMap[container.Name()] = container.Dependencies()
 		}
 	}
 
-	return unordered
+	return dependenciesMap
 }
 
 // alphabetical returns the containers of the map in
@@ -205,13 +204,11 @@ func (m ContainerMap) alphabetical(reversed bool) []string {
 }
 
 // resolve deletes the given name from the
-// unordered map and remoes it from all
+// dependenciesMap and removes it from all
 // dependencies.
-func (u Unordered) resolve(resolved string) {
-	if _, ok := u[resolved]; ok {
-		delete(u, resolved)
-	}
-	for _, dependencies := range u {
+func (d DependenciesMap) resolve(resolved string) {
+	delete(d, resolved)
+	for _, dependencies := range d {
 		dependencies.remove(resolved)
 	}
 }
