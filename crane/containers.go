@@ -111,7 +111,7 @@ func (containers Containers) push() {
 func (containers Containers) status(notrunc bool) {
 	w := new(tabwriter.Writer)
 	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
-	fmt.Fprintln(w, "NAME\tIMAGE\tID\tIP\tPORTS\tRUNNING")
+	fmt.Fprintln(w, "NAME\tIMAGE\tID\tUP TO DATE\tIP\tPORTS\tRUNNING")
 	for _, container := range containers {
 		fields := container.status()
 		if !notrunc {
