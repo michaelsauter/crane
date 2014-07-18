@@ -113,8 +113,19 @@ func (containers Containers) status(notrunc bool) {
 	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
 	fmt.Fprintln(w, "NAME\tIMAGE\tID\tIP\tPORTS\tRUNNING")
 	for _, container := range containers {
-		fields := container.status(notrunc)
+		fields := container.status()
+		if !notrunc {
+			fields[2] = truncateID(fields[2])
+		}
 		fmt.Fprintf(w, "%s\n", strings.Join(fields, "\t"))
 	}
 	w.Flush()
+}
+
+func truncateID(id string) string {
+	shortLen := 12
+	if len(id) < shortLen {
+		shortLen = len(id)
+	}
+	return id[:shortLen]
 }
