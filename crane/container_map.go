@@ -61,6 +61,17 @@ func (d *Dependencies) remove(resolved string) {
 	}
 }
 
+// returns a copy of the map where all containers are within the given list
+func (m ContainerMap) subset(included []string) ContainerMap {
+	newMap := make(ContainerMap)
+	for _, name := range included {
+		if container, present := m[name]; present {
+			newMap[name] = container
+		}
+	}
+	return newMap
+}
+
 // order works on the containerMap and retuens the order
 // The order can be reversed as well. This is needed as any command
 // bringing up containers needs to bring up the dependencies first,

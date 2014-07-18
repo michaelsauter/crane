@@ -2,6 +2,41 @@ package crane
 
 import "testing"
 
+func TestSubset(t *testing.T) {
+	containerMap := ContainerMap{
+		"a": Container{},
+		"b": Container{},
+		"c": Container{},
+	}
+
+	subset := containerMap.subset([]string{"a", "c"})
+	if _, present := subset["a"]; !present {
+		t.Errorf("a should have been kept")
+	}
+	if _, present := subset["b"]; present {
+		t.Errorf("b should have been removed")
+	}
+	if _, present := subset["c"]; !present {
+		t.Errorf("c should have been kept")
+	}
+
+	subset = containerMap.subset([]string{"a", "a"})
+	if _, present := subset["a"]; !present {
+		t.Errorf("a should have been kept")
+	}
+	if _, present := subset["b"]; present {
+		t.Errorf("b should have been removed")
+	}
+	if _, present := subset["c"]; present {
+		t.Errorf("c should have been removed")
+	}
+
+	subset = containerMap.subset([]string{"d"})
+	if len(subset) != 0 {
+		t.Errorf("everything should have been removed but got %v", subset)
+	}
+}
+
 func TestOrder(t *testing.T) {
 	var err error
 	var order []string

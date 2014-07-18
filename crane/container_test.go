@@ -16,16 +16,6 @@ func TestDependencies(t *testing.T) {
 	}
 }
 
-func TestIsTargeted(t *testing.T) {
-	container := &Container{RawName: "a"}
-	if container.IsTargeted([]string{"b"}) {
-		t.Error("Container name was a, got targeted with b")
-	}
-	if !container.IsTargeted([]string{"x", "a"}) {
-		t.Error("Container name was a, should have been targeted with a")
-	}
-}
-
 func TestVolume(t *testing.T) {
 	var container *Container
 	// Absolute path

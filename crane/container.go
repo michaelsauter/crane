@@ -65,15 +65,6 @@ func (container *Container) Dependencies() *Dependencies {
 	return dependencies
 }
 
-func (container *Container) IsTargeted(targeted []string) bool {
-	for _, target := range targeted {
-		if target == container.Name() {
-			return true
-		}
-	}
-	return false
-}
-
 func (container *Container) Name() string {
 	return os.ExpandEnv(container.RawName)
 }
