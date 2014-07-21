@@ -89,8 +89,7 @@ func (m ContainerMap) order(reversed bool) (order []string, err error) {
 	for success && len(dependenciesMap) > 0 {
 		success = false
 		for _, name := range alphabetical {
-			if _, ok := dependenciesMap[name]; ok {
-				dependencies := dependenciesMap[name]
+			if dependencies, ok := dependenciesMap[name]; ok {
 				if dependencies.satisfied() {
 					// Resolve "name" and continue with next iteration
 					success = true
@@ -106,8 +105,7 @@ func (m ContainerMap) order(reversed bool) (order []string, err error) {
 			// but maybe one of the container already runs/exists?
 			// This check does only make sense for the default order.
 			for _, name := range alphabetical {
-				if _, ok := dependenciesMap[name]; ok {
-					dependencies := dependenciesMap[name]
+				if dependencies, ok := dependenciesMap[name]; ok {
 					for _, name := range dependencies.list {
 						// Container must not be part of the map that
 						// is currently targeted.
@@ -170,8 +168,8 @@ func (m ContainerMap) dependencies(reversed bool) DependenciesMap {
 			for _, dep := range container.Dependencies().list {
 				// If dependenciesMap already has the key, append to the list,
 				// otherwise create that dependecy
-				if _, ok := dependenciesMap[dep]; ok {
-					dependenciesMap[dep].list = append(dependenciesMap[dep].list, container.Name())
+				if dependencies, ok := dependenciesMap[dep]; ok {
+					dependencies.list = append(dependencies.list, container.Name())
 				} else {
 					dependenciesMap[dep] = &Dependencies{list: []string{container.Name()}}
 				}
