@@ -7,7 +7,6 @@ import (
 	"path"
 	"strconv"
 	"strings"
-	"text/tabwriter"
 )
 
 type Container struct {
@@ -301,20 +300,16 @@ func (container *Container) imageExists() bool {
 	}
 }
 
-func (container *Container) status(w *tabwriter.Writer, notrunc bool) {
-	fmt.Fprintf(w, "%s\t%s\t", container.Name(), container.Image())
-	var args []string
-	if notrunc {
-		args = []string{"inspect", "--format={{.State.Running}}\t{{.Id}}\t{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}\t{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}", container.Name()}
-	} else {
-		args = []string{"inspect", "--format={{.State.Running}}\t{{.Id | printf \"%.12s\"}}\t{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}\t{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}", container.Name()}
-	}
+func (container *Container) status() []string {
+	fields := []string{container.Name(), container.Image(), "-", "-", "-", "-", "-"}
+	args := []string{"inspect", "--format={{.Id}}\t{{.Image}}\t{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}\t{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}\t{{.State.Running}}", container.Name()}
 	output, err := commandOutput("docker", args)
-	if err != nil {
-		fmt.Fprintf(w, "-\t-\t-\t-\n")
-		return
+	if err == nil {
+		copy(fields[2:], strings.Split(output, "\t"))
+		// we asked for the image id the container was created from
+		fields[3] = strconv.FormatBool(imageIdFromTag(fields[1]) == fields[3])
 	}
-	fmt.Fprintf(w, "%s\n", output)
+	return fields
 }
 
 // Pull image for container
@@ -556,4 +551,14 @@ func (container Container) push() {
 	} else {
 		print.Noticef("Skipping %s as it does not have an image name.\n", container.Name())
 	}
+}
+
+// Return the image id of a tag, or an empty string if it doesn't exist
+func imageIdFromTag(tag string) string {
+	args := []string{"inspect", "--format={{.Id}}", tag}
+	output, err := commandOutput("docker", args)
+	if err != nil {
+		return ""
+	}
+	return string(output)
 }
