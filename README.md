@@ -69,6 +69,7 @@ Every container consists of:
 	* `link` (array) Link containers.
 	* `lxc-conf` (array)
 	* `memory` (string)
+	* `net` (string)
 	* `privileged` (boolean)
 	* `publish` (array) Map network ports to the container.
 	* `publish-all` (boolean)
