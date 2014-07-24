@@ -18,11 +18,14 @@ rm cmd.go.bak
 sed -i.bak 's/VERSION="[0-9]\.[0-9]\.[0-9]"/VERSION="'$version'"/' download.sh
 rm download.sh.bak
 
+echo "Update contributors..."
+git contributors | awk '{for (i=2; i<NF; i++) printf $i " "; print $NF}' > CONTRIBUTORS
+
 echo "Build binary..."
 ../../../../bin/gox -osarch="darwin/amd64" -osarch="linux/amd64"
 
 echo "Update repository..."
-git add cmd.go download.sh
+git add cmd.go download.sh CONTRIBUTORS
 git commit -m "Bump version to ${version}"
 git tag "v$version"
 
