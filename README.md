@@ -168,6 +168,9 @@ This could be used like so: `crane provision --target="container1"` or `crane ru
 * [Symfony2 + Apache + MySQL](https://github.com/michaelsauter/symfony2-crane-env)
 * [Sinatra + PostrgeSQL](https://github.com/michaelsauter/sinatra-crane-env)
 
+## Copyright & Licensing
+Copyright © 2013-2014 Michael Sauter. See the LICENSE file for details.
+
 ---
 
 [![GoDoc](https://godoc.org/github.com/michaelsauter/crane?status.png)](https://godoc.org/github.com/michaelsauter/crane)
