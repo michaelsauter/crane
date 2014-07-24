@@ -61,6 +61,7 @@ Every container consists of:
 	* `cpu-shares` (integer)
 	* `detach` (boolean) `sudo docker attach <container name>` will work as normal.
 	* `dns` (array)
+	* `entrypoint` (string)
 	* `env` (array)
 	* `env-file` (string)
 	* `expose` (array) Ports to expose to linked containers.
