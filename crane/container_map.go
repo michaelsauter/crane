@@ -14,14 +14,15 @@ type ContainerMap map[string]Container
 // to its dependencies
 type DependenciesMap map[string]*Dependencies
 
-// Dependencies contain two fields:
+// Dependencies contain 3 fields:
 // list: contains all dependencies
 // linked: contains dependencies that
-// are being linked to (which means they
-// need to be running in order to be satisfied).
+// are being linked to.
+// net: container the net stack is shared with
 type Dependencies struct {
 	list   []string
 	linked []string
+	net    string
 }
 
 // includes checks whether the given needle is
@@ -36,9 +37,11 @@ func (d *Dependencies) includes(needle string) bool {
 }
 
 // mustRun checks whether the given needle needs
-// to be running (for now that just means it's in
-// the linked list)
+// to be running
 func (d *Dependencies) mustRun(needle string) bool {
+	if needle == d.net {
+		return true
+	}
 	for _, name := range d.linked {
 		if name == needle {
 			return true

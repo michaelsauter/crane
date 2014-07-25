@@ -51,7 +51,7 @@ type RmParameters struct {
 
 func (container *Container) Dependencies() *Dependencies {
 	var linkParts []string
-	dependencies := &Dependencies{list: []string{}, linked: []string{}}
+	dependencies := &Dependencies{list: []string{}, linked: []string{}, net: ""}
 	for _, link := range container.Run.Link() {
 		linkParts = strings.Split(link, ":")
 		dependencies.list = append(dependencies.list, linkParts[0])
@@ -60,6 +60,16 @@ func (container *Container) Dependencies() *Dependencies {
 	for _, volumeFrom := range container.Run.VolumesFrom() {
 		if !dependencies.includes(volumeFrom) {
 			dependencies.list = append(dependencies.list, volumeFrom)
+		}
+	}
+	if netParts := strings.Split(container.Run.Net(), ":"); len(netParts) == 2 && netParts[0] == "container" {
+		// we'll just assume here that the reference is a name, and not an id, even
+		// though docker supports it, since we have no bullet-proof way to tell:
+		// heuristics to detect whether it's an id could bring false positive, and
+		// a lookup in the list of container names could bring false negatives
+		dependencies.net = netParts[1]
+		if !dependencies.includes(dependencies.net) {
+			dependencies.list = append(dependencies.list, dependencies.net)
 		}
 	}
 	return dependencies
