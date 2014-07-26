@@ -6,12 +6,12 @@ import (
 )
 
 func TestDependencies(t *testing.T) {
-	container := &Container{Run: RunParameters{RawLink: []string{"a:b", "b:d"}, RawVolumesFrom: []string{"c"}}}
-	if deps := container.Dependencies(); deps.list[0] != "a" || deps.list[1] != "b" || deps.linked[0] != "a" || deps.linked[1] != "b" || deps.list[2] != "c" {
-		t.Errorf("Dependencies should have been a, b and c. Got %v", deps)
+	container := &Container{Run: RunParameters{RawNet: "container:n", RawLink: []string{"a:b", "b:d"}, RawVolumesFrom: []string{"c"}}}
+	if deps := container.Dependencies(); deps.list[0] != "a" || deps.list[1] != "b" || deps.list[2] != "c" || deps.list[3] != "n" || deps.linked[0] != "a" || deps.linked[1] != "b" || deps.list[2] != "c" || deps.net != "n" {
+		t.Errorf("Dependencies should have been a, b, c, n. Got %v", deps)
 	}
 	container = &Container{Run: RunParameters{RawLink: []string{}, RawVolumesFrom: []string{}}}
-	if deps := container.Dependencies(); len(deps.list) != 0 {
+	if deps := container.Dependencies(); len(deps.list) != 0 && len(deps.linked) != 0 && deps.net == "" {
 		t.Error("Dependencies should have been empty")
 	}
 }

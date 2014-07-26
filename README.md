@@ -70,7 +70,7 @@ Every container consists of:
 	* `link` (array) Link containers.
 	* `lxc-conf` (array)
 	* `memory` (string)
-	* `net` (string)
+	* `net` (string) The `container:id` syntax is not supported, use `container:name` if you want to reuse another container network stack.
 	* `privileged` (boolean)
 	* `publish` (array) Map network ports to the container.
 	* `publish-all` (boolean)
