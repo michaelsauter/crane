@@ -160,7 +160,7 @@ func (c *Config) determineOrder(reversed bool) error {
 		return nil // Order was set manually
 	}
 
-	order, err := c.containerMap.order(reversed)
+	order, err := c.containerMap.order(reversed, reversed)
 	if err != nil {
 		return err
 	} else {
