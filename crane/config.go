@@ -98,7 +98,7 @@ func unmarshalYAML(data []byte) *Config {
 	return config
 }
 
-func NewConfig(options Options, reversed bool) *Config {
+func NewConfig(options Options, reversed bool, ignoreUnresolved bool) *Config {
 	var config *Config
 	for _, f := range configFiles(options) {
 		if _, err := os.Stat(f); err == nil {
@@ -111,7 +111,7 @@ func NewConfig(options Options, reversed bool) *Config {
 	}
 	config.process()
 	config.truncate(options.target)
-	err := config.determineOrder(reversed)
+	err := config.determineOrder(reversed, ignoreUnresolved)
 	if err != nil {
 		panic(StatusError{err, 78})
 	}
@@ -155,12 +155,12 @@ func (c *Config) process() {
 // determineOrder sets the Order field of the config.
 // Containers will be ordered so that they can be
 // brought up and down with Docker.
-func (c *Config) determineOrder(reversed bool) error {
+func (c *Config) determineOrder(reversed bool, ignoreUnresolved bool) error {
 	if len(c.order) > 0 {
 		return nil // Order was set manually
 	}
 
-	order, err := c.containerMap.order(reversed, reversed)
+	order, err := c.containerMap.order(reversed, ignoreUnresolved)
 	if err != nil {
 		return err
 	} else {
