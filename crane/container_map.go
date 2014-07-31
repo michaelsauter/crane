@@ -10,9 +10,9 @@ import (
 // to its configuration
 type ContainerMap map[string]Container
 
-// DependenciesMap maps the container name
+// DependencyGraph maps the container name
 // to its dependencies
-type DependenciesMap map[string]*Dependencies
+type DependencyGraph map[string]*Dependencies
 
 // Dependencies contain 3 fields:
 // list: contains all dependencies
@@ -85,19 +85,19 @@ func (m ContainerMap) subset(included []string) ContainerMap {
 // If the map cannot be resolved, and error is returned detailing
 // which containers still have unresolved dependencies.
 func (m ContainerMap) order(reversed bool) (order []string, err error) {
-	dependenciesMap := m.dependencies(reversed)
+	dependencyGraph := m.dependencies(reversed)
 	alphabetical := m.alphabetical(reversed)
 
 	success := true
-	for success && len(dependenciesMap) > 0 {
+	for success && len(dependencyGraph) > 0 {
 		success = false
 		for _, name := range alphabetical {
-			if dependencies, ok := dependenciesMap[name]; ok {
+			if dependencies, ok := dependencyGraph[name]; ok {
 				if dependencies.satisfied() {
 					// Resolve "name" and continue with next iteration
 					success = true
 					order = append([]string{name}, order...)
-					dependenciesMap.resolve(name)
+					dependencyGraph.resolve(name)
 					break
 				}
 			}
@@ -108,7 +108,7 @@ func (m ContainerMap) order(reversed bool) (order []string, err error) {
 			// but maybe one of the container already runs/exists?
 			// This check does only make sense for the default order.
 			for _, name := range alphabetical {
-				if dependencies, ok := dependenciesMap[name]; ok {
+				if dependencies, ok := dependencyGraph[name]; ok {
 					for _, name := range dependencies.list {
 						// Container must not be part of the map that
 						// is currently targeted.
@@ -124,7 +124,7 @@ func (m ContainerMap) order(reversed bool) (order []string, err error) {
 							}
 							if satisfied {
 								success = true
-								dependenciesMap.resolve(name)
+								dependencyGraph.resolve(name)
 								break
 							}
 						}
@@ -136,10 +136,10 @@ func (m ContainerMap) order(reversed bool) (order []string, err error) {
 
 	// If we still have dependencies, the container map
 	// cannot be resolved (cyclic or missing dependency found).
-	if len(dependenciesMap) > 0 {
+	if len(dependencyGraph) > 0 {
 		unresolved := []string{}
 		for _, name := range alphabetical {
-			if _, ok := dependenciesMap[name]; ok {
+			if _, ok := dependencyGraph[name]; ok {
 				unresolved = append(unresolved, name)
 			}
 		}
@@ -158,38 +158,38 @@ func (m ContainerMap) order(reversed bool) (order []string, err error) {
 
 // dependencies returns a map describing the dependencies
 // between the containers.
-func (m ContainerMap) dependencies(reversed bool) DependenciesMap {
-	dependenciesMap := make(DependenciesMap)
+func (m ContainerMap) dependencies(reversed bool) DependencyGraph {
+	dependencyGraph := make(DependencyGraph)
 
 	if reversed {
 		// Need to set every "dependency" as the key of the
-		// dependenciesMap map and list the containers that depend
+		// dependencyGraph map and list the containers that depend
 		// on it as the dependencies ...
 		// Iterate over map
 		for _, container := range m {
 			// Get dependency list of each container
 			for _, dep := range container.Dependencies().list {
-				// If dependenciesMap already has the key, append to the list,
+				// If dependencyGraph already has the key, append to the list,
 				// otherwise create that dependecy
-				if dependencies, ok := dependenciesMap[dep]; ok {
+				if dependencies, ok := dependencyGraph[dep]; ok {
 					dependencies.list = append(dependencies.list, container.Name())
 				} else {
-					dependenciesMap[dep] = &Dependencies{list: []string{container.Name()}}
+					dependencyGraph[dep] = &Dependencies{list: []string{container.Name()}}
 				}
 			}
 			// If we haven't created the key yet, do it now
-			if _, ok := dependenciesMap[container.Name()]; !ok {
-				dependenciesMap[container.Name()] = &Dependencies{list: []string{}}
+			if _, ok := dependencyGraph[container.Name()]; !ok {
+				dependencyGraph[container.Name()] = &Dependencies{list: []string{}}
 			}
 		}
 	} else {
 		// For default order, just map the container names to their dependencies
 		for _, container := range m {
-			dependenciesMap[container.Name()] = container.Dependencies()
+			dependencyGraph[container.Name()] = container.Dependencies()
 		}
 	}
 
-	return dependenciesMap
+	return dependencyGraph
 }
 
 // alphabetical returns the containers of the map in
@@ -216,9 +216,9 @@ func (m ContainerMap) alphabetical(reversed bool) []string {
 }
 
 // resolve deletes the given name from the
-// dependenciesMap and removes it from all
+// dependencyGraph and removes it from all
 // dependencies.
-func (d DependenciesMap) resolve(resolved string) {
+func (d DependencyGraph) resolve(resolved string) {
 	delete(d, resolved)
 	for _, dependencies := range d {
 		dependencies.remove(resolved)
