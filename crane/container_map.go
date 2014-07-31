@@ -84,7 +84,7 @@ func (m ContainerMap) subset(included []string) ContainerMap {
 // alphabetically.
 // If the map cannot be resolved, and error is returned detailing
 // which containers still have unresolved dependencies.
-func (m ContainerMap) order(reversed bool) (order []string, err error) {
+func (m ContainerMap) order(reversed bool, ignoreUnresolved bool) (order []string, err error) {
 	dependenciesMap := m.dependencies(reversed)
 	alphabetical := m.alphabetical(reversed)
 
@@ -143,10 +143,7 @@ func (m ContainerMap) order(reversed bool) (order []string, err error) {
 				unresolved = append(unresolved, name)
 			}
 		}
-		// For reversed order, that is okay.
-		// Otherwise, this is an error that needs
-		// to be resolved.
-		if reversed {
+		if ignoreUnresolved {
 			order = append(order, unresolved...)
 		} else {
 			err = fmt.Errorf("Dependencies for container(s) %s could not be resolved. Check for cyclic or missing dependencies.", strings.Join(unresolved, ", "))

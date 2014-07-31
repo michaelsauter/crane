@@ -49,12 +49,12 @@ func TestOrder(t *testing.T) {
 		"c": Container{RawName: "c"},
 	}
 	// Default order
-	order, err = containerMap.order(false)
+	order, err = containerMap.order(false, false)
 	if err != nil || order[0] != "a" || order[1] != "b" || order[2] != "c" {
 		t.Errorf("Order should have been [a b c], got %v. Err: %v", order, err)
 	}
 	// Reversed order
-	order, err = containerMap.order(true)
+	order, err = containerMap.order(true, false)
 	if err != nil || order[0] != "c" || order[1] != "b" || order[2] != "a" {
 		t.Errorf("Order should have been [c b a], got %v. Err: %v", order, err)
 	}
@@ -65,15 +65,25 @@ func TestOrder(t *testing.T) {
 		"a": Container{RawName: "a", Run: RunParameters{RawLink: []string{"b:b"}}},
 		"c": Container{RawName: "c", Run: RunParameters{RawLink: []string{"a:a"}}},
 	}
-	// Errors in default order
-	order, err = containerMap.order(false)
+	// Default order
+	order, err = containerMap.order(false, false)
 	if err == nil {
 		t.Errorf("Cyclic dependency a -> b -> c -> a should not have been resolvable, got %v. Err: %v", order, err)
 	}
-	// Works in reversed order
-	order, err = containerMap.order(true)
+	// Default order, ignoring unresolved
+	order, err = containerMap.order(false, true)
+	if err != nil || order[0] != "a" || order[1] != "b" || order[2] != "c" {
+		t.Errorf("Order should have been [a b c], got %v. Err: %v", order, err)
+	}
+	// Reversed order
+	order, err = containerMap.order(true, true)
 	if err != nil || order[0] != "c" || order[1] != "b" || order[2] != "a" {
 		t.Errorf("Order should have been [c b a], got %v", order)
+	}
+	// Reversed order, ignoring unresolved
+	order, err = containerMap.order(true, true)
+	if err != nil || order[0] != "c" || order[1] != "b" || order[2] != "a" {
+		t.Errorf("Order should have been [c b a], got %v. Err: %v", order, err)
 	}
 }
 
