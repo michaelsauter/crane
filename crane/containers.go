@@ -9,6 +9,14 @@ import (
 
 type Containers []Container
 
+func (containers Containers) reversed() Containers {
+	var reversed []Container
+	for i := len(containers) - 1; i >= 0; i-- {
+		reversed = append(reversed, containers[i])
+	}
+	return reversed
+}
+
 // Lift containers (provision + run).
 // When recreate is set, this will re-provision all images
 // and recreate all containers.

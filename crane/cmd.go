@@ -30,14 +30,14 @@ func isVerbose() bool {
 }
 
 // returns a function to be set as a cobra command run, wrapping a command meant to be run on a set of containers
-func containersCommand(wrapped func(containers Containers), reversed bool) func(cmd *cobra.Command, args []string) {
+func containersCommand(wrapped func(containers Containers), forceOrder bool) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		if len(args) > 0 {
 			cmd.Printf("Error: too many arguments given: %#q", args)
 			cmd.Usage()
 			panic(StatusError{status: 64})
 		}
-		wrapped(NewConfig(options, reversed).Containers())
+		wrapped(NewConfig(options, forceOrder).Containers())
 	}
 }
 
@@ -61,7 +61,7 @@ provision will use specified Dockerfiles to build all targeted images.
 If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Run: containersCommand(func(containers Containers) {
 			containers.provision(options.nocache)
-		}, false),
+		}, true),
 	}
 
 	var cmdRun = &cobra.Command{
@@ -78,7 +78,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Remove the containers",
 		Long:  `rm will call docker rm for all targeted containers.`,
 		Run: containersCommand(func(containers Containers) {
-			containers.rm(options.kill)
+			containers.reversed().rm(options.kill)
 		}, true),
 	}
 
@@ -87,7 +87,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Kill the containers",
 		Long:  `kill will call docker kill for all targeted containers.`,
 		Run: containersCommand(func(containers Containers) {
-			containers.kill()
+			containers.reversed().kill()
 		}, true),
 	}
 
@@ -105,7 +105,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Stop the containers",
 		Long:  `stop will call docker stop for all targeted containers.`,
 		Run: containersCommand(func(containers Containers) {
-			containers.stop()
+			containers.reversed().stop()
 		}, true),
 	}
 
@@ -114,7 +114,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Pause the containers",
 		Long:  `pause will call docker pause for all targeted containers.`,
 		Run: containersCommand(func(containers Containers) {
-			containers.pause()
+			containers.reversed().pause()
 		}, true),
 	}
 
@@ -133,7 +133,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Long:  `push will call docker push for all targeted containers.`,
 		Run: containersCommand(func(containers Containers) {
 			containers.push()
-		}, false),
+		}, true),
 	}
 
 	var cmdStatus = &cobra.Command{
@@ -142,7 +142,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Long:  `Displays the current status of all targeted containers.`,
 		Run: containersCommand(func(containers Containers) {
 			containers.status(options.notrunc)
-		}, false),
+		}, true),
 	}
 
 	var cmdVersion = &cobra.Command{

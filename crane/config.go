@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 )
 
 type Config struct {
@@ -16,9 +17,17 @@ type Config struct {
 	RawOrder        []string            `json:"order" yaml:"order"`
 	RawGroups       map[string][]string `json:"groups" yaml:"groups"`
 	containerMap    ContainerMap
+	dependencyGraph DependencyGraph
+	target          Target
 	order           []string
 	groups          map[string][]string
 }
+
+// ContainerMap maps the container name
+// to its configuration
+type ContainerMap map[string]Container
+
+type Target []string
 
 // configFiles returns a slice of
 // files to read the config from.
@@ -98,7 +107,7 @@ func unmarshalYAML(data []byte) *Config {
 	return config
 }
 
-func NewConfig(options Options, reversed bool) *Config {
+func NewConfig(options Options, forceOrder bool) *Config {
 	var config *Config
 	for _, f := range configFiles(options) {
 		if _, err := os.Stat(f); err == nil {
@@ -109,9 +118,10 @@ func NewConfig(options Options, reversed bool) *Config {
 	if config == nil {
 		panic(StatusError{fmt.Errorf("No configuration found %v", configFiles(options)), 78})
 	}
-	config.process()
-	config.truncate(options.target)
-	err := config.determineOrder(reversed)
+	config.expandEnv()
+	config.determineGraph()
+	config.determineTarget(options.target)
+	err := config.determineOrder(forceOrder)
 	if err != nil {
 		panic(StatusError{err, 78})
 	}
@@ -127,11 +137,11 @@ func (c *Config) Containers() Containers {
 	return containers
 }
 
-// process creates a new container map
+// expandEnv creates a new container map
 // with expanded names and sets the RawName of each
 // container to the map key.
 // It also expand variables in the order and the groups.
-func (c *Config) process() {
+func (c *Config) expandEnv() {
 	// Container map
 	c.containerMap = make(map[string]Container)
 	for rawName, container := range c.RawContainerMap {
@@ -152,15 +162,24 @@ func (c *Config) process() {
 	}
 }
 
+// generateGraph generated the dependency graph, which is
+// a map describing the dependencies between the containers.
+func (c *Config) determineGraph() {
+	c.dependencyGraph = make(DependencyGraph)
+	for _, container := range c.containerMap {
+		c.dependencyGraph[container.Name()] = container.Dependencies()
+	}
+}
+
 // determineOrder sets the Order field of the config.
 // Containers will be ordered so that they can be
 // brought up and down with Docker.
-func (c *Config) determineOrder(reversed bool) error {
+func (c *Config) determineOrder(force bool) error {
 	if len(c.order) > 0 {
 		return nil // Order was set manually
 	}
 
-	order, err := c.containerMap.order(reversed)
+	order, err := c.dependencyGraph.order(c.target, force)
 	if err != nil {
 		return err
 	} else {
@@ -169,16 +188,20 @@ func (c *Config) determineOrder(reversed bool) error {
 	return nil
 }
 
-// truncate receives a target and deletes all containers
-// from the map which are not targeted.
-func (c *Config) truncate(target string) {
-	included := c.targetedContainers(target)
-	c.containerMap = c.containerMap.subset(included)
+// determineTarget receives the specified target
+// and determines which containers should be targeted.
+// Additionally, ot sorts these alphabetically.
+func (c *Config) determineTarget(target string) {
+	c.target = Target(c.explicitlyTargeted(target))
+
+	// Extend target here (cascade)
+
+	sort.Strings(c.target)
 }
 
-// targetedContainers receives a target and determines which
+// explicitlyTargeted receives a target and determines which
 // containers of the map are targeted
-func (c *Config) targetedContainers(target string) []string {
+func (c *Config) explicitlyTargeted(target string) []string {
 	// target not given
 	if len(target) == 0 {
 		// If default group exists, return its containers
@@ -210,4 +233,15 @@ func (c *Config) targetedContainers(target string) []string {
 	}
 	// Otherwise, fail verbosely
 	panic(StatusError{fmt.Errorf("No group or container matching `%s`", target), 64})
+}
+
+// includes checks whether the given needle is
+// included in the dependency list
+func (t Target) includes(needle string) bool {
+	for _, name := range t {
+		if name == needle {
+			return true
+		}
+	}
+	return false
 }
