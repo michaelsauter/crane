@@ -51,25 +51,26 @@ type RmParameters struct {
 
 func (container *Container) Dependencies() *Dependencies {
 	var linkParts []string
-	dependencies := &Dependencies{list: []string{}, linked: []string{}, net: ""}
+	dependencies := &Dependencies{all: []string{}, linked: []string{}, volumesFrom: []string{}, net: ""}
 	for _, link := range container.Run.Link() {
 		linkParts = strings.Split(link, ":")
-		dependencies.list = append(dependencies.list, linkParts[0])
+		dependencies.all = append(dependencies.all, linkParts[0])
 		dependencies.linked = append(dependencies.linked, linkParts[0])
 	}
 	for _, volumeFrom := range container.Run.VolumesFrom() {
 		if !dependencies.includes(volumeFrom) {
-			dependencies.list = append(dependencies.list, volumeFrom)
+			dependencies.all = append(dependencies.all, volumeFrom)
+			dependencies.volumesFrom = append(dependencies.volumesFrom, volumeFrom)
 		}
 	}
 	if netParts := strings.Split(container.Run.Net(), ":"); len(netParts) == 2 && netParts[0] == "container" {
-		// we'll just assume here that the reference is a name, and not an id, even
+		// We'll just assume here that the reference is a name, and not an id, even
 		// though docker supports it, since we have no bullet-proof way to tell:
-		// heuristics to detect whether it's an id could bring false positive, and
+		// heuristics to detect whether it's an id could bring false positives, and
 		// a lookup in the list of container names could bring false negatives
 		dependencies.net = netParts[1]
 		if !dependencies.includes(dependencies.net) {
-			dependencies.list = append(dependencies.list, dependencies.net)
+			dependencies.all = append(dependencies.all, dependencies.net)
 		}
 	}
 	return dependencies

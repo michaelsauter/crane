@@ -1,20 +1,21 @@
 package crane
 
-// Dependencies contain 3 fields:
-// list: contains all dependencies
-// linked: contains dependencies that
-// are being linked to.
+// Dependencies contains 4 fields:
+// all: contains all dependencies
+// linked: containers linked to
+// volumesFrom: containers that provide volumes
 // net: container the net stack is shared with
 type Dependencies struct {
-	list   []string
-	linked []string
-	net    string
+	all         []string
+	linked      []string
+	volumesFrom []string
+	net         string
 }
 
 // includes checks whether the given needle is
 // included in the dependency list
 func (d *Dependencies) includes(needle string) bool {
-	for _, name := range d.list {
+	for _, name := range d.all {
 		if name == needle {
 			return true
 		}
@@ -36,16 +37,17 @@ func (d *Dependencies) mustRun(needle string) bool {
 	return false
 }
 
-// satisfied is true when the list is empty
+// satisfied is true when there are no
+// dependencies
 func (d *Dependencies) satisfied() bool {
-	return len(d.list) == 0
+	return len(d.all) == 0
 }
 
-// remove removes the given name from the list
+// remove removes the given name from all
 func (d *Dependencies) remove(resolved string) {
-	for i, name := range d.list {
+	for i, name := range d.all {
 		if name == resolved {
-			d.list = append(d.list[:i], d.list[i+1:]...)
+			d.all = append(d.all[:i], d.all[i+1:]...)
 		}
 	}
 }

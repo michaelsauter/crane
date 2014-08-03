@@ -37,7 +37,7 @@ func (graph DependencyGraph) order(target Target, force bool) (order []string, e
 		if !success {
 			for _, name := range target {
 				dependencies := graph[name]
-				for _, name := range dependencies.list {
+				for _, name := range dependencies.all {
 					if !target.includes(name) {
 						container := &Container{RawName: name}
 						satisfied := false
@@ -63,7 +63,7 @@ func (graph DependencyGraph) order(target Target, force bool) (order []string, e
 		if !success && force {
 			for _, name := range target {
 				dependencies := graph[name]
-				for _, name := range dependencies.list {
+				for _, name := range dependencies.all {
 					if !target.includes(name) {
 						success = true
 						graph.resolve(name)

@@ -9,9 +9,9 @@ func TestOrder(t *testing.T) {
 
 	// Resolvable map
 	dependencyGraph = DependencyGraph{
-		"b": &Dependencies{list: []string{"c"}},
-		"a": &Dependencies{list: []string{"b"}},
-		"c": &Dependencies{list: []string{}},
+		"b": &Dependencies{all: []string{"c"}},
+		"a": &Dependencies{all: []string{"b"}},
+		"c": &Dependencies{all: []string{}},
 	}
 	order, err = dependencyGraph.order([]string{"a", "b", "c"}, false)
 	if err != nil || len(order) != 3 || order[0] != "a" || order[1] != "b" || order[2] != "c" {
@@ -20,9 +20,9 @@ func TestOrder(t *testing.T) {
 
 	// Cyclic map without forced order fails
 	dependencyGraph = DependencyGraph{
-		"b": &Dependencies{list: []string{"c"}},
-		"a": &Dependencies{list: []string{"b"}},
-		"c": &Dependencies{list: []string{"a"}},
+		"b": &Dependencies{all: []string{"c"}},
+		"a": &Dependencies{all: []string{"b"}},
+		"c": &Dependencies{all: []string{"a"}},
 	}
 	order, err = dependencyGraph.order([]string{"a", "b", "c"}, false)
 	if err == nil {
@@ -31,9 +31,9 @@ func TestOrder(t *testing.T) {
 
 	// Cyclic map with forced order fails
 	dependencyGraph = DependencyGraph{
-		"b": &Dependencies{list: []string{"c"}},
-		"a": &Dependencies{list: []string{"b"}},
-		"c": &Dependencies{list: []string{"a"}},
+		"b": &Dependencies{all: []string{"c"}},
+		"a": &Dependencies{all: []string{"b"}},
+		"c": &Dependencies{all: []string{"a"}},
 	}
 	order, err = dependencyGraph.order([]string{"a", "b", "c"}, true)
 	if err == nil {
@@ -42,9 +42,9 @@ func TestOrder(t *testing.T) {
 
 	// Resolvable map, partial target fails non-forced
 	dependencyGraph = DependencyGraph{
-		"b": &Dependencies{list: []string{"c"}},
-		"a": &Dependencies{list: []string{"b"}},
-		"c": &Dependencies{list: []string{}},
+		"b": &Dependencies{all: []string{"c"}},
+		"a": &Dependencies{all: []string{"b"}},
+		"c": &Dependencies{all: []string{}},
 	}
 	order, err = dependencyGraph.order([]string{"a", "b"}, false)
 	if err == nil {
@@ -53,9 +53,9 @@ func TestOrder(t *testing.T) {
 
 	// Resolvable map, partial target, succeeds forced
 	dependencyGraph = DependencyGraph{
-		"b": &Dependencies{list: []string{"c"}},
-		"a": &Dependencies{list: []string{"b"}},
-		"c": &Dependencies{list: []string{}},
+		"b": &Dependencies{all: []string{"c"}},
+		"a": &Dependencies{all: []string{"b"}},
+		"c": &Dependencies{all: []string{}},
 	}
 	order, err = dependencyGraph.order([]string{"a", "b"}, true)
 	if err != nil || len(order) != 2 || order[0] != "a" || order[1] != "b" {

@@ -236,7 +236,7 @@ func (c *Config) explicitlyTargeted(target string) []string {
 }
 
 // includes checks whether the given needle is
-// included in the dependency list
+// included in the target
 func (t Target) includes(needle string) bool {
 	for _, name := range t {
 		if name == needle {
