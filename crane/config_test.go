@@ -40,6 +40,68 @@ func TestDetermineOrder(t *testing.T) {
 	}
 }
 
+func TestDetermineTargetLinearChainDependencies(t *testing.T) {
+	rawContainerMap := ContainerMap{
+		"a": Container{Run: RunParameters{RawLink: []string{"b:b"}}},
+		"b": Container{Run: RunParameters{RawLink: []string{"c:c"}}},
+		"c": Container{},
+	}
+	c := &Config{RawContainerMap: rawContainerMap}
+	c.expandEnv()
+	c.determineGraph()
+	c.determineTarget("a", true)
+	if len(c.target) != 3 {
+		t.Errorf("all containers should have been targeted but got %v", c.target)
+	}
+	c.determineTarget("b", true)
+	if c.target[0] != "b" || c.target[1] != "c" || len(c.target) != 2 {
+		t.Errorf("a should have been left out but got %v", c.target)
+	}
+}
+
+func TestDetermineTargetGraphDependencies(t *testing.T) {
+	rawContainerMap := ContainerMap{
+		"a": Container{Run: RunParameters{RawLink: []string{"b:b", "c:c"}}},
+		"b": Container{Run: RunParameters{RawLink: []string{"d:d"}}},
+		"c": Container{Run: RunParameters{RawLink: []string{"e:e"}}},
+		"d": Container{},
+		"e": Container{},
+	}
+	rawGroups := map[string][]string{
+		"bc": []string{"b", "c"},
+	}
+	c := &Config{RawContainerMap: rawContainerMap, RawGroups: rawGroups}
+	c.expandEnv()
+	c.determineGraph()
+	c.determineTarget("a", true)
+	if len(c.target) != 5 {
+		t.Errorf("all containers should have been targeted but got %v", c.target)
+	}
+	c.determineTarget("b", true)
+	if c.target[0] != "b" || c.target[1] != "d" || len(c.target) != 2 {
+		t.Errorf("all b and d should have been targeted but got %v", c.target)
+	}
+	c.determineTarget("bc", true)
+	if c.target[0] != "b" || c.target[1] != "c" || c.target[2] != "d" || c.target[3] != "e" || len(c.target) != 4 {
+		t.Errorf("a should have been left out but got %v", c.target)
+	}
+}
+
+func TestDetermineTargetMissingDependencies(t *testing.T) {
+	rawContainerMap := ContainerMap{
+		"a": Container{Run: RunParameters{RawLink: []string{"b:b", "d:d"}}},
+		"b": Container{Run: RunParameters{RawLink: []string{"c:c"}}},
+		"c": Container{Run: RunParameters{RawLink: []string{"d:d"}}},
+	}
+	c := &Config{RawContainerMap: rawContainerMap}
+	c.expandEnv()
+	c.determineGraph()
+	c.determineTarget("a", true)
+	if len(c.target) != 3 {
+		t.Errorf("only declared containers should have been targeted but got %v", c.target)
+	}
+}
+
 func TestExplicitlyTargeted(t *testing.T) {
 	var result []string
 	var containers []string

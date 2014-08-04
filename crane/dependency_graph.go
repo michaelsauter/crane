@@ -86,7 +86,7 @@ func (graph DependencyGraph) order(target Target, force bool) (order []string, e
 				unresolved = append(unresolved, name)
 			}
 		}
-		err = fmt.Errorf("Dependencies for container(s) %s could not be resolved. Check for cyclic or missing dependencies.", strings.Join(unresolved, ", "))
+		err = fmt.Errorf("Dependencies for container(s) %s could not be resolved. Check for cyclic or missing dependencies, or use -d/--cascade-dependencies to automatically attempt to recursively include dependencies in the set of targeted containers.", strings.Join(unresolved, ", "))
 	}
 
 	return
