@@ -51,11 +51,11 @@ type RmParameters struct {
 
 func (container *Container) Dependencies() *Dependencies {
 	var linkParts []string
-	dependencies := &Dependencies{all: []string{}, linked: []string{}, volumesFrom: []string{}, net: ""}
+	dependencies := &Dependencies{all: []string{}, link: []string{}, volumesFrom: []string{}, net: ""}
 	for _, link := range container.Run.Link() {
 		linkParts = strings.Split(link, ":")
 		dependencies.all = append(dependencies.all, linkParts[0])
-		dependencies.linked = append(dependencies.linked, linkParts[0])
+		dependencies.link = append(dependencies.link, linkParts[0])
 	}
 	for _, volumeFrom := range container.Run.VolumesFrom() {
 		if !dependencies.includes(volumeFrom) {
