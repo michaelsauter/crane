@@ -15,12 +15,35 @@ type Dependencies struct {
 // includes checks whether the given needle is
 // included in the dependency list
 func (d *Dependencies) includes(needle string) bool {
-	for _, name := range d.all {
+	return d.includesAsKind(needle, "all")
+}
+
+// includes checks whether the given needle is
+// included in the dependency list as the given kind
+func (d *Dependencies) includesAsKind(needle string, kind string) bool {
+	for _, name := range d.forKind(kind) {
 		if name == needle {
 			return true
 		}
 	}
 	return false
+}
+
+// returns the list of dependencies for a certain
+// kind of dependency
+func (d *Dependencies) forKind(kind string) []string {
+	switch kind {
+	case "all":
+		return d.all
+	case "link":
+		return d.link
+	case "volumesFrom":
+		return d.volumesFrom
+	case "net":
+		return []string{d.net}
+	default:
+		return []string{}
+	}
 }
 
 // mustRun checks whether the given needle needs

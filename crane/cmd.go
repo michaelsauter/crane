@@ -11,8 +11,8 @@ type Options struct {
 	nocache             bool
 	notrunc             bool
 	kill                bool
-	cascadeDependencies bool
-	cascadeAffected     bool
+	cascadeDependencies string
+	cascadeAffected     string
 	config              string
 	target              string
 }
@@ -23,8 +23,8 @@ var options = Options{
 	nocache:             false,
 	notrunc:             false,
 	kill:                false,
-	cascadeDependencies: false,
-	cascadeAffected:     false,
+	cascadeDependencies: "",
+	cascadeAffected:     "",
 	config:              "",
 	target:              "",
 }
@@ -36,6 +36,13 @@ func isVerbose() bool {
 // returns a function to be set as a cobra command run, wrapping a command meant to be run on a set of containers
 func containersCommand(wrapped func(containers Containers), forceOrder bool) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
+		for _, value := range []string{options.cascadeDependencies, options.cascadeAffected} {
+			if value != "none" && value != "all" && value != "link" && value != "volumesFrom" && value != "net" {
+				cmd.Printf("Error: invalid cascading value: %v", value)
+				cmd.Usage()
+				panic(StatusError{status: 64})
+			}
+		}
 		if len(args) > 0 {
 			cmd.Printf("Error: too many arguments given: %#q", args)
 			cmd.Usage()
@@ -170,8 +177,14 @@ See the corresponding docker commands for more information.`,
 	craneCmd.PersistentFlags().BoolVarP(&options.verbose, "verbose", "v", false, "Verbose output")
 	craneCmd.PersistentFlags().StringVarP(&options.config, "config", "c", "", "Config file to read from")
 	craneCmd.PersistentFlags().StringVarP(&options.target, "target", "t", "", "Group or container to execute the command for")
-	craneCmd.PersistentFlags().BoolVarP(&options.cascadeDependencies, "cascade-dependencies", "d", false, "Also apply the command for the containers that (any of) the explicitly targeted one(s) depend on")
-	craneCmd.PersistentFlags().BoolVarP(&options.cascadeAffected, "cascade-affected", "a", false, "Also apply the command for the containers depending on (any of) the explicitly targeted one(s)")
+	cascadingValuesSuffix := `
+					"all": follow any kind of dependency
+					"link": follow --link dependencies only
+					"volumesFrom": follow --volumesFrom dependencies only
+					"net": follow --net dependencies only
+	`
+	craneCmd.PersistentFlags().StringVarP(&options.cascadeDependencies, "cascade-dependencies", "d", "none", "Also apply the command for the containers that (any of) the explicitly targeted one(s) depend on"+cascadingValuesSuffix)
+	craneCmd.PersistentFlags().StringVarP(&options.cascadeAffected, "cascade-affected", "a", "none", "Also apply the command for the containers depending on (any of) the explicitly targeted one(s)"+cascadingValuesSuffix)
 
 	cmdLift.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (kill and remove containers, provision images, run containers)")
 	cmdLift.Flags().BoolVarP(&options.nocache, "no-cache", "n", false, "Build the image without any cache")
