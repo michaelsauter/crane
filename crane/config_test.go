@@ -49,13 +49,25 @@ func TestDetermineTargetLinearChainDependencies(t *testing.T) {
 	c := &Config{RawContainerMap: rawContainerMap}
 	c.expandEnv()
 	c.determineGraph()
-	c.determineTarget("a", true)
+	c.determineTarget("a", true, false)
 	if len(c.target) != 3 {
 		t.Errorf("all containers should have been targeted but got %v", c.target)
 	}
-	c.determineTarget("b", true)
+	c.determineTarget("b", true, false)
 	if c.target[0] != "b" || c.target[1] != "c" || len(c.target) != 2 {
 		t.Errorf("a should have been left out but got %v", c.target)
+	}
+	c.determineTarget("c", false, true)
+	if len(c.target) != 3 {
+		t.Errorf("all containers should have been targeted but got %v", c.target)
+	}
+	c.determineTarget("b", false, true)
+	if c.target[0] != "a" || c.target[1] != "b" || len(c.target) != 2 {
+		t.Errorf("c should have been left out but got %v", c.target)
+	}
+	c.determineTarget("b", true, true)
+	if len(c.target) != 3 {
+		t.Errorf("all containers should have been targeted but got %v", c.target)
 	}
 }
 
@@ -73,17 +85,25 @@ func TestDetermineTargetGraphDependencies(t *testing.T) {
 	c := &Config{RawContainerMap: rawContainerMap, RawGroups: rawGroups}
 	c.expandEnv()
 	c.determineGraph()
-	c.determineTarget("a", true)
+	c.determineTarget("a", true, false)
 	if len(c.target) != 5 {
 		t.Errorf("all containers should have been targeted but got %v", c.target)
 	}
-	c.determineTarget("b", true)
+	c.determineTarget("b", true, false)
 	if c.target[0] != "b" || c.target[1] != "d" || len(c.target) != 2 {
 		t.Errorf("all b and d should have been targeted but got %v", c.target)
 	}
-	c.determineTarget("bc", true)
+	c.determineTarget("bc", true, false)
 	if c.target[0] != "b" || c.target[1] != "c" || c.target[2] != "d" || c.target[3] != "e" || len(c.target) != 4 {
 		t.Errorf("a should have been left out but got %v", c.target)
+	}
+	c.determineTarget("bc", false, true)
+	if c.target[0] != "a" || c.target[1] != "b" || c.target[2] != "c" || len(c.target) != 3 {
+		t.Errorf("d and e should have been left out but got %v", c.target)
+	}
+	c.determineTarget("bc", true, true)
+	if len(c.target) != 5 {
+		t.Errorf("all containers should have been targeted but got %v", c.target)
 	}
 }
 
@@ -96,7 +116,15 @@ func TestDetermineTargetMissingDependencies(t *testing.T) {
 	c := &Config{RawContainerMap: rawContainerMap}
 	c.expandEnv()
 	c.determineGraph()
-	c.determineTarget("a", true)
+	c.determineTarget("a", true, false)
+	if len(c.target) != 3 {
+		t.Errorf("only declared containers should have been targeted but got %v", c.target)
+	}
+	c.determineTarget("c", false, true)
+	if len(c.target) != 3 {
+		t.Errorf("only declared containers should have been targeted but got %v", c.target)
+	}
+	c.determineTarget("a", true, true)
 	if len(c.target) != 3 {
 		t.Errorf("only declared containers should have been targeted but got %v", c.target)
 	}

@@ -12,6 +12,7 @@ type Options struct {
 	notrunc             bool
 	kill                bool
 	cascadeDependencies bool
+	cascadeAffected     bool
 	config              string
 	target              string
 }
@@ -23,6 +24,7 @@ var options = Options{
 	notrunc:             false,
 	kill:                false,
 	cascadeDependencies: false,
+	cascadeAffected:     false,
 	config:              "",
 	target:              "",
 }
@@ -169,6 +171,7 @@ See the corresponding docker commands for more information.`,
 	craneCmd.PersistentFlags().StringVarP(&options.config, "config", "c", "", "Config file to read from")
 	craneCmd.PersistentFlags().StringVarP(&options.target, "target", "t", "", "Group or container to execute the command for")
 	craneCmd.PersistentFlags().BoolVarP(&options.cascadeDependencies, "cascade-dependencies", "d", false, "Also apply the command for the containers that (any of) the explicitly targeted one(s) depend on")
+	craneCmd.PersistentFlags().BoolVarP(&options.cascadeAffected, "cascade-affected", "a", false, "Also apply the command for the containers depending on (any of) the explicitly targeted one(s)")
 
 	cmdLift.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (kill and remove containers, provision images, run containers)")
 	cmdLift.Flags().BoolVarP(&options.nocache, "no-cache", "n", false, "Build the image without any cache")

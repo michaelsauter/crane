@@ -120,7 +120,7 @@ func NewConfig(options Options, forceOrder bool) *Config {
 	}
 	config.expandEnv()
 	config.determineGraph()
-	config.determineTarget(options.target, options.cascadeDependencies)
+	config.determineTarget(options.target, options.cascadeDependencies, options.cascadeAffected)
 	err := config.determineOrder(forceOrder)
 	if err != nil {
 		panic(StatusError{err, 78})
@@ -191,7 +191,7 @@ func (c *Config) determineOrder(force bool) error {
 // determineTarget receives the specified target
 // and determines which containers should be targeted.
 // Additionally, ot sorts these alphabetically.
-func (c *Config) determineTarget(target string, cascadeDependencies bool) {
+func (c *Config) determineTarget(target string, cascadeDependencies bool, cascadeAffected bool) {
 	// start from the explicitly targeted target
 	includedSet := make(map[string]bool)
 	cascadingSeeds := []string{}
@@ -201,12 +201,12 @@ func (c *Config) determineTarget(target string, cascadeDependencies bool) {
 	}
 
 	// cascade until the graph has been fully traversed according to the cascading flags
-	if cascadeDependencies {
-		for len(cascadingSeeds) > 0 {
-			nextCascadingSeeds := []string{}
-			for _, name := range cascadingSeeds {
-				// queue all the direct dependencies if we haven't already considered them
-				if dependencies, ok := c.dependencyGraph[name]; ok {
+	for len(cascadingSeeds) > 0 {
+		nextCascadingSeeds := []string{}
+		for _, seed := range cascadingSeeds {
+			if cascadeDependencies {
+				if dependencies, ok := c.dependencyGraph[seed]; ok {
+					// queue all the direct dependencies if we haven't already considered them
 					for _, name := range dependencies.all {
 						if _, alreadyIncluded := includedSet[name]; !alreadyIncluded {
 							includedSet[name] = true
@@ -215,8 +215,19 @@ func (c *Config) determineTarget(target string, cascadeDependencies bool) {
 					}
 				}
 			}
-			cascadingSeeds = nextCascadingSeeds
+			if cascadeAffected {
+				// queue all containers we haven't considered yet which directly depend on the seed
+				for name, dependencies := range c.dependencyGraph {
+					if _, alreadyIncluded := includedSet[name]; !alreadyIncluded {
+						if dependencies.includes(seed) {
+							includedSet[name] = true
+							nextCascadingSeeds = append(nextCascadingSeeds, name)
+						}
+					}
+				}
+			}
 		}
+		cascadingSeeds = nextCascadingSeeds
 	}
 
 	// keep the ones that we know of
