@@ -22,13 +22,14 @@ func (graph DependencyGraph) order(target Target, force bool) (order []string, e
 
 		// Try to resolve container with satisfied dependencies
 		for _, name := range target {
-			dependencies := graph[name]
-			if dependencies.satisfied() {
-				// Resolve "name" and continue with next iteration
-				success = true
-				order = append([]string{name}, order...)
-				graph.resolve(name)
-				break
+			if dependencies, ok := graph[name]; ok {
+				if dependencies.satisfied() {
+					// Resolve "name" and continue with next iteration
+					success = true
+					order = append([]string{name}, order...)
+					graph.resolve(name)
+					break
+				}
 			}
 		}
 
@@ -36,20 +37,21 @@ func (graph DependencyGraph) order(target Target, force bool) (order []string, e
 		// we check if one of the non-targeted dependencies already runs or exists.
 		if !success {
 			for _, name := range target {
-				dependencies := graph[name]
-				for _, name := range dependencies.all {
-					if !target.includes(name) {
-						container := &Container{RawName: name}
-						satisfied := false
-						if dependencies.mustRun(name) {
-							satisfied = container.running()
-						} else {
-							satisfied = container.exists()
-						}
-						if satisfied {
-							success = true
-							graph.resolve(name)
-							break
+				if dependencies, ok := graph[name]; ok {
+					for _, name := range dependencies.all {
+						if !target.includes(name) {
+							container := &Container{RawName: name}
+							satisfied := false
+							if dependencies.mustRun(name) {
+								satisfied = container.running()
+							} else {
+								satisfied = container.exists()
+							}
+							if satisfied {
+								success = true
+								graph.resolve(name)
+								break
+							}
 						}
 					}
 				}
@@ -62,12 +64,13 @@ func (graph DependencyGraph) order(target Target, force bool) (order []string, e
 		// dependency.
 		if !success && force {
 			for _, name := range target {
-				dependencies := graph[name]
-				for _, name := range dependencies.all {
-					if !target.includes(name) {
-						success = true
-						graph.resolve(name)
-						break
+				if dependencies, ok := graph[name]; ok {
+					for _, name := range dependencies.all {
+						if !target.includes(name) {
+							success = true
+							graph.resolve(name)
+							break
+						}
 					}
 				}
 			}

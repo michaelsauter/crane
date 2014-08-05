@@ -13,7 +13,7 @@ func TestOrder(t *testing.T) {
 		"a": &Dependencies{all: []string{"b"}},
 		"c": &Dependencies{all: []string{}},
 	}
-	order, err = dependencyGraph.order([]string{"a", "b", "c"}, false)
+	order, err = dependencyGraph.order([]string{"b", "c", "a"}, false)
 	if err != nil || len(order) != 3 || order[0] != "a" || order[1] != "b" || order[2] != "c" {
 		t.Errorf("Order should have been [a b c], got %v. Err: %v", order, err)
 	}
