@@ -27,7 +27,7 @@ echo "Build binary..."
 echo "Update repository..."
 git add crane/cmd.go download.sh CONTRIBUTORS
 git commit -m "Bump version to ${version}"
-git tag "v$version"
+git tag --sign --message="v$version" "v$version"
 
 echo "v$version tagged."
 echo "Now, run 'git push origin master && git push --tags' and publish the release on GitHub."
