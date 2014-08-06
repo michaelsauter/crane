@@ -13,8 +13,8 @@ echo "Running tests..."
 go test ./...
 
 echo "Update version..."
-sed -i.bak 's/fmt\.Println("v[0-9]\.[0-9]\.[0-9]")/fmt.Println("v'$version'")/' cmd.go
-rm cmd.go.bak
+sed -i.bak 's/fmt\.Println("v[0-9]\.[0-9]\.[0-9]")/fmt.Println("v'$version'")/' crane/cmd.go
+rm crane/cmd.go.bak
 sed -i.bak 's/VERSION="[0-9]\.[0-9]\.[0-9]"/VERSION="'$version'"/' download.sh
 rm download.sh.bak
 
@@ -25,7 +25,7 @@ echo "Build binary..."
 ../../../../bin/gox -osarch="darwin/amd64" -osarch="linux/amd64"
 
 echo "Update repository..."
-git add cmd.go download.sh CONTRIBUTORS
+git add crane/cmd.go download.sh CONTRIBUTORS
 git commit -m "Bump version to ${version}"
 git tag "v$version"
 
