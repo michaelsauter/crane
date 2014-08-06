@@ -40,12 +40,12 @@ func (graph DependencyGraph) order(target Target, force bool) (order []string, e
 				if dependencies, ok := graph[name]; ok {
 					for _, name := range dependencies.all {
 						if !target.includes(name) {
-							container := &Container{RawName: name}
+							container := graph.tmpContainer(name)
 							satisfied := false
 							if dependencies.mustRun(name) {
-								satisfied = container.running()
+								satisfied = container.Running()
 							} else {
-								satisfied = container.exists()
+								satisfied = container.Exists()
 							}
 							if satisfied {
 								success = true
@@ -90,6 +90,10 @@ func (graph DependencyGraph) order(target Target, force bool) (order []string, e
 	}
 
 	return
+}
+
+func (d DependencyGraph) tmpContainer(name string) Container {
+	return &container{RawName: name}
 }
 
 // resolve deletes the given name from the

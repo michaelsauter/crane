@@ -28,7 +28,7 @@ func (containers Containers) lift(recreate bool, nocache bool) {
 // Provision containers.
 func (containers Containers) provision(nocache bool) {
 	for _, container := range containers {
-		container.provision(nocache)
+		container.Provision(nocache)
 	}
 }
 
@@ -39,7 +39,7 @@ func (containers Containers) run(recreate bool) {
 		containers.rm(true)
 	}
 	for _, container := range containers {
-		container.run()
+		container.Run()
 	}
 }
 
@@ -50,7 +50,7 @@ func (containers Containers) runOrStart(recreate bool) {
 		containers.rm(true)
 	}
 	for _, container := range containers {
-		container.runOrStart()
+		container.RunOrStart()
 	}
 }
 
@@ -58,42 +58,42 @@ func (containers Containers) runOrStart(recreate bool) {
 // When update is true, provisions all images.
 func (containers Containers) provisionOrSkip(update bool, nocache bool) {
 	for _, container := range containers {
-		container.provisionOrSkip(update, nocache)
+		container.ProvisionOrSkip(update, nocache)
 	}
 }
 
 // Start containers.
 func (containers Containers) start() {
 	for _, container := range containers {
-		container.start()
+		container.Start()
 	}
 }
 
 // Kill containers.
 func (containers Containers) kill() {
 	for _, container := range containers {
-		container.kill()
+		container.Kill()
 	}
 }
 
 // Stop containers.
 func (containers Containers) stop() {
 	for _, container := range containers {
-		container.stop()
+		container.Stop()
 	}
 }
 
 // Pause containers.
 func (containers Containers) pause() {
 	for _, container := range containers {
-		container.pause()
+		container.Pause()
 	}
 }
 
 // Unpause containers.
 func (containers Containers) unpause() {
 	for _, container := range containers {
-		container.unpause()
+		container.Unpause()
 	}
 }
 
@@ -104,14 +104,14 @@ func (containers Containers) rm(kill bool) {
 		containers.kill()
 	}
 	for _, container := range containers {
-		container.rm()
+		container.Rm()
 	}
 }
 
 // Push containers.
 func (containers Containers) push() {
 	for _, container := range containers {
-		container.push()
+		container.Push()
 	}
 }
 
@@ -121,7 +121,7 @@ func (containers Containers) status(notrunc bool) {
 	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
 	fmt.Fprintln(w, "NAME\tIMAGE\tID\tUP TO DATE\tIP\tPORTS\tRUNNING")
 	for _, container := range containers {
-		fields := container.status()
+		fields := container.Status()
 		if !notrunc {
 			fields[2] = truncateID(fields[2])
 		}

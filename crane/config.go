@@ -145,7 +145,7 @@ func (c *Config) expandEnv() {
 	// Container map
 	c.containerMap = make(map[string]Container)
 	for rawName, container := range c.RawContainerMap {
-		container.RawName = rawName
+		container.SetRawName(rawName)
 		name := os.ExpandEnv(rawName)
 		c.containerMap[name] = container
 	}

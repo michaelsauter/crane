@@ -4,9 +4,9 @@ import "testing"
 
 func TestReversed(t *testing.T) {
 	var containers Containers
-	containers = []Container{Container{RawName: "a"}, Container{RawName: "b"}}
+	containers = []Container{&container{RawName: "a"}, &container{RawName: "b"}}
 	reversed := containers.reversed()
-	if reversed[0].RawName != "b" || reversed[1].RawName != "a" {
+	if reversed[0].Name() != "b" || reversed[1].Name() != "a" {
 		t.Errorf("Containers should have been ordered [b a], got %v", reversed)
 	}
 

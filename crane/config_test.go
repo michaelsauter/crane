@@ -19,13 +19,13 @@ func TestConfigFiles(t *testing.T) {
 
 func TestExpandEnv(t *testing.T) {
 	rawContainerMap := ContainerMap{
-		"a": Container{},
-		"b": Container{},
+		"a": &container{},
+		"b": &container{},
 	}
 	c := &Config{RawContainerMap: rawContainerMap}
 	c.expandEnv()
-	if c.containerMap["a"].RawName != "a" || c.containerMap["b"].RawName != "b" {
-		t.Errorf("Names should be 'a' and 'b', got %s and %s", c.containerMap["a"].RawName, c.containerMap["b"].RawName)
+	if c.containerMap["a"].Name() != "a" || c.containerMap["b"].Name() != "b" {
+		t.Errorf("Names should be 'a' and 'b', got %s and %s", c.containerMap["a"].Name(), c.containerMap["b"].Name())
 	}
 }
 
@@ -45,9 +45,9 @@ func TestExplicitlyTargeted(t *testing.T) {
 	var containers []string
 	var rawGroups = make(map[string][]string)
 	rawContainerMap := ContainerMap{
-		"a": Container{},
-		"b": Container{},
-		"c": Container{},
+		"a": &container{},
+		"b": &container{},
+		"c": &container{},
 	}
 
 	// No target given
@@ -92,7 +92,7 @@ func TestExplicitlyTargeted(t *testing.T) {
 
 func TestContainers(t *testing.T) {
 	c := &Config{
-		containerMap: ContainerMap{"a": Container{RawName: "a"}, "b": Container{RawName: "b"}},
+		containerMap: ContainerMap{"a": &container{RawName: "a"}, "b": &container{RawName: "b"}},
 		order:        []string{"a", "b"},
 	}
 	containers := c.Containers()
