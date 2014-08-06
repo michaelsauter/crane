@@ -1,64 +1,86 @@
 package crane
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestOrder(t *testing.T) {
-	var err error
-	var order []string
-	var dependencyGraph DependencyGraph
 
-	// Resolvable map
-	dependencyGraph = DependencyGraph{
-		"b": &Dependencies{all: []string{"c"}},
-		"a": &Dependencies{all: []string{"b"}},
-		"c": &Dependencies{all: []string{}},
-	}
-	order, err = dependencyGraph.order([]string{"b", "c", "a"}, false)
-	if err != nil || len(order) != 3 || order[0] != "a" || order[1] != "b" || order[2] != "c" {
-		t.Errorf("Order should have been [a b c], got %v. Err: %v", order, err)
+	examples := []struct {
+		graph      DependencyGraph
+		target     []string
+		forceOrder bool
+		expected   []string
+		err        bool
+	}{
+		{ // resolvable map -> works
+			graph: DependencyGraph{
+				"b": &Dependencies{all: []string{"c"}},
+				"a": &Dependencies{all: []string{"b"}},
+				"c": &Dependencies{all: []string{}},
+			},
+			target:     []string{"a", "b", "c"},
+			forceOrder: false,
+			expected:   []string{"a", "b", "c"},
+			err:        false,
+		},
+		{ // cyclic map, unforced -> fails
+			graph: DependencyGraph{
+				"b": &Dependencies{all: []string{"c"}},
+				"a": &Dependencies{all: []string{"b"}},
+				"c": &Dependencies{all: []string{"a"}},
+			},
+			target:     []string{"a", "b", "c"},
+			forceOrder: false,
+			expected:   []string{},
+			err:        true,
+		},
+		{ // cyclic map, forced -> fails
+			graph: DependencyGraph{
+				"b": &Dependencies{all: []string{"c"}},
+				"a": &Dependencies{all: []string{"b"}},
+				"c": &Dependencies{all: []string{"a"}},
+			},
+			target:     []string{"a", "b", "c"},
+			forceOrder: true,
+			expected:   []string{},
+			err:        true,
+		},
+		{ // partial target, unforced -> fails
+			graph: DependencyGraph{
+				"b": &Dependencies{all: []string{"c"}},
+				"a": &Dependencies{all: []string{"b"}},
+				"c": &Dependencies{all: []string{}},
+			},
+			target:     []string{"a", "b"},
+			forceOrder: false,
+			expected:   []string{},
+			err:        true,
+		},
+		{ // partial target, forced -> works
+			graph: DependencyGraph{
+				"b": &Dependencies{all: []string{"c"}},
+				"a": &Dependencies{all: []string{"b"}},
+				"c": &Dependencies{all: []string{}},
+			},
+			target:     []string{"a", "b"},
+			forceOrder: true,
+			expected:   []string{"a", "b"},
+			err:        false,
+		},
 	}
 
-	// Cyclic map without forced order fails
-	dependencyGraph = DependencyGraph{
-		"b": &Dependencies{all: []string{"c"}},
-		"a": &Dependencies{all: []string{"b"}},
-		"c": &Dependencies{all: []string{"a"}},
-	}
-	order, err = dependencyGraph.order([]string{"a", "b", "c"}, false)
-	if err == nil {
-		t.Errorf("Cyclic dependency a -> b -> c -> a should not have been resolvable, got %v. Err: %v", order, err)
-	}
-
-	// Cyclic map with forced order fails
-	dependencyGraph = DependencyGraph{
-		"b": &Dependencies{all: []string{"c"}},
-		"a": &Dependencies{all: []string{"b"}},
-		"c": &Dependencies{all: []string{"a"}},
-	}
-	order, err = dependencyGraph.order([]string{"a", "b", "c"}, true)
-	if err == nil {
-		t.Errorf("Cyclic dependency a -> b -> c -> a should not have been resolvable, got %v. Err: %v", order, err)
-	}
-
-	// Resolvable map, partial target fails non-forced
-	dependencyGraph = DependencyGraph{
-		"b": &Dependencies{all: []string{"c"}},
-		"a": &Dependencies{all: []string{"b"}},
-		"c": &Dependencies{all: []string{}},
-	}
-	order, err = dependencyGraph.order([]string{"a", "b"}, false)
-	if err == nil {
-		t.Errorf("Dependency c was missing, so graph should not have been resolvable, got %v. Err: %v", order, err)
-	}
-
-	// Resolvable map, partial target, succeeds forced
-	dependencyGraph = DependencyGraph{
-		"b": &Dependencies{all: []string{"c"}},
-		"a": &Dependencies{all: []string{"b"}},
-		"c": &Dependencies{all: []string{}},
-	}
-	order, err = dependencyGraph.order([]string{"a", "b"}, true)
-	if err != nil || len(order) != 2 || order[0] != "a" || order[1] != "b" {
-		t.Errorf("Dependency c was missing, but order was forced, so graph should have been resolvable, got %v. Err: %v", order, err)
+	for _, example := range examples {
+		order, err := example.graph.order(example.target, example.forceOrder)
+		if example.err {
+			if err == nil {
+				t.Errorf("Should have not gotten an order, got %v", order)
+			}
+		} else {
+			if err != nil || !reflect.DeepEqual(order, example.expected) {
+				t.Errorf("Order should have been %v, got %v. Err: %v", example.expected, order, err)
+			}
+		}
 	}
 }
