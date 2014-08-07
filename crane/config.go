@@ -120,7 +120,7 @@ func NewConfig(options Options, forceOrder bool) *Config {
 	}
 	config.expandEnv()
 	config.determineGraph()
-	config.determineTarget(options.target)
+	config.determineTarget(options.target, options.cascadeDependencies, options.cascadeAffected)
 	err := config.determineOrder(forceOrder)
 	if err != nil {
 		panic(StatusError{err, 78})
@@ -191,11 +191,55 @@ func (c *Config) determineOrder(force bool) error {
 // determineTarget receives the specified target
 // and determines which containers should be targeted.
 // Additionally, ot sorts these alphabetically.
-func (c *Config) determineTarget(target string) {
-	c.target = Target(c.explicitlyTargeted(target))
+func (c *Config) determineTarget(target string, cascadeDependencies string, cascadeAffected string) {
+	// start from the explicitly targeted target
+	includedSet := make(map[string]bool)
+	cascadingSeeds := []string{}
+	for _, name := range c.explicitlyTargeted(target) {
+		includedSet[name] = true
+		cascadingSeeds = append(cascadingSeeds, name)
+	}
 
-	// Extend target here (cascade)
+	// cascade until the graph has been fully traversed according to the cascading flags
+	for len(cascadingSeeds) > 0 {
+		nextCascadingSeeds := []string{}
+		for _, seed := range cascadingSeeds {
+			if cascadeDependencies != "none" {
+				if dependencies, ok := c.dependencyGraph[seed]; ok {
+					// queue direct dependencies if we haven't already considered them
+					for _, name := range dependencies.forKind(cascadeDependencies) {
+						if _, alreadyIncluded := includedSet[name]; !alreadyIncluded {
+							includedSet[name] = true
+							nextCascadingSeeds = append(nextCascadingSeeds, name)
+						}
+					}
+				}
+			}
+			if cascadeAffected != "none" {
+				// queue all containers we haven't considered yet which directly depend on the seed
+				for name, dependencies := range c.dependencyGraph {
+					if _, alreadyIncluded := includedSet[name]; !alreadyIncluded {
+						if dependencies.includesAsKind(seed, cascadeAffected) {
+							includedSet[name] = true
+							nextCascadingSeeds = append(nextCascadingSeeds, name)
+						}
+					}
+				}
+			}
+		}
+		cascadingSeeds = nextCascadingSeeds
+	}
 
+	// keep the ones that we know of
+	included := []string{}
+	for name := range includedSet {
+		if _, exists := c.containerMap[name]; exists {
+			included = append(included, name)
+		}
+	}
+
+	// sort
+	c.target = Target(included)
 	sort.Strings(c.target)
 }
 
