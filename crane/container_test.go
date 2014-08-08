@@ -36,4 +36,9 @@ func TestVolume(t *testing.T) {
 	if c.RunParams.Volume()[0] != (os.Getenv("HOME") + "/a:b") {
 		t.Errorf("Volume mapping should have been $HOME/a:b, was %v", c.RunParams.Volume()[0])
 	}
+	// Container-only path
+	c = &container{RunParams: RunParameters{RawVolume: []string{"/b"}}}
+	if c.RunParams.Volume()[0] != "/b" {
+		t.Errorf("Volume mapping should have been /b, was %v", c.RunParams.Volume()[0])
+	}
 }
