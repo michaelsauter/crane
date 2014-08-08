@@ -42,3 +42,19 @@ func TestVolume(t *testing.T) {
 		t.Errorf("Volume mapping should have been /b, was %v", c.RunParams.Volume()[0])
 	}
 }
+
+func TestNet(t *testing.T) {
+	var c *container
+	// Empty defaults to "bridge"
+	c = &container{RunParams: RunParameters{}}
+	if c.RunParams.Net() != "bridge" {
+		t.Errorf("Net should have been bridge, got %v", c.RunParams.Net())
+	}
+	// Environment variable
+	os.Clearenv()
+	os.Setenv("NET", "container")
+	c = &container{RunParams: RunParameters{RawNet: "$NET"}}
+	if c.RunParams.Net() != "container" {
+		t.Errorf("Net should have been container, got %v", c.RunParams.Net())
+	}
+}
