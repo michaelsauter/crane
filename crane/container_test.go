@@ -58,3 +58,21 @@ func TestNet(t *testing.T) {
 		t.Errorf("Net should have been container, got %v", c.RunParams.Net())
 	}
 }
+
+func TestCmd(t *testing.T) {
+	var c *container
+	// String
+	os.Clearenv()
+	os.Setenv("CMD", "true")
+	c = &container{RunParams: RunParameters{RawCmd: "$CMD"}}
+	if len(c.RunParams.Cmd()) != 1 || c.RunParams.Cmd()[0] != "true" {
+		t.Errorf("Command should have been true, got %v", c.RunParams.Cmd())
+	}
+	// Array
+	os.Clearenv()
+	os.Setenv("CMD", "1")
+	c = &container{RunParams: RunParameters{RawCmd: []interface{}{"echo", "$CMD"}}}
+	if len(c.RunParams.Cmd()) != 2 || c.RunParams.Cmd()[0] != "echo" || c.RunParams.Cmd()[1] != "1" {
+		t.Errorf("Command should have been true, got %v", c.RunParams.Cmd())
+	}
+}
