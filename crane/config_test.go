@@ -42,9 +42,9 @@ func TestDetermineOrder(t *testing.T) {
 
 func TestDetermineTargetLinearChainDependencies(t *testing.T) {
 	rawContainerMap := ContainerMap{
-		"a": Container{Run: RunParameters{RawLink: []string{"b:b"}}},
-		"b": Container{Run: RunParameters{RawLink: []string{"c:c"}}},
-		"c": Container{},
+		"a": &container{RunParams: RunParameters{RawLink: []string{"b:b"}}},
+		"b": &container{RunParams: RunParameters{RawLink: []string{"c:c"}}},
+		"c": &container{},
 	}
 	c := &Config{RawContainerMap: rawContainerMap}
 	c.expandEnv()
@@ -73,11 +73,11 @@ func TestDetermineTargetLinearChainDependencies(t *testing.T) {
 
 func TestDetermineTargetGraphDependencies(t *testing.T) {
 	rawContainerMap := ContainerMap{
-		"a": Container{Run: RunParameters{RawLink: []string{"b:b", "c:c"}}},
-		"b": Container{Run: RunParameters{RawLink: []string{"d:d"}}},
-		"c": Container{Run: RunParameters{RawLink: []string{"e:e"}}},
-		"d": Container{},
-		"e": Container{},
+		"a": &container{RunParams: RunParameters{RawLink: []string{"b:b", "c:c"}}},
+		"b": &container{RunParams: RunParameters{RawLink: []string{"d:d"}}},
+		"c": &container{RunParams: RunParameters{RawLink: []string{"e:e"}}},
+		"d": &container{},
+		"e": &container{},
 	}
 	rawGroups := map[string][]string{
 		"bc": []string{"b", "c"},
@@ -109,9 +109,9 @@ func TestDetermineTargetGraphDependencies(t *testing.T) {
 
 func TestDetermineTargetMissingDependencies(t *testing.T) {
 	rawContainerMap := ContainerMap{
-		"a": Container{Run: RunParameters{RawLink: []string{"b:b", "d:d"}}},
-		"b": Container{Run: RunParameters{RawLink: []string{"c:c"}}},
-		"c": Container{Run: RunParameters{RawLink: []string{"d:d"}}},
+		"a": &container{RunParams: RunParameters{RawLink: []string{"b:b", "d:d"}}},
+		"b": &container{RunParams: RunParameters{RawLink: []string{"c:c"}}},
+		"c": &container{RunParams: RunParameters{RawLink: []string{"d:d"}}},
 	}
 	c := &Config{RawContainerMap: rawContainerMap}
 	c.expandEnv()
@@ -132,13 +132,13 @@ func TestDetermineTargetMissingDependencies(t *testing.T) {
 
 func TestDetermineTargetCustomCascading(t *testing.T) {
 	rawContainerMap := ContainerMap{
-		"linkSource":        Container{Run: RunParameters{RawLink: []string{"x:x"}}},
-		"netSource":         Container{Run: RunParameters{RawNet: "container:x"}},
-		"volumesFromSource": Container{Run: RunParameters{RawVolumesFrom: []string{"x"}}},
-		"x":                 Container{Run: RunParameters{RawLink: []string{"linkTarget:linkTarget"}, RawNet: "container:netTarget", RawVolumesFrom: []string{"volumesFromTarget"}}},
-		"linkTarget":        Container{},
-		"netTarget":         Container{},
-		"volumesFromTarget": Container{},
+		"linkSource":        &container{RunParams: RunParameters{RawLink: []string{"x:x"}}},
+		"netSource":         &container{RunParams: RunParameters{RawNet: "container:x"}},
+		"volumesFromSource": &container{RunParams: RunParameters{RawVolumesFrom: []string{"x"}}},
+		"x":                 &container{RunParams: RunParameters{RawLink: []string{"linkTarget:linkTarget"}, RawNet: "container:netTarget", RawVolumesFrom: []string{"volumesFromTarget"}}},
+		"linkTarget":        &container{},
+		"netTarget":         &container{},
+		"volumesFromTarget": &container{},
 	}
 	c := &Config{RawContainerMap: rawContainerMap}
 	c.expandEnv()
