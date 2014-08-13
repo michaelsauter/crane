@@ -26,45 +26,80 @@ func TestIncludesAsKind(t *testing.T) {
 		net:         "net",
 	}
 
-	if !dependencies.includesAsKind("link", "all") {
-		t.Errorf("false negative")
-	}
-	if !dependencies.includesAsKind("volumesFrom", "all") {
-		t.Errorf("false negative")
-	}
-	if !dependencies.includesAsKind("net", "all") {
-		t.Errorf("false negative")
+	examples := []struct {
+		needle   string
+		kind     string
+		expected bool
+	}{
+		{ // kind all
+			needle:   "link",
+			kind:     "all",
+			expected: true,
+		},
+		{
+			needle:   "volumesFrom",
+			kind:     "all",
+			expected: true,
+		},
+		{
+			needle:   "net",
+			kind:     "all",
+			expected: true,
+		},
+		{ // kind link
+			needle:   "link",
+			kind:     "link",
+			expected: true,
+		},
+		{
+			needle:   "volumesFrom",
+			kind:     "link",
+			expected: false,
+		},
+		{
+			needle:   "net",
+			kind:     "link",
+			expected: false,
+		},
+		{ // kind volumesFrom
+			needle:   "link",
+			kind:     "volumesFrom",
+			expected: false,
+		},
+		{
+			needle:   "volumesFrom",
+			kind:     "volumesFrom",
+			expected: true,
+		},
+		{
+			needle:   "net",
+			kind:     "volumesFrom",
+			expected: false,
+		},
+		{ // kind net
+			needle:   "link",
+			kind:     "net",
+			expected: false,
+		},
+		{
+			needle:   "volumesFrom",
+			kind:     "net",
+			expected: false,
+		},
+		{
+			needle:   "net",
+			kind:     "net",
+			expected: true,
+		},
 	}
 
-	if !dependencies.includesAsKind("link", "link") {
-		t.Errorf("false negative")
-	}
-	if dependencies.includesAsKind("volumesFrom", "link") {
-		t.Errorf("false positive")
-	}
-	if dependencies.includesAsKind("net", "link") {
-		t.Errorf("false positive")
+	for _, example := range examples {
+		actual := dependencies.includesAsKind(example.needle, example.kind)
+		if actual != example.expected {
+			t.Errorf("includesAsKind should have returned %v, got %v for %v, %v", example.expected, actual, example.needle, example.kind)
+		}
 	}
 
-	if dependencies.includesAsKind("link", "volumesFrom") {
-		t.Errorf("false positive")
-	}
-	if !dependencies.includesAsKind("volumesFrom", "volumesFrom") {
-		t.Errorf("false negative")
-	}
-	if dependencies.includesAsKind("net", "volumesFrom") {
-		t.Errorf("false positive")
-	}
-
-	if dependencies.includesAsKind("link", "net") {
-		t.Errorf("false positive")
-	}
-	if dependencies.includesAsKind("volumesFrom", "net") {
-		t.Errorf("false positive")
-	}
-	if !dependencies.includesAsKind("net", "net") {
-		t.Errorf("false negative")
-	}
 }
 
 func TestForKind(t *testing.T) {
