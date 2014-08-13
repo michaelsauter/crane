@@ -110,21 +110,48 @@ func TestForKind(t *testing.T) {
 		net:         "net",
 	}
 
-	if kindDeps := dependencies.forKind("all"); len(kindDeps) != 3 {
-		t.Errorf("all dependencies expected but got %v", kindDeps)
+	examples := []struct {
+		kind           string
+		expectedLength int
+		expectedFirst  string
+	}{
+		{
+			kind:           "all",
+			expectedLength: 3,
+			expectedFirst:  "",
+		},
+		{
+			kind:           "link",
+			expectedLength: 1,
+			expectedFirst:  "link",
+		},
+		{
+			kind:           "volumesFrom",
+			expectedLength: 1,
+			expectedFirst:  "volumesFrom",
+		},
+		{
+			kind:           "net",
+			expectedLength: 1,
+			expectedFirst:  "net",
+		},
+		{
+			kind:           "foobar",
+			expectedLength: 0,
+			expectedFirst:  "",
+		},
 	}
-	if kindDeps := dependencies.forKind("link"); len(kindDeps) != 1 || kindDeps[0] != "link" {
-		t.Errorf("link expected but got %v", kindDeps)
+
+	for _, example := range examples {
+		kindDeps := dependencies.forKind(example.kind)
+		if len(kindDeps) != example.expectedLength {
+			t.Errorf("%v dependencies expected for kind %v, got %v", example.expectedLength, example.kind, len(kindDeps))
+		}
+		if len(example.expectedFirst) > 0 && kindDeps[0] != example.expectedFirst {
+			t.Errorf("Expected %v at index 0 for kind %v, got %v", example.expectedFirst, example.kind, kindDeps[0])
+		}
 	}
-	if kindDeps := dependencies.forKind("volumesFrom"); len(kindDeps) != 1 || kindDeps[0] != "volumesFrom" {
-		t.Errorf("volumesFrom expected but got %v", kindDeps)
-	}
-	if kindDeps := dependencies.forKind("net"); len(kindDeps) != 1 || kindDeps[0] != "net" {
-		t.Errorf("net expected but got %v", kindDeps)
-	}
-	if kindDeps := dependencies.forKind("foobar"); len(kindDeps) != 0 {
-		t.Errorf("no dependencies expected but got %v", kindDeps)
-	}
+
 }
 
 func TestSatisfied(t *testing.T) {
