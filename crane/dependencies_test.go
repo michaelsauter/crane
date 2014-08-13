@@ -10,14 +10,11 @@ func TestIncludes(t *testing.T) {
 		net:         "net",
 	}
 
-	if !dependencies.includes("link") {
-		t.Errorf("false negative")
+	if !dependencies.includes("link") || !dependencies.includes("volumesFrom") || !dependencies.includes("net") {
+		t.Errorf("Dependencies should have included link, volumesFrom and net")
 	}
-	if !dependencies.includes("volumesFrom") {
-		t.Errorf("false negative")
-	}
-	if !dependencies.includes("net") {
-		t.Errorf("false negative")
+	if dependencies.includes("non-existant") {
+		t.Errorf("Dependencies should not have included 'non-existant'")
 	}
 }
 
