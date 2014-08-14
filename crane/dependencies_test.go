@@ -1,6 +1,9 @@
 package crane
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestIncludes(t *testing.T) {
 	dependencies := Dependencies{
@@ -111,44 +114,35 @@ func TestForKind(t *testing.T) {
 	}
 
 	examples := []struct {
-		kind           string
-		expectedLength int
-		expectedFirst  string
+		kind     string
+		expected []string
 	}{
 		{
-			kind:           "all",
-			expectedLength: 3,
-			expectedFirst:  "",
+			kind:     "all",
+			expected: []string{"link", "volumesFrom", "net"},
 		},
 		{
-			kind:           "link",
-			expectedLength: 1,
-			expectedFirst:  "link",
+			kind:     "link",
+			expected: []string{"link"},
 		},
 		{
-			kind:           "volumesFrom",
-			expectedLength: 1,
-			expectedFirst:  "volumesFrom",
+			kind:     "volumesFrom",
+			expected: []string{"volumesFrom"},
 		},
 		{
-			kind:           "net",
-			expectedLength: 1,
-			expectedFirst:  "net",
+			kind:     "net",
+			expected: []string{"net"},
 		},
 		{
-			kind:           "foobar",
-			expectedLength: 0,
-			expectedFirst:  "",
+			kind:     "foobar",
+			expected: []string{},
 		},
 	}
 
 	for _, example := range examples {
 		kindDeps := dependencies.forKind(example.kind)
-		if len(kindDeps) != example.expectedLength {
-			t.Errorf("%v dependencies expected for kind %v, got %v", example.expectedLength, example.kind, len(kindDeps))
-		}
-		if len(example.expectedFirst) > 0 && kindDeps[0] != example.expectedFirst {
-			t.Errorf("Expected %v at index 0 for kind %v, got %v", example.expectedFirst, example.kind, kindDeps[0])
+		if !reflect.DeepEqual(kindDeps, example.expected) {
+			t.Errorf("%v dependencies expected for kind %v, got %v", example.expected, example.kind, kindDeps)
 		}
 	}
 
