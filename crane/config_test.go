@@ -1,6 +1,9 @@
 package crane
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestConfigFiles(t *testing.T) {
 	// With given filename
@@ -49,25 +52,50 @@ func TestDetermineTargetLinearChainDependencies(t *testing.T) {
 	c := &Config{RawContainerMap: rawContainerMap}
 	c.expandEnv()
 	c.determineGraph()
-	c.determineTarget("a", "all", "none")
-	if len(c.target) != 3 {
-		t.Errorf("all containers should have been targeted but got %v", c.target)
+
+	examples := []struct {
+		target              string
+		cascadeDependencies string
+		cascadeAffected     string
+		expected            Target
+	}{
+		{
+			target:              "a",
+			cascadeDependencies: "all",
+			cascadeAffected:     "none",
+			expected:            []string{"a", "b", "c"},
+		},
+		{
+			target:              "b",
+			cascadeDependencies: "all",
+			cascadeAffected:     "none",
+			expected:            []string{"b", "c"},
+		},
+		{
+			target:              "c",
+			cascadeDependencies: "none",
+			cascadeAffected:     "all",
+			expected:            []string{"a", "b", "c"},
+		},
+		{
+			target:              "b",
+			cascadeDependencies: "none",
+			cascadeAffected:     "all",
+			expected:            []string{"a", "b"},
+		},
+		{
+			target:              "b",
+			cascadeDependencies: "all",
+			cascadeAffected:     "all",
+			expected:            []string{"a", "b", "c"},
+		},
 	}
-	c.determineTarget("b", "all", "none")
-	if c.target[0] != "b" || c.target[1] != "c" || len(c.target) != 2 {
-		t.Errorf("a should have been left out but got %v", c.target)
-	}
-	c.determineTarget("c", "none", "all")
-	if len(c.target) != 3 {
-		t.Errorf("all containers should have been targeted but got %v", c.target)
-	}
-	c.determineTarget("b", "none", "all")
-	if c.target[0] != "a" || c.target[1] != "b" || len(c.target) != 2 {
-		t.Errorf("c should have been left out but got %v", c.target)
-	}
-	c.determineTarget("b", "all", "all")
-	if len(c.target) != 3 {
-		t.Errorf("all containers should have been targeted but got %v", c.target)
+
+	for _, example := range examples {
+		c.determineTarget(example.target, example.cascadeDependencies, example.cascadeAffected)
+		if !reflect.DeepEqual(c.target, example.expected) {
+			t.Errorf("Target should have been %v, got %v", example.expected, c.target)
+		}
 	}
 }
 
