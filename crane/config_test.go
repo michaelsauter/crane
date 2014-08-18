@@ -5,6 +5,15 @@ import (
 	"testing"
 )
 
+type StubbedContainer struct {
+	Container
+	exists		bool
+}
+
+func (stubbedContainer *StubbedContainer) Exists() bool {
+	return stubbedContainer.exists
+}
+
 func TestConfigFiles(t *testing.T) {
 	// With given filename
 	filename := "some/file.yml"
@@ -45,9 +54,9 @@ func TestDetermineOrder(t *testing.T) {
 
 func TestDetermineTargetLinearChainDependencies(t *testing.T) {
 	rawContainerMap := ContainerMap{
-		"a": &container{RunParams: RunParameters{RawLink: []string{"b:b"}}},
-		"b": &container{RunParams: RunParameters{RawLink: []string{"c:c"}}},
-		"c": &container{},
+		"a": &StubbedContainer{&container{RunParams: RunParameters{RawLink: []string{"b:b"}}}, true},
+		"b": &StubbedContainer{&container{RunParams: RunParameters{RawLink: []string{"c:c"}}}, true},
+		"c": &StubbedContainer{&container{}, true},
 	}
 	c := &Config{RawContainerMap: rawContainerMap}
 	c.expandEnv()
@@ -101,11 +110,11 @@ func TestDetermineTargetLinearChainDependencies(t *testing.T) {
 
 func TestDetermineTargetGraphDependencies(t *testing.T) {
 	rawContainerMap := ContainerMap{
-		"a": &container{RunParams: RunParameters{RawLink: []string{"b:b", "c:c"}}},
-		"b": &container{RunParams: RunParameters{RawLink: []string{"d:d"}}},
-		"c": &container{RunParams: RunParameters{RawLink: []string{"e:e"}}},
-		"d": &container{},
-		"e": &container{},
+		"a": &StubbedContainer{&container{RunParams: RunParameters{RawLink: []string{"b:b", "c:c"}}}, true},
+		"b": &StubbedContainer{&container{RunParams: RunParameters{RawLink: []string{"d:d"}}}, true},
+		"c": &StubbedContainer{&container{RunParams: RunParameters{RawLink: []string{"e:e"}}}, true},
+		"d": &StubbedContainer{&container{}, true},
+		"e": &StubbedContainer{&container{}, true},
 	}
 	rawGroups := map[string][]string{
 		"bc": []string{"b", "c"},
@@ -137,9 +146,9 @@ func TestDetermineTargetGraphDependencies(t *testing.T) {
 
 func TestDetermineTargetMissingDependencies(t *testing.T) {
 	rawContainerMap := ContainerMap{
-		"a": &container{RunParams: RunParameters{RawLink: []string{"b:b", "d:d"}}},
-		"b": &container{RunParams: RunParameters{RawLink: []string{"c:c"}}},
-		"c": &container{RunParams: RunParameters{RawLink: []string{"d:d"}}},
+		"a": &StubbedContainer{&container{RunParams: RunParameters{RawLink: []string{"b:b", "d:d"}}}, true},
+		"b": &StubbedContainer{&container{RunParams: RunParameters{RawLink: []string{"c:c"}}}, true},
+		"c": &StubbedContainer{&container{RunParams: RunParameters{RawLink: []string{"d:d"}}}, true},
 	}
 	c := &Config{RawContainerMap: rawContainerMap}
 	c.expandEnv()
@@ -160,13 +169,13 @@ func TestDetermineTargetMissingDependencies(t *testing.T) {
 
 func TestDetermineTargetCustomCascading(t *testing.T) {
 	rawContainerMap := ContainerMap{
-		"linkSource":        &container{RunParams: RunParameters{RawLink: []string{"x:x"}}},
-		"netSource":         &container{RunParams: RunParameters{RawNet: "container:x"}},
-		"volumesFromSource": &container{RunParams: RunParameters{RawVolumesFrom: []string{"x"}}},
+		"linkSource":        &StubbedContainer{&container{RunParams: RunParameters{RawLink: []string{"x:x"}}}, true},
+		"netSource":         &StubbedContainer{&container{RunParams: RunParameters{RawNet: "container:x"}}, true},
+		"volumesFromSource": &StubbedContainer{&container{RunParams: RunParameters{RawVolumesFrom: []string{"x"}}}, true},
 		"x":                 &container{RunParams: RunParameters{RawLink: []string{"linkTarget:linkTarget"}, RawNet: "container:netTarget", RawVolumesFrom: []string{"volumesFromTarget"}}},
-		"linkTarget":        &container{},
-		"netTarget":         &container{},
-		"volumesFromTarget": &container{},
+		"linkTarget":        &StubbedContainer{&container{},true},
+		"netTarget":         &StubbedContainer{&container{},true},
+		"volumesFromTarget": &StubbedContainer{&container{},true},
 	}
 	c := &Config{RawContainerMap: rawContainerMap}
 	c.expandEnv()
@@ -202,6 +211,27 @@ func TestDetermineTargetCustomCascading(t *testing.T) {
 	c.determineTarget("x", "volumesFrom", "volumesFrom")
 	if c.target[0] != "volumesFromSource" || c.target[1] != "volumesFromTarget" || c.target[2] != "x" || len(c.target) != 3 {
 		t.Errorf("all volumesFrom* containers should have been targeted but got %v", c.target)
+	}
+}
+
+func TestDetermineTargetCascadingToExisting(t *testing.T) {
+	rawContainerMap := ContainerMap{
+		"existingSource": &StubbedContainer{&container{RunParams: RunParameters{RawLink: []string{"x:x"}}}, true},
+		"nonExistingSource": &StubbedContainer{&container{RunParams: RunParameters{RawLink: []string{"x:x"}}}, false},
+		"x": &StubbedContainer{&container{RunParams: RunParameters{RawLink: []string{"existingTarget:existingTarget", "nonExistingTarget:nonExistingTarget"}}}, true},
+		"existingTarget": &StubbedContainer{&container{}, true},
+		"nonExistingTarget": &StubbedContainer{&container{}, false},
+	}
+	c := &Config{RawContainerMap: rawContainerMap}
+	c.expandEnv()
+	c.determineGraph()
+	c.determineTarget("x", "all", "none")
+	if c.target[0] != "existingTarget" || c.target[1] != "nonExistingTarget" || c.target[2] != "x" || len(c.target) != 3 {
+		t.Errorf("all *Target containers should have been targeted but got %v", c.target)
+	}
+	c.determineTarget("x", "none", "all")
+	if c.target[0] != "existingSource" || c.target[1] != "x" || len(c.target) != 2 {
+		t.Errorf("from the *Source containers, only existingSource should have been targeted but got %v", c.target)
 	}
 }
 
