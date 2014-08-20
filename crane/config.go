@@ -219,8 +219,8 @@ func (c *Config) determineTarget(target string, cascadeDependencies string, casc
 			if cascadeAffected != "none" {
 				// queue all containers we haven't considered yet which exist & directly depend on the seed
 				for name, container := range c.containerMap {
-					if _, alreadyIncluded := includedSet[name]; !alreadyIncluded && container.Exists() {
-						if container.Dependencies().includesAsKind(seed, cascadeAffected) {
+					if _, alreadyIncluded := includedSet[name]; !alreadyIncluded {
+						if container.Dependencies().includesAsKind(seed, cascadeAffected) && container.Exists() {
 							includedSet[name] = true
 							nextCascadingSeeds = append(nextCascadingSeeds, name)
 						}
