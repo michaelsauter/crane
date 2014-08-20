@@ -13,7 +13,7 @@ type Container interface {
 	Name() string
 	Dockerfile() string
 	Image() string
-	Id() (id string, err error)
+	Id() string
 	Dependencies() *Dependencies
 	Exists() bool
 	Running() bool
@@ -240,48 +240,27 @@ func (r *RunParameters) Cmd() []string {
 	return cmd
 }
 
-func (c *container) Id() (id string, err error) {
-	if len(c.id) > 0 {
-		id = c.id
-	} else {
+func (c *container) Id() string {
+	if len(c.id) == 0 {
 		// Inspect container, extracting the ID.
 		// This will return gibberish if no container is found.
 		args := []string{"inspect", "--format={{.Id}}", c.Name()}
 		output, outErr := commandOutput("docker", args)
 		if outErr == nil {
-			id = output
 			c.id = output
-		} else {
-			err = outErr
 		}
 	}
-	return
+	return c.id
 }
 
 func (c *container) Exists() bool {
-	// `ps -a` returns all existant containers
-	id, err := c.Id()
-	if err != nil || len(id) == 0 {
-		return false
-	}
-	dockerCmd := []string{"docker", "ps", "--quiet", "--all", "--no-trunc"}
-	grepCmd := []string{"grep", "-wF", id}
-	output, err := pipedCommandOutput(dockerCmd, grepCmd)
-	if err != nil {
-		return false
-	}
-	result := string(output)
-	if len(result) > 0 {
-		return true
-	} else {
-		return false
-	}
+	return c.Id() != ""
 }
 
 func (c *container) Running() bool {
 	// `ps` returns all running containers
-	id, err := c.Id()
-	if err != nil || len(id) == 0 {
+	id := c.Id()
+	if len(id) == 0 {
 		return false
 	}
 	dockerCmd := []string{"docker", "ps", "--quiet", "--no-trunc"}
