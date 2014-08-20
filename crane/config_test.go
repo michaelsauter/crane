@@ -5,9 +5,18 @@ import (
 	"testing"
 )
 
+// Create a map of stubbed containers out of the provided set
+func NewStubbedContainerMap(exists bool, containers ...Container) ContainerMap {
+	containerMap := make(map[string]Container)
+	for _, container := range containers {
+		containerMap[container.Name()] = &StubbedContainer{container, exists}
+	}
+	return containerMap
+}
+
 type StubbedContainer struct {
 	Container
-	exists		bool
+	exists bool
 }
 
 func (stubbedContainer *StubbedContainer) Exists() bool {
@@ -29,8 +38,69 @@ func TestConfigFiles(t *testing.T) {
 	}
 }
 
+func TestUnmarshalJSON(t *testing.T) {
+	json := []byte(
+`{
+    "containers": {
+        "apache": {
+            "dockerfile": "apache",
+            "image": "michaelsauter/apache",
+            "run": {
+                "volumes-from": ["crane_app"],
+                "publish": ["80:80"],
+                "link": ["crane_mysql:db", "crane_memcached:cache"],
+                "detach": true
+            }
+        }
+    },
+    "groups": {
+        "default": [
+            "apache"
+        ]
+    }
+}
+`)
+	actual := unmarshalJSON(json)
+	if _, ok := actual.RawContainerMap["apache"]; !ok {
+		t.Errorf("Config should have one container, got %v", actual.RawContainerMap)
+	}
+	if len(actual.RawContainerMap["apache"].RunParams.Link()) != 2 {
+		t.Errorf("Container should have been linked to 2 other containers, got %v", actual.RawContainerMap["apache"].RunParams.Link())
+	}
+	if group, ok := actual.RawGroups["default"]; !ok || len(group) != 1 {
+		t.Errorf("Config should have one `default` group with one container, got %v", actual.RawGroups)
+	}
+}
+
+func TestUnmarshalYAML(t *testing.T) {
+	yaml := []byte(
+`containers:
+  apache:
+    dockerfile: apache
+    image: michaelsauter/apache
+    run:
+      volumes-from: ["crane_app"]
+      publish: ["80:80"]
+      link: ["crane_mysql:db", "crane_memcached:cache"]
+      detach: true
+groups:
+  default:
+    - apache
+`)
+	actual := unmarshalYAML(yaml)
+	if _, ok := actual.RawContainerMap["apache"]; !ok {
+		t.Errorf("Config should have one container, got %v", actual.RawContainerMap)
+	}
+	if len(actual.RawContainerMap["apache"].RunParams.Link()) != 2 {
+		t.Errorf("Container should have been linked to 2 other containers, got %v", actual.RawContainerMap["apache"].RunParams.Link())
+	}
+	if group, ok := actual.RawGroups["default"]; !ok || len(group) != 1 {
+		t.Errorf("Config should have one `default` group with one container, got %v", actual.RawGroups)
+	}
+}
+
 func TestExpandEnv(t *testing.T) {
-	rawContainerMap := ContainerMap{
+	rawContainerMap := containerMap{
 		"a": &container{},
 		"b": &container{},
 	}
@@ -53,13 +123,12 @@ func TestDetermineOrder(t *testing.T) {
 }
 
 func TestDetermineTargetLinearChainDependencies(t *testing.T) {
-	rawContainerMap := ContainerMap{
-		"a": &StubbedContainer{&container{RunParams: RunParameters{RawLink: []string{"b:b"}}}, true},
-		"b": &StubbedContainer{&container{RunParams: RunParameters{RawLink: []string{"c:c"}}}, true},
-		"c": &StubbedContainer{&container{}, true},
-	}
-	c := &Config{RawContainerMap: rawContainerMap}
-	c.expandEnv()
+	containerMap := NewStubbedContainerMap(true,
+		&container{RawName: "a", RunParams: RunParameters{RawLink: []string{"b:b"}}},
+		&container{RawName: "b", RunParams: RunParameters{RawLink: []string{"c:c"}}},
+		&container{RawName: "c"},
+	)
+	c := &Config{containerMap: containerMap}
 	c.determineGraph()
 
 	examples := []struct {
@@ -109,18 +178,17 @@ func TestDetermineTargetLinearChainDependencies(t *testing.T) {
 }
 
 func TestDetermineTargetGraphDependencies(t *testing.T) {
-	rawContainerMap := ContainerMap{
-		"a": &StubbedContainer{&container{RunParams: RunParameters{RawLink: []string{"b:b", "c:c"}}}, true},
-		"b": &StubbedContainer{&container{RunParams: RunParameters{RawLink: []string{"d:d"}}}, true},
-		"c": &StubbedContainer{&container{RunParams: RunParameters{RawLink: []string{"e:e"}}}, true},
-		"d": &StubbedContainer{&container{}, true},
-		"e": &StubbedContainer{&container{}, true},
-	}
-	rawGroups := map[string][]string{
+	containerMap := NewStubbedContainerMap(true,
+		&container{RawName: "a", RunParams: RunParameters{RawLink: []string{"b:b", "c:c"}}},
+		&container{RawName: "b", RunParams: RunParameters{RawLink: []string{"d:d"}}},
+		&container{RawName: "c", RunParams: RunParameters{RawLink: []string{"e:e"}}},
+		&container{RawName: "d"},
+		&container{RawName: "e"},
+	)
+	groups := map[string][]string{
 		"bc": []string{"b", "c"},
 	}
-	c := &Config{RawContainerMap: rawContainerMap, RawGroups: rawGroups}
-	c.expandEnv()
+	c := &Config{containerMap: containerMap, groups: groups}
 	c.determineGraph()
 	c.determineTarget("a", "all", "none")
 	if len(c.target) != 5 {
@@ -145,13 +213,12 @@ func TestDetermineTargetGraphDependencies(t *testing.T) {
 }
 
 func TestDetermineTargetMissingDependencies(t *testing.T) {
-	rawContainerMap := ContainerMap{
-		"a": &StubbedContainer{&container{RunParams: RunParameters{RawLink: []string{"b:b", "d:d"}}}, true},
-		"b": &StubbedContainer{&container{RunParams: RunParameters{RawLink: []string{"c:c"}}}, true},
-		"c": &StubbedContainer{&container{RunParams: RunParameters{RawLink: []string{"d:d"}}}, true},
-	}
-	c := &Config{RawContainerMap: rawContainerMap}
-	c.expandEnv()
+	containerMap := NewStubbedContainerMap(true,
+		&container{RawName: "a", RunParams: RunParameters{RawLink: []string{"b:b", "d:d"}}},
+		&container{RawName: "b", RunParams: RunParameters{RawLink: []string{"c:c"}}},
+		&container{RawName: "c", RunParams: RunParameters{RawLink: []string{"d:d"}}},
+	)
+	c := &Config{containerMap: containerMap}
 	c.determineGraph()
 	c.determineTarget("a", "all", "none")
 	if len(c.target) != 3 {
@@ -168,17 +235,16 @@ func TestDetermineTargetMissingDependencies(t *testing.T) {
 }
 
 func TestDetermineTargetCustomCascading(t *testing.T) {
-	rawContainerMap := ContainerMap{
-		"linkSource":        &StubbedContainer{&container{RunParams: RunParameters{RawLink: []string{"x:x"}}}, true},
-		"netSource":         &StubbedContainer{&container{RunParams: RunParameters{RawNet: "container:x"}}, true},
-		"volumesFromSource": &StubbedContainer{&container{RunParams: RunParameters{RawVolumesFrom: []string{"x"}}}, true},
-		"x":                 &container{RunParams: RunParameters{RawLink: []string{"linkTarget:linkTarget"}, RawNet: "container:netTarget", RawVolumesFrom: []string{"volumesFromTarget"}}},
-		"linkTarget":        &StubbedContainer{&container{},true},
-		"netTarget":         &StubbedContainer{&container{},true},
-		"volumesFromTarget": &StubbedContainer{&container{},true},
-	}
-	c := &Config{RawContainerMap: rawContainerMap}
-	c.expandEnv()
+	containerMap := NewStubbedContainerMap(true,
+		&container{RawName: "linkSource", RunParams: RunParameters{RawLink: []string{"x:x"}}},
+		&container{RawName: "netSource", RunParams: RunParameters{RawNet: "container:x"}},
+		&container{RawName: "volumesFromSource", RunParams: RunParameters{RawVolumesFrom: []string{"x"}}},
+		&container{RawName: "x", RunParams: RunParameters{RawLink: []string{"linkTarget:linkTarget"}, RawNet: "container:netTarget", RawVolumesFrom: []string{"volumesFromTarget"}}},
+		&container{RawName: "linkTarget"},
+		&container{RawName: "netTarget"},
+		&container{RawName: "volumesFromTarget"},
+	)
+	c := &Config{containerMap: containerMap}
 	c.determineGraph()
 	c.determineTarget("x", "all", "none")
 	if c.target[0] != "linkTarget" || c.target[1] != "netTarget" || c.target[2] != "volumesFromTarget" || c.target[3] != "x" || len(c.target) != 4 {
@@ -215,15 +281,16 @@ func TestDetermineTargetCustomCascading(t *testing.T) {
 }
 
 func TestDetermineTargetCascadingToExisting(t *testing.T) {
-	rawContainerMap := ContainerMap{
-		"existingSource": &StubbedContainer{&container{RunParams: RunParameters{RawLink: []string{"x:x"}}}, true},
-		"nonExistingSource": &StubbedContainer{&container{RunParams: RunParameters{RawLink: []string{"x:x"}}}, false},
-		"x": &StubbedContainer{&container{RunParams: RunParameters{RawLink: []string{"existingTarget:existingTarget", "nonExistingTarget:nonExistingTarget"}}}, true},
-		"existingTarget": &StubbedContainer{&container{}, true},
-		"nonExistingTarget": &StubbedContainer{&container{}, false},
-	}
-	c := &Config{RawContainerMap: rawContainerMap}
-	c.expandEnv()
+	containerMap := NewStubbedContainerMap(true,
+		&container{RawName: "existingSource", RunParams: RunParameters{RawLink: []string{"x:x"}}},
+		&container{RawName: "nonExistingSource", RunParams: RunParameters{RawLink: []string{"x:x"}}},
+		&container{RawName: "x", RunParams: RunParameters{RawLink: []string{"existingTarget:existingTarget", "nonExistingTarget:nonExistingTarget"}}},
+		&container{RawName: "existingTarget"},
+		&container{RawName: "nonExistingTarget"},
+	)
+	containerMap["nonExistingSource"].(*StubbedContainer).exists = false
+	containerMap["nonExistingTarget"].(*StubbedContainer).exists = false
+	c := &Config{containerMap: containerMap}
 	c.determineGraph()
 	c.determineTarget("x", "all", "none")
 	if c.target[0] != "existingTarget" || c.target[1] != "nonExistingTarget" || c.target[2] != "x" || len(c.target) != 3 {
@@ -238,29 +305,26 @@ func TestDetermineTargetCascadingToExisting(t *testing.T) {
 func TestExplicitlyTargeted(t *testing.T) {
 	var result []string
 	var containers []string
-	var rawGroups = make(map[string][]string)
-	rawContainerMap := ContainerMap{
-		"a": &container{},
-		"b": &container{},
-		"c": &container{},
-	}
+	containerMap := NewStubbedContainerMap(true,
+		&container{RawName: "a"},
+		&container{RawName: "b"},
+		&container{RawName: "c"},
+	)
 
 	// No target given
 	// If default group exist, it returns its containers
 	result = []string{"a", "b"}
-	rawGroups = map[string][]string{
+	groups := map[string][]string{
 		"default": result,
 	}
-	c := &Config{RawGroups: rawGroups}
-	c.expandEnv()
+	c := &Config{groups: groups}
 	containers = c.explicitlyTargeted("")
 	if len(containers) != 2 || containers[0] != "a" || containers[1] != "b" {
 		t.Errorf("Expected %v, got %v", result, containers)
 	}
 	// If no default group, returns all containers
 	result = []string{"a", "b", "c"}
-	c = &Config{RawContainerMap: rawContainerMap}
-	c.expandEnv()
+	c = &Config{containerMap: containerMap}
 	containers = c.explicitlyTargeted("")
 	if len(containers) != 3 || containers[0] != "a" || containers[1] != "b" || containers[2] != "c" {
 		t.Errorf("Expected %v, got %v", result, containers)
@@ -268,11 +332,10 @@ func TestExplicitlyTargeted(t *testing.T) {
 	// Target given
 	// Target is a group
 	result = []string{"b", "c"}
-	rawGroups = map[string][]string{
+	groups = map[string][]string{
 		"second": result,
 	}
-	c = &Config{RawContainerMap: rawContainerMap, RawGroups: rawGroups}
-	c.expandEnv()
+	c = &Config{containerMap: containerMap, groups: groups}
 	containers = c.explicitlyTargeted("second")
 	if len(containers) != 2 || containers[0] != "b" || containers[1] != "c" {
 		t.Errorf("Expected %v, got %v", result, containers)
@@ -287,7 +350,7 @@ func TestExplicitlyTargeted(t *testing.T) {
 
 func TestContainers(t *testing.T) {
 	c := &Config{
-		containerMap: ContainerMap{"a": &container{RawName: "a"}, "b": &container{RawName: "b"}},
+		containerMap: NewStubbedContainerMap(true, &container{RawName: "a"}, &container{RawName: "b"}),
 		order:        []string{"a", "b"},
 	}
 	containers := c.Containers()
