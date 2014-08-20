@@ -13,7 +13,7 @@ import (
 )
 
 type Config struct {
-	RawContainerMap ContainerMap        `json:"containers" yaml:"containers"`
+	RawContainerMap containerMap        `json:"containers" yaml:"containers"`
 	RawOrder        []string            `json:"order" yaml:"order"`
 	RawGroups       map[string][]string `json:"groups" yaml:"groups"`
 	containerMap    ContainerMap
@@ -26,6 +26,8 @@ type Config struct {
 // ContainerMap maps the container name
 // to its configuration
 type ContainerMap map[string]Container
+
+type containerMap map[string]*container
 
 type Target []string
 
@@ -145,9 +147,8 @@ func (c *Config) expandEnv() {
 	// Container map
 	c.containerMap = make(map[string]Container)
 	for rawName, container := range c.RawContainerMap {
-		container.SetRawName(rawName)
-		name := os.ExpandEnv(rawName)
-		c.containerMap[name] = container
+		container.RawName = rawName
+		c.containerMap[container.Name()] = container
 	}
 	// Order
 	for _, rawName := range c.RawOrder {

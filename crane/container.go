@@ -10,7 +10,6 @@ import (
 )
 
 type Container interface {
-	SetRawName(rawName string)
 	Name() string
 	Dockerfile() string
 	Image() string
@@ -99,10 +98,6 @@ func (c *container) Dependencies() *Dependencies {
 		}
 	}
 	return dependencies
-}
-
-func (c *container) SetRawName(rawName string) {
-	c.RawName = rawName
 }
 
 func (c *container) Name() string {
