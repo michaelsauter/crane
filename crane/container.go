@@ -242,7 +242,10 @@ func (r *RunParameters) Cmd() []string {
 
 func (c *container) Id() string {
 	if len(c.id) == 0 {
-		c.id = inspectString(c.Name(), "{{.Id}}")
+		// `docker inspect` works both for image or containers, make sure this is a
+		// container payload we get back, otherwise we might end up getting the Id
+		// of the image of the same name
+		c.id = inspectString(c.Name(), "{{if .State}}{{.Id}}{{else}}{{end}}")
 	}
 	return c.id
 }
@@ -282,7 +285,7 @@ func (c *container) ImageExists() bool {
 
 func (c *container) Status() []string {
 	fields := []string{c.Name(), c.Image(), "-", "-", "-", "-", "-"}
-	output := inspectString(c.Name(), "{{.Id}}\t{{.Image}}\t{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}\t{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}\t{{.State.Running}}")
+	output := inspectString(c.Id(), "{{.Id}}\t{{.Image}}\t{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}\t{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}\t{{.State.Running}}")
 	if output != "" {
 		copy(fields[2:], strings.Split(output, "\t"))
 		// we asked for the image id the container was created from
