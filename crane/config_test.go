@@ -112,17 +112,6 @@ func TestExpandEnv(t *testing.T) {
 	}
 }
 
-func TestDetermineOrder(t *testing.T) {
-	// Order set manually
-	rawOrder := []string{"a", "b", "c"}
-	c := &Config{RawOrder: rawOrder}
-	c.expandEnv()
-	c.determineOrder(false)
-	if c.order[0] != "a" || c.order[1] != "b" || c.order[2] != "c" {
-		t.Errorf("Order should have been %v, got %v", rawOrder, c.order)
-	}
-}
-
 func TestDetermineTargetLinearChainDependencies(t *testing.T) {
 	containerMap := NewStubbedContainerMap(true,
 		&container{RawName: "a", RunParams: RunParameters{RawLink: []string{"b:b"}}},

@@ -14,7 +14,6 @@ import (
 
 type Config struct {
 	RawContainerMap containerMap        `json:"containers" yaml:"containers"`
-	RawOrder        []string            `json:"order" yaml:"order"`
 	RawGroups       map[string][]string `json:"groups" yaml:"groups"`
 	containerMap    ContainerMap
 	dependencyGraph DependencyGraph
@@ -109,6 +108,10 @@ func unmarshalYAML(data []byte) *Config {
 	return config
 }
 
+// NewConfig retus a new config based on given
+// options.
+// Containers will be ordered so that they can be
+// brought up and down with Docker.
 func NewConfig(options Options, forceOrder bool) *Config {
 	var config *Config
 	for _, f := range configFiles(options) {
@@ -123,7 +126,9 @@ func NewConfig(options Options, forceOrder bool) *Config {
 	config.expandEnv()
 	config.determineGraph()
 	config.determineTarget(options.target, options.cascadeDependencies, options.cascadeAffected)
-	err := config.determineOrder(forceOrder)
+
+	var err error
+	config.order, err = config.dependencyGraph.order(config.target, forceOrder)
 	if err != nil {
 		panic(StatusError{err, 78})
 	}
@@ -150,10 +155,6 @@ func (c *Config) expandEnv() {
 		container.RawName = rawName
 		c.containerMap[container.Name()] = container
 	}
-	// Order
-	for _, rawName := range c.RawOrder {
-		c.order = append(c.order, os.ExpandEnv(rawName))
-	}
 	// Groups
 	c.groups = make(map[string][]string)
 	for groupRawName, rawNames := range c.RawGroups {
@@ -170,23 +171,6 @@ func (c *Config) determineGraph() {
 	for _, container := range c.containerMap {
 		c.dependencyGraph[container.Name()] = container.Dependencies()
 	}
-}
-
-// determineOrder sets the Order field of the config.
-// Containers will be ordered so that they can be
-// brought up and down with Docker.
-func (c *Config) determineOrder(force bool) error {
-	if len(c.order) > 0 {
-		return nil // Order was set manually
-	}
-
-	order, err := c.dependencyGraph.order(c.target, force)
-	if err != nil {
-		return err
-	} else {
-		c.order = order
-	}
-	return nil
 }
 
 // determineTarget receives the specified target
