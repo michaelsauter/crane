@@ -9,6 +9,14 @@ import (
 
 type Containers []Container
 
+func (containers Containers) names() []string {
+	var names []string
+	for _, container := range containers {
+		names = append(names, container.Name())
+	}
+	return names
+}
+
 func (containers Containers) reversed() Containers {
 	var reversed []Container
 	for i := len(containers) - 1; i >= 0; i-- {

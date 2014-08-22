@@ -2,7 +2,9 @@ package crane
 
 import (
 	"fmt"
+	"github.com/michaelsauter/crane/print"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 type Options struct {
@@ -48,7 +50,16 @@ func containersCommand(wrapped func(containers Containers), forceOrder bool) fun
 			cmd.Usage()
 			panic(StatusError{status: 64})
 		}
-		wrapped(NewConfig(options, forceOrder).Containers())
+
+		containers := NewConfig(options, forceOrder).Containers()
+		if len(containers) == 0 {
+			print.Errorf("ERROR: Command cannot be applied to any container.")
+		} else {
+			if isVerbose() {
+				print.Infof("Command will be applied to: %v\n\n", strings.Join(containers.names(), ", "))
+			}
+			wrapped(containers)
+		}
 	}
 }
 
