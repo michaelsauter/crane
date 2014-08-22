@@ -502,6 +502,7 @@ func (c *container) Rm() {
 			}
 			args = append(args, c.Name())
 			executeCommand("docker", args)
+			c.id = ""
 		}
 	}
 }
