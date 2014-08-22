@@ -2,6 +2,7 @@ package crane
 
 import (
 	"reflect"
+	"sort"
 	"testing"
 )
 
@@ -40,7 +41,7 @@ func TestConfigFiles(t *testing.T) {
 
 func TestUnmarshalJSON(t *testing.T) {
 	json := []byte(
-`{
+		`{
     "containers": {
         "apache": {
             "dockerfile": "apache",
@@ -74,7 +75,7 @@ func TestUnmarshalJSON(t *testing.T) {
 
 func TestUnmarshalYAML(t *testing.T) {
 	yaml := []byte(
-`containers:
+		`containers:
   apache:
     dockerfile: apache
     image: michaelsauter/apache
@@ -303,7 +304,7 @@ func TestDetermineTargetCascadingToExisting(t *testing.T) {
 }
 
 func TestExplicitlyTargeted(t *testing.T) {
-	var result []string
+	var expected []string
 	var containers []string
 	containerMap := NewStubbedContainerMap(true,
 		&container{RawName: "a"},
@@ -313,38 +314,39 @@ func TestExplicitlyTargeted(t *testing.T) {
 
 	// No target given
 	// If default group exist, it returns its containers
-	result = []string{"a", "b"}
+	expected = []string{"a", "b"}
 	groups := map[string][]string{
-		"default": result,
+		"default": expected,
 	}
 	c := &Config{groups: groups}
 	containers = c.explicitlyTargeted("")
 	if len(containers) != 2 || containers[0] != "a" || containers[1] != "b" {
-		t.Errorf("Expected %v, got %v", result, containers)
+		t.Errorf("Expected %v, got %v", expected, containers)
 	}
 	// If no default group, returns all containers
-	result = []string{"a", "b", "c"}
+	expected = []string{"a", "b", "c"}
 	c = &Config{containerMap: containerMap}
 	containers = c.explicitlyTargeted("")
+	sort.Strings(containers)
 	if len(containers) != 3 || containers[0] != "a" || containers[1] != "b" || containers[2] != "c" {
-		t.Errorf("Expected %v, got %v", result, containers)
+		t.Errorf("Expected %v, got %v", expected, containers)
 	}
 	// Target given
 	// Target is a group
-	result = []string{"b", "c"}
+	expected = []string{"b", "c"}
 	groups = map[string][]string{
-		"second": result,
+		"second": expected,
 	}
 	c = &Config{containerMap: containerMap, groups: groups}
 	containers = c.explicitlyTargeted("second")
 	if len(containers) != 2 || containers[0] != "b" || containers[1] != "c" {
-		t.Errorf("Expected %v, got %v", result, containers)
+		t.Errorf("Expected %v, got %v", expected, containers)
 	}
 	// Target is a container
-	result = []string{"a"}
+	expected = []string{"a"}
 	containers = c.explicitlyTargeted("a")
 	if len(containers) != 1 || containers[0] != "a" {
-		t.Errorf("Expected %v, got %v", result, containers)
+		t.Errorf("Expected %v, got %v", expected, containers)
 	}
 }
 
