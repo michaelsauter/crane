@@ -67,9 +67,9 @@ func handleCmd() {
 
 	var cmdLift = &cobra.Command{
 		Use:   "lift",
-		Short: "Build or pull images, then run or start the containers",
+		Short: "Build or pull images if they don't exist, then run or start the containers",
 		Long: `
-lift will provision and run all targeted containers.`,
+lift will provision missing images and run all targeted containers.`,
 		Run: containersCommand(func(containers Containers) {
 			containers.lift(options.recreate, options.nocache)
 		}, false),
@@ -197,7 +197,7 @@ See the corresponding docker commands for more information.`,
 	craneCmd.PersistentFlags().StringVarP(&options.cascadeDependencies, "cascade-dependencies", "d", "none", "Also apply the command for the containers that (any of) the explicitly targeted one(s) depend on"+cascadingValuesSuffix)
 	craneCmd.PersistentFlags().StringVarP(&options.cascadeAffected, "cascade-affected", "a", "none", "Also apply the command for the existing containers depending on (any of) the explicitly targeted one(s)"+cascadingValuesSuffix)
 
-	cmdLift.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (kill and remove containers, provision images, run containers)")
+	cmdLift.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (kill and remove containers if they exist, force-provision images, run containers)")
 	cmdLift.Flags().BoolVarP(&options.nocache, "no-cache", "n", false, "Build the image without any cache")
 
 	cmdProvision.Flags().BoolVarP(&options.nocache, "no-cache", "n", false, "Build the image without any cache")
