@@ -85,6 +85,9 @@ The map of containers consists of the name of the container mapped to the contai
 	* `cmd` (array/string) Command to append to `docker run` (overwriting `CMD`).
 * `rm` (object, optional): Parameters mapped to Docker's `rm`.
 	* `volumes` (boolean)
+* `start` (object, optional): Parameters mapped to Docker's `start`.
+	* `attach` (boolean)
+	* `interactive` (boolean)
 
 See the [Docker documentation](http://docs.docker.io/en/latest/reference/commandline/cli/#run) for more details about the parameters.
 

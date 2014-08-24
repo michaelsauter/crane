@@ -36,10 +36,11 @@ type Container interface {
 type container struct {
 	id            string
 	RawName       string
-	RawDockerfile string        `json:"dockerfile" yaml:"dockerfile"`
-	RawImage      string        `json:"image" yaml:"image"`
-	RunParams     RunParameters `json:"run" yaml:"run"`
-	RmParams      RmParameters  `json:"rm" yaml:"rm"`
+	RawDockerfile string          `json:"dockerfile" yaml:"dockerfile"`
+	RawImage      string          `json:"image" yaml:"image"`
+	RunParams     RunParameters   `json:"run" yaml:"run"`
+	RmParams      RmParameters    `json:"rm" yaml:"rm"`
+	StartParams   StartParameters `json:"start" yaml:"start"`
 }
 
 type RunParameters struct {
@@ -71,6 +72,11 @@ type RunParameters struct {
 
 type RmParameters struct {
 	Volumes bool `json:"volumes" yaml:"volumes"`
+}
+
+type StartParameters struct {
+	Attach      bool `json:"attach" yaml:"attach"`
+	Interactive bool `json:"interactive" yaml:"interactive"`
 }
 
 func (c *container) Dependencies() *Dependencies {
@@ -437,7 +443,14 @@ func (c *container) Start() {
 	if c.Exists() {
 		if !c.Running() {
 			fmt.Printf("Starting container %s ... ", c.Name())
-			args := []string{"start", c.Name()}
+			args := []string{"start"}
+			if c.StartParams.Attach {
+				args = append(args, "--attach")
+			}
+			if c.StartParams.Interactive {
+				args = append(args, "--interactive")
+			}
+			args = append(args, c.Name())
 			executeCommand("docker", args)
 		}
 	} else {
