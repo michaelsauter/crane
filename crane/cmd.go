@@ -222,7 +222,7 @@ Available Commands: {{range .Commands}}{{if .Runnable}}
 {{end}}
 Explicit targeting:
   By default, the command is applied to all containers declared in the
-  config,  or to the containers defined in the group `+"`"+`default`+"`"+` if it is
+  config,  or to the containers defined in the group ` + "`" + `default` + "`" + ` if it is
   defined. If one or several container or group reference(s) is/are
   passed as  argument(s), the command will only be applied to containers
   matching these references. Note however that providing cascading flags
