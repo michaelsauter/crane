@@ -45,7 +45,12 @@ func containersCommand(wrapped func(containers Containers), forceOrder bool) fun
 				panic(StatusError{status: 64})
 			}
 		}
-		if len(args) > 0 {
+		if options.target != "" {
+			print.Noticef("DEPRECATION: -t/--target is now implicit and will be removed in an upcoming release\n")
+		}
+		if len(args) == 1 {
+			options.target = args[0]
+		} else if len(args) > 0 {
 			cmd.Printf("Error: too many arguments given: %#q", args)
 			cmd.Usage()
 			panic(StatusError{status: 64})
@@ -187,7 +192,7 @@ See the corresponding docker commands for more information.`,
 
 	craneCmd.PersistentFlags().BoolVarP(&options.verbose, "verbose", "v", false, "Verbose output")
 	craneCmd.PersistentFlags().StringVarP(&options.config, "config", "c", "", "Config file to read from")
-	craneCmd.PersistentFlags().StringVarP(&options.target, "target", "t", "", "Group or container to execute the command for")
+	craneCmd.PersistentFlags().StringVarP(&options.target, "target", "t", "", "Group or container to execute the command for [DEPRECATED, NOW IMPLICIT]")
 	cascadingValuesSuffix := `
 					"all": follow any kind of dependency
 					"link": follow --link dependencies only
