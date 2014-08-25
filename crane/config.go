@@ -176,7 +176,7 @@ func (c *Config) determineGraph() {
 // determineTarget receives the specified target
 // and determines which containers should be targeted.
 // Additionally, ot sorts these alphabetically.
-func (c *Config) determineTarget(target string, cascadeDependencies string, cascadeAffected string) {
+func (c *Config) determineTarget(target []string, cascadeDependencies string, cascadeAffected string) {
 	// start from the explicitly targeted target
 	includedSet := make(map[string]bool)
 	cascadingSeeds := []string{}
@@ -230,9 +230,11 @@ func (c *Config) determineTarget(target string, cascadeDependencies string, casc
 
 // explicitlyTargeted receives a target and determines which
 // containers of the map are targeted
-func (c *Config) explicitlyTargeted(target string) []string {
+func (c *Config) explicitlyTargeted(target []string) (result []string) {
+	result = []string{}
 	// target not given
-	if len(target) == 0 {
+	if len(target) == 0 ||
+			(len(target) == 1 && target[0] == "") { //FIXME: remove when -t/--target is removed
 		// If default group exists, return its containers
 		for group, containers := range c.groups {
 			if group == "default" {
@@ -240,28 +242,37 @@ func (c *Config) explicitlyTargeted(target string) []string {
 			}
 		}
 		// If no default group exists, return all containers
-		var containers []string
 		for name, _ := range c.containerMap {
-			containers = append(containers, name)
+			result = append(result, name)
 		}
-		return containers
+		return
 	}
 	// target given
-	target = os.ExpandEnv(target)
-	// Select target from listed groups
-	for group, containers := range c.groups {
-		if group == target {
-			return containers
+	for _, reference := range target {
+		success := false
+		reference = os.ExpandEnv(reference)
+		// Select reference from listed groups
+		for group, containers := range c.groups {
+			if group == reference {
+				result = append(result, containers...)
+				success = true
+				break
+			}
 		}
-	}
-	// The target might just be one container
-	for name, _ := range c.containerMap {
-		if name == target {
-			return append([]string{}, target)
+		if success { continue }
+		// The reference might just be one container
+		for name, _ := range c.containerMap {
+			if name == reference {
+				result = append(result, reference)
+				success = true
+				break
+			}
 		}
+		if success { continue }
+		// Otherwise, fail verbosely
+		panic(StatusError{fmt.Errorf("No group or container matching `%s`", reference), 64})
 	}
-	// Otherwise, fail verbosely
-	panic(StatusError{fmt.Errorf("No group or container matching `%s`", target), 64})
+	return
 }
 
 // includes checks whether the given needle is

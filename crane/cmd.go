@@ -16,7 +16,7 @@ type Options struct {
 	cascadeDependencies string
 	cascadeAffected     string
 	config              string
-	target              string
+	target              []string
 }
 
 var options = Options{
@@ -28,7 +28,7 @@ var options = Options{
 	cascadeDependencies: "",
 	cascadeAffected:     "",
 	config:              "",
-	target:              "",
+	target:              make([]string, 1), //FIXME: remove pre-allocation when -t/--target is removed
 }
 
 func isVerbose() bool {
@@ -45,15 +45,13 @@ func containersCommand(wrapped func(containers Containers), forceOrder bool) fun
 				panic(StatusError{status: 64})
 			}
 		}
-		if options.target != "" {
+		if options.target[0] != "" { //FIXME: remove when -t/--target is removed
 			print.Noticef("DEPRECATION: -t/--target is now implicit and will be removed in an upcoming release\n")
-		}
-		if len(args) == 1 {
-			options.target = args[0]
-		} else if len(args) > 0 {
-			cmd.Printf("Error: too many arguments given: %#q", args)
-			cmd.Usage()
-			panic(StatusError{status: 64})
+			if len(args) > 0 {
+				options.target = append(args, options.target[0])
+			}
+		} else {
+			options.target = args
 		}
 
 		containers := NewConfig(options, forceOrder).Containers()
@@ -192,7 +190,7 @@ See the corresponding docker commands for more information.`,
 
 	craneCmd.PersistentFlags().BoolVarP(&options.verbose, "verbose", "v", false, "Verbose output")
 	craneCmd.PersistentFlags().StringVarP(&options.config, "config", "c", "", "Config file to read from")
-	craneCmd.PersistentFlags().StringVarP(&options.target, "target", "t", "", "Group or container to execute the command for [DEPRECATED, NOW IMPLICIT]")
+	craneCmd.PersistentFlags().StringVarP(&options.target[0], "target", "t", "", "Group or container to execute the command for [DEPRECATED, NOW IMPLICIT]")
 	cascadingValuesSuffix := `
 					"all": follow any kind of dependency
 					"link": follow --link dependencies only
@@ -212,6 +210,31 @@ See the corresponding docker commands for more information.`,
 	cmdRm.Flags().BoolVarP(&options.kill, "kill", "k", false, "Kill containers if they are running first")
 
 	cmdStatus.Flags().BoolVarP(&options.notrunc, "no-trunc", "", false, "Don't truncate output")
+
+	// default usage template with target arguments & description
+	craneCmd.SetUsageTemplate(`{{ $cmd := . }}
+Usage: {{if .Runnable}}
+  {{.UseLine}}{{if .HasFlags}} [flags]{{end}}{{end}}{{if .HasSubCommands}}
+  {{ .CommandPath}} [command]{{end}} [target1 [target2 [...]]]
+{{ if .HasSubCommands}}
+Available Commands: {{range .Commands}}{{if .Runnable}}
+  {{rpad .Use .UsagePadding }} {{.Short}}{{end}}{{end}}
+{{end}}
+Explicit targeting:
+  By default, the command is applied to all containers declared in the
+  config,  or to the containers defined in the group `+"`"+`default`+"`"+` if it is
+  defined. If one or several container or group reference(s) is/are
+  passed as  argument(s), the command will only be applied to containers
+  matching these references. Note however that providing cascading flags
+  might extend the set of targeted containers.
+
+{{ if .HasFlags}}Available Flags:
+{{.Flags.FlagUsages}}{{end}}{{if .HasParent}}{{if and (gt .Commands 0) (gt .Parent.Commands 1) }}
+Additional help topics: {{if gt .Commands 0 }}{{range .Commands}}{{if not .Runnable}} {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}{{if gt .Parent.Commands 1 }}{{range .Parent.Commands}}{{if .Runnable}}{{if not (eq .Name $cmd.Name) }}{{end}}
+  {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}{{end}}
+{{end}}
+Use "{{.Root.Name}} help [command]" for more information about that command.
+`)
 
 	craneCmd.AddCommand(cmdLift, cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdPause, cmdUnpause, cmdPush, cmdStatus, cmdVersion)
 	err := craneCmd.Execute()
