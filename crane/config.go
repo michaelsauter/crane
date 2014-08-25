@@ -234,7 +234,7 @@ func (c *Config) explicitlyTargeted(target []string) (result []string) {
 	result = []string{}
 	// target not given
 	if len(target) == 0 ||
-			(len(target) == 1 && target[0] == "") { //FIXME: remove when -t/--target is removed
+		(len(target) == 1 && target[0] == "") { //FIXME: remove when -t/--target is removed
 		// If default group exists, return its containers
 		for group, containers := range c.groups {
 			if group == "default" {
@@ -259,7 +259,9 @@ func (c *Config) explicitlyTargeted(target []string) (result []string) {
 				break
 			}
 		}
-		if success { continue }
+		if success {
+			continue
+		}
 		// The reference might just be one container
 		for name, _ := range c.containerMap {
 			if name == reference {
@@ -268,7 +270,9 @@ func (c *Config) explicitlyTargeted(target []string) (result []string) {
 				break
 			}
 		}
-		if success { continue }
+		if success {
+			continue
+		}
 		// Otherwise, fail verbosely
 		panic(StatusError{fmt.Errorf("No group or container matching `%s`", reference), 64})
 	}
