@@ -148,16 +148,26 @@ If you want to use JSON instead of YAML, here's what a simple configuration look
 ```
 
 ## Advanced Usage
-Next to containers, you can also specify groups, and then execute Crane commands that only target those groups. If you do not specify `--target`, the command will apply to all containers. However, you can override this by specifying a `default` group. Also, every container can be targeted individually by using the name of the container as an argument to `--target`. Groups of containers can be specified like this (YAML shown):
+Next to containers, you can also specify groups, and then execute Crane commands that only target those groups. If you do not specify any target as non-option arguments, the command will apply to all containers. However, you can override this by specifying a `default` group. Also, every container can be targeted individually by using the name of the container in the non-option arguments. Note that any number of group or container references can be used as target, and that ordering doesn't matter since containers will be ordered according to the dependency graph. Groups of containers can be specified like this (YAML shown):
 
 ```
+containers:
+  database1:
+    ../..
+  database2:
+    ../..
+  service1:
+    ../..
+  service2:
+    ../..
 groups:
-	databases: ["database1", "database2"]
-	development: ["container1", "container2"]
+  default: ["service1", "database1"]
+  databases: ["database1", "database2"]
+  services: ["service1", "service2"]
 
 ```
 
-This could be used like so: `crane provision --target="container1"` or `crane run --target="databases"`.
+This could be used like so: `crane provision service1`, `crane run -v databases` or `crane lift -r services database1`. `crane status` is an alias for `crane status default`, which in that example is an alias for `crane status service1 database1`.
 
 When using targets, it is also possible to cascade the commands to related containers. There are 2 different flags, `--cascade-affected` and `--cascade-dependencies`. In our example configuration above, when targeting the `mysql` container, the `apache` container would be considered to be "affected". When targeting the `apache` container, the `mysql` container would be considered as a "dependency". Both flags take a string argument, which specifies which type of cascading is desired, options are `volumesFrom`, `link`, `net` and `all`.
 
