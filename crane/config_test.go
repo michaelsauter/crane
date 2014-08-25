@@ -122,37 +122,37 @@ func TestDetermineTargetLinearChainDependencies(t *testing.T) {
 	c.determineGraph()
 
 	examples := []struct {
-		target              string
+		target              []string
 		cascadeDependencies string
 		cascadeAffected     string
 		expected            Target
 	}{
 		{
-			target:              "a",
+			target:              []string{"a"},
 			cascadeDependencies: "all",
 			cascadeAffected:     "none",
 			expected:            []string{"a", "b", "c"},
 		},
 		{
-			target:              "b",
+			target:              []string{"b"},
 			cascadeDependencies: "all",
 			cascadeAffected:     "none",
 			expected:            []string{"b", "c"},
 		},
 		{
-			target:              "c",
+			target:              []string{"c"},
 			cascadeDependencies: "none",
 			cascadeAffected:     "all",
 			expected:            []string{"a", "b", "c"},
 		},
 		{
-			target:              "b",
+			target:              []string{"b"},
 			cascadeDependencies: "none",
 			cascadeAffected:     "all",
 			expected:            []string{"a", "b"},
 		},
 		{
-			target:              "b",
+			target:              []string{"b"},
 			cascadeDependencies: "all",
 			cascadeAffected:     "all",
 			expected:            []string{"a", "b", "c"},
@@ -175,28 +175,25 @@ func TestDetermineTargetGraphDependencies(t *testing.T) {
 		&container{RawName: "d"},
 		&container{RawName: "e"},
 	)
-	groups := map[string][]string{
-		"bc": []string{"b", "c"},
-	}
-	c := &Config{containerMap: containerMap, groups: groups}
+	c := &Config{containerMap: containerMap}
 	c.determineGraph()
-	c.determineTarget("a", "all", "none")
+	c.determineTarget([]string{"a"}, "all", "none")
 	if len(c.target) != 5 {
 		t.Errorf("all containers should have been targeted but got %v", c.target)
 	}
-	c.determineTarget("b", "all", "none")
+	c.determineTarget([]string{"b"}, "all", "none")
 	if c.target[0] != "b" || c.target[1] != "d" || len(c.target) != 2 {
 		t.Errorf("all b and d should have been targeted but got %v", c.target)
 	}
-	c.determineTarget("bc", "all", "none")
+	c.determineTarget([]string{"b", "c"}, "all", "none")
 	if c.target[0] != "b" || c.target[1] != "c" || c.target[2] != "d" || c.target[3] != "e" || len(c.target) != 4 {
 		t.Errorf("a should have been left out but got %v", c.target)
 	}
-	c.determineTarget("bc", "none", "all")
+	c.determineTarget([]string{"b", "c"}, "none", "all")
 	if c.target[0] != "a" || c.target[1] != "b" || c.target[2] != "c" || len(c.target) != 3 {
 		t.Errorf("d and e should have been left out but got %v", c.target)
 	}
-	c.determineTarget("bc", "all", "all")
+	c.determineTarget([]string{"b", "c"}, "all", "all")
 	if len(c.target) != 5 {
 		t.Errorf("all containers should have been targeted but got %v", c.target)
 	}
@@ -210,15 +207,15 @@ func TestDetermineTargetMissingDependencies(t *testing.T) {
 	)
 	c := &Config{containerMap: containerMap}
 	c.determineGraph()
-	c.determineTarget("a", "all", "none")
+	c.determineTarget([]string{"a"}, "all", "none")
 	if len(c.target) != 3 {
 		t.Errorf("only declared containers should have been targeted but got %v", c.target)
 	}
-	c.determineTarget("c", "none", "all")
+	c.determineTarget([]string{"c"}, "none", "all")
 	if len(c.target) != 3 {
 		t.Errorf("only declared containers should have been targeted but got %v", c.target)
 	}
-	c.determineTarget("a", "all", "all")
+	c.determineTarget([]string{"a"}, "all", "all")
 	if len(c.target) != 3 {
 		t.Errorf("only declared containers should have been targeted but got %v", c.target)
 	}
@@ -236,35 +233,35 @@ func TestDetermineTargetCustomCascading(t *testing.T) {
 	)
 	c := &Config{containerMap: containerMap}
 	c.determineGraph()
-	c.determineTarget("x", "all", "none")
+	c.determineTarget([]string{"x"}, "all", "none")
 	if c.target[0] != "linkTarget" || c.target[1] != "netTarget" || c.target[2] != "volumesFromTarget" || c.target[3] != "x" || len(c.target) != 4 {
 		t.Errorf("all *Target containers should have been targeted but got %v", c.target)
 	}
-	c.determineTarget("x", "link", "none")
+	c.determineTarget([]string{"x"}, "link", "none")
 	if c.target[0] != "linkTarget" || c.target[1] != "x" || len(c.target) != 2 {
 		t.Errorf("linkTarget should have been targeted but got %v", c.target)
 	}
-	c.determineTarget("x", "net", "none")
+	c.determineTarget([]string{"x"}, "net", "none")
 	if c.target[0] != "netTarget" || c.target[1] != "x" || len(c.target) != 2 {
 		t.Errorf("netTarget should have been targeted but got %v", c.target)
 	}
-	c.determineTarget("x", "volumesFrom", "none")
+	c.determineTarget([]string{"x"}, "volumesFrom", "none")
 	if c.target[0] != "volumesFromTarget" || c.target[1] != "x" || len(c.target) != 2 {
 		t.Errorf("volumesFromTarget should have been targeted but got %v", c.target)
 	}
-	c.determineTarget("x", "none", "all")
+	c.determineTarget([]string{"x"}, "none", "all")
 	if c.target[0] != "linkSource" || c.target[1] != "netSource" || c.target[2] != "volumesFromSource" || c.target[3] != "x" || len(c.target) != 4 {
 		t.Errorf("all *Source containers should have been targeted but got %v", c.target)
 	}
-	c.determineTarget("x", "none", "net")
+	c.determineTarget([]string{"x"}, "none", "net")
 	if c.target[0] != "netSource" || c.target[1] != "x" || len(c.target) != 2 {
 		t.Errorf("netSource should have been targeted but got %v", c.target)
 	}
-	c.determineTarget("x", "none", "volumesFrom")
+	c.determineTarget([]string{"x"}, "none", "volumesFrom")
 	if c.target[0] != "volumesFromSource" || c.target[1] != "x" || len(c.target) != 2 {
 		t.Errorf("volumesFromSource should have been targeted but got %v", c.target)
 	}
-	c.determineTarget("x", "volumesFrom", "volumesFrom")
+	c.determineTarget([]string{"x"}, "volumesFrom", "volumesFrom")
 	if c.target[0] != "volumesFromSource" || c.target[1] != "volumesFromTarget" || c.target[2] != "x" || len(c.target) != 3 {
 		t.Errorf("all volumesFrom* containers should have been targeted but got %v", c.target)
 	}
@@ -282,11 +279,11 @@ func TestDetermineTargetCascadingToExisting(t *testing.T) {
 	containerMap["nonExistingTarget"].(*StubbedContainer).exists = false
 	c := &Config{containerMap: containerMap}
 	c.determineGraph()
-	c.determineTarget("x", "all", "none")
+	c.determineTarget([]string{"x"}, "all", "none")
 	if c.target[0] != "existingTarget" || c.target[1] != "nonExistingTarget" || c.target[2] != "x" || len(c.target) != 3 {
 		t.Errorf("all *Target containers should have been targeted but got %v", c.target)
 	}
-	c.determineTarget("x", "none", "all")
+	c.determineTarget([]string{"x"}, "none", "all")
 	if c.target[0] != "existingSource" || c.target[1] != "x" || len(c.target) != 2 {
 		t.Errorf("from the *Source containers, only existingSource should have been targeted but got %v", c.target)
 	}
@@ -308,14 +305,23 @@ func TestExplicitlyTargeted(t *testing.T) {
 		"default": expected,
 	}
 	c := &Config{groups: groups}
-	containers = c.explicitlyTargeted("")
+	containers = c.explicitlyTargeted([]string{})
+	if len(containers) != 2 || containers[0] != "a" || containers[1] != "b" {
+		t.Errorf("Expected %v, got %v", expected, containers)
+	}
+	containers = c.explicitlyTargeted([]string{""}) //FIXME: remove when -t/--target is removed
 	if len(containers) != 2 || containers[0] != "a" || containers[1] != "b" {
 		t.Errorf("Expected %v, got %v", expected, containers)
 	}
 	// If no default group, returns all containers
 	expected = []string{"a", "b", "c"}
 	c = &Config{containerMap: containerMap}
-	containers = c.explicitlyTargeted("")
+	containers = c.explicitlyTargeted([]string{})
+	sort.Strings(containers)
+	if len(containers) != 3 || containers[0] != "a" || containers[1] != "b" || containers[2] != "c" {
+		t.Errorf("Expected %v, got %v", expected, containers)
+	}
+	containers = c.explicitlyTargeted([]string{""}) //FIXME: remove when -t/--target is removed
 	sort.Strings(containers)
 	if len(containers) != 3 || containers[0] != "a" || containers[1] != "b" || containers[2] != "c" {
 		t.Errorf("Expected %v, got %v", expected, containers)
@@ -327,14 +333,26 @@ func TestExplicitlyTargeted(t *testing.T) {
 		"second": expected,
 	}
 	c = &Config{containerMap: containerMap, groups: groups}
-	containers = c.explicitlyTargeted("second")
+	containers = c.explicitlyTargeted([]string{"second"})
 	if len(containers) != 2 || containers[0] != "b" || containers[1] != "c" {
 		t.Errorf("Expected %v, got %v", expected, containers)
 	}
 	// Target is a container
 	expected = []string{"a"}
-	containers = c.explicitlyTargeted("a")
+	containers = c.explicitlyTargeted([]string{"a"})
 	if len(containers) != 1 || containers[0] != "a" {
+		t.Errorf("Expected %v, got %v", expected, containers)
+	}
+	// Target is 2 containers
+	expected = []string{"a", "b"}
+	containers = c.explicitlyTargeted([]string{"a", "b"})
+	if len(containers) != 2 || containers[0] != "a" || containers[1] != "b" {
+		t.Errorf("Expected %v, got %v", expected, containers)
+	}
+	// Target is a container and a group
+	expected = []string{"a", "b", "c"}
+	containers = c.explicitlyTargeted([]string{"a", "second"})
+	if len(containers) != 3 || containers[0] != "a" || containers[1] != "b" || containers[2] != "c" {
 		t.Errorf("Expected %v, got %v", expected, containers)
 	}
 }
