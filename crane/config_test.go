@@ -105,7 +105,7 @@ func TestExpandEnv(t *testing.T) {
 		"a": &container{},
 		"b": &container{},
 	}
-	c := &Config{RawContainerMap: rawContainerMap}
+	c := &config{RawContainerMap: rawContainerMap}
 	c.expandEnv()
 	if c.containerMap["a"].Name() != "a" || c.containerMap["b"].Name() != "b" {
 		t.Errorf("Names should be 'a' and 'b', got %s and %s", c.containerMap["a"].Name(), c.containerMap["b"].Name())
@@ -118,7 +118,7 @@ func TestDetermineTargetLinearChainDependencies(t *testing.T) {
 		&container{RawName: "b", RunParams: RunParameters{RawLink: []string{"c:c"}}},
 		&container{RawName: "c"},
 	)
-	c := &Config{containerMap: containerMap}
+	c := &config{containerMap: containerMap}
 	c.determineGraph()
 
 	examples := []struct {
@@ -175,7 +175,7 @@ func TestDetermineTargetGraphDependencies(t *testing.T) {
 		&container{RawName: "d"},
 		&container{RawName: "e"},
 	)
-	c := &Config{containerMap: containerMap}
+	c := &config{containerMap: containerMap}
 	c.determineGraph()
 	c.determineTarget([]string{"a"}, "all", "none")
 	if len(c.target) != 5 {
@@ -205,7 +205,7 @@ func TestDetermineTargetMissingDependencies(t *testing.T) {
 		&container{RawName: "b", RunParams: RunParameters{RawLink: []string{"c:c"}}},
 		&container{RawName: "c", RunParams: RunParameters{RawLink: []string{"d:d"}}},
 	)
-	c := &Config{containerMap: containerMap}
+	c := &config{containerMap: containerMap}
 	c.determineGraph()
 	c.determineTarget([]string{"a"}, "all", "none")
 	if len(c.target) != 3 {
@@ -231,7 +231,7 @@ func TestDetermineTargetCustomCascading(t *testing.T) {
 		&container{RawName: "netTarget"},
 		&container{RawName: "volumesFromTarget"},
 	)
-	c := &Config{containerMap: containerMap}
+	c := &config{containerMap: containerMap}
 	c.determineGraph()
 	c.determineTarget([]string{"x"}, "all", "none")
 	if c.target[0] != "linkTarget" || c.target[1] != "netTarget" || c.target[2] != "volumesFromTarget" || c.target[3] != "x" || len(c.target) != 4 {
@@ -277,7 +277,7 @@ func TestDetermineTargetCascadingToExisting(t *testing.T) {
 	)
 	containerMap["nonExistingSource"].(*StubbedContainer).exists = false
 	containerMap["nonExistingTarget"].(*StubbedContainer).exists = false
-	c := &Config{containerMap: containerMap}
+	c := &config{containerMap: containerMap}
 	c.determineGraph()
 	c.determineTarget([]string{"x"}, "all", "none")
 	if c.target[0] != "existingTarget" || c.target[1] != "nonExistingTarget" || c.target[2] != "x" || len(c.target) != 3 {
@@ -304,7 +304,7 @@ func TestExplicitlyTargeted(t *testing.T) {
 	groups := map[string][]string{
 		"default": expected,
 	}
-	c := &Config{groups: groups}
+	c := &config{groups: groups}
 	containers = c.explicitlyTargeted([]string{})
 	if len(containers) != 2 || containers[0] != "a" || containers[1] != "b" {
 		t.Errorf("Expected %v, got %v", expected, containers)
@@ -315,7 +315,7 @@ func TestExplicitlyTargeted(t *testing.T) {
 	}
 	// If no default group, returns all containers
 	expected = []string{"a", "b", "c"}
-	c = &Config{containerMap: containerMap}
+	c = &config{containerMap: containerMap}
 	containers = c.explicitlyTargeted([]string{})
 	sort.Strings(containers)
 	if len(containers) != 3 || containers[0] != "a" || containers[1] != "b" || containers[2] != "c" {
@@ -332,7 +332,7 @@ func TestExplicitlyTargeted(t *testing.T) {
 	groups = map[string][]string{
 		"second": expected,
 	}
-	c = &Config{containerMap: containerMap, groups: groups}
+	c = &config{containerMap: containerMap, groups: groups}
 	containers = c.explicitlyTargeted([]string{"second"})
 	if len(containers) != 2 || containers[0] != "b" || containers[1] != "c" {
 		t.Errorf("Expected %v, got %v", expected, containers)
@@ -358,7 +358,7 @@ func TestExplicitlyTargeted(t *testing.T) {
 }
 
 func TestContainers(t *testing.T) {
-	c := &Config{
+	c := &config{
 		containerMap: NewStubbedContainerMap(true, &container{RawName: "a"}, &container{RawName: "b"}),
 		order:        []string{"a", "b"},
 	}

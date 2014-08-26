@@ -61,7 +61,7 @@ func configCommand(wrapped func(config Config), forceOrder bool) func(cmd *cobra
 			if isVerbose() {
 				print.Infof("Command will be applied to: %v\n\n", strings.Join(containers.names(), ", "))
 			}
-			wrapped(*config)
+			wrapped(config)
 		}
 	}
 }

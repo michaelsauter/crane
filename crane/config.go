@@ -12,7 +12,11 @@ import (
 	"sort"
 )
 
-type Config struct {
+type Config interface {
+	Containers() Containers
+}
+
+type config struct {
 	RawContainerMap containerMap        `json:"containers" yaml:"containers"`
 	RawGroups       map[string][]string `json:"groups" yaml:"groups"`
 	containerMap    ContainerMap
@@ -44,7 +48,7 @@ func configFiles(options Options) []string {
 
 // readConfig will read the config file
 // and return the created config.
-func readConfig(filename string) *Config {
+func readConfig(filename string) *config {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		panic(StatusError{err, 74})
@@ -86,8 +90,8 @@ func displaySyntaxError(data []byte, syntaxError error) (err error) {
 
 // unmarshalJSON converts given JSON data
 // into a config object.
-func unmarshalJSON(data []byte) *Config {
-	var config *Config
+func unmarshalJSON(data []byte) *config {
+	var config *config
 	err := json.Unmarshal(data, &config)
 	if err != nil {
 		err = displaySyntaxError(data, err)
@@ -98,8 +102,8 @@ func unmarshalJSON(data []byte) *Config {
 
 // unmarshalYAML converts given YAML data
 // into a config object.
-func unmarshalYAML(data []byte) *Config {
-	var config *Config
+func unmarshalYAML(data []byte) *config {
+	var config *config
 	err := yaml.Unmarshal(data, &config)
 	if err != nil {
 		err = displaySyntaxError(data, err)
@@ -112,8 +116,8 @@ func unmarshalYAML(data []byte) *Config {
 // options.
 // Containers will be ordered so that they can be
 // brought up and down with Docker.
-func NewConfig(options Options, forceOrder bool) *Config {
-	var config *Config
+func NewConfig(options Options, forceOrder bool) Config {
+	var config *config
 	for _, f := range configFiles(options) {
 		if _, err := os.Stat(f); err == nil {
 			config = readConfig(f)
@@ -136,7 +140,7 @@ func NewConfig(options Options, forceOrder bool) *Config {
 }
 
 // Containers returns the containers of the config in order
-func (c *Config) Containers() Containers {
+func (c *config) Containers() Containers {
 	var containers Containers
 	for _, name := range c.order {
 		containers = append([]Container{c.containerMap[name]}, containers...)
@@ -148,7 +152,7 @@ func (c *Config) Containers() Containers {
 // with expanded names and sets the RawName of each
 // container to the map key.
 // It also expand variables in the order and the groups.
-func (c *Config) expandEnv() {
+func (c *config) expandEnv() {
 	// Container map
 	c.containerMap = make(map[string]Container)
 	for rawName, container := range c.RawContainerMap {
@@ -166,7 +170,7 @@ func (c *Config) expandEnv() {
 
 // generateGraph generated the dependency graph, which is
 // a map describing the dependencies between the containers.
-func (c *Config) determineGraph() {
+func (c *config) determineGraph() {
 	c.dependencyGraph = make(DependencyGraph)
 	for _, container := range c.containerMap {
 		c.dependencyGraph[container.Name()] = container.Dependencies()
@@ -176,7 +180,7 @@ func (c *Config) determineGraph() {
 // determineTarget receives the specified target
 // and determines which containers should be targeted.
 // Additionally, ot sorts these alphabetically.
-func (c *Config) determineTarget(target []string, cascadeDependencies string, cascadeAffected string) {
+func (c *config) determineTarget(target []string, cascadeDependencies string, cascadeAffected string) {
 	// start from the explicitly targeted target
 	includedSet := make(map[string]bool)
 	cascadingSeeds := []string{}
@@ -230,7 +234,7 @@ func (c *Config) determineTarget(target []string, cascadeDependencies string, ca
 
 // explicitlyTargeted receives a target and determines which
 // containers of the map are targeted
-func (c *Config) explicitlyTargeted(target []string) (result []string) {
+func (c *config) explicitlyTargeted(target []string) (result []string) {
 	result = []string{}
 	// target not given
 	if len(target) == 0 ||
