@@ -357,12 +357,12 @@ func TestExplicitlyTargeted(t *testing.T) {
 	}
 }
 
-func TestContainers(t *testing.T) {
+func TestTargetedContainers(t *testing.T) {
 	c := &config{
 		containerMap: NewStubbedContainerMap(true, &container{RawName: "a"}, &container{RawName: "b"}),
 		order:        []string{"a", "b"},
 	}
-	containers := c.Containers()
+	containers := c.TargetedContainers()
 	if containers[0].Name() != "b" || containers[1].Name() != "a" {
 		t.Errorf("Expected [b a], got %v", containers)
 	}

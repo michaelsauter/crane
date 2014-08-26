@@ -55,7 +55,7 @@ func configCommand(wrapped func(config Config), forceOrder bool) func(cmd *cobra
 		}
 
 		config := NewConfig(options, forceOrder)
-		if containers := config.Containers(); len(containers) == 0 {
+		if containers := config.TargetedContainers(); len(containers) == 0 {
 			print.Errorf("ERROR: Command cannot be applied to any container.")
 		} else {
 			if isVerbose() {
@@ -74,7 +74,7 @@ func handleCmd() {
 		Long: `
 lift will provision missing images and run all targeted containers.`,
 		Run: configCommand(func(config Config) {
-			config.Containers().lift(options.recreate, options.nocache)
+			config.TargetedContainers().lift(options.recreate, options.nocache)
 		}, false),
 	}
 
@@ -85,7 +85,7 @@ lift will provision missing images and run all targeted containers.`,
 provision will use specified Dockerfiles to build all targeted images.
 If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Run: configCommand(func(config Config) {
-			config.Containers().provision(options.nocache)
+			config.TargetedContainers().provision(options.nocache)
 		}, true),
 	}
 
@@ -94,7 +94,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Run the containers",
 		Long:  `run will call docker run for all targeted containers.`,
 		Run: configCommand(func(config Config) {
-			config.Containers().run(options.recreate)
+			config.TargetedContainers().run(options.recreate)
 		}, false),
 	}
 
@@ -103,7 +103,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Remove the containers",
 		Long:  `rm will call docker rm for all targeted containers.`,
 		Run: configCommand(func(config Config) {
-			config.Containers().reversed().rm(options.forceRm)
+			config.TargetedContainers().reversed().rm(options.forceRm)
 		}, true),
 	}
 
@@ -112,7 +112,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Kill the containers",
 		Long:  `kill will call docker kill for all targeted containers.`,
 		Run: configCommand(func(config Config) {
-			config.Containers().reversed().kill()
+			config.TargetedContainers().reversed().kill()
 		}, true),
 	}
 
@@ -121,7 +121,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Start the containers",
 		Long:  `start will call docker start for all targeted containers.`,
 		Run: configCommand(func(config Config) {
-			config.Containers().start()
+			config.TargetedContainers().start()
 		}, false),
 	}
 
@@ -130,7 +130,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Stop the containers",
 		Long:  `stop will call docker stop for all targeted containers.`,
 		Run: configCommand(func(config Config) {
-			config.Containers().reversed().stop()
+			config.TargetedContainers().reversed().stop()
 		}, true),
 	}
 
@@ -139,7 +139,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Pause the containers",
 		Long:  `pause will call docker pause for all targeted containers.`,
 		Run: configCommand(func(config Config) {
-			config.Containers().reversed().pause()
+			config.TargetedContainers().reversed().pause()
 		}, true),
 	}
 
@@ -148,7 +148,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Unpause the containers",
 		Long:  `unpause will call docker unpause for all targeted containers.`,
 		Run: configCommand(func(config Config) {
-			config.Containers().unpause()
+			config.TargetedContainers().unpause()
 		}, false),
 	}
 
@@ -157,7 +157,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Push the containers",
 		Long:  `push will call docker push for all targeted containers.`,
 		Run: configCommand(func(config Config) {
-			config.Containers().push()
+			config.TargetedContainers().push()
 		}, true),
 	}
 
@@ -166,7 +166,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Displays status of containers",
 		Long:  `Displays the current status of all targeted containers.`,
 		Run: configCommand(func(config Config) {
-			config.Containers().status(options.notrunc)
+			config.TargetedContainers().status(options.notrunc)
 		}, true),
 	}
 

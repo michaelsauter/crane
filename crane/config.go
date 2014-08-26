@@ -13,7 +13,7 @@ import (
 )
 
 type Config interface {
-	Containers() Containers
+	TargetedContainers() Containers
 }
 
 type config struct {
@@ -140,7 +140,7 @@ func NewConfig(options Options, forceOrder bool) Config {
 }
 
 // Containers returns the containers of the config in order
-func (c *config) Containers() Containers {
+func (c *config) TargetedContainers() Containers {
 	var containers Containers
 	for _, name := range c.order {
 		containers = append([]Container{c.containerMap[name]}, containers...)
