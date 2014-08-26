@@ -29,7 +29,7 @@ type Container interface {
 	Stop()
 	Pause()
 	Unpause()
-	Rm()
+	Rm(force bool)
 	Push()
 }
 
@@ -501,12 +501,15 @@ func (c *container) Unpause() {
 }
 
 // Remove container
-func (c *container) Rm() {
+func (c *container) Rm(force bool) {
 	if c.Exists() {
-		if c.Running() {
-			print.Errorf("Container %s is running and cannot be removed.\n", c.Name())
+		if !force && c.Running() {
+			print.Errorf("Container %s is running and cannot be removed. Use --force to remove anyway.\n", c.Name())
 		} else {
 			args := []string{"rm"}
+			if force {
+				args = append(args, "--force")
+			}
 			if c.RmParams.Volumes {
 				fmt.Printf("Removing container %s and its volumes ... ", c.Name())
 				args = append(args, "--volumes")

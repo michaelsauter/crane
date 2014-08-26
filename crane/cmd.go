@@ -12,7 +12,7 @@ type Options struct {
 	recreate            bool
 	nocache             bool
 	notrunc             bool
-	kill                bool
+	forceRm             bool
 	cascadeDependencies string
 	cascadeAffected     string
 	config              string
@@ -24,7 +24,7 @@ var options = Options{
 	recreate:            false,
 	nocache:             false,
 	notrunc:             false,
-	kill:                false,
+	forceRm:             false,
 	cascadeDependencies: "",
 	cascadeAffected:     "",
 	config:              "",
@@ -103,7 +103,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Remove the containers",
 		Long:  `rm will call docker rm for all targeted containers.`,
 		Run: containersCommand(func(containers Containers) {
-			containers.reversed().rm(options.kill)
+			containers.reversed().rm(options.forceRm)
 		}, true),
 	}
 
@@ -200,14 +200,14 @@ See the corresponding docker commands for more information.`,
 	craneCmd.PersistentFlags().StringVarP(&options.cascadeDependencies, "cascade-dependencies", "d", "none", "Also apply the command for the containers that (any of) the explicitly targeted one(s) depend on"+cascadingValuesSuffix)
 	craneCmd.PersistentFlags().StringVarP(&options.cascadeAffected, "cascade-affected", "a", "none", "Also apply the command for the existing containers depending on (any of) the explicitly targeted one(s)"+cascadingValuesSuffix)
 
-	cmdLift.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (kill and remove containers if they exist, force-provision images, run containers)")
+	cmdLift.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (force-remove containers if they exist, force-provision images, run containers)")
 	cmdLift.Flags().BoolVarP(&options.nocache, "no-cache", "n", false, "Build the image without any cache")
 
 	cmdProvision.Flags().BoolVarP(&options.nocache, "no-cache", "n", false, "Build the image without any cache")
 
-	cmdRun.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (kill and remove containers first)")
+	cmdRun.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (force-remove containers first)")
 
-	cmdRm.Flags().BoolVarP(&options.kill, "kill", "k", false, "Kill containers if they are running first")
+	cmdRm.Flags().BoolVarP(&options.forceRm, "force", "f", false, "Kill containers if they are running first")
 
 	cmdStatus.Flags().BoolVarP(&options.notrunc, "no-trunc", "", false, "Don't truncate output")
 

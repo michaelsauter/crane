@@ -106,13 +106,10 @@ func (containers Containers) unpause() {
 }
 
 // Remove containers.
-// When kill is true, kills existing containers first.
-func (containers Containers) rm(kill bool) {
-	if kill {
-		containers.kill()
-	}
+// When force is true, kills existing containers first.
+func (containers Containers) rm(force bool) {
 	for _, container := range containers {
-		container.Rm()
+		container.Rm(force)
 	}
 }
 
