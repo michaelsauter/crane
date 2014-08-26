@@ -7,10 +7,10 @@ import (
 
 func TestIncludes(t *testing.T) {
 	dependencies := Dependencies{
-		all:         []string{"link", "volumesFrom", "net"},
-		link:        []string{"link"},
-		volumesFrom: []string{"volumesFrom"},
-		net:         "net",
+		All:         []string{"link", "volumesFrom", "net"},
+		Link:        []string{"link"},
+		VolumesFrom: []string{"volumesFrom"},
+		Net:         "net",
 	}
 
 	if !dependencies.includes("link") || !dependencies.includes("volumesFrom") || !dependencies.includes("net") {
@@ -23,10 +23,10 @@ func TestIncludes(t *testing.T) {
 
 func TestIncludesAsKind(t *testing.T) {
 	dependencies := Dependencies{
-		all:         []string{"link", "volumesFrom", "net"},
-		link:        []string{"link"},
-		volumesFrom: []string{"volumesFrom"},
-		net:         "net",
+		All:         []string{"link", "volumesFrom", "net"},
+		Link:        []string{"link"},
+		VolumesFrom: []string{"volumesFrom"},
+		Net:         "net",
 	}
 
 	examples := []struct {
@@ -107,10 +107,10 @@ func TestIncludesAsKind(t *testing.T) {
 
 func TestForKind(t *testing.T) {
 	dependencies := Dependencies{
-		all:         []string{"link", "volumesFrom", "net"},
-		link:        []string{"link"},
-		volumesFrom: []string{"volumesFrom"},
-		net:         "net",
+		All:         []string{"link", "volumesFrom", "net"},
+		Link:        []string{"link"},
+		VolumesFrom: []string{"volumesFrom"},
+		Net:         "net",
 	}
 
 	examples := []struct {
@@ -152,14 +152,14 @@ func TestSatisfied(t *testing.T) {
 	var dependencies Dependencies
 
 	dependencies = Dependencies{
-		all: []string{"a"},
+		All: []string{"a"},
 	}
 	if dependencies.satisfied() {
 		t.Errorf("Dependencies was not empty, but appeared to be satisfied")
 	}
 
 	dependencies = Dependencies{
-		all: []string{},
+		All: []string{},
 	}
 	if !dependencies.satisfied() {
 		t.Errorf("Dependencies was empty, but appeared not to be satisfied")

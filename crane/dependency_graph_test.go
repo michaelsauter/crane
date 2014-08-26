@@ -16,9 +16,9 @@ func TestOrder(t *testing.T) {
 	}{
 		{ // resolvable map -> works
 			graph: DependencyGraph{
-				"b": &Dependencies{all: []string{"c"}},
-				"a": &Dependencies{all: []string{"b"}},
-				"c": &Dependencies{all: []string{}},
+				"b": &Dependencies{All: []string{"c"}},
+				"a": &Dependencies{All: []string{"b"}},
+				"c": &Dependencies{All: []string{}},
 			},
 			target:     []string{"a", "b", "c"},
 			forceOrder: false,
@@ -27,9 +27,9 @@ func TestOrder(t *testing.T) {
 		},
 		{ // cyclic map, unforced -> fails
 			graph: DependencyGraph{
-				"b": &Dependencies{all: []string{"c"}},
-				"a": &Dependencies{all: []string{"b"}},
-				"c": &Dependencies{all: []string{"a"}},
+				"b": &Dependencies{All: []string{"c"}},
+				"a": &Dependencies{All: []string{"b"}},
+				"c": &Dependencies{All: []string{"a"}},
 			},
 			target:     []string{"a", "b", "c"},
 			forceOrder: false,
@@ -38,9 +38,9 @@ func TestOrder(t *testing.T) {
 		},
 		{ // cyclic map, forced -> fails
 			graph: DependencyGraph{
-				"b": &Dependencies{all: []string{"c"}},
-				"a": &Dependencies{all: []string{"b"}},
-				"c": &Dependencies{all: []string{"a"}},
+				"b": &Dependencies{All: []string{"c"}},
+				"a": &Dependencies{All: []string{"b"}},
+				"c": &Dependencies{All: []string{"a"}},
 			},
 			target:     []string{"a", "b", "c"},
 			forceOrder: true,
@@ -49,9 +49,9 @@ func TestOrder(t *testing.T) {
 		},
 		{ // partial target, unforced -> fails
 			graph: DependencyGraph{
-				"b": &Dependencies{all: []string{"c"}},
-				"a": &Dependencies{all: []string{"b"}},
-				"c": &Dependencies{all: []string{}},
+				"b": &Dependencies{All: []string{"c"}},
+				"a": &Dependencies{All: []string{"b"}},
+				"c": &Dependencies{All: []string{}},
 			},
 			target:     []string{"a", "b"},
 			forceOrder: false,
@@ -60,9 +60,9 @@ func TestOrder(t *testing.T) {
 		},
 		{ // partial target, forced -> works
 			graph: DependencyGraph{
-				"b": &Dependencies{all: []string{"c"}},
-				"a": &Dependencies{all: []string{"b"}},
-				"c": &Dependencies{all: []string{}},
+				"b": &Dependencies{All: []string{"c"}},
+				"a": &Dependencies{All: []string{"b"}},
+				"c": &Dependencies{All: []string{}},
 			},
 			target:     []string{"a", "b"},
 			forceOrder: true,

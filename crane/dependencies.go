@@ -6,10 +6,10 @@ package crane
 // volumesFrom: containers that provide volumes
 // net: container the net stack is shared with
 type Dependencies struct {
-	all         []string
-	link        []string
-	volumesFrom []string
-	net         string
+	All         []string
+	Link        []string
+	VolumesFrom []string
+	Net         string
 }
 
 // includes checks whether the given needle is
@@ -34,13 +34,13 @@ func (d *Dependencies) includesAsKind(needle string, kind string) bool {
 func (d *Dependencies) forKind(kind string) []string {
 	switch kind {
 	case "all":
-		return d.all
+		return d.All
 	case "link":
-		return d.link
+		return d.Link
 	case "volumesFrom":
-		return d.volumesFrom
+		return d.VolumesFrom
 	case "net":
-		return []string{d.net}
+		return []string{d.Net}
 	default:
 		return []string{}
 	}
@@ -49,10 +49,10 @@ func (d *Dependencies) forKind(kind string) []string {
 // mustRun checks whether the given needle needs
 // to be running
 func (d *Dependencies) mustRun(needle string) bool {
-	if needle == d.net {
+	if needle == d.Net {
 		return true
 	}
-	for _, name := range d.link {
+	for _, name := range d.Link {
 		if name == needle {
 			return true
 		}
@@ -63,14 +63,14 @@ func (d *Dependencies) mustRun(needle string) bool {
 // satisfied is true when there are no
 // dependencies
 func (d *Dependencies) satisfied() bool {
-	return len(d.all) == 0
+	return len(d.All) == 0
 }
 
 // remove removes the given name from all
 func (d *Dependencies) remove(resolved string) {
-	for i, name := range d.all {
+	for i, name := range d.All {
 		if name == resolved {
-			d.all = append(d.all[:i], d.all[i+1:]...)
+			d.All = append(d.All[:i], d.All[i+1:]...)
 		}
 	}
 }

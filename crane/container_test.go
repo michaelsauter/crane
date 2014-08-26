@@ -7,11 +7,11 @@ import (
 
 func TestDependencies(t *testing.T) {
 	c := &container{RunParams: RunParameters{RawNet: "container:n", RawLink: []string{"a:b", "b:d"}, RawVolumesFrom: []string{"c"}}}
-	if deps := c.Dependencies(); deps.all[0] != "a" || deps.all[1] != "b" || deps.all[2] != "c" || deps.all[3] != "n" || deps.link[0] != "a" || deps.link[1] != "b" || deps.all[2] != "c" || deps.net != "n" {
+	if deps := c.Dependencies(); deps.All[0] != "a" || deps.All[1] != "b" || deps.All[2] != "c" || deps.All[3] != "n" || deps.Link[0] != "a" || deps.Link[1] != "b" || deps.All[2] != "c" || deps.Net != "n" {
 		t.Errorf("Dependencies should have been a, b, c, n. Got %v", deps)
 	}
 	c = &container{RunParams: RunParameters{RawLink: []string{}, RawVolumesFrom: []string{}}}
-	if deps := c.Dependencies(); len(deps.all) != 0 && len(deps.link) != 0 && deps.net == "" {
+	if deps := c.Dependencies(); len(deps.All) != 0 && len(deps.Link) != 0 && deps.Net == "" {
 		t.Error("Dependencies should have been empty")
 	}
 }
