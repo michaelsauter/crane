@@ -35,8 +35,8 @@ func isVerbose() bool {
 	return options.verbose
 }
 
-// returns a function to be set as a cobra command run, wrapping a command meant to be run on a set of containers
-func containersCommand(wrapped func(containers Containers), forceOrder bool) func(cmd *cobra.Command, args []string) {
+// returns a function to be set as a cobra command run, wrapping a command meant to be run according to the config
+func configCommand(wrapped func(config Config), forceOrder bool) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		for _, value := range []string{options.cascadeDependencies, options.cascadeAffected} {
 			if value != "none" && value != "all" && value != "link" && value != "volumesFrom" && value != "net" {
@@ -54,14 +54,14 @@ func containersCommand(wrapped func(containers Containers), forceOrder bool) fun
 			options.target = args
 		}
 
-		containers := NewConfig(options, forceOrder).Containers()
-		if len(containers) == 0 {
+		config := NewConfig(options, forceOrder)
+		if containers := config.Containers(); len(containers) == 0 {
 			print.Errorf("ERROR: Command cannot be applied to any container.")
 		} else {
 			if isVerbose() {
 				print.Infof("Command will be applied to: %v\n\n", strings.Join(containers.names(), ", "))
 			}
-			wrapped(containers)
+			wrapped(*config)
 		}
 	}
 }
@@ -73,8 +73,8 @@ func handleCmd() {
 		Short: "Build or pull images if they don't exist, then run or start the containers",
 		Long: `
 lift will provision missing images and run all targeted containers.`,
-		Run: containersCommand(func(containers Containers) {
-			containers.lift(options.recreate, options.nocache)
+		Run: configCommand(func(config Config) {
+			config.Containers().lift(options.recreate, options.nocache)
 		}, false),
 	}
 
@@ -84,8 +84,8 @@ lift will provision missing images and run all targeted containers.`,
 		Long: `
 provision will use specified Dockerfiles to build all targeted images.
 If no Dockerfile is given, it will pull the image(s) from the given registry.`,
-		Run: containersCommand(func(containers Containers) {
-			containers.provision(options.nocache)
+		Run: configCommand(func(config Config) {
+			config.Containers().provision(options.nocache)
 		}, true),
 	}
 
@@ -93,8 +93,8 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Use:   "run",
 		Short: "Run the containers",
 		Long:  `run will call docker run for all targeted containers.`,
-		Run: containersCommand(func(containers Containers) {
-			containers.run(options.recreate)
+		Run: configCommand(func(config Config) {
+			config.Containers().run(options.recreate)
 		}, false),
 	}
 
@@ -102,8 +102,8 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Use:   "rm",
 		Short: "Remove the containers",
 		Long:  `rm will call docker rm for all targeted containers.`,
-		Run: containersCommand(func(containers Containers) {
-			containers.reversed().rm(options.forceRm)
+		Run: configCommand(func(config Config) {
+			config.Containers().reversed().rm(options.forceRm)
 		}, true),
 	}
 
@@ -111,8 +111,8 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Use:   "kill",
 		Short: "Kill the containers",
 		Long:  `kill will call docker kill for all targeted containers.`,
-		Run: containersCommand(func(containers Containers) {
-			containers.reversed().kill()
+		Run: configCommand(func(config Config) {
+			config.Containers().reversed().kill()
 		}, true),
 	}
 
@@ -120,8 +120,8 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Use:   "start",
 		Short: "Start the containers",
 		Long:  `start will call docker start for all targeted containers.`,
-		Run: containersCommand(func(containers Containers) {
-			containers.start()
+		Run: configCommand(func(config Config) {
+			config.Containers().start()
 		}, false),
 	}
 
@@ -129,8 +129,8 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Use:   "stop",
 		Short: "Stop the containers",
 		Long:  `stop will call docker stop for all targeted containers.`,
-		Run: containersCommand(func(containers Containers) {
-			containers.reversed().stop()
+		Run: configCommand(func(config Config) {
+			config.Containers().reversed().stop()
 		}, true),
 	}
 
@@ -138,8 +138,8 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Use:   "pause",
 		Short: "Pause the containers",
 		Long:  `pause will call docker pause for all targeted containers.`,
-		Run: containersCommand(func(containers Containers) {
-			containers.reversed().pause()
+		Run: configCommand(func(config Config) {
+			config.Containers().reversed().pause()
 		}, true),
 	}
 
@@ -147,8 +147,8 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Use:   "unpause",
 		Short: "Unpause the containers",
 		Long:  `unpause will call docker unpause for all targeted containers.`,
-		Run: containersCommand(func(containers Containers) {
-			containers.unpause()
+		Run: configCommand(func(config Config) {
+			config.Containers().unpause()
 		}, false),
 	}
 
@@ -156,8 +156,8 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Use:   "push",
 		Short: "Push the containers",
 		Long:  `push will call docker push for all targeted containers.`,
-		Run: containersCommand(func(containers Containers) {
-			containers.push()
+		Run: configCommand(func(config Config) {
+			config.Containers().push()
 		}, true),
 	}
 
@@ -165,8 +165,8 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Use:   "status",
 		Short: "Displays status of containers",
 		Long:  `Displays the current status of all targeted containers.`,
-		Run: containersCommand(func(containers Containers) {
-			containers.status(options.notrunc)
+		Run: configCommand(func(config Config) {
+			config.Containers().status(options.notrunc)
 		}, true),
 	}
 
