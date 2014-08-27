@@ -13,11 +13,11 @@ func TestDOT(t *testing.T) {
 		"c": &Dependencies{Net: "d"},
 	}
 	var buffer bytes.Buffer
-	dependencyGraph.DOT(&buffer)
+	dependencyGraph.DOT(&buffer, Containers{&container{RawName: "a"}, &container{RawName: "b"}})
 	expected := `digraph {
-  "a" [style=bold]
+  "a" [style=bold,color=red]
   "a"->"c"
-  "b" [style=bold]
+  "b" [style=bold,color=red]
   "b"->"c"
   "b"->"a" [style=dashed]
   "c" [style=bold]
