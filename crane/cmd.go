@@ -170,10 +170,11 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Dumps the dependency graph as a DOT file",
 		Long:  `Generate a DOT file representing the dependency graph. Bold nodes represent the
 containers declared in the config (as opposed to non-bold ones that are referenced
-in the config, but not defined). Solid edges represent links, dashed edges volumesFrom,
-and dotted edges net=container relations.`,
+in the config, but not defined). Targeted containers are highlighted with color
+borders. Solid edges represent links, dashed edges volumesFrom, and dotted edges
+net=container relations.`,
 		Run: configCommand(func(config Config) {
-				config.DependencyGraph().DOT(os.Stdout)
+				config.DependencyGraph().DOT(os.Stdout, config.TargetedContainers())
 		}, true),
 	}
 

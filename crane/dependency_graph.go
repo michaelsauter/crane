@@ -12,10 +12,15 @@ import (
 // to their dependencies
 type DependencyGraph map[string]*Dependencies
 
+type dotInput struct {
+	Graph DependencyGraph
+	TargetedContainers Containers
+}
+
 // dumps the dependency graph as a DOT to the writer
-func (graph DependencyGraph) DOT(writer io.Writer) {
-	const dotTemplate = `digraph {
-{{ range $name, $dependencies := . }}{{ with $dependencies }}  "{{ $name }}" [style=bold]
+func (graph DependencyGraph) DOT(writer io.Writer, targetedContainers Containers) {
+	const dotTemplate = `{{ $targetedContainers := .TargetedContainers }}digraph {
+{{ range $name, $dependencies := .Graph }}{{ with $dependencies }}  "{{ $name }}" [style=bold{{ range $targetedContainers }}{{ if eq $name .Name }},color=red{{ end }}{{ end }}]
 {{ range .Link }}  "{{ $name }}"->"{{ . }}"
 {{ end }}{{ range .VolumesFrom }}  "{{ $name }}"->"{{ . }}" [style=dashed]
 {{ end }}{{ if ne .Net "" }}  "{{ $name }}"->"{{ .Net }}" [style=dotted]
@@ -26,7 +31,7 @@ func (graph DependencyGraph) DOT(writer io.Writer) {
 		print.Errorf("ERROR: %s\n", err)
 		return
 	}
-	err = template.Execute(writer, graph)
+	err = template.Execute(writer, dotInput{graph, targetedContainers})
 	if err != nil {
 		print.Errorf("ERROR: %s\n", err)
 	}
