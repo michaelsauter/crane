@@ -112,6 +112,25 @@ func TestExpandEnv(t *testing.T) {
 	}
 }
 
+func TestGraph(t *testing.T) {
+	containerMap := NewStubbedContainerMap(true,
+		&container{RawName: "a", RunParams: RunParameters{RawLink: []string{"b:b"}}},
+		&container{RawName: "b", RunParams: RunParameters{RawLink: []string{"c:c"}}},
+		&container{RawName: "c"},
+	)
+	c := &config{containerMap: containerMap}
+	dependencyGraph := c.DependencyGraph()
+	if len(dependencyGraph) != 3 {
+		t.Errorf("Expecting the graph to contain all containers (defined in %v), got %v", containerMap, dependencyGraph)
+	}
+	// make sure a new graph is returned each time
+	dependencyGraph.resolve("a") // mutate the previous graph
+	dependencyGraph = c.DependencyGraph()
+	if len(dependencyGraph) != 3 {
+		t.Errorf("Expecting the graph to contain all containers (defined in %v), got %v", containerMap, dependencyGraph)
+	}
+}
+
 func TestDetermineTargetLinearChainDependencies(t *testing.T) {
 	containerMap := NewStubbedContainerMap(true,
 		&container{RawName: "a", RunParams: RunParameters{RawLink: []string{"b:b"}}},
@@ -119,7 +138,7 @@ func TestDetermineTargetLinearChainDependencies(t *testing.T) {
 		&container{RawName: "c"},
 	)
 	c := &config{containerMap: containerMap}
-	c.determineGraph()
+	c.dependencyGraph = c.DependencyGraph()
 
 	examples := []struct {
 		target              []string
@@ -176,7 +195,7 @@ func TestDetermineTargetGraphDependencies(t *testing.T) {
 		&container{RawName: "e"},
 	)
 	c := &config{containerMap: containerMap}
-	c.determineGraph()
+	c.dependencyGraph = c.DependencyGraph()
 	c.determineTarget([]string{"a"}, "all", "none")
 	if len(c.target) != 5 {
 		t.Errorf("all containers should have been targeted but got %v", c.target)
@@ -206,7 +225,7 @@ func TestDetermineTargetMissingDependencies(t *testing.T) {
 		&container{RawName: "c", RunParams: RunParameters{RawLink: []string{"d:d"}}},
 	)
 	c := &config{containerMap: containerMap}
-	c.determineGraph()
+	c.dependencyGraph = c.DependencyGraph()
 	c.determineTarget([]string{"a"}, "all", "none")
 	if len(c.target) != 3 {
 		t.Errorf("only declared containers should have been targeted but got %v", c.target)
@@ -232,7 +251,7 @@ func TestDetermineTargetCustomCascading(t *testing.T) {
 		&container{RawName: "volumesFromTarget"},
 	)
 	c := &config{containerMap: containerMap}
-	c.determineGraph()
+	c.dependencyGraph = c.DependencyGraph()
 	c.determineTarget([]string{"x"}, "all", "none")
 	if c.target[0] != "linkTarget" || c.target[1] != "netTarget" || c.target[2] != "volumesFromTarget" || c.target[3] != "x" || len(c.target) != 4 {
 		t.Errorf("all *Target containers should have been targeted but got %v", c.target)
@@ -278,7 +297,7 @@ func TestDetermineTargetCascadingToExisting(t *testing.T) {
 	containerMap["nonExistingSource"].(*StubbedContainer).exists = false
 	containerMap["nonExistingTarget"].(*StubbedContainer).exists = false
 	c := &config{containerMap: containerMap}
-	c.determineGraph()
+	c.dependencyGraph = c.DependencyGraph()
 	c.determineTarget([]string{"x"}, "all", "none")
 	if c.target[0] != "existingTarget" || c.target[1] != "nonExistingTarget" || c.target[2] != "x" || len(c.target) != 3 {
 		t.Errorf("all *Target containers should have been targeted but got %v", c.target)

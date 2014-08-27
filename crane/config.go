@@ -14,6 +14,7 @@ import (
 
 type Config interface {
 	TargetedContainers() Containers
+	DependencyGraph() DependencyGraph
 }
 
 type config struct {
@@ -128,7 +129,7 @@ func NewConfig(options Options, forceOrder bool) Config {
 		panic(StatusError{fmt.Errorf("No configuration found %v", configFiles(options)), 78})
 	}
 	config.expandEnv()
-	config.determineGraph()
+	config.dependencyGraph = config.DependencyGraph()
 	config.determineTarget(options.target, options.cascadeDependencies, options.cascadeAffected)
 
 	var err error
@@ -170,11 +171,12 @@ func (c *config) expandEnv() {
 
 // generateGraph generated the dependency graph, which is
 // a map describing the dependencies between the containers.
-func (c *config) determineGraph() {
-	c.dependencyGraph = make(DependencyGraph)
+func (c *config) DependencyGraph() DependencyGraph {
+	dependencyGraph := make(DependencyGraph)
 	for _, container := range c.containerMap {
-		c.dependencyGraph[container.Name()] = container.Dependencies()
+		dependencyGraph[container.Name()] = container.Dependencies()
 	}
+	return dependencyGraph
 }
 
 // determineTarget receives the specified target
