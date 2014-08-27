@@ -2,12 +2,35 @@ package crane
 
 import (
 	"fmt"
+	"github.com/michaelsauter/crane/print"
+	"io"
 	"strings"
+	"text/template"
 )
 
 // DependencyGraph maps container names
 // to their dependencies
 type DependencyGraph map[string]*Dependencies
+
+// dumps the dependency graph as a DOT to the writer
+func (graph DependencyGraph) DOT(writer io.Writer) {
+	const dotTemplate = `digraph {
+{{ range $name, $dependencies := . }}{{ with $dependencies }}  "{{ $name }}" [style=bold]
+{{ range .Link }}  "{{ $name }}"->"{{ . }}"
+{{ end }}{{ range .VolumesFrom }}  "{{ $name }}"->"{{ . }}" [style=dashed]
+{{ end }}{{ if ne .Net "" }}  "{{ $name }}"->"{{ .Net }}" [style=dotted]
+{{ end }}{{ end }}{{ end }}}
+`
+	template, err := template.New("dot").Parse(dotTemplate)
+	if err != nil {
+		print.Errorf("ERROR: %s\n", err)
+		return
+	}
+	err = template.Execute(writer, graph)
+	if err != nil {
+		print.Errorf("ERROR: %s\n", err)
+	}
+}
 
 // determineOrder works on the dependency graph and returns the order
 // of the given the target (a subset of the graph).
