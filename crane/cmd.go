@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/michaelsauter/crane/print"
 	"github.com/spf13/cobra"
+	"os"
 	"strings"
 )
 
@@ -164,6 +165,18 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		}, true),
 	}
 
+	var cmdGraph = &cobra.Command{
+		Use:   "graph",
+		Short: "Dumps the dependency graph as a DOT file",
+		Long:  `Generate a DOT file representing the dependency graph. Bold nodes represent the
+containers declared in the config (as opposed to non-bold ones that are referenced
+in the config, but not defined). Solid edges represent links, dashed edges volumesFrom,
+and dotted edges net=container relations.`,
+		Run: configCommand(func(config Config) {
+				config.DependencyGraph().DOT(os.Stdout)
+		}, true),
+	}
+
 	var cmdVersion = &cobra.Command{
 		Use:   "version",
 		Short: "Display version",
@@ -229,7 +242,7 @@ Additional help topics: {{if gt .Commands 0 }}{{range .Commands}}{{if not .Runna
 Use "{{.Root.Name}} help [command]" for more information about that command.
 `)
 
-	craneCmd.AddCommand(cmdLift, cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdPause, cmdUnpause, cmdPush, cmdStatus, cmdVersion)
+	craneCmd.AddCommand(cmdLift, cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdPause, cmdUnpause, cmdPush, cmdStatus, cmdGraph, cmdVersion)
 	err := craneCmd.Execute()
 	if err != nil {
 		panic(StatusError{status: 64})
