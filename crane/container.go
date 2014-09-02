@@ -2,6 +2,7 @@ package crane
 
 import (
 	"fmt"
+	"github.com/flynn/go-shlex"
 	"github.com/michaelsauter/crane/print"
 	"os"
 	"path"
@@ -235,7 +236,11 @@ func (r *RunParameters) Cmd() []string {
 		switch rawCmd := r.RawCmd.(type) {
 		case string:
 			if len(rawCmd) > 0 {
-				cmd = append(cmd, os.ExpandEnv(rawCmd))
+				cmds, err := shlex.Split(os.ExpandEnv(rawCmd))
+				if err != nil {
+					print.Errorf("Error when parsing cmd `%v`: %v. Proceeding with %q.", rawCmd, err, cmds)
+				}
+				cmd = append(cmd, cmds...)
 			}
 		case []interface{}:
 			cmds := make([]string, len(rawCmd))
