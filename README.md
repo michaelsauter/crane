@@ -65,7 +65,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `dns` (array)
 	* `entrypoint` (string)
 	* `env` (array)
-	* `env-file` (string)
+	* `env-file` (array)
 	* `expose` (array) Ports to expose to linked containers.
 	* `hostname` (string)
 	* `interactive` (boolean)

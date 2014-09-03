@@ -50,7 +50,7 @@ type RunParameters struct {
 	RawDns         []string    `json:"dns" yaml:"dns"`
 	RawEntrypoint  string      `json:"entrypoint" yaml:"entrypoint"`
 	RawEnv         []string    `json:"env" yaml:"env"`
-	RawEnvFile     string      `json:"env-file" yaml:"env-file"`
+	RawEnvFile     []string    `json:"env-file" yaml:"env-file"`
 	RawExpose      []string    `json:"expose" yaml:"expose"`
 	RawHostname    string      `json:"hostname" yaml:"hostname"`
 	Interactive    bool        `json:"interactive" yaml:"interactive"`
@@ -142,8 +142,12 @@ func (r *RunParameters) Env() []string {
 	return env
 }
 
-func (r *RunParameters) EnvFile() string {
-	return os.ExpandEnv(r.RawEnvFile)
+func (r *RunParameters) EnvFile() []string {
+	var envFile []string
+	for _, rawEnvFile := range r.RawEnvFile {
+		envFile = append(envFile, os.ExpandEnv(rawEnvFile))
+	}
+	return envFile
 }
 
 func (r *RunParameters) Expose() []string {
@@ -360,8 +364,8 @@ func (c *container) Run() {
 			args = append(args, "--env", env)
 		}
 		// Env file
-		if len(c.RunParams.EnvFile()) > 0 {
-			args = append(args, "--env-file", c.RunParams.EnvFile())
+		for _, envFile := range c.RunParams.EnvFile() {
+			args = append(args, "--env-file", envFile)
 		}
 		// Expose
 		for _, expose := range c.RunParams.Expose() {
