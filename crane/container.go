@@ -81,16 +81,16 @@ type StartParameters struct {
 
 func (c *container) Dependencies() *Dependencies {
 	var linkParts []string
-	dependencies := &Dependencies{all: []string{}, link: []string{}, volumesFrom: []string{}, net: ""}
+	dependencies := &Dependencies{}
 	for _, link := range c.RunParams.Link() {
 		linkParts = strings.Split(link, ":")
-		dependencies.all = append(dependencies.all, linkParts[0])
-		dependencies.link = append(dependencies.link, linkParts[0])
+		dependencies.All = append(dependencies.All, linkParts[0])
+		dependencies.Link = append(dependencies.Link, linkParts[0])
 	}
 	for _, volumeFrom := range c.RunParams.VolumesFrom() {
 		if !dependencies.includes(volumeFrom) {
-			dependencies.all = append(dependencies.all, volumeFrom)
-			dependencies.volumesFrom = append(dependencies.volumesFrom, volumeFrom)
+			dependencies.All = append(dependencies.All, volumeFrom)
+			dependencies.VolumesFrom = append(dependencies.VolumesFrom, volumeFrom)
 		}
 	}
 	if netParts := strings.Split(c.RunParams.Net(), ":"); len(netParts) == 2 && netParts[0] == "container" {
@@ -98,9 +98,9 @@ func (c *container) Dependencies() *Dependencies {
 		// though docker supports it, since we have no bullet-proof way to tell:
 		// heuristics to detect whether it's an id could bring false positives, and
 		// a lookup in the list of container names could bring false negatives
-		dependencies.net = netParts[1]
-		if !dependencies.includes(dependencies.net) {
-			dependencies.all = append(dependencies.all, dependencies.net)
+		dependencies.Net = netParts[1]
+		if !dependencies.includes(dependencies.Net) {
+			dependencies.All = append(dependencies.All, dependencies.Net)
 		}
 	}
 	return dependencies
