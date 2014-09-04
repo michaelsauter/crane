@@ -328,19 +328,10 @@ func TestExplicitlyTargeted(t *testing.T) {
 	if len(containers) != 2 || containers[0] != "a" || containers[1] != "b" {
 		t.Errorf("Expected %v, got %v", expected, containers)
 	}
-	containers = c.explicitlyTargeted([]string{""}) //FIXME: remove when -t/--target is removed
-	if len(containers) != 2 || containers[0] != "a" || containers[1] != "b" {
-		t.Errorf("Expected %v, got %v", expected, containers)
-	}
 	// If no default group, returns all containers
 	expected = []string{"a", "b", "c"}
 	c = &config{containerMap: containerMap}
 	containers = c.explicitlyTargeted([]string{})
-	sort.Strings(containers)
-	if len(containers) != 3 || containers[0] != "a" || containers[1] != "b" || containers[2] != "c" {
-		t.Errorf("Expected %v, got %v", expected, containers)
-	}
-	containers = c.explicitlyTargeted([]string{""}) //FIXME: remove when -t/--target is removed
 	sort.Strings(containers)
 	if len(containers) != 3 || containers[0] != "a" || containers[1] != "b" || containers[2] != "c" {
 		t.Errorf("Expected %v, got %v", expected, containers)

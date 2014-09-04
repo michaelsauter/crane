@@ -239,8 +239,7 @@ func (c *config) determineTarget(target []string, cascadeDependencies string, ca
 func (c *config) explicitlyTargeted(target []string) (result []string) {
 	result = []string{}
 	// target not given
-	if len(target) == 0 ||
-		(len(target) == 1 && target[0] == "") { //FIXME: remove when -t/--target is removed
+	if len(target) == 0 {
 		// If default group exists, return its containers
 		for group, containers := range c.groups {
 			if group == "default" {

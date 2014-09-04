@@ -28,7 +28,6 @@ var options = Options{
 	cascadeDependencies: "",
 	cascadeAffected:     "",
 	config:              "",
-	target:              make([]string, 1), //FIXME: remove pre-allocation when -t/--target is removed
 }
 
 func isVerbose() bool {
@@ -45,14 +44,9 @@ func configCommand(wrapped func(config Config), forceOrder bool) func(cmd *cobra
 				panic(StatusError{status: 64})
 			}
 		}
-		if options.target[0] != "" { //FIXME: remove when -t/--target is removed
-			print.Noticef("DEPRECATION: -t/--target is now implicit and will be removed in an upcoming release\n")
-			if len(args) > 0 {
-				options.target = append(args, options.target[0])
-			}
-		} else {
-			options.target = args
-		}
+
+		// Set target from args
+		options.target = args
 
 		config := NewConfig(options, forceOrder)
 		if containers := config.TargetedContainers(); len(containers) == 0 {
@@ -190,7 +184,6 @@ See the corresponding docker commands for more information.`,
 
 	craneCmd.PersistentFlags().BoolVarP(&options.verbose, "verbose", "v", false, "Verbose output")
 	craneCmd.PersistentFlags().StringVarP(&options.config, "config", "c", "", "Config file to read from")
-	craneCmd.PersistentFlags().StringVarP(&options.target[0], "target", "t", "", "Group or container to execute the command for [DEPRECATED, NOW IMPLICIT]")
 	cascadingValuesSuffix := `
 					"all": follow any kind of dependency
 					"link": follow --link dependencies only
