@@ -39,7 +39,8 @@ func TestConfigFiles(t *testing.T) {
 	}
 }
 
-func TestUnmarshalJSON(t *testing.T) {
+func TestUnmarshal(t *testing.T) {
+	var actual *config
 	json := []byte(
 		`{
     "containers": {
@@ -61,7 +62,7 @@ func TestUnmarshalJSON(t *testing.T) {
     }
 }
 `)
-	actual := unmarshalJSON(json)
+	actual = unmarshal(json, ".json")
 	if _, ok := actual.RawContainerMap["apache"]; !ok {
 		t.Errorf("Config should have one container, got %v", actual.RawContainerMap)
 	}
@@ -71,9 +72,8 @@ func TestUnmarshalJSON(t *testing.T) {
 	if group, ok := actual.RawGroups["default"]; !ok || len(group) != 1 {
 		t.Errorf("Config should have one `default` group with one container, got %v", actual.RawGroups)
 	}
-}
+	actual = nil
 
-func TestUnmarshalYAML(t *testing.T) {
 	yaml := []byte(
 		`containers:
   apache:
@@ -88,7 +88,7 @@ groups:
   default:
     - apache
 `)
-	actual := unmarshalYAML(yaml)
+	actual = unmarshal(yaml, ".yml")
 	if _, ok := actual.RawContainerMap["apache"]; !ok {
 		t.Errorf("Config should have one container, got %v", actual.RawContainerMap)
 	}

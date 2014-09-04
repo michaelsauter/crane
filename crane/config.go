@@ -38,7 +38,7 @@ type Target []string
 // configFiles returns a slice of
 // files to read the config from.
 // If the --config option was given,
-// it will just use the given file.
+// it will only use the given file.
 func configFiles(options Options) []string {
 	if len(options.config) > 0 {
 		return []string{options.config}
@@ -56,13 +56,7 @@ func readConfig(filename string) *config {
 	}
 
 	ext := filepath.Ext(filename)
-	if ext == ".json" {
-		return unmarshalJSON(data)
-	} else if ext == ".yml" || ext == ".yaml" {
-		return unmarshalYAML(data)
-	} else {
-		panic(StatusError{errors.New("Unrecognized file extension"), 65})
-	}
+	return unmarshal(data, ext)
 }
 
 // displaySyntaxError will display more information
@@ -89,23 +83,18 @@ func displaySyntaxError(data []byte, syntaxError error) (err error) {
 	return
 }
 
-// unmarshalJSON converts given JSON data
-// into a config object.
-func unmarshalJSON(data []byte) *config {
+// unmarshal converts either JSON
+// or YAML into a config object.
+func unmarshal(data []byte, ext string) *config {
 	var config *config
-	err := json.Unmarshal(data, &config)
-	if err != nil {
-		err = displaySyntaxError(data, err)
-		panic(StatusError{err, 65})
+	var err error
+	if ext == ".json" {
+		err = json.Unmarshal(data, &config)
+	} else if ext == ".yml" || ext == ".yaml" {
+		err = yaml.Unmarshal(data, &config)
+	} else {
+		panic(StatusError{errors.New("Unrecognized file extension"), 65})
 	}
-	return config
-}
-
-// unmarshalYAML converts given YAML data
-// into a config object.
-func unmarshalYAML(data []byte) *config {
-	var config *config
-	err := yaml.Unmarshal(data, &config)
 	if err != nil {
 		err = displaySyntaxError(data, err)
 		panic(StatusError{err, 65})
