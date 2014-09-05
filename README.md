@@ -50,6 +50,9 @@ Will provision and run the containers in one go. By default, it does as little a
 ### `status`
 Displays information about the state of the containers.
 
+### `graph`
+Parses your config file and dumps the relations between containers as a dependency graph, using the DOT format. See built-in help for more information about style conventions used in that representation.
+
 You can get more information about what's happening behind the scenes for all commands by using `--verbose`. All options have a short version as well, e.g. `lift -rn`.
 
 ## crane.json / crane.yaml

@@ -1,9 +1,33 @@
 package crane
 
 import (
+	"bytes"
 	"reflect"
 	"testing"
 )
+
+func TestDOT(t *testing.T) {
+	dependencyGraph := DependencyGraph{
+		"b": &Dependencies{Link: []string{"c"}, VolumesFrom: []string{"a"}},
+		"a": &Dependencies{Link: []string{"c"}},
+		"c": &Dependencies{Net: "d"},
+	}
+	var buffer bytes.Buffer
+	dependencyGraph.DOT(&buffer, Containers{&container{RawName: "a"}, &container{RawName: "b"}})
+	expected := `digraph {
+  "a" [style=bold,color=red]
+  "a"->"c"
+  "b" [style=bold,color=red]
+  "b"->"c"
+  "b"->"a" [style=dashed]
+  "c" [style=bold]
+  "c"->"d" [style=dotted]
+}
+`
+	if expected != buffer.String() {
+		t.Errorf("Invalid graph received. Expected `%v`, but got `%v`", expected, buffer.String())
+	}
+}
 
 func TestOrder(t *testing.T) {
 
