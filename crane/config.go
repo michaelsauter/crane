@@ -18,8 +18,8 @@ type Config interface {
 }
 
 type config struct {
-	RawContainerMap containerMap        `json:"containers" yaml:"containers"`
-	RawGroups       map[string][]string `json:"groups" yaml:"groups"`
+	RawContainerMap map[string]*container `json:"containers" yaml:"containers"`
+	RawGroups       map[string][]string   `json:"groups" yaml:"groups"`
 	containerMap    ContainerMap
 	dependencyGraph DependencyGraph
 	target          Target
@@ -30,8 +30,6 @@ type config struct {
 // ContainerMap maps the container name
 // to its configuration
 type ContainerMap map[string]Container
-
-type containerMap map[string]*container
 
 type Target []string
 

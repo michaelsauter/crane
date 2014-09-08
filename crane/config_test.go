@@ -101,7 +101,7 @@ groups:
 }
 
 func TestExpandEnv(t *testing.T) {
-	rawContainerMap := containerMap{
+	rawContainerMap := map[string]*container{
 		"a": &container{},
 		"b": &container{},
 	}
