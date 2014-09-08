@@ -18,7 +18,7 @@ func (d *Dependencies) includes(needle string) bool {
 	return d.includesAsKind(needle, "all")
 }
 
-// includes checks whether the given needle is
+// includesAsKind checks whether the given needle is
 // included in the dependency list as the given kind
 func (d *Dependencies) includesAsKind(needle string, kind string) bool {
 	for _, name := range d.forKind(kind) {
@@ -29,8 +29,8 @@ func (d *Dependencies) includesAsKind(needle string, kind string) bool {
 	return false
 }
 
-// returns the list of dependencies for a certain
-// kind of dependency
+// forKind returns the list of dependencies for
+// a certain kind of dependency
 func (d *Dependencies) forKind(kind string) []string {
 	switch kind {
 	case "all":
@@ -47,7 +47,7 @@ func (d *Dependencies) forKind(kind string) []string {
 }
 
 // mustRun checks whether the given needle needs
-// to be running
+// to be running in order to be satisfied.
 func (d *Dependencies) mustRun(needle string) bool {
 	if needle == d.Net {
 		return true
@@ -61,12 +61,12 @@ func (d *Dependencies) mustRun(needle string) bool {
 }
 
 // satisfied is true when there are no
-// dependencies
+// dependencies left.
 func (d *Dependencies) satisfied() bool {
 	return len(d.All) == 0
 }
 
-// remove removes the given name from all
+// remove removes the given name from All
 func (d *Dependencies) remove(resolved string) {
 	for i, name := range d.All {
 		if name == resolved {

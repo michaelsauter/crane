@@ -128,14 +128,14 @@ func (containers Containers) status(notrunc bool) {
 	for _, container := range containers {
 		fields := container.Status()
 		if !notrunc {
-			fields[2] = truncateID(fields[2])
+			fields[2] = truncateId(fields[2])
 		}
 		fmt.Fprintf(w, "%s\n", strings.Join(fields, "\t"))
 	}
 	w.Flush()
 }
 
-func truncateID(id string) string {
+func truncateId(id string) string {
 	shortLen := 12
 	if len(id) < shortLen {
 		shortLen = len(id)

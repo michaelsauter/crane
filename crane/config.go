@@ -139,7 +139,7 @@ func (c *config) TargetedContainers() Containers {
 // expandEnv creates a new container map
 // with expanded names and sets the RawName of each
 // container to the map key.
-// It also expand variables in the order and the groups.
+// It also expand variables in the groups.
 func (c *config) expandEnv() {
 	// Container map
 	c.containerMap = make(map[string]Container)
@@ -156,7 +156,7 @@ func (c *config) expandEnv() {
 	}
 }
 
-// generateGraph generated the dependency graph, which is
+// DependencyGraph returns the dependency graph, which is
 // a map describing the dependencies between the containers.
 func (c *config) DependencyGraph() DependencyGraph {
 	dependencyGraph := make(DependencyGraph)
@@ -168,7 +168,9 @@ func (c *config) DependencyGraph() DependencyGraph {
 
 // determineTarget receives the specified target
 // and determines which containers should be targeted.
-// Additionally, ot sorts these alphabetically.
+// The target might be extended depending on the value
+// given for cascadeDependencies and cascadeAffected.
+// Additionally, the target is sorted alphabetically.
 func (c *config) determineTarget(target []string, cascadeDependencies string, cascadeAffected string) {
 	// start from the explicitly targeted target
 	includedSet := make(map[string]bool)
@@ -178,13 +180,14 @@ func (c *config) determineTarget(target []string, cascadeDependencies string, ca
 		cascadingSeeds = append(cascadingSeeds, name)
 	}
 
-	// cascade until the graph has been fully traversed according to the cascading flags
+	// Cascade until the graph has been fully traversed
+	// according to the cascading flags.
 	for len(cascadingSeeds) > 0 {
 		nextCascadingSeeds := []string{}
 		for _, seed := range cascadingSeeds {
 			if cascadeDependencies != "none" {
 				if dependencies, ok := c.dependencyGraph[seed]; ok {
-					// queue direct dependencies if we haven't already considered them
+					// Queue direct dependencies if we haven't already considered them
 					for _, name := range dependencies.forKind(cascadeDependencies) {
 						if _, alreadyIncluded := includedSet[name]; !alreadyIncluded {
 							includedSet[name] = true
@@ -194,7 +197,8 @@ func (c *config) determineTarget(target []string, cascadeDependencies string, ca
 				}
 			}
 			if cascadeAffected != "none" {
-				// queue all containers we haven't considered yet which exist & directly depend on the seed
+				// Queue all containers we haven't considered yet which exist
+				// and directly depend on the seed.
 				for name, container := range c.containerMap {
 					if _, alreadyIncluded := includedSet[name]; !alreadyIncluded {
 						if container.Dependencies().includesAsKind(seed, cascadeAffected) && container.Exists() {
@@ -208,7 +212,7 @@ func (c *config) determineTarget(target []string, cascadeDependencies string, ca
 		cascadingSeeds = nextCascadingSeeds
 	}
 
-	// keep the ones that we know of
+	// Keep the ones that are part of the container map
 	included := []string{}
 	for name := range includedSet {
 		if _, exists := c.containerMap[name]; exists {
@@ -216,13 +220,13 @@ func (c *config) determineTarget(target []string, cascadeDependencies string, ca
 		}
 	}
 
-	// sort
+	// Sort alphabetically
 	c.target = Target(included)
 	sort.Strings(c.target)
 }
 
 // explicitlyTargeted receives a target and determines which
-// containers of the map are targeted
+// containers of the map are targeted.
 func (c *config) explicitlyTargeted(target []string) (result []string) {
 	result = []string{}
 	// target not given

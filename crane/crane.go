@@ -60,7 +60,7 @@ func commandOutput(name string, args []string) (string, error) {
 	return strings.TrimSpace(string(out)), err
 }
 
-// from https://gist.github.com/dagoof/1477401
+// From https://gist.github.com/dagoof/1477401
 func pipedCommandOutput(pipedCommandArgs ...[]string) ([]byte, error) {
 	var commands []exec.Cmd
 	for _, commandArgs := range pipedCommandArgs {

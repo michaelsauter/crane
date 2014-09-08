@@ -9,7 +9,7 @@ import (
 // to their dependencies
 type DependencyGraph map[string]*Dependencies
 
-// determineOrder works on the dependency graph and returns the order
+// order works on the dependency graph and returns the order
 // of the given the target (a subset of the graph).
 // If force is true, the map will be ordered even if dependencies
 // are missing.
