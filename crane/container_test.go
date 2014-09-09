@@ -68,6 +68,11 @@ func TestCmd(t *testing.T) {
 	if len(c.RunParams.Cmd()) != 1 || c.RunParams.Cmd()[0] != "true" {
 		t.Errorf("Command should have been true, got %v", c.RunParams.Cmd())
 	}
+	// String with multiple parts
+	c = &container{RunParams: RunParameters{RawCmd: "bundle exec rails s -p 3000"}}
+	if len(c.RunParams.Cmd()) != 6 || c.RunParams.Cmd()[0] != "bundle" || c.RunParams.Cmd()[1] != "exec" || c.RunParams.Cmd()[2] != "rails" || c.RunParams.Cmd()[3] != "s" || c.RunParams.Cmd()[4] != "-p" || c.RunParams.Cmd()[5] != "3000" {
+		t.Errorf("Command should have been [bundle exec rails s -p 3000], got %v", c.RunParams.Cmd())
+	}
 	// Array
 	os.Clearenv()
 	os.Setenv("CMD", "1")
