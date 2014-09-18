@@ -13,9 +13,9 @@ echo "Running tests..."
 go test ./...
 
 echo "Update version..."
-sed -i.bak 's/fmt\.Println("v[0-9]\.[0-9]\.[0-9]")/fmt.Println("v'$version'")/' crane/cmd.go
+sed -i.bak 's/fmt\.Println("v[0-9]*\.[0-9]*\.[0-9]*")/fmt.Println("v'$version'")/' crane/cmd.go
 rm crane/cmd.go.bak
-sed -i.bak 's/VERSION="[0-9]\.[0-9]\.[0-9]"/VERSION="'$version'"/' download.sh
+sed -i.bak 's/VERSION="[0-9]*\.[0-9]*\.[0-9]*"/VERSION="'$version'"/' download.sh
 rm download.sh.bak
 
 echo "Update contributors..."
