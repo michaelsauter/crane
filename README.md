@@ -63,6 +63,7 @@ The map of containers consists of the name of the container mapped to the contai
 * `dockerfile` (string, optional): Relative path to the Dockerfile
 * `run` (object, optional): Parameters mapped to Docker's `run`.
 	* `cidfile` (string)
+	* `cpuset` (integer)
 	* `cpu-shares` (integer)
 	* `detach` (boolean) `sudo docker attach <container name>` will work as normal.
 	* `dns` (array)

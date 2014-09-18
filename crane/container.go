@@ -46,6 +46,7 @@ type container struct {
 
 type RunParameters struct {
 	RawCidfile     string      `json:"cidfile" yaml:"cidfile"`
+	Cpuset         int         `json:"cpuset" yaml:"cpuset"`
 	CpuShares      int         `json:"cpu-shares" yaml:"cpu-shares"`
 	Detach         bool        `json:"detach" yaml:"detach"`
 	RawDns         []string    `json:"dns" yaml:"dns"`
@@ -347,6 +348,10 @@ func (c *container) Run() {
 		// Cidfile
 		if len(c.RunParams.Cidfile()) > 0 {
 			args = append(args, "--cidfile", c.RunParams.Cidfile())
+		}
+		// CPU set
+		if len(c.RunParams.Cpuset()) > 0 {
+			args = append(args, "--cpuset", strconv.Itoa(c.RunParams.CpuSet))
 		}
 		// CPU shares
 		if c.RunParams.CpuShares > 0 {
