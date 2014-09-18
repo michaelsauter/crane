@@ -355,8 +355,8 @@ func (c *container) Run() {
 			args = append(args, "--cidfile", c.RunParams.Cidfile())
 		}
 		// CPU set
-		if len(c.RunParams.Cpuset()) > 0 {
-			args = append(args, "--cpuset", strconv.Itoa(c.RunParams.CpuSet))
+		if c.RunParams.Cpuset > 0 {
+			args = append(args, "--cpuset", strconv.Itoa(c.RunParams.Cpuset))
 		}
 		// CPU shares
 		if c.RunParams.CpuShares > 0 {
