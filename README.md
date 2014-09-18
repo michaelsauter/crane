@@ -12,7 +12,7 @@ bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/master/
 ```
 You can also build Crane yourself by using the Go toolchain (`go get` and `go install`). Please have a look at the [release notes](https://github.com/michaelsauter/crane/releases) for the changelog if you're upgrading.
 
-Of course, you will need to have Docker (>= 1.0) installed.
+Of course, you will need to have Docker (>= 1.2 recommended, 1.0 required) installed.
 
 ## Usage
 Crane is a very light wrapper around the Docker CLI. This means that most commands just call the corresponding Docker command, but for all targeted containers. Additionally, there are a few special commands.
