@@ -63,6 +63,7 @@ type RunParameters struct {
 	Privileged     bool        `json:"privileged" yaml:"privileged"`
 	RawPublish     []string    `json:"publish" yaml:"publish"`
 	PublishAll     bool        `json:"publish-all" yaml:"publish-all"`
+	RawRestart     string      `json:"restart" yaml:"restart"`
 	Rm             bool        `json:"rm" yaml:"rm"`
 	Tty            bool        `json:"tty" yaml:"tty"`
 	RawUser        string      `json:"user" yaml:"user"`
@@ -199,6 +200,10 @@ func (r *RunParameters) Publish() []string {
 		publish = append(publish, os.ExpandEnv(rawPublish))
 	}
 	return publish
+}
+
+func (r *RunParameters) Restart() string {
+	return os.ExpandEnv(r.RawRestart)
 }
 
 func (r *RunParameters) User() string {
@@ -416,6 +421,10 @@ func (c *container) Run() {
 		// PublishAll
 		if c.RunParams.PublishAll {
 			args = append(args, "--publish-all")
+		}
+		// Restart
+		if len(c.RunParams.Restart()) > 0 {
+			args = append(args, "--restart", c.RunParams.Restart())
 		}
 		// Rm
 		if c.RunParams.Rm {

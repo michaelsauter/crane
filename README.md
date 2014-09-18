@@ -80,6 +80,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `privileged` (boolean)
 	* `publish` (array) Map network ports to the container.
 	* `publish-all` (boolean)
+	* `restart` (string)
 	* `rm` (boolean)
 	* `tty` (boolean)
 	* `user` (string)
