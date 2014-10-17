@@ -6,6 +6,7 @@ import (
 	"github.com/michaelsauter/crane/print"
 	"os"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
@@ -56,15 +57,18 @@ func checkDockerClient() {
 	if err != nil {
 		panic(StatusError{errors.New("Error when probing Docker's client version. Is docker installed and within the $PATH?"), 69})
 	}
-	rawVersions := strings.Split(string(output), ".")[:2]
+
+	re := regexp.MustCompile("([0-9]+)\\.([0-9]+)\\.?([0-9]+)?")
+	rawVersions := re.FindStringSubmatch(string(output))
 	var versions []int
-	for _, rawVersion := range rawVersions {
+	for _, rawVersion := range rawVersions[1:] {
 		version, err := strconv.Atoi(rawVersion)
 		if err != nil {
 			panic(StatusError{fmt.Errorf("Error when parsing Docker's version %v: %v", rawVersion, err), 69})
 		}
 		versions = append(versions, version)
 	}
+
 	for i, expectedVersion := range minimalDockerVersion {
 		if versions[i] > expectedVersion {
 			break
