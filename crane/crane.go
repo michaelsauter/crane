@@ -51,9 +51,7 @@ func RealMain() {
 // is below the minimal requirement, and printing a warning if its version
 // is below the recommended requirement.
 func checkDockerClient() {
-	dockerCmd := []string{"docker", "--version"}
-	sedCmd := []string{"sed", "-e", "s/[^0-9]*\\([0-9.]\\+\\).*/\\1/"}
-	output, err := pipedCommandOutput(dockerCmd, sedCmd)
+	output, err := commandOutput("docker", []string{"--version"})
 	if err != nil {
 		panic(StatusError{errors.New("Error when probing Docker's client version. Is docker installed and within the $PATH?"), 69})
 	}
