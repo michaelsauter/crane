@@ -47,7 +47,7 @@ func RealMain() {
 	handleCmd()
 }
 
-// Ensure there is a docker binary in the path, printing a warning if its version
+// Ensure there is a docker binary in the path, printing an error if its version
 // is below the minimal requirement, and printing a warning if its version
 // is below the recommended requirement.
 func checkDockerClient() {
