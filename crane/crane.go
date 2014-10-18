@@ -47,7 +47,7 @@ func RealMain() {
 	handleCmd()
 }
 
-// Ensure there is a docker binary in the path, panicking if its version
+// Ensure there is a docker binary in the path, printing a warning if its version
 // is below the minimal requirement, and printing a warning if its version
 // is below the recommended requirement.
 func checkDockerClient() {
@@ -55,14 +55,14 @@ func checkDockerClient() {
 	if err != nil {
 		panic(StatusError{errors.New("Error when probing Docker's client version. Is docker installed and within the $PATH?"), 69})
 	}
-
 	re := regexp.MustCompile("([0-9]+)\\.([0-9]+)\\.?([0-9]+)?")
 	rawVersions := re.FindStringSubmatch(string(output))
 	var versions []int
 	for _, rawVersion := range rawVersions[1:] {
 		version, err := strconv.Atoi(rawVersion)
 		if err != nil {
-			panic(StatusError{fmt.Errorf("Error when parsing Docker's version %v: %v", rawVersion, err), 69})
+			print.Errorf("Error when parsing Docker's version %v: %v", rawVersion, err)
+			break
 		}
 		versions = append(versions, version)
 	}
@@ -72,9 +72,10 @@ func checkDockerClient() {
 			break
 		}
 		if versions[i] < expectedVersion {
-			panic(StatusError{fmt.Errorf("Unsupported client version. Please upgrade to Docker %v or later.", intJoin(recommendedDockerVersion, ".")), 69})
+			print.Errorf("Unsupported client version. Please upgrade to Docker %v or later.", intJoin(recommendedDockerVersion, "."))
 		}
 	}
+
 	for i, expectedVersion := range recommendedDockerVersion {
 		if versions[i] > expectedVersion {
 			break
