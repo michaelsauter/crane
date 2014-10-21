@@ -84,6 +84,15 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		}, true),
 	}
 
+	var cmdCreate = &cobra.Command{
+		Use:   "create",
+		Short: "Create the containers",
+		Long:  `run will call docker create for all targeted containers.`,
+		Run: configCommand(func(config Config) {
+			config.TargetedContainers().create(options.recreate)
+		}, false),
+	}
+
 	var cmdRun = &cobra.Command{
 		Use:   "run",
 		Short: "Run the containers",
@@ -212,6 +221,8 @@ See the corresponding docker commands for more information.`,
 
 	cmdProvision.Flags().BoolVarP(&options.nocache, "no-cache", "n", false, "Build the image without any cache")
 
+	cmdCreate.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (force-remove containers first)")
+
 	cmdRun.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (force-remove containers first)")
 
 	cmdRm.Flags().BoolVarP(&options.forceRm, "force", "f", false, "Kill containers if they are running first")
@@ -243,7 +254,7 @@ Additional help topics: {{if gt .Commands 0 }}{{range .Commands}}{{if not .Runna
 Use "{{.Root.Name}} help [command]" for more information about that command.
 `)
 
-	craneCmd.AddCommand(cmdLift, cmdProvision, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdPause, cmdUnpause, cmdPush, cmdStatus, cmdGraph, cmdVersion)
+	craneCmd.AddCommand(cmdLift, cmdProvision, cmdCreate, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdPause, cmdUnpause, cmdPush, cmdStatus, cmdGraph, cmdVersion)
 	err := craneCmd.Execute()
 	if err != nil {
 		panic(StatusError{status: 64})

@@ -19,7 +19,7 @@ type StatusError struct {
 
 var (
 	minimalDockerVersion     = []int{1, 0}
-	recommendedDockerVersion = []int{1, 2}
+	recommendedDockerVersion = []int{1, 3}
 )
 
 func RealMain() {

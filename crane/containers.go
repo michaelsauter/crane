@@ -40,6 +40,17 @@ func (containers Containers) provision(nocache bool) {
 	}
 }
 
+// Create containers.
+// When recreate is true, removes existing containers first.
+func (containers Containers) create(recreate bool) {
+	if recreate {
+		containers.rm(true)
+	}
+	for _, container := range containers {
+		container.Create()
+	}
+}
+
 // Run containers.
 // When recreate is true, removes existing containers first.
 func (containers Containers) run(recreate bool) {

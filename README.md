@@ -12,10 +12,13 @@ bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/master/
 ```
 You can also build Crane yourself by using the Go toolchain (`go get` and `go install`). Please have a look at the [release notes](https://github.com/michaelsauter/crane/releases) for the changelog if you're upgrading.
 
-Of course, you will need to have Docker (>= 1.2 recommended, 1.0 required) installed.
+Of course, you will need to have Docker (>= 1.3 recommended, 1.0 required) installed.
 
 ## Usage
 Crane is a very light wrapper around the Docker CLI. This means that most commands just call the corresponding Docker command, but for all targeted containers. Additionally, there are a few special commands.
+
+### `create`
+Maps to `docker create`. Containers can be recreated by passing `--recreate`. Docker >=1.3 only.
 
 ### `run`
 Maps to `docker run`.  If a container already exists, it is just started. However, containers can be recreated by passing `--recreate`.
@@ -61,11 +64,15 @@ The map of containers consists of the name of the container mapped to the contai
 
 * `image` (string, required): Name of the image to build/pull
 * `dockerfile` (string, optional): Relative path to the Dockerfile
-* `run` (object, optional): Parameters mapped to Docker's `run`.
+* `run` (object, optional): Parameters mapped to Docker's `run` & `create`.
+	* `add-host` (array) Add custom host-to-IP mappings. Docker >=1.3 only.
+	* `cap-add` (array) Add Linux capabilities. Docker >=1.2 only.
+	* `cap-drop` (array) Drop Linux capabilities. Docker >=1.2 only.
 	* `cidfile` (string)
 	* `cpuset` (integer)
 	* `cpu-shares` (integer)
 	* `detach` (boolean) `sudo docker attach <container name>` will work as normal.
+	* `device` (array) Add host devices. Docker >=1.2 only.
 	* `dns` (array)
 	* `entrypoint` (string)
 	* `env` (array)
@@ -80,7 +87,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `privileged` (boolean)
 	* `publish` (array) Map network ports to the container.
 	* `publish-all` (boolean)
-	* `restart` (string)
+	* `restart` (string) Restart policy. Docker >=1.2 only.
 	* `rm` (boolean)
 	* `tty` (boolean)
 	* `user` (string)
