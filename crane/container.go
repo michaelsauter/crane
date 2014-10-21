@@ -23,6 +23,7 @@ type Container interface {
 	Status() []string
 	Provision(nocache bool)
 	ProvisionOrSkip(update bool, nocache bool)
+	Create()
 	Run()
 	Start()
 	RunOrStart()
@@ -45,10 +46,14 @@ type container struct {
 }
 
 type RunParameters struct {
+	RawAddHost     []string    `json:"add-host" yaml:"add-host"`
+	RawCapAdd      []string    `json:"cap-add" yaml:"cap-add"`
+	RawCapDrop     []string    `json:"cap-drop" yaml:"cap-drop"`
 	RawCidfile     string      `json:"cidfile" yaml:"cidfile"`
 	Cpuset         int         `json:"cpuset" yaml:"cpuset"`
 	CpuShares      int         `json:"cpu-shares" yaml:"cpu-shares"`
 	Detach         bool        `json:"detach" yaml:"detach"`
+	RawDevice      []string    `json:"device" yaml:"device"`
 	RawDns         []string    `json:"dns" yaml:"dns"`
 	RawEntrypoint  string      `json:"entrypoint" yaml:"entrypoint"`
 	RawEnv         []string    `json:"env" yaml:"env"`
@@ -121,8 +126,40 @@ func (c *container) Image() string {
 	return os.ExpandEnv(c.RawImage)
 }
 
+func (r *RunParameters) AddHost() []string {
+	var addHost []string
+	for _, rawAddHost := range r.RawAddHost {
+		addHost = append(addHost, os.ExpandEnv(rawAddHost))
+	}
+	return addHost
+}
+
+func (r *RunParameters) CapAdd() []string {
+	var capAdd []string
+	for _, rawCapAdd := range r.RawCapAdd {
+		capAdd = append(capAdd, os.ExpandEnv(rawCapAdd))
+	}
+	return capAdd
+}
+
+func (r *RunParameters) CapDrop() []string {
+	var capDrop []string
+	for _, rawCapDrop := range r.RawCapDrop {
+		capDrop = append(capDrop, os.ExpandEnv(rawCapDrop))
+	}
+	return capDrop
+}
+
 func (r *RunParameters) Cidfile() string {
 	return os.ExpandEnv(r.RawCidfile)
+}
+
+func (r *RunParameters) Device() []string {
+	var device []string
+	for _, rawDevice := range r.RawDevice {
+		device = append(device, os.ExpandEnv(rawDevice))
+	}
+	return device
 }
 
 func (r *RunParameters) Dns() []string {
@@ -339,7 +376,18 @@ func (c *container) ProvisionOrSkip(update bool, nocache bool) {
 	}
 }
 
-// Run container
+// Create container
+func (c *container) Create() {
+	if c.Exists() {
+		print.Noticef("Container %s does already exist. Use --recreate to recreate.\n", c.Name())
+	} else {
+		fmt.Printf("Creating container %s ... ", c.Name())
+		args := append([]string{"create"}, c.createArgs()...)
+		executeCommand("docker", args)
+	}
+}
+
+// Run container, or start it if already existing
 func (c *container) Run() {
 	if c.Exists() {
 		print.Noticef("Container %s does already exist. Use --recreate to recreate.\n", c.Name())
@@ -348,117 +396,138 @@ func (c *container) Run() {
 		}
 	} else {
 		fmt.Printf("Running container %s ... ", c.Name())
-		// Assemble command arguments
 		args := []string{"run"}
-		// Cidfile
-		if len(c.RunParams.Cidfile()) > 0 {
-			args = append(args, "--cidfile", c.RunParams.Cidfile())
-		}
-		// CPU set
-		if c.RunParams.Cpuset > 0 {
-			args = append(args, "--cpuset", strconv.Itoa(c.RunParams.Cpuset))
-		}
-		// CPU shares
-		if c.RunParams.CpuShares > 0 {
-			args = append(args, "--cpu-shares", strconv.Itoa(c.RunParams.CpuShares))
-		}
 		// Detach
 		if c.RunParams.Detach {
 			args = append(args, "--detach")
 		}
-		// Dns
-		for _, dns := range c.RunParams.Dns() {
-			args = append(args, "--dns", dns)
-		}
-		// Entrypoint
-		if len(c.RunParams.Entrypoint()) > 0 {
-			args = append(args, "--entrypoint", c.RunParams.Entrypoint())
-		}
-		// Env
-		for _, env := range c.RunParams.Env() {
-			args = append(args, "--env", env)
-		}
-		// Env file
-		for _, envFile := range c.RunParams.EnvFile() {
-			args = append(args, "--env-file", envFile)
-		}
-		// Expose
-		for _, expose := range c.RunParams.Expose() {
-			args = append(args, "--expose", expose)
-		}
-		// Host
-		if len(c.RunParams.Hostname()) > 0 {
-			args = append(args, "--hostname", c.RunParams.Hostname())
-		}
-		// Interactive
-		if c.RunParams.Interactive {
-			args = append(args, "--interactive")
-		}
-		// Link
-		for _, link := range c.RunParams.Link() {
-			args = append(args, "--link", link)
-		}
-		// LxcConf
-		for _, lxcConf := range c.RunParams.LxcConf() {
-			args = append(args, "--lxc-conf", lxcConf)
-		}
-		// Memory
-		if len(c.RunParams.Memory()) > 0 {
-			args = append(args, "--memory", c.RunParams.Memory())
-		}
-		// Net
-		if c.RunParams.Net() != "bridge" {
-			args = append(args, "--net", c.RunParams.Net())
-		}
-		// Privileged
-		if c.RunParams.Privileged {
-			args = append(args, "--privileged")
-		}
-		// Publish
-		for _, port := range c.RunParams.Publish() {
-			args = append(args, "--publish", port)
-		}
-		// PublishAll
-		if c.RunParams.PublishAll {
-			args = append(args, "--publish-all")
-		}
-		// Restart
-		if len(c.RunParams.Restart()) > 0 {
-			args = append(args, "--restart", c.RunParams.Restart())
-		}
-		// Rm
-		if c.RunParams.Rm {
-			args = append(args, "--rm")
-		}
-		// Tty
-		if c.RunParams.Tty {
-			args = append(args, "--tty")
-		}
-		// User
-		if len(c.RunParams.User()) > 0 {
-			args = append(args, "--user", c.RunParams.User())
-		}
-		// Volumes
-		for _, volume := range c.RunParams.Volume() {
-			args = append(args, "--volume", volume)
-		}
-		// VolumesFrom
-		for _, volumeFrom := range c.RunParams.VolumesFrom() {
-			args = append(args, "--volumes-from", volumeFrom)
-		}
-		// Workdir
-		if len(c.RunParams.Workdir()) > 0 {
-			args = append(args, "--workdir", c.RunParams.Workdir())
-		}
-		// Name
-		args = append(args, "--name", c.Name())
-		// Image
-		args = append(args, c.Image())
-		// Command
-		args = append(args, c.RunParams.Cmd()...)
-		// Execute command
+		args = append(args, c.createArgs()...)
 		executeCommand("docker", args)
 	}
+}
+
+// Returns all the flags to be passed to `docker create`
+func (c *container) createArgs() []string {
+	args := []string{}
+	// AddHost
+	for _, addHost := range c.RunParams.AddHost() {
+		args = append(args, "--add-host", addHost)
+	}
+	// CapAdd
+	for _, capAdd := range c.RunParams.CapAdd() {
+		args = append(args, "--cap-add", capAdd)
+	}
+	// CapDrop
+	for _, capDrop := range c.RunParams.CapDrop() {
+		args = append(args, "--cap-drop", capDrop)
+	}
+	// Cidfile
+	if len(c.RunParams.Cidfile()) > 0 {
+		args = append(args, "--cidfile", c.RunParams.Cidfile())
+	}
+	// CPU set
+	if c.RunParams.Cpuset > 0 {
+		args = append(args, "--cpuset", strconv.Itoa(c.RunParams.Cpuset))
+	}
+	// CPU shares
+	if c.RunParams.CpuShares > 0 {
+		args = append(args, "--cpu-shares", strconv.Itoa(c.RunParams.CpuShares))
+	}
+	// Device
+	for _, device := range c.RunParams.Device() {
+		args = append(args, "--device", device)
+	}
+	// Dns
+	for _, dns := range c.RunParams.Dns() {
+		args = append(args, "--dns", dns)
+	}
+	// Entrypoint
+	if len(c.RunParams.Entrypoint()) > 0 {
+		args = append(args, "--entrypoint", c.RunParams.Entrypoint())
+	}
+	// Env
+	for _, env := range c.RunParams.Env() {
+		args = append(args, "--env", env)
+	}
+	// Env file
+	for _, envFile := range c.RunParams.EnvFile() {
+		args = append(args, "--env-file", envFile)
+	}
+	// Expose
+	for _, expose := range c.RunParams.Expose() {
+		args = append(args, "--expose", expose)
+	}
+	// Host
+	if len(c.RunParams.Hostname()) > 0 {
+		args = append(args, "--hostname", c.RunParams.Hostname())
+	}
+	// Interactive
+	if c.RunParams.Interactive {
+		args = append(args, "--interactive")
+	}
+	// Link
+	for _, link := range c.RunParams.Link() {
+		args = append(args, "--link", link)
+	}
+	// LxcConf
+	for _, lxcConf := range c.RunParams.LxcConf() {
+		args = append(args, "--lxc-conf", lxcConf)
+	}
+	// Memory
+	if len(c.RunParams.Memory()) > 0 {
+		args = append(args, "--memory", c.RunParams.Memory())
+	}
+	// Net
+	if c.RunParams.Net() != "bridge" {
+		args = append(args, "--net", c.RunParams.Net())
+	}
+	// Privileged
+	if c.RunParams.Privileged {
+		args = append(args, "--privileged")
+	}
+	// Publish
+	for _, port := range c.RunParams.Publish() {
+		args = append(args, "--publish", port)
+	}
+	// PublishAll
+	if c.RunParams.PublishAll {
+		args = append(args, "--publish-all")
+	}
+	// Restart
+	if len(c.RunParams.Restart()) > 0 {
+		args = append(args, "--restart", c.RunParams.Restart())
+	}
+	// Rm
+	if c.RunParams.Rm {
+		args = append(args, "--rm")
+	}
+	// Tty
+	if c.RunParams.Tty {
+		args = append(args, "--tty")
+	}
+	// User
+	if len(c.RunParams.User()) > 0 {
+		args = append(args, "--user", c.RunParams.User())
+	}
+	// Volumes
+	for _, volume := range c.RunParams.Volume() {
+		args = append(args, "--volume", volume)
+	}
+	// VolumesFrom
+	for _, volumeFrom := range c.RunParams.VolumesFrom() {
+		args = append(args, "--volumes-from", volumeFrom)
+	}
+	// Workdir
+	if len(c.RunParams.Workdir()) > 0 {
+		args = append(args, "--workdir", c.RunParams.Workdir())
+	}
+	// Name
+	args = append(args, "--name", c.Name())
+	// Image
+	args = append(args, c.Image())
+	// Command
+	args = append(args, c.RunParams.Cmd()...)
+	return args
 }
 
 // Start container
