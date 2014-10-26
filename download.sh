@@ -5,7 +5,7 @@ if [ -z "$VERSION" ]; then
   VERSION="0.12.0"
 fi
 
-echo "Dowloading version ${VERSION}..."
+echo "Downloading version ${VERSION}..."
 
 # OS information (contains e.g. darwin x86_64)
 UNAME=`uname -a | awk '{print tolower($0)}'`
