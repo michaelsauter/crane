@@ -112,9 +112,9 @@ containers:
 		dockerfile: apache
 		image: michaelsauter/apache
 		run:
-			volumes-from: ["crane_app"]
+			volumes-from: ["app"]
 			publish: ["80:80"]
-			link: ["crane_mysql:db", "crane_memcached:cache"]
+			link: ["mysql:db", "memcached:cache"]
 			detach: true
 	app:
 		dockerfile: app
