@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/michaelsauter/crane/print"
+	"io"
 	"os"
 	"os/exec"
 	"regexp"
@@ -109,6 +110,17 @@ func executeCommand(name string, args []string) {
 		status := cmd.ProcessState.Sys().(syscall.WaitStatus).ExitStatus()
 		panic(StatusError{errors.New(cmd.ProcessState.String()), status})
 	}
+}
+
+func executeCommandBackground(name string, args []string) (stdout, stderr io.ReadCloser) {
+	if isVerbose() {
+		fmt.Printf("--> %s %s\n\n", name, strings.Join(args, " "))
+	}
+	cmd := exec.Command(name, args...)
+	stdout, _ = cmd.StdoutPipe()
+	stderr, _ = cmd.StderrPipe()
+	cmd.Start()
+	return stdout, stderr
 }
 
 func commandOutput(name string, args []string) (string, error) {

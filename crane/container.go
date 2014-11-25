@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/flynn/go-shlex"
 	"github.com/michaelsauter/crane/print"
+	"io"
 	"os"
 	"path"
 	"strconv"
@@ -32,6 +33,7 @@ type Container interface {
 	Pause()
 	Unpause()
 	Rm(force bool)
+	Logs(follow bool, tail string) (stdout, stderr io.Reader)
 	Push()
 }
 
@@ -612,6 +614,27 @@ func (c *container) Rm(force bool) {
 			executeCommand("docker", args)
 			c.id = ""
 		}
+	}
+}
+
+// Dump container logs
+func (c *container) Logs(follow bool, tail string) (stdout, stderr io.Reader) {
+	if c.Exists() {
+		args := []string{"logs"}
+		if follow {
+			args = append(args, "-f")
+		}
+		if len(tail) > 0 && tail != "all" {
+			args = append(args, "--tail", tail)
+		}
+		// always include timestamps for ordering, we'll just strip
+		// them if the user doesn't want to see them
+		args = append(args, "-t")
+		args = append(args, c.Id())
+		stdout, stderr := executeCommandBackground("docker", args)
+		return stdout, stderr
+	} else {
+		return nil, nil
 	}
 }
 
