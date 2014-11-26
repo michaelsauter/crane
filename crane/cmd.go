@@ -24,20 +24,7 @@ type Options struct {
 	target              []string
 }
 
-var options = Options{
-	verbose:             false,
-	recreate:            false,
-	nocache:             false,
-	notrunc:             false,
-	forceRm:             false,
-	follow:              false,
-	timestamps:          false,
-	tail:                "all",
-	colorize:            false,
-	cascadeDependencies: "",
-	cascadeAffected:     "",
-	config:              "",
-}
+var options Options
 
 func isVerbose() bool {
 	return options.verbose
