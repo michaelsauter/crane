@@ -14,6 +14,10 @@ type Options struct {
 	nocache             bool
 	notrunc             bool
 	forceRm             bool
+	follow              bool
+	timestamps          bool
+	tail                string
+	colorize            bool
 	cascadeDependencies string
 	cascadeAffected     string
 	config              string
@@ -26,6 +30,10 @@ var options = Options{
 	nocache:             false,
 	notrunc:             false,
 	forceRm:             false,
+	follow:              false,
+	timestamps:          false,
+	tail:                "all",
+	colorize:            false,
 	cascadeDependencies: "",
 	cascadeAffected:     "",
 	config:              "",
@@ -165,6 +173,20 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		}, true),
 	}
 
+	var cmdLogs = &cobra.Command{
+		Use:   "logs",
+		Short: "Display container logs",
+		Long: `Display an aggregated, name-prefixed view of the logs for the targeted
+containers. To distinguish the sources better, lines can be colorized by
+enabling the 'colorize' flag. Containers' STDERR and STDOUT are multiplexed
+together into the process STDOUT in order to interlace lines properly. Logs
+originally dumped to STDERR have a line header ending with a '*', and are
+formatted in bold provided the 'colorize' flag is on.`,
+		Run: configCommand(func(config Config) {
+			config.TargetedContainers().logs(options.follow, options.timestamps, options.tail, options.colorize)
+		}, true),
+	}
+
 	var cmdStatus = &cobra.Command{
 		Use:   "status",
 		Short: "Displays status of containers",
@@ -177,13 +199,13 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 	var cmdGraph = &cobra.Command{
 		Use:   "graph",
 		Short: "Dumps the dependency graph as a DOT file",
-		Long:  `Generate a DOT file representing the dependency graph. Bold nodes represent the
+		Long: `Generate a DOT file representing the dependency graph. Bold nodes represent the
 containers declared in the config (as opposed to non-bold ones that are referenced
 in the config, but not defined). Targeted containers are highlighted with color
 borders. Solid edges represent links, dashed edges volumesFrom, and dotted edges
 net=container relations.`,
 		Run: configCommand(func(config Config) {
-				config.DependencyGraph().DOT(os.Stdout, config.TargetedContainers())
+			config.DependencyGraph().DOT(os.Stdout, config.TargetedContainers())
 		}, true),
 	}
 
@@ -229,6 +251,11 @@ See the corresponding docker commands for more information.`,
 
 	cmdStatus.Flags().BoolVarP(&options.notrunc, "no-trunc", "", false, "Don't truncate output")
 
+	cmdLogs.Flags().BoolVarP(&options.follow, "follow", "f", false, "Follow log output")
+	cmdLogs.Flags().BoolVarP(&options.timestamps, "timestamps", "t", false, "Show timestamps")
+	cmdLogs.Flags().StringVarP(&options.tail, "tail", "", "all", "Output the specified number of lines at the end of logs")
+	cmdLogs.Flags().BoolVarP(&options.colorize, "colorize", "z", false, "Output the lines with one color per container")
+
 	// default usage template with target arguments & description
 	craneCmd.SetUsageTemplate(`{{ $cmd := . }}
 Usage: {{if .Runnable}}
@@ -254,7 +281,7 @@ Additional help topics: {{if gt .Commands 0 }}{{range .Commands}}{{if not .Runna
 Use "{{.Root.Name}} help [command]" for more information about that command.
 `)
 
-	craneCmd.AddCommand(cmdLift, cmdProvision, cmdCreate, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdPause, cmdUnpause, cmdPush, cmdStatus, cmdGraph, cmdVersion)
+	craneCmd.AddCommand(cmdLift, cmdProvision, cmdCreate, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdPause, cmdUnpause, cmdPush, cmdLogs, cmdStatus, cmdGraph, cmdVersion)
 	err := craneCmd.Execute()
 	if err != nil {
 		panic(StatusError{status: 64})

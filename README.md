@@ -50,6 +50,9 @@ Maps to `docker push`.
 ### `lift`
 Will provision and run the containers in one go. By default, it does as little as possible to get the containers running. This means it only provisions images if necessary and just starts containers if they already exist. To update the images and recreate the containers, pass `--recreate` (and optionally `--no-cache`).
 
+### `logs`
+Maps to `docker logs`, multiplexing the logs of the targeted containers chronologically.
+
 ### `status`
 Displays information about the state of the containers.
 
