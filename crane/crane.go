@@ -18,10 +18,7 @@ type StatusError struct {
 	status int
 }
 
-var (
-	minimalDockerVersion     = []int{1, 0}
-	recommendedDockerVersion = []int{1, 3}
-)
+var requiredDockerVersion = []int{1, 3}
 
 func RealMain() {
 	// On panic, recover the error, display it and return the given status code if any
@@ -48,9 +45,8 @@ func RealMain() {
 	handleCmd()
 }
 
-// Ensure there is a docker binary in the path, printing an error if its version
-// is below the minimal requirement, and printing a warning if its version
-// is below the recommended requirement.
+// Ensure there is a docker binary in the path,
+// and printing an error if its version is below the minimal requirement.
 func checkDockerClient() {
 	output, err := commandOutput("docker", []string{"--version"})
 	if err != nil {
@@ -68,22 +64,12 @@ func checkDockerClient() {
 		versions = append(versions, version)
 	}
 
-	for i, expectedVersion := range minimalDockerVersion {
+	for i, expectedVersion := range requiredDockerVersion {
 		if versions[i] > expectedVersion {
 			break
 		}
 		if versions[i] < expectedVersion {
-			print.Errorf("Unsupported client version. Please upgrade to Docker %v or later.", intJoin(recommendedDockerVersion, "."))
-		}
-	}
-
-	for i, expectedVersion := range recommendedDockerVersion {
-		if versions[i] > expectedVersion {
-			break
-		}
-		if versions[i] < expectedVersion {
-			print.Noticef("WARNING: outdated Docker client, behavior might not be optimal. Please upgrade to Docker %v or later.\n", intJoin(recommendedDockerVersion, "."))
-			break
+			print.Errorf("Unsupported client version! Please upgrade to Docker %v or later.\n", intJoin(requiredDockerVersion, "."))
 		}
 	}
 }
