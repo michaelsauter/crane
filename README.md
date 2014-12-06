@@ -107,13 +107,12 @@ The map of containers consists of the name of the container mapped to the contai
 See the [Docker documentation](http://docs.docker.io/en/latest/reference/commandline/cli/#run) for more details about the parameters.
 
 ## Example
-For demonstration purposes, we'll bring up a PHP app (served by Apache) that depends both on a MySQL database and a Memcached server. The source code is available at http://github.com/michaelsauter/crane-example. Here's what the `crane.yaml` looks like:
+A typical `crane.yaml` looks like this:
 
 ```
 containers:
 	apache:
-		dockerfile: apache
-		image: michaelsauter/apache
+		image: some-apache-image:latest
 		run:
 			volumes-from: ["app"]
 			publish: ["80:80"]
@@ -126,24 +125,22 @@ containers:
 			volume: ["app/www:/srv/www:rw"]
 			detach: true
 	mysql:
-		dockerfile: mysql
-		image: michaelsauter/mysql
+		image: mysql
 		run:
+			env: ["MYSQL_ROOT_PASSWORD=mysecretpassword"]
 			detach: true
 	memcached:
-		dockerfile: memcached
-		image: michaelsauter/memcached
+		image: tutum/memcached
 		run:
 			detach: true
 ```
-If you have Docker installed, you can just clone that repository and bring up the environment right now.
-In the folder where the `crane.yaml` is, type:
+All specified Docker containers can then be created and started with:
 
 ```
 crane lift
 ```
 
-This will bring up the containers. The container running Apache has the MySQL and Memcached containers automatically linked. Open `http://localhost` and you should be greeted with "Hello World".
+This will bring up the containers. The container running Apache has the MySQL and Memcached containers automatically linked.
 
 If you want to use JSON instead of YAML, here's what a simple configuration looks like:
 
@@ -186,7 +183,7 @@ This could be used like so: `crane provision service1`, `crane run -v databases`
 
 When using targets, it is also possible to cascade the commands to related containers. There are 2 different flags, `--cascade-affected` and `--cascade-dependencies`. In our example configuration above, when targeting the `mysql` container, the `apache` container would be considered to be "affected". When targeting the `apache` container, the `mysql` container would be considered as a "dependency". Both flags take a string argument, which specifies which type of cascading is desired, options are `volumesFrom`, `link`, `net` and `all`.
 
-## Other Crane-backed environments
+## Some Crane-backed sample environments
 * [Silex + Nginx/php-fpm + MySQL](https://github.com/michaelsauter/silex-crane-env)
 * [Symfony2 + Apache + MySQL](https://github.com/michaelsauter/symfony2-crane-env)
 * [Sinatra + PostrgeSQL](https://github.com/michaelsauter/sinatra-crane-env)
