@@ -34,7 +34,7 @@ type Container interface {
 	Unpause()
 	Rm(force bool)
 	Logs(follow bool, tail string) (stdout, stderr io.Reader)
-	Push()
+	Push(latest bool)
 }
 
 type container struct {
@@ -639,10 +639,18 @@ func (c *container) Logs(follow bool, tail string) (stdout, stderr io.Reader) {
 }
 
 // Push container
-func (c *container) Push() {
-	if len(c.Image()) > 0 {
-		fmt.Printf("Pushing image %s ... ", c.Image())
-		args := []string{"push", c.Image()}
+func (c *container) Push(latest bool) {
+	imageName := c.Image()
+	if len(imageName) > 0 {
+		if latest {
+			imageParts := strings.Split(imageName, ":")
+			if len(imageParts) == 2 {
+				imageParts[1] = "latest"
+				imageName = strings.Join(imageParts, ":")
+			}
+		}
+		fmt.Printf("Pushing image %s ... ", imageName)
+		args := []string{"push", imageName}
 		executeCommand("docker", args)
 	} else {
 		print.Noticef("Skipping %s as it does not have an image name.\n", c.Name())

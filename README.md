@@ -45,7 +45,7 @@ Maps to `docker unpause`.
 Either calls Docker's `build` or `pull`, depending on whether a Dockerfile is specified. The Docker cache can be disabled by passing `--no-cache`.
 
 ### `push`
-Maps to `docker push`.
+Maps to `docker push`. By using the `--latest` parameter, you can push your image with the `latest` tag, instead of the version that is in your Crane config file.
 
 ### `lift`
 Will provision and run the containers in one go. By default, it does as little as possible to get the containers running. This means it only provisions images if necessary and just starts containers if they already exist. To update the images and recreate the containers, pass `--recreate` (and optionally `--no-cache`).
