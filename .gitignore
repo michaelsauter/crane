@@ -1,2 +1,6 @@
 crane_darwin_amd64
 crane_linux_amd64
+
+.idea/
+atlassian-ide-plugin.xml
+*.iml

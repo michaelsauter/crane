@@ -129,9 +129,9 @@ func (containers Containers) rm(force bool) {
 }
 
 // Push containers.
-func (containers Containers) push() {
+func (containers Containers) push(latest bool) {
 	for _, container := range containers {
-		container.Push()
+		container.Push(latest)
 	}
 }
 
