@@ -11,7 +11,7 @@ import (
 type Options struct {
 	verbose             bool
 	recreate            bool
-	latest				bool
+	latest              bool
 	nocache             bool
 	notrunc             bool
 	forceRm             bool
