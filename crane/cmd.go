@@ -11,6 +11,7 @@ import (
 type Options struct {
 	verbose             bool
 	recreate            bool
+	tag                 string
 	nocache             bool
 	notrunc             bool
 	forceRm             bool
@@ -25,6 +26,10 @@ type Options struct {
 }
 
 var options Options
+
+func getTag() string {
+	return options.tag
+}
 
 func isVerbose() bool {
 	return options.verbose
@@ -64,7 +69,7 @@ func handleCmd() {
 		Long: `
 lift will provision missing images and run all targeted containers.`,
 		Run: configCommand(func(config Config) {
-			config.TargetedContainers().lift(options.recreate, options.nocache)
+			config.TargetedContainers().lift(options.recreate, options.nocache, options.tag)
 		}, false),
 	}
 
@@ -75,7 +80,7 @@ lift will provision missing images and run all targeted containers.`,
 provision will use specified Dockerfiles to build all targeted images.
 If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Run: configCommand(func(config Config) {
-			config.TargetedContainers().provision(options.nocache)
+			config.TargetedContainers().provision(options.nocache, options.tag)
 		}, true),
 	}
 
@@ -156,7 +161,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Push the containers",
 		Long:  `push will call docker push for all targeted containers.`,
 		Run: configCommand(func(config Config) {
-			config.TargetedContainers().push()
+			config.TargetedContainers().push(options.tag)
 		}, true),
 	}
 
@@ -227,10 +232,14 @@ See the corresponding docker commands for more information.`,
 
 	cmdLift.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (force-remove containers if they exist, force-provision images, run containers)")
 	cmdLift.Flags().BoolVarP(&options.nocache, "no-cache", "n", false, "Build the image without any cache")
+	cmdLift.Flags().StringVarP(&options.tag, "tag", "t", false, "Use a specific tag when building images (overriding any set in the config file)")
 
 	cmdProvision.Flags().BoolVarP(&options.nocache, "no-cache", "n", false, "Build the image without any cache")
+	cmdProvision.Flags().StringVarP(&options.tag, "tag", "t", false, "Use a specific tag when building images (overriding any set in the config file)")
 
 	cmdCreate.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (force-remove containers first)")
+
+	cmdPush.Flags().StringVarP(&options.tag, "tag", "t", false, "Push to a specific tag (overriding any set in the config file)")
 
 	cmdRun.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (force-remove containers first)")
 
