@@ -22,8 +22,8 @@ type Container interface {
 	Paused() bool
 	ImageExists() bool
 	Status() []string
-	Provision(nocache bool)
-	ProvisionOrSkip(update bool, nocache bool)
+	Provision(nocache bool, tag string)
+	ProvisionOrSkip(update bool, nocache bool, tag string)
 	Create()
 	Run()
 	Start()
@@ -34,7 +34,7 @@ type Container interface {
 	Unpause()
 	Rm(force bool)
 	Logs(follow bool, tail string) (stdout, stderr io.Reader)
-	Push()
+	Push(tag string)
 }
 
 type container struct {
@@ -354,9 +354,9 @@ func (c *container) Status() []string {
 	return fields
 }
 
-func (c *container) Provision(nocache bool) {
+func (c *container) Provision(nocache bool, tag string) {
 	if len(c.Dockerfile()) > 0 {
-		c.buildImage(nocache)
+		c.buildImage(nocache, tag)
 	} else {
 		c.pullImage()
 	}
@@ -372,9 +372,9 @@ func (c *container) RunOrStart() {
 }
 
 // Provision or skip container
-func (c *container) ProvisionOrSkip(update bool, nocache bool) {
+func (c *container) ProvisionOrSkip(update bool, nocache bool, tag string) {
 	if update || !c.ImageExists() {
-		c.Provision(nocache)
+		c.Provision(nocache, tag)
 	}
 }
 
@@ -639,14 +639,27 @@ func (c *container) Logs(follow bool, tail string) (stdout, stderr io.Reader) {
 }
 
 // Push container
-func (c *container) Push() {
-	if len(c.Image()) > 0 {
-		fmt.Printf("Pushing image %s ... ", c.Image())
-		args := []string{"push", c.Image()}
+func (c *container) Push(tag string) {
+	imageName := c.getTaggedImageName(tag)
+	if len(imageName) > 0 {
+		fmt.Printf("Pushing image %s ... ", imageName)
+		args := []string{"push", imageName}
 		executeCommand("docker", args)
 	} else {
 		print.Noticef("Skipping %s as it does not have an image name.\n", c.Name())
 	}
+}
+
+func (c *container) getTaggedImageName(tag string) {
+	imageName := c.Image()
+	if len(imageName) > 0 {
+		if len(tag) > 0 {
+			imageParts := strings.Split(imageName, ":")
+			imageParts[1] = tag
+			imageName = strings.Join(imageParts, ":")
+		}
+	}
+	return imageName
 }
 
 // Pull image for container
@@ -657,13 +670,14 @@ func (c *container) pullImage() {
 }
 
 // Build image for container
-func (c *container) buildImage(nocache bool) {
-	fmt.Printf("Building image %s ... ", c.Image())
+func (c *container) buildImage(nocache bool, tag string) {
+	imageName := c.getTaggedImageName(tag)
+	fmt.Printf("Building image %s ... ", imageName)
 	args := []string{"build"}
 	if nocache {
 		args = append(args, "--no-cache")
 	}
-	args = append(args, "--rm", "--tag="+c.Image(), c.Dockerfile())
+	args = append(args, "--rm", "--tag="+imageName, c.Dockerfile())
 	executeCommand("docker", args)
 }
 
