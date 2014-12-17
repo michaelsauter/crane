@@ -640,7 +640,7 @@ func (c *container) Logs(follow bool, tail string) (stdout, stderr io.Reader) {
 
 // Push container
 func (c *container) Push(tag string) {
-	imageName := c.getTaggedImageName(tag)
+	imageName := c.nameWithTagOverride(tag)
 	if len(imageName) > 0 {
 		fmt.Printf("Pushing image %s ... ", imageName)
 		args := []string{"push", imageName}
@@ -650,7 +650,7 @@ func (c *container) Push(tag string) {
 	}
 }
 
-func (c *container) getTaggedImageName(tag string) {
+func (c *container) nameWithTagOverride(tag string) {
 	imageName := c.Image()
 	if len(imageName) > 0 {
 		if len(tag) > 0 {
@@ -671,7 +671,7 @@ func (c *container) pullImage() {
 
 // Build image for container
 func (c *container) buildImage(nocache bool, tag string) {
-	imageName := c.getTaggedImageName(tag)
+	imageName := c.nameWithTagOverride(tag)
 	fmt.Printf("Building image %s ... ", imageName)
 	args := []string{"build"}
 	if nocache {

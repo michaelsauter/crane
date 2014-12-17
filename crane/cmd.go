@@ -27,10 +27,6 @@ type Options struct {
 
 var options Options
 
-func getTag() string {
-	return options.tag
-}
-
 func isVerbose() bool {
 	return options.verbose
 }
