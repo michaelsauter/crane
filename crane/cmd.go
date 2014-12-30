@@ -228,14 +228,14 @@ See the corresponding docker commands for more information.`,
 
 	cmdLift.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (force-remove containers if they exist, force-provision images, run containers)")
 	cmdLift.Flags().BoolVarP(&options.nocache, "no-cache", "n", false, "Build the image without any cache")
-	cmdLift.Flags().StringVarP(&options.tag, "tag", "t", false, "Use a specific tag when building images (overriding any set in the config file)")
+	cmdLift.Flags().StringVarP(&options.tag, "tag", "t", "", "Use a specific tag when building images (overriding any set in the config file)")
 
 	cmdProvision.Flags().BoolVarP(&options.nocache, "no-cache", "n", false, "Build the image without any cache")
-	cmdProvision.Flags().StringVarP(&options.tag, "tag", "t", false, "Use a specific tag when building images (overriding any set in the config file)")
+	cmdProvision.Flags().StringVarP(&options.tag, "tag", "t", "", "Use a specific tag when building images (overriding any set in the config file)")
 
 	cmdCreate.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (force-remove containers first)")
 
-	cmdPush.Flags().StringVarP(&options.tag, "tag", "t", false, "Push to a specific tag (overriding any set in the config file)")
+	cmdPush.Flags().StringVarP(&options.tag, "tag", "t", "", "Push to a specific tag (overriding any set in the config file)")
 
 	cmdRun.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (force-remove containers first)")
 
