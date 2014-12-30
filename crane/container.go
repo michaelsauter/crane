@@ -650,7 +650,7 @@ func (c *container) Push(tag string) {
 	}
 }
 
-func (c *container) nameWithTagOverride(tag string) {
+func (c *container) nameWithTagOverride(tag string) string {
 	imageName := c.Image()
 	if len(imageName) > 0 {
 		if len(tag) > 0 {
