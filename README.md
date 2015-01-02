@@ -46,7 +46,7 @@ Either calls Docker's `build` or `pull`, depending on whether a Dockerfile is sp
 A specific tag can be build using the `--tag` argument;
 
 ### `push`
-Maps to `docker push`. By using the `--tag` parameter, you can push your image with a specific tag, instead of the version that is in your Crane config file.
+Maps to `docker push`. By using the `--tag` parameter, you can push your image with a specific tag, instead of the version that may be specified in your crane config file.
 
 ### `lift`
 Will provision and run the containers in one go. By default, it does as little as possible to get the containers running. This means it only provisions images if necessary and just starts containers if they already exist. To update the images and recreate the containers, pass `--recreate` (and optionally `--no-cache`).
