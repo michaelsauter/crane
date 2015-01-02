@@ -235,7 +235,7 @@ See the corresponding docker commands for more information.`,
 
 	cmdCreate.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (force-remove containers first)")
 
-	cmdPush.Flags().StringVarP(&options.tag, "tag", "t", "", "Push to a specific tag (overriding any set in the config file)")
+	cmdPush.Flags().StringVarP(&options.tag, "tag", "t", "", "Push a specific tag (overriding any set in the config file)")
 
 	cmdRun.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (force-remove containers first)")
 

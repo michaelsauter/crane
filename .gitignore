@@ -1,10 +1,2 @@
 crane_darwin_amd64
 crane_linux_amd64
-
-# IntelliJ IDE files
-.idea/
-atlassian-ide-plugin.xml
-*.iml
-
-# Cloud9 IDE files
-.c9/
