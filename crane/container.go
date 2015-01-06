@@ -652,10 +652,17 @@ func (c *container) Push(tag string) {
 
 func (c *container) nameWithTagOverride(tag string) string {
 	imageName := c.Image()
+	fmt.Println(imageName)
 	if len(imageName) > 0 {
 		if len(tag) > 0 {
 			imageParts := strings.Split(imageName, ":")
-			imageParts[1] = tag
+			fmt.Println(imageParts)
+			fmt.Println(tag)
+			if len(imageParts) > 1 {
+				imageParts[1] = tag
+			} else {
+				imageParts = append(imageParts, tag);
+			}
 			imageName = strings.Join(imageParts, ":")
 		}
 	}
