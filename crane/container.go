@@ -2,13 +2,14 @@ package crane
 
 import (
 	"fmt"
-	"github.com/flynn/go-shlex"
-	"github.com/michaelsauter/crane/print"
 	"io"
 	"os"
 	"path"
 	"strconv"
 	"strings"
+
+	"github.com/flynn/go-shlex"
+	"github.com/michaelsauter/crane/print"
 )
 
 type Container interface {
@@ -345,7 +346,7 @@ func (c *container) ImageExists() bool {
 
 func (c *container) Status() []string {
 	fields := []string{c.Name(), c.Image(), "-", "-", "-", "-", "-"}
-	output := inspectString(c.Id(), "{{.Id}}\t{{.Image}}\t{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}\t{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}\t{{.State.Running}}")
+	output := inspectString(c.Id(), "{{.Id}}\t{{.Image}}\t{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}\t{{range $networkport,$hostforwardmap := $.NetworkSettings.Ports}}{{range $_, $hostinfo := $hostforwardmap}}{{$hostinfo.HostIp}}:{{$hostinfo.HostPort}}->{{$networkport}},{{else}}{{$networkport}},{{end}}{{else}}-{{end}}\t{{.State.Running}}")
 	if output != "" {
 		copy(fields[2:], strings.Split(output, "\t"))
 		// We asked for the image id the container was created from
