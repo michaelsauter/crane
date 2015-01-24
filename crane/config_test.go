@@ -323,7 +323,7 @@ func TestExplicitlyTargeted(t *testing.T) {
 	groups := map[string][]string{
 		"default": expected,
 	}
-	c := &config{groups: groups}
+	c := &config{containerMap: containerMap, groups: groups}
 	containers = c.explicitlyTargeted([]string{})
 	if len(containers) != 2 || containers[0] != "a" || containers[1] != "b" {
 		t.Errorf("Expected %v, got %v", expected, containers)
