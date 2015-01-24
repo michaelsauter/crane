@@ -277,6 +277,19 @@ func (c *config) explicitlyTargeted(target []string) (result []string) {
 			panic(StatusError{fmt.Errorf("No group or container matching `%s`", reference), 64})
 		}
 	}
+	// ensure all container references exist
+	for _, container := range result {
+		containerDeclared := false
+		for name, _ := range c.containerMap {
+			if container == name {
+				containerDeclared = true
+				break
+			}
+		}
+		if !containerDeclared {
+			panic(StatusError{fmt.Errorf("Invalid container reference `%s`", container), 64})
+		}
+	}
 	return
 }
 

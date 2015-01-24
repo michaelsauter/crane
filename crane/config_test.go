@@ -367,6 +367,23 @@ func TestExplicitlyTargeted(t *testing.T) {
 	}
 }
 
+func TestExplicitlyTargetedInvalidReference(t *testing.T) {
+	containerMap := NewStubbedContainerMap(true,
+		&container{RawName: "a"},
+		&container{RawName: "b"},
+	)
+	groups := map[string][]string{
+		"foo": []string{"a", "doesntexist", "b"},
+	}
+	c := &config{containerMap: containerMap, groups: groups}
+	defer func() {
+		if err := recover(); err == nil {
+			t.Errorf("Error expected but not found")
+		}
+	}()
+	c.explicitlyTargeted([]string{"foo"})
+}
+
 func TestTargetedContainers(t *testing.T) {
 	c := &config{
 		containerMap: NewStubbedContainerMap(true, &container{RawName: "a"}, &container{RawName: "b"}),
