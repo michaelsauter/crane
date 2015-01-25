@@ -228,49 +228,67 @@ func (c *config) determineTarget(target []string, cascadeDependencies string, ca
 // explicitlyTargeted receives a target and determines which
 // containers of the map are targeted.
 func (c *config) explicitlyTargeted(target []string) (result []string) {
-	result = []string{}
-	// target not given
 	if len(target) == 0 {
-		// If default group exists, return its containers
+		// target not given
+		var defaultGroup []string
 		for group, containers := range c.groups {
 			if group == "default" {
-				return containers
+				defaultGroup = containers
+				break
 			}
 		}
-		// If no default group exists, return all containers
-		for name, _ := range c.containerMap {
-			result = append(result, name)
+		if defaultGroup != nil {
+			// If default group exists, return its containers
+			result = defaultGroup
+		} else {
+			// Otherwise, return all containers
+			for name, _ := range c.containerMap {
+				result = append(result, name)
+			}
 		}
-		return
+	} else {
+		// target given
+		for _, reference := range target {
+			success := false
+			reference = os.ExpandEnv(reference)
+			// Select reference from listed groups
+			for group, containers := range c.groups {
+				if group == reference {
+					result = append(result, containers...)
+					success = true
+					break
+				}
+			}
+			if success {
+				continue
+			}
+			// The reference might just be one container
+			for name, _ := range c.containerMap {
+				if name == reference {
+					result = append(result, reference)
+					success = true
+					break
+				}
+			}
+			if success {
+				continue
+			}
+			// Otherwise, fail verbosely
+			panic(StatusError{fmt.Errorf("No group or container matching `%s`", reference), 64})
+		}
 	}
-	// target given
-	for _, reference := range target {
-		success := false
-		reference = os.ExpandEnv(reference)
-		// Select reference from listed groups
-		for group, containers := range c.groups {
-			if group == reference {
-				result = append(result, containers...)
-				success = true
-				break
-			}
-		}
-		if success {
-			continue
-		}
-		// The reference might just be one container
+	// ensure all container references exist
+	for _, container := range result {
+		containerDeclared := false
 		for name, _ := range c.containerMap {
-			if name == reference {
-				result = append(result, reference)
-				success = true
+			if container == name {
+				containerDeclared = true
 				break
 			}
 		}
-		if success {
-			continue
+		if !containerDeclared {
+			panic(StatusError{fmt.Errorf("Invalid container reference `%s`", container), 64})
 		}
-		// Otherwise, fail verbosely
-		panic(StatusError{fmt.Errorf("No group or container matching `%s`", reference), 64})
 	}
 	return
 }
