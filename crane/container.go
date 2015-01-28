@@ -65,6 +65,7 @@ type RunParameters struct {
 	Interactive    bool        `json:"interactive" yaml:"interactive"`
 	RawLink        []string    `json:"link" yaml:"link"`
 	RawLxcConf     []string    `json:"lxc-conf" yaml:"lxc-conf"`
+	RawMacAddress  string      `json:"mac-address" yaml:"mac-address"`
 	RawMemory      string      `json:"memory" yaml:"memory"`
 	RawNet         string      `json:"net" yaml:"net"`
 	Privileged     bool        `json:"privileged" yaml:"privileged"`
@@ -78,6 +79,7 @@ type RunParameters struct {
 	RawVolumesFrom []string    `json:"volumes-from" yaml:"volumes-from"`
 	RawWorkdir     string      `json:"workdir" yaml:"workdir"`
 	RawCmd         interface{} `json:"cmd" yaml:"cmd"`
+
 }
 
 type RmParameters struct {
@@ -218,6 +220,10 @@ func (r *RunParameters) LxcConf() []string {
 		lxcConf = append(lxcConf, os.ExpandEnv(rawLxcConf))
 	}
 	return lxcConf
+}
+
+func (r *RunParameters) MacAddress() string {
+	return os.ExpandEnv(r.RawMacAddress)
 }
 
 func (r *RunParameters) Memory() string {
@@ -474,6 +480,10 @@ func (c *container) createArgs() []string {
 	// LxcConf
 	for _, lxcConf := range c.RunParams.LxcConf() {
 		args = append(args, "--lxc-conf", lxcConf)
+	}
+	// Mac address
+	if len(c.RunParams.MacAddress()) > 0 {
+		args = append(args, "--mac-address", c.RunParams.MacAddress())
 	}
 	// Memory
 	if len(c.RunParams.Memory()) > 0 {

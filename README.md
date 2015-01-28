@@ -85,6 +85,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `interactive` (boolean)
 	* `link` (array) Link containers.
 	* `lxc-conf` (array)
+	* `mac-address` (string) Need Docker >= 1.4
 	* `memory` (string)
 	* `net` (string) The `container:id` syntax is not supported, use `container:name` if you want to reuse another container network stack.
 	* `privileged` (boolean)
