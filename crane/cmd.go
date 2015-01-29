@@ -35,7 +35,7 @@ func configCommand(wrapped func(config Config), forceOrder bool) func(cmd *cobra
 	return func(cmd *cobra.Command, args []string) {
 		for _, value := range []string{options.cascadeDependencies, options.cascadeAffected} {
 			if value != "none" && value != "all" && value != "link" && value != "volumesFrom" && value != "net" {
-				cmd.Printf("Error: invalid cascading value: %v", value)
+				print.Errorf("Error: invalid cascading value: %v", value)
 				cmd.Usage()
 				panic(StatusError{status: 64})
 			}

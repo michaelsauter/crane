@@ -85,7 +85,7 @@ func intJoin(intSlice []int, sep string) string {
 
 func executeCommand(name string, args []string) {
 	if isVerbose() {
-		fmt.Printf("\n--> %s %s\n", name, strings.Join(args, " "))
+		print.Infof("\n--> %s %s\n", name, strings.Join(args, " "))
 	}
 	cmd := exec.Command(name, args...)
 	cmd.Stdout = os.Stdout
@@ -100,7 +100,7 @@ func executeCommand(name string, args []string) {
 
 func executeCommandBackground(name string, args []string) (stdout, stderr io.ReadCloser) {
 	if isVerbose() {
-		fmt.Printf("--> %s %s\n\n", name, strings.Join(args, " "))
+		print.Infof("--> %s %s\n\n", name, strings.Join(args, " "))
 	}
 	cmd := exec.Command(name, args...)
 	stdout, _ = cmd.StdoutPipe()
