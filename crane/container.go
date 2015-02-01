@@ -67,6 +67,7 @@ type RunParameters struct {
 	RawLxcConf     []string    `json:"lxc-conf" yaml:"lxc-conf"`
 	RawMacAddress  string      `json:"mac-address" yaml:"mac-address"`
 	RawMemory      string      `json:"memory" yaml:"memory"`
+	RawMemorySwap  string      `json:"memory-swap" yaml:"memory-swap"`
 	RawNet         string      `json:"net" yaml:"net"`
 	Privileged     bool        `json:"privileged" yaml:"privileged"`
 	RawPublish     []string    `json:"publish" yaml:"publish"`
@@ -228,6 +229,10 @@ func (r *RunParameters) MacAddress() string {
 
 func (r *RunParameters) Memory() string {
 	return os.ExpandEnv(r.RawMemory)
+}
+
+func (r *RunParameters) MemorySwap() string {
+	return os.ExpandEnv(r.RawMemorySwap)
 }
 
 func (r *RunParameters) Net() string {
@@ -488,6 +493,10 @@ func (c *container) createArgs() []string {
 	// Memory
 	if len(c.RunParams.Memory()) > 0 {
 		args = append(args, "--memory", c.RunParams.Memory())
+	}
+	// MemorySwap
+	if len(c.RunParams.MemorySwap()) > 0 {
+		args = append(args, "--memory-swap", c.RunParams.MemorySwap())
 	}
 	// Net
 	if c.RunParams.Net() != "bridge" {
