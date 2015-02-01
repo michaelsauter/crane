@@ -69,6 +69,7 @@ type RunParameters struct {
 	RawMemory      string      `json:"memory" yaml:"memory"`
 	RawMemorySwap  string      `json:"memory-swap" yaml:"memory-swap"`
 	RawNet         string      `json:"net" yaml:"net"`
+	RawPid         string      `json:"pid" yaml:"pid"`
 	Privileged     bool        `json:"privileged" yaml:"privileged"`
 	RawPublish     []string    `json:"publish" yaml:"publish"`
 	PublishAll     bool        `json:"publish-all" yaml:"publish-all"`
@@ -243,6 +244,10 @@ func (r *RunParameters) Net() string {
 	} else {
 		return os.ExpandEnv(r.RawNet)
 	}
+}
+
+func (r *RunParameters) Pid() string {
+	return os.ExpandEnv(r.RawPid)
 }
 
 func (r *RunParameters) Publish() []string {
@@ -502,6 +507,10 @@ func (c *container) createArgs() []string {
 	// Net
 	if c.RunParams.Net() != "bridge" {
 		args = append(args, "--net", c.RunParams.Net())
+	}
+	// PID
+	if len(c.RunParams.Pid()) > 0 {
+		args = append(args, "--pid", c.RunParams.Pid())
 	}
 	// Privileged
 	if c.RunParams.Privileged {
