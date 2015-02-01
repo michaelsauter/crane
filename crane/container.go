@@ -72,6 +72,7 @@ type RunParameters struct {
 	Privileged     bool        `json:"privileged" yaml:"privileged"`
 	RawPublish     []string    `json:"publish" yaml:"publish"`
 	PublishAll     bool        `json:"publish-all" yaml:"publish-all"`
+	ReadOnly       bool        `json:"read-only" yaml:"read-only"`
 	RawRestart     string      `json:"restart" yaml:"restart"`
 	Rm             bool        `json:"rm" yaml:"rm"`
 	Tty            bool        `json:"tty" yaml:"tty"`
@@ -513,6 +514,10 @@ func (c *container) createArgs() []string {
 	// PublishAll
 	if c.RunParams.PublishAll {
 		args = append(args, "--publish-all")
+	}
+	// ReadOnly
+	if c.RunParams.ReadOnly {
+		args = append(args, "--read-only")
 	}
 	// Restart
 	if len(c.RunParams.Restart()) > 0 {
