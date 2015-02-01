@@ -183,6 +183,15 @@ formatted in bold provided the 'colorize' flag is on.`,
 		}, true),
 	}
 
+	var cmdStats = &cobra.Command{
+		Use:   "stats",
+		Short: "Displays statistics about containers",
+		Long:  `Display a live stream of running targeted containers' resource usage statistics.`,
+		Run: configCommand(func(config Config) {
+			config.TargetedContainers().stats()
+		}, true),
+	}
+
 	var cmdGraph = &cobra.Command{
 		Use:   "graph",
 		Short: "Dumps the dependency graph as a DOT file",
@@ -268,7 +277,7 @@ Additional help topics: {{if gt .Commands 0 }}{{range .Commands}}{{if not .Runna
 Use "{{.Root.Name}} help [command]" for more information about that command.
 `)
 
-	craneCmd.AddCommand(cmdLift, cmdProvision, cmdCreate, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdPause, cmdUnpause, cmdPush, cmdLogs, cmdStatus, cmdGraph, cmdVersion)
+	craneCmd.AddCommand(cmdLift, cmdProvision, cmdCreate, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdPause, cmdUnpause, cmdPush, cmdLogs, cmdStatus, cmdStats, cmdGraph, cmdVersion)
 	err := craneCmd.Execute()
 	if err != nil {
 		panic(StatusError{status: 64})
