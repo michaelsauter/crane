@@ -67,10 +67,13 @@ type RunParameters struct {
 	RawLxcConf     []string    `json:"lxc-conf" yaml:"lxc-conf"`
 	RawMacAddress  string      `json:"mac-address" yaml:"mac-address"`
 	RawMemory      string      `json:"memory" yaml:"memory"`
+	RawMemorySwap  string      `json:"memory-swap" yaml:"memory-swap"`
 	RawNet         string      `json:"net" yaml:"net"`
+	RawPid         string      `json:"pid" yaml:"pid"`
 	Privileged     bool        `json:"privileged" yaml:"privileged"`
 	RawPublish     []string    `json:"publish" yaml:"publish"`
 	PublishAll     bool        `json:"publish-all" yaml:"publish-all"`
+	ReadOnly       bool        `json:"read-only" yaml:"read-only"`
 	RawRestart     string      `json:"restart" yaml:"restart"`
 	Rm             bool        `json:"rm" yaml:"rm"`
 	Tty            bool        `json:"tty" yaml:"tty"`
@@ -230,6 +233,10 @@ func (r *RunParameters) Memory() string {
 	return os.ExpandEnv(r.RawMemory)
 }
 
+func (r *RunParameters) MemorySwap() string {
+	return os.ExpandEnv(r.RawMemorySwap)
+}
+
 func (r *RunParameters) Net() string {
 	// Default to bridge
 	if len(r.RawNet) == 0 {
@@ -237,6 +244,10 @@ func (r *RunParameters) Net() string {
 	} else {
 		return os.ExpandEnv(r.RawNet)
 	}
+}
+
+func (r *RunParameters) Pid() string {
+	return os.ExpandEnv(r.RawPid)
 }
 
 func (r *RunParameters) Publish() []string {
@@ -489,9 +500,17 @@ func (c *container) createArgs() []string {
 	if len(c.RunParams.Memory()) > 0 {
 		args = append(args, "--memory", c.RunParams.Memory())
 	}
+	// MemorySwap
+	if len(c.RunParams.MemorySwap()) > 0 {
+		args = append(args, "--memory-swap", c.RunParams.MemorySwap())
+	}
 	// Net
 	if c.RunParams.Net() != "bridge" {
 		args = append(args, "--net", c.RunParams.Net())
+	}
+	// PID
+	if len(c.RunParams.Pid()) > 0 {
+		args = append(args, "--pid", c.RunParams.Pid())
 	}
 	// Privileged
 	if c.RunParams.Privileged {
@@ -504,6 +523,10 @@ func (c *container) createArgs() []string {
 	// PublishAll
 	if c.RunParams.PublishAll {
 		args = append(args, "--publish-all")
+	}
+	// ReadOnly
+	if c.RunParams.ReadOnly {
+		args = append(args, "--read-only")
 	}
 	// Restart
 	if len(c.RunParams.Restart()) > 0 {
