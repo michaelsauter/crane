@@ -3,6 +3,7 @@ package crane
 import (
 	"fmt"
 	"github.com/bjaglin/multiplexio"
+	"github.com/michaelsauter/crane/print"
 	ansi "github.com/fatih/color"
 	"io"
 	"os"
@@ -188,6 +189,21 @@ func (containers Containers) status(notrunc bool) {
 		fmt.Fprintf(w, "%s\n", strings.Join(fields, "\t"))
 	}
 	w.Flush()
+}
+
+// Stats about containers.
+func (containers Containers) stats() {
+	args := []string{"stats"}
+	for _, container := range containers {
+		if container.Running() {
+			args = append(args, container.Name())
+		}
+	}
+	if len(args) > 1 {
+		executeCommand("docker", args)
+	} else {
+		print.Errorf("None of the targeted container is running.\n")
+	}
 }
 
 // Return the length of the longest container name.

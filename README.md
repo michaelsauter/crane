@@ -56,6 +56,9 @@ Maps to `docker logs`, multiplexing the logs of the targeted containers chronolo
 ### `status`
 Displays information about the state of the containers.
 
+### `stats`
+Maps to `docker stats`. Need Docker >= 1.5
+
 ### `graph`
 Parses your config file and dumps the relations between containers as a dependency graph, using the DOT format. See built-in help for more information about style conventions used in that representation.
 
