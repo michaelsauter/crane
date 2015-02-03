@@ -105,6 +105,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `volumes-from` (array) Mount volumes from other containers
 	* `workdir` (string)
 	* `cmd` (array/string) Command to append to `docker run` (overwriting `CMD`).
+	* `extra-args` (array) Extra, non-validated arguments passed to the CLI Docker client
 * `rm` (object, optional): Parameters mapped to Docker's `rm`.
 	* `volumes` (boolean)
 * `start` (object, optional): Parameters mapped to Docker's `start`.
