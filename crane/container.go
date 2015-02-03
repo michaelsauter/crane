@@ -82,7 +82,7 @@ type RunParameters struct {
 	RawVolumesFrom []string    `json:"volumes-from" yaml:"volumes-from"`
 	RawWorkdir     string      `json:"workdir" yaml:"workdir"`
 	RawCmd         interface{} `json:"cmd" yaml:"cmd"`
-
+	RawExtraArgs   []string    `json:"extra-args" yaml:"extra-args"`
 }
 
 type RmParameters struct {
@@ -131,6 +131,14 @@ func (c *container) Dockerfile() string {
 
 func (c *container) Image() string {
 	return os.ExpandEnv(c.RawImage)
+}
+
+func (p *RunParameters) ExtraArgs() []string {
+	var extraArgs []string
+	for _, rawExtraArg := range p.RawExtraArgs {
+		extraArgs = append(extraArgs, os.ExpandEnv(rawExtraArg))
+	}
+	return extraArgs
 }
 
 func (r *RunParameters) AddHost() []string {
@@ -558,6 +566,8 @@ func (c *container) createArgs() []string {
 	}
 	// Name
 	args = append(args, "--name", c.Name())
+	// ExtraArgs
+	args = append(args, c.RunParams.ExtraArgs()...)
 	// Image
 	args = append(args, c.Image())
 	// Command
