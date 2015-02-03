@@ -76,13 +76,14 @@ type RunParameters struct {
 	ReadOnly       bool        `json:"read-only" yaml:"read-only"`
 	RawRestart     string      `json:"restart" yaml:"restart"`
 	Rm             bool        `json:"rm" yaml:"rm"`
+	RawSecurityOpt []string    `json:"security-opt" yaml:"security-opt"`
+	SigProxy       bool        `json:"sig-proxy" yaml:"sig-proxy"`
 	Tty            bool        `json:"tty" yaml:"tty"`
 	RawUser        string      `json:"user" yaml:"user"`
 	RawVolume      []string    `json:"volume" yaml:"volume"`
 	RawVolumesFrom []string    `json:"volumes-from" yaml:"volumes-from"`
 	RawWorkdir     string      `json:"workdir" yaml:"workdir"`
 	RawCmd         interface{} `json:"cmd" yaml:"cmd"`
-
 }
 
 type RmParameters struct {
@@ -260,6 +261,14 @@ func (r *RunParameters) Publish() []string {
 
 func (r *RunParameters) Restart() string {
 	return os.ExpandEnv(r.RawRestart)
+}
+
+func (r *RunParameters) SecurityOpt() []string {
+	var flags []string
+	for _, rawFlag := range r.RawSecurityOpt {
+		flags = append(flags, os.ExpandEnv(rawFlag))
+	}
+	return flags
 }
 
 func (r *RunParameters) User() string {
@@ -535,6 +544,14 @@ func (c *container) createArgs() []string {
 	// Rm
 	if c.RunParams.Rm {
 		args = append(args, "--rm")
+	}
+	// SecurityOpt
+	for _, flag := range c.RunParams.SecurityOpt() {
+		args = append(args, "--security-opt", flag)
+	}
+	// SigProxy
+	if !c.RunParams.SigProxy {
+		args = append(args, "--sig-proxy")
 	}
 	// Tty
 	if c.RunParams.Tty {
