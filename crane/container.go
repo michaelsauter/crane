@@ -264,11 +264,11 @@ func (r *RunParameters) Restart() string {
 }
 
 func (r *RunParameters) SecurityOpt() []string {
-	var flags []string
-	for _, rawFlag := range r.RawSecurityOpt {
-		flags = append(flags, os.ExpandEnv(rawFlag))
+	var securityOpt []string
+	for _, rawSecurityOpt := range r.RawSecurityOpt {
+		securityOpt = append(securityOpt, os.ExpandEnv(rawSecurityOpt))
 	}
-	return flags
+	return securityOpt
 }
 
 func (r *RunParameters) User() string {
@@ -546,8 +546,8 @@ func (c *container) createArgs() []string {
 		args = append(args, "--rm")
 	}
 	// SecurityOpt
-	for _, flag := range c.RunParams.SecurityOpt() {
-		args = append(args, "--security-opt", flag)
+	for _, securityOpt := range c.RunParams.SecurityOpt() {
+		args = append(args, "--security-opt", securityOpt)
 	}
 	// SigProxy
 	if !c.RunParams.SigProxy {
