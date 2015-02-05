@@ -9,13 +9,13 @@ import (
 )
 
 func TestDependencies(t *testing.T) {
-	c := &container{RunParams: RunParameters{RawLink: []string{"a:b", "?b:e"}, RawVolumesFrom: []string{"c", "?d"}, RawNet: "container:n"}}
+	c := &container{RunParams: RunParameters{RawLink: []string{"a:b", "?b:e"}, RawVolumesFrom: []string{"b", "c", "?d"}, RawNet: "container:n"}}
 	deps := c.Dependencies()
 	expected := &Dependencies{
 		All:         []string{"a", "b", "c", "d", "n"},
-		Required:    []string{"a", "c", "n"},
+		Required:    []string{"a", "b", "c", "n"},
 		Link:        []string{"a", "b"},
-		VolumesFrom: []string{"c", "d"},
+		VolumesFrom: []string{"b", "c", "d"},
 		Net:         "n",
 	}
 	if !reflect.DeepEqual(deps, expected) {

@@ -70,6 +70,26 @@ func (d *Dependencies) satisfied() bool {
 	return len(d.Required) == 0
 }
 
+// register a dependency
+func (d *Dependencies) add(name string, kind string, required bool) {
+	if !d.includesAsKind(name, "all") {
+		d.All = append(d.All, name)
+	}
+	if required && !d.includesAsKind(name, "required") {
+		d.Required = append(d.Required, name)
+	}
+	if !d.includesAsKind(name, kind) {
+		switch kind {
+		case "link":
+			d.Link = append(d.Link, name)
+		case "volumesFrom":
+			d.VolumesFrom = append(d.VolumesFrom, name)
+		case "net":
+			d.Net = name
+		}
+	}
+}
+
 // remove removes the given name from Required
 func (d *Dependencies) remove(resolved string) {
 	for i, name := range d.Required {
