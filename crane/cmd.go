@@ -34,7 +34,7 @@ func isVerbose() bool {
 func configCommand(wrapped func(config Config), forceOrder bool) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		for _, value := range []string{options.cascadeDependencies, options.cascadeAffected} {
-			if value != "none" && value != "all" && value != "link" && value != "volumesFrom" && value != "net" {
+			if value != "none" && value != "all" && value != "required" && value != "link" && value != "volumesFrom" && value != "net" {
 				print.Errorf("Error: invalid cascading value: %v", value)
 				cmd.Usage()
 				panic(StatusError{status: 64})
@@ -227,6 +227,7 @@ See the corresponding docker commands for more information.`,
 	craneCmd.PersistentFlags().StringVarP(&options.config, "config", "c", "", "Config file to read from")
 	cascadingValuesSuffix := `
 					"all": follow any kind of dependency
+					"required": like "all" without unresolved optional ones
 					"link": follow --link dependencies only
 					"volumesFrom": follow --volumesFrom dependencies only
 					"net": follow --net dependencies only

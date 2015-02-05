@@ -4,17 +4,28 @@ import (
 	"encoding/json"
 	"gopkg.in/v2/yaml"
 	"os"
+	"reflect"
 	"testing"
 )
 
 func TestDependencies(t *testing.T) {
-	c := &container{RunParams: RunParameters{RawNet: "container:n", RawLink: []string{"a:b", "b:d"}, RawVolumesFrom: []string{"c"}}}
-	if deps := c.Dependencies(); deps.All[0] != "a" || deps.All[1] != "b" || deps.All[2] != "c" || deps.All[3] != "n" || deps.Link[0] != "a" || deps.Link[1] != "b" || deps.All[2] != "c" || deps.Net != "n" {
-		t.Errorf("Dependencies should have been a, b, c, n. Got %v", deps)
+	c := &container{RunParams: RunParameters{RawLink: []string{"a:b", "?b:e"}, RawVolumesFrom: []string{"c", "?d"}, RawNet: "container:n"}}
+	deps := c.Dependencies()
+	expected := &Dependencies{
+		All:         []string{"a", "b", "c", "d", "n"},
+		Required:    []string{"a", "c", "n"},
+		Link:        []string{"a", "b"},
+		VolumesFrom: []string{"c", "d"},
+		Net:         "n",
+	}
+	if !reflect.DeepEqual(deps, expected) {
+		t.Errorf("Dependencies should have been %v. Got %v", expected, deps)
 	}
 	c = &container{RunParams: RunParameters{RawLink: []string{}, RawVolumesFrom: []string{}}}
-	if deps := c.Dependencies(); len(deps.All) != 0 && len(deps.Link) != 0 && deps.Net == "" {
-		t.Error("Dependencies should have been empty")
+	deps = c.Dependencies()
+	expected = &Dependencies{}
+	if !reflect.DeepEqual(deps, expected) {
+		t.Errorf("Dependencies should have been %v. Got %v", expected, deps)
 	}
 }
 

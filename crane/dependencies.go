@@ -1,12 +1,14 @@
 package crane
 
-// Dependencies contains 4 fields:
+// Dependencies contains 5 fields:
 // all: contains all dependencies
+// required: contains all non-optional dependencies
 // link: containers linked to
 // volumesFrom: containers that provide volumes
 // net: container the net stack is shared with
 type Dependencies struct {
 	All         []string
+	Required    []string
 	Link        []string
 	VolumesFrom []string
 	Net         string
@@ -35,6 +37,8 @@ func (d *Dependencies) forKind(kind string) []string {
 	switch kind {
 	case "all":
 		return d.All
+	case "required":
+		return d.Required
 	case "link":
 		return d.Link
 	case "volumesFrom":
@@ -60,17 +64,17 @@ func (d *Dependencies) mustRun(needle string) bool {
 	return false
 }
 
-// satisfied is true when there are no
+// satisfied is true when there are no required
 // dependencies left.
 func (d *Dependencies) satisfied() bool {
-	return len(d.All) == 0
+	return len(d.Required) == 0
 }
 
-// remove removes the given name from All
+// remove removes the given name from Required
 func (d *Dependencies) remove(resolved string) {
-	for i, name := range d.All {
+	for i, name := range d.Required {
 		if name == resolved {
-			d.All = append(d.All[:i], d.All[i+1:]...)
+			d.Required = append(d.Required[:i], d.Required[i+1:]...)
 		}
 	}
 }
