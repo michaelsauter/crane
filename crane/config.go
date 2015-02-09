@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gopkg.in/v1/yaml"
+	"gopkg.in/v2/yaml"
 	"io/ioutil"
 	"os"
 	"path/filepath"

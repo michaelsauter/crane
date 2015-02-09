@@ -100,6 +100,43 @@ groups:
 	}
 }
 
+func TestUnmarshalInvalidJSON(t *testing.T) {
+	json := []byte(
+		`{
+    "containers": {
+        "apache": {
+            "image": "michaelsauter/apache",
+            "run": {
+                "publish": "shouldbeanarray"
+            }
+        }
+    }
+}
+`)
+	defer func() {
+		if err := recover(); err == nil {
+			t.Errorf("Error expected but not found")
+		}
+	}()
+	unmarshal(json, ".json")
+}
+
+func TestUnmarshalInvalidYAML(t *testing.T) {
+	yaml := []byte(
+		`containers:
+  apache:
+    image: michaelsauter/apache
+    run:
+      publish: "shouldbeanarray"
+`)
+	defer func() {
+		if err := recover(); err == nil {
+			t.Errorf("Error expected but not found")
+		}
+	}()
+	unmarshal(yaml, ".yml")
+}
+
 func TestExpandEnv(t *testing.T) {
 	rawContainerMap := map[string]*container{
 		"a": &container{},
