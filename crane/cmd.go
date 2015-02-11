@@ -22,6 +22,7 @@ type Options struct {
 	cascadeAffected     string
 	config              string
 	target              []string
+	cmd                 string
 }
 
 var options Options
@@ -84,7 +85,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Create the containers",
 		Long:  `run will call docker create for all targeted containers.`,
 		Run: configCommand(func(config Config) {
-			config.TargetedContainers().create(options.recreate)
+			config.TargetedContainers().create(options.recreate, options.cmd)
 		}, false),
 	}
 
@@ -93,7 +94,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Run the containers",
 		Long:  `run will call docker run for all targeted containers.`,
 		Run: configCommand(func(config Config) {
-			config.TargetedContainers().run(options.recreate)
+			config.TargetedContainers().run(options.recreate, options.cmd)
 		}, false),
 	}
 
@@ -240,8 +241,10 @@ See the corresponding docker commands for more information.`,
 	cmdProvision.Flags().BoolVarP(&options.nocache, "no-cache", "n", false, "Build the image without any cache")
 
 	cmdCreate.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (force-remove containers first)")
+	cmdCreate.Flags().StringVarP(&options.cmd, "cmd", "", "", "Overwrites defined command")
 
 	cmdRun.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (force-remove containers first)")
+	cmdRun.Flags().StringVarP(&options.cmd, "cmd", "", "", "Overwrites defined command")
 
 	cmdRm.Flags().BoolVarP(&options.forceRm, "force", "f", false, "Kill containers if they are running first")
 
