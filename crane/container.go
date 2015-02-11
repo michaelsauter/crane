@@ -24,8 +24,8 @@ type Container interface {
 	Status() []string
 	Provision(nocache bool)
 	ProvisionOrSkip(update bool, nocache bool)
-	Create()
-	Run()
+	Create(cmd string)
+	Run(cmd string)
 	Start()
 	RunOrStart()
 	Kill()
@@ -393,7 +393,7 @@ func (c *container) RunOrStart() {
 	if c.Exists() {
 		c.Start()
 	} else {
-		c.Run()
+		c.Run("")
 	}
 }
 
@@ -405,10 +405,14 @@ func (c *container) ProvisionOrSkip(update bool, nocache bool) {
 }
 
 // Create container
-func (c *container) Create() {
+func (c *container) Create(cmd string) {
 	if c.Exists() {
 		print.Noticef("Container %s does already exist. Use --recreate to recreate.\n", c.Name())
 	} else {
+		if cmd != "" {
+			c.RunParams.RawCmd = cmd
+		}
+
 		fmt.Printf("Creating container %s ... ", c.Name())
 		args := append([]string{"create"}, c.createArgs()...)
 		executeCommand("docker", args)
@@ -416,13 +420,17 @@ func (c *container) Create() {
 }
 
 // Run container, or start it if already existing
-func (c *container) Run() {
+func (c *container) Run(cmd string) {
 	if c.Exists() {
 		print.Noticef("Container %s does already exist. Use --recreate to recreate.\n", c.Name())
 		if !c.Running() {
 			c.Start()
 		}
 	} else {
+		if cmd != "" {
+			c.RunParams.RawCmd = cmd
+		}
+
 		fmt.Printf("Running container %s ... ", c.Name())
 		args := []string{"run"}
 		// Detach
