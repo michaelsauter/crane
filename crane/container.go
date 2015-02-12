@@ -1,6 +1,7 @@
 package crane
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/flynn/go-shlex"
 	"github.com/michaelsauter/crane/print"
@@ -77,7 +78,7 @@ type RunParameters struct {
 	RawRestart     string      `json:"restart" yaml:"restart"`
 	Rm             bool        `json:"rm" yaml:"rm"`
 	RawSecurityOpt []string    `json:"security-opt" yaml:"security-opt"`
-	SigProxy       bool        `json:"sig-proxy" yaml:"sig-proxy"`
+	SigProxy       OptBool     `json:"sig-proxy" yaml:"sig-proxy"`
 	Tty            bool        `json:"tty" yaml:"tty"`
 	RawUser        string      `json:"user" yaml:"user"`
 	RawVolume      []string    `json:"volume" yaml:"volume"`
@@ -93,6 +94,27 @@ type RmParameters struct {
 type StartParameters struct {
 	Attach      bool `json:"attach" yaml:"attach"`
 	Interactive bool `json:"interactive" yaml:"interactive"`
+}
+
+type OptBool struct {
+	Defined bool
+	Value   bool
+}
+
+func (o *OptBool) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	if err := unmarshal(&o.Value); err != nil {
+		return err
+	}
+	o.Defined = true
+	return nil
+}
+
+func (o *OptBool) UnmarshalJSON(b []byte) (err error) {
+	if err := json.Unmarshal(b, &o.Value); err != nil {
+		return err
+	}
+	o.Defined = true
+	return
 }
 
 func (c *container) Dependencies() *Dependencies {
@@ -550,8 +572,8 @@ func (c *container) createArgs() []string {
 		args = append(args, "--security-opt", securityOpt)
 	}
 	// SigProxy
-	if !c.RunParams.SigProxy {
-		args = append(args, "--sig-proxy")
+	if c.RunParams.SigProxy.Defined && !c.RunParams.SigProxy.Value {
+		args = append(args, "--sig-proxy=false")
 	}
 	// Tty
 	if c.RunParams.Tty {
