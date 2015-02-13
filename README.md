@@ -5,15 +5,32 @@ Lift containers with ease
 Crane is a tool to orchestrate Docker containers. It works by reading in some configuration (JSON or YAML) which describes how to obtain images and how to run containers. This simplifies setting up a development environment a lot as you don't have to bring up every container manually, remembering all the arguments you need to pass. By storing the configuration next to the data and the app(s) in a repository, you can easily share the whole environment.
 
 ## Installation
-The latest release can be installed via:
+The latest releases bre-built in binary form can be installed via:
 
 ```
 bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/master/download.sh`" && sudo mv crane /usr/local/bin/crane
 ```
-You can also build Crane yourself by using the Go toolchain (`go get` and `go install`). Please have a look at the [release notes](https://github.com/michaelsauter/crane/releases) for the changelog if you're upgrading.
+Remember to check the [release notes](https://github.com/michaelsauter/crane/releases) changelog before upgrading.
 
 Of course, you will need to have Docker (>= 1.3) installed.
 
+## Build
+
+Or you can build Crane yourself by running the following commands:
+
+```
+# Set up your go environment. You should want to add `GOPATH` and `GOBIN` to your `.profile`
+sudo apt-get install gccgo-go
+[ "$GOPATH" ] || export GOPATH=$HOME/go   && mkkdir -p $GOPATH
+[ "$GOBIN" ]  || export GOBIN=$GOPATH/bin && mkkdir -p $GOBIN && export PATH="$GOBIN:$PATH"
+
+# Build crane and install the `crane` binary into `GOBIN`
+cd $GOPATH && mkdir -p src/github.com/michaelsauter
+cd src/github.com/michaelsauter
+git clone https://github.com/michaelsauter/crane.git
+cd crane && go get
+
+```
 ## Usage
 Crane is a very light wrapper around the Docker CLI. This means that most commands just call the corresponding Docker command, but for all targeted containers. Additionally, there are a few special commands.
 
