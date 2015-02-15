@@ -1,6 +1,8 @@
 package crane
 
 import (
+	"encoding/json"
+	"gopkg.in/v2/yaml"
 	"os"
 	"testing"
 )
@@ -79,5 +81,61 @@ func TestCmd(t *testing.T) {
 	c = &container{RunParams: RunParameters{RawCmd: []interface{}{"echo", "$CMD"}}}
 	if len(c.RunParams.Cmd()) != 2 || c.RunParams.Cmd()[0] != "echo" || c.RunParams.Cmd()[1] != "1" {
 		t.Errorf("Command should have been true, got %v", c.RunParams.Cmd())
+	}
+}
+
+type OptBoolWrapper struct {
+	OptBool OptBool `json:"OptBool" yaml:"OptBool"`
+}
+
+func TestOptBoolJSON(t *testing.T) {
+	wrapper := OptBoolWrapper{}
+	json.Unmarshal([]byte("{\"OptBool\": true}"), &wrapper)
+	if !wrapper.OptBool.Defined || !wrapper.OptBool.Value {
+		t.Errorf("OptBool should have been defined and true, got %v", wrapper.OptBool)
+	}
+
+	wrapper = OptBoolWrapper{}
+	json.Unmarshal([]byte("{\"OptBool\": false}"), &wrapper)
+	if !wrapper.OptBool.Defined || wrapper.OptBool.Value {
+		t.Errorf("OptBool should have been defined and false, got %v", wrapper.OptBool)
+	}
+
+	wrapper = OptBoolWrapper{}
+	json.Unmarshal([]byte("{}"), &wrapper)
+	if wrapper.OptBool.Defined {
+		t.Errorf("OptBool should have been undefined, got %v", wrapper.OptBool)
+	}
+
+	wrapper = OptBoolWrapper{}
+	err := json.Unmarshal([]byte("{\"OptBool\": \"notaboolean\"}"), &wrapper)
+	if err == nil {
+		t.Errorf("Error expected but not found")
+	}
+}
+
+func TestOptBoolYAML(t *testing.T) {
+	wrapper := OptBoolWrapper{}
+	yaml.Unmarshal([]byte("OptBool: true"), &wrapper)
+	if !wrapper.OptBool.Defined || !wrapper.OptBool.Value {
+		t.Errorf("OptBool should have been defined and true, got %v", wrapper.OptBool)
+	}
+
+	wrapper = OptBoolWrapper{}
+	yaml.Unmarshal([]byte("OptBool: false"), &wrapper)
+	if !wrapper.OptBool.Defined || wrapper.OptBool.Value {
+		t.Errorf("OptBool should have been defined and false, got %v", wrapper.OptBool)
+	}
+
+	wrapper = OptBoolWrapper{}
+	yaml.Unmarshal([]byte(""), &wrapper)
+	if wrapper.OptBool.Defined {
+		t.Errorf("OptBool should have been undefined, got %v", wrapper.OptBool)
+	}
+
+	wrapper = OptBoolWrapper{}
+	err := yaml.Unmarshal([]byte("OptBool: notaboolean"), &wrapper)
+	if err == nil {
+		t.Errorf("Error expected but not found")
 	}
 }
