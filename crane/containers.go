@@ -33,9 +33,9 @@ func (containers Containers) reversed() Containers {
 // Lift containers (provision + run).
 // When recreate is set, this will re-provision all images
 // and recreate all containers.
-func (containers Containers) lift(recreate bool, nocache bool) {
+func (containers Containers) lift(recreate bool, nocache bool, ignoreMissing string) {
 	containers.provisionOrSkip(recreate, nocache)
-	containers.runOrStart(recreate)
+	containers.runOrStart(recreate, ignoreMissing)
 }
 
 // Provision containers.
@@ -47,34 +47,34 @@ func (containers Containers) provision(nocache bool) {
 
 // Create containers.
 // When recreate is true, removes existing containers first.
-func (containers Containers) create(recreate bool) {
+func (containers Containers) create(recreate bool, ignoreMissing string) {
 	if recreate {
 		containers.rm(true)
 	}
 	for _, container := range containers {
-		container.Create()
+		container.Create(ignoreMissing)
 	}
 }
 
 // Run containers.
 // When recreate is true, removes existing containers first.
-func (containers Containers) run(recreate bool) {
+func (containers Containers) run(recreate bool, ignoreMissing string) {
 	if recreate {
 		containers.rm(true)
 	}
 	for _, container := range containers {
-		container.Run()
+		container.Run(ignoreMissing)
 	}
 }
 
 // Run or start containers.
 // When recreate is true, removes existing containers first.
-func (containers Containers) runOrStart(recreate bool) {
+func (containers Containers) runOrStart(recreate bool, ignoreMissing string) {
 	if recreate {
 		containers.rm(true)
 	}
 	for _, container := range containers {
-		container.RunOrStart()
+		container.RunOrStart(ignoreMissing)
 	}
 }
 

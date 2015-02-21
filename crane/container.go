@@ -25,10 +25,10 @@ type Container interface {
 	Status() []string
 	Provision(nocache bool)
 	ProvisionOrSkip(update bool, nocache bool)
-	Create()
-	Run()
+	Create(ignoreMissing string)
+	Run(ignoreMissing string)
 	Start()
-	RunOrStart()
+	RunOrStart(ignoreMissing string)
 	Kill()
 	Stop()
 	Pause()
@@ -119,6 +119,17 @@ func (o *OptBool) UnmarshalJSON(b []byte) (err error) {
 	return
 }
 
+func (c *container) netContainer() (name string) {
+	if netParts := strings.Split(c.RunParams.Net(), ":"); len(netParts) == 2 && netParts[0] == "container" {
+		// We'll just assume here that the reference is a name, and not an id, even
+		// though docker supports it, since we have no bullet-proof way to tell:
+		// heuristics to detect whether it's an id could bring false positives, and
+		// a lookup in the list of container names could bring false negatives
+		name = netParts[1]
+	}
+	return
+}
+
 func (c *container) Dependencies() *Dependencies {
 	var linkParts []string
 	dependencies := &Dependencies{}
@@ -127,18 +138,13 @@ func (c *container) Dependencies() *Dependencies {
 		dependencies.All = append(dependencies.All, linkParts[0])
 		dependencies.Link = append(dependencies.Link, linkParts[0])
 	}
-	for _, volumeFrom := range c.RunParams.VolumesFrom() {
-		if !dependencies.includes(volumeFrom) {
-			dependencies.All = append(dependencies.All, volumeFrom)
-			dependencies.VolumesFrom = append(dependencies.VolumesFrom, volumeFrom)
+	for _, volumesFrom := range c.RunParams.VolumesFrom() {
+		if !dependencies.includes(volumesFrom) {
+			dependencies.All = append(dependencies.All, volumesFrom)
+			dependencies.VolumesFrom = append(dependencies.VolumesFrom, volumesFrom)
 		}
 	}
-	if netParts := strings.Split(c.RunParams.Net(), ":"); len(netParts) == 2 && netParts[0] == "container" {
-		// We'll just assume here that the reference is a name, and not an id, even
-		// though docker supports it, since we have no bullet-proof way to tell:
-		// heuristics to detect whether it's an id could bring false positives, and
-		// a lookup in the list of container names could bring false negatives
-		dependencies.Net = netParts[1]
+	if dependencies.Net = c.netContainer(); dependencies.Net != "" {
 		if !dependencies.includes(dependencies.Net) {
 			dependencies.All = append(dependencies.All, dependencies.Net)
 		}
@@ -424,11 +430,11 @@ func (c *container) Provision(nocache bool) {
 }
 
 // Run or start container
-func (c *container) RunOrStart() {
+func (c *container) RunOrStart(ignoreMissing string) {
 	if c.Exists() {
 		c.Start()
 	} else {
-		c.Run()
+		c.Run(ignoreMissing)
 	}
 }
 
@@ -440,18 +446,18 @@ func (c *container) ProvisionOrSkip(update bool, nocache bool) {
 }
 
 // Create container
-func (c *container) Create() {
+func (c *container) Create(ignoreMissing string) {
 	if c.Exists() {
 		print.Noticef("Container %s does already exist. Use --recreate to recreate.\n", c.Name())
 	} else {
 		fmt.Printf("Creating container %s ... ", c.Name())
-		args := append([]string{"create"}, c.createArgs()...)
+		args := append([]string{"create"}, c.createArgs(ignoreMissing)...)
 		executeCommand("docker", args)
 	}
 }
 
 // Run container, or start it if already existing
-func (c *container) Run() {
+func (c *container) Run(ignoreMissing string) {
 	if c.Exists() {
 		print.Noticef("Container %s does already exist. Use --recreate to recreate.\n", c.Name())
 		if !c.Running() {
@@ -465,14 +471,14 @@ func (c *container) Run() {
 		if c.RunParams.Detach {
 			args = append(args, "--detach")
 		}
-		args = append(args, c.createArgs()...)
+		args = append(args, c.createArgs(ignoreMissing)...)
 		executeCommand("docker", args)
 		executeHook(c.Hooks().PostStart())
 	}
 }
 
 // Returns all the flags to be passed to `docker create`
-func (c *container) createArgs() []string {
+func (c *container) createArgs(ignoreMissing string) []string {
 	args := []string{}
 	// AddHost
 	for _, addHost := range c.RunParams.AddHost() {
@@ -532,6 +538,13 @@ func (c *container) createArgs() []string {
 	}
 	// Link
 	for _, link := range c.RunParams.Link() {
+		if ignoreMissing == "all" || ignoreMissing == "link" {
+			// Omit non-running targets
+			target := container{RawName: strings.Split(link, ":")[0]}
+			if !target.Running() {
+				continue
+			}
+		}
 		args = append(args, "--link", link)
 	}
 	// LxcConf
@@ -552,7 +565,17 @@ func (c *container) createArgs() []string {
 	}
 	// Net
 	if c.RunParams.Net() != "bridge" {
-		args = append(args, "--net", c.RunParams.Net())
+		skip := false
+		name := c.netContainer()
+		if name != "" && (ignoreMissing == "all" || ignoreMissing == "net") {
+			target := container{RawName: name}
+			if !target.Running() {
+				skip = true
+			}
+		}
+		if !skip {
+			args = append(args, "--net", c.RunParams.Net())
+		}
 	}
 	// PID
 	if len(c.RunParams.Pid()) > 0 {
@@ -603,8 +626,15 @@ func (c *container) createArgs() []string {
 		args = append(args, "--volume", volume)
 	}
 	// VolumesFrom
-	for _, volumeFrom := range c.RunParams.VolumesFrom() {
-		args = append(args, "--volumes-from", volumeFrom)
+	for _, volumesFrom := range c.RunParams.VolumesFrom() {
+		if ignoreMissing == "all" || ignoreMissing == "volumesFrom" {
+			// Omit non-existing targets
+			target := container{RawName: volumesFrom}
+			if !target.Exists() {
+				continue
+			}
+		}
+		args = append(args, "--volumes-from", volumesFrom)
 	}
 	// Workdir
 	if len(c.RunParams.Workdir()) > 0 {

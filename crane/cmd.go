@@ -20,6 +20,7 @@ type Options struct {
 	colorize            bool
 	cascadeDependencies string
 	cascadeAffected     string
+	ignoreMissing       string
 	config              string
 	target              []string
 }
@@ -33,9 +34,9 @@ func isVerbose() bool {
 // returns a function to be set as a cobra command run, wrapping a command meant to be run according to the config
 func configCommand(wrapped func(config Config), forceOrder bool) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		for _, value := range []string{options.cascadeDependencies, options.cascadeAffected} {
+		for _, value := range []string{options.cascadeDependencies, options.cascadeAffected, options.ignoreMissing} {
 			if value != "none" && value != "all" && value != "link" && value != "volumesFrom" && value != "net" {
-				print.Errorf("Error: invalid cascading value: %v", value)
+				print.Errorf("Error: invalid dependency type value: %v", value)
 				cmd.Usage()
 				panic(StatusError{status: 64})
 			}
@@ -64,7 +65,7 @@ func handleCmd() {
 		Long: `
 lift will provision missing images and run all targeted containers.`,
 		Run: configCommand(func(config Config) {
-			config.TargetedContainers().lift(options.recreate, options.nocache)
+			config.TargetedContainers().lift(options.recreate, options.nocache, options.ignoreMissing)
 		}, false),
 	}
 
@@ -84,7 +85,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Create the containers",
 		Long:  `run will call docker create for all targeted containers.`,
 		Run: configCommand(func(config Config) {
-			config.TargetedContainers().create(options.recreate)
+			config.TargetedContainers().create(options.recreate, options.ignoreMissing)
 		}, false),
 	}
 
@@ -93,7 +94,7 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		Short: "Run the containers",
 		Long:  `run will call docker run for all targeted containers.`,
 		Run: configCommand(func(config Config) {
-			config.TargetedContainers().run(options.recreate)
+			config.TargetedContainers().run(options.recreate, options.ignoreMissing)
 		}, false),
 	}
 
@@ -225,23 +226,26 @@ See the corresponding docker commands for more information.`,
 
 	craneCmd.PersistentFlags().BoolVarP(&options.verbose, "verbose", "v", false, "Verbose output")
 	craneCmd.PersistentFlags().StringVarP(&options.config, "config", "c", "", "Config file to read from")
-	cascadingValuesSuffix := `
-					"all": follow any kind of dependency
-					"link": follow --link dependencies only
-					"volumesFrom": follow --volumesFrom dependencies only
-					"net": follow --net dependencies only
+	dependencyTypeValuesSuffix := `
+				"all": any kind of dependency
+				"link": --link dependencies only
+				"volumesFrom": --volumesFrom dependencies only
+				"net": --net dependencies only
 	`
-	craneCmd.PersistentFlags().StringVarP(&options.cascadeDependencies, "cascade-dependencies", "d", "none", "Also apply the command for the containers that (any of) the explicitly targeted one(s) depend on"+cascadingValuesSuffix)
-	craneCmd.PersistentFlags().StringVarP(&options.cascadeAffected, "cascade-affected", "a", "none", "Also apply the command for the existing containers depending on (any of) the explicitly targeted one(s)"+cascadingValuesSuffix)
+	craneCmd.PersistentFlags().StringVarP(&options.cascadeDependencies, "cascade-dependencies", "d", "none", "Also apply the command for the containers that (any of) the explicitly targeted one(s) depend on for:"+dependencyTypeValuesSuffix)
+	craneCmd.PersistentFlags().StringVarP(&options.cascadeAffected, "cascade-affected", "a", "none", "Also apply the command for the existing containers depending on (any of) the explicitly targeted one(s) for:"+dependencyTypeValuesSuffix)
 
 	cmdLift.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (force-remove containers if they exist, force-provision images, run containers)")
+	cmdLift.Flags().StringVarP(&options.ignoreMissing, "ignore-missing", "i", "none", "Rather than failing, ignore dependencies that are not fullfilled for:"+dependencyTypeValuesSuffix)
 	cmdLift.Flags().BoolVarP(&options.nocache, "no-cache", "n", false, "Build the image without any cache")
 
 	cmdProvision.Flags().BoolVarP(&options.nocache, "no-cache", "n", false, "Build the image without any cache")
 
 	cmdCreate.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (force-remove containers first)")
+	cmdCreate.Flags().StringVarP(&options.ignoreMissing, "ignore-missing", "i", "none", "Rather than failing, ignore dependencies that are not fullfilled for:"+dependencyTypeValuesSuffix)
 
 	cmdRun.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (force-remove containers first)")
+	cmdRun.Flags().StringVarP(&options.ignoreMissing, "ignore-missing", "i", "none", "Rather than failing, ignore dependencies that are not fullfilled for:"+dependencyTypeValuesSuffix)
 
 	cmdRm.Flags().BoolVarP(&options.forceRm, "force", "f", false, "Kill containers if they are running first")
 
@@ -265,7 +269,7 @@ Explicit targeting:
   By default, the command is applied to all containers declared in the
   config,  or to the containers defined in the group ` + "`" + `default` + "`" + ` if it is
   defined. If one or several container or group reference(s) is/are
-  passed as  argument(s), the command will only be applied to containers
+  passed as argument(s), the command will only be applied to containers
   matching these references. Note however that providing cascading flags
   might extend the set of targeted containers.
 

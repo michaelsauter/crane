@@ -40,7 +40,11 @@ func (d *Dependencies) forKind(kind string) []string {
 	case "volumesFrom":
 		return d.VolumesFrom
 	case "net":
-		return []string{d.Net}
+		if d.Net != "" {
+			return []string{d.Net}
+		} else {
+			return []string{}
+		}
 	default:
 		return []string{}
 	}
