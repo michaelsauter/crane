@@ -3,6 +3,7 @@ package crane
 import (
 	"errors"
 	"fmt"
+	"github.com/flynn/go-shlex"
 	"github.com/michaelsauter/crane/print"
 	"io"
 	"os"
@@ -81,6 +82,21 @@ func intJoin(intSlice []int, sep string) string {
 		stringSlice = append(stringSlice, fmt.Sprint(v))
 	}
 	return strings.Join(stringSlice, ".")
+}
+
+func executeHook(hook string) {
+	cmds, err := shlex.Split(hook)
+	if err != nil {
+		panic(StatusError{fmt.Errorf("Error when parsing hook `%v`: %v", hook, err), 64})
+	}
+	switch len(cmds) {
+	case 0:
+		return
+	case 1:
+		executeCommand(cmds[0], []string{})
+	default:
+		executeCommand(cmds[0], cmds[1:])
+	}
 }
 
 func executeCommand(name string, args []string) {

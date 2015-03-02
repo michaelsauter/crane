@@ -59,6 +59,15 @@ func TestUnmarshal(t *testing.T) {
         "default": [
             "apache"
         ]
+    },
+    "hooks": {
+        "apache": {
+            "post-stop": "echo apache container stopped!\n"
+        },
+        "default": {
+            "pre-start": "echo start...",
+            "post-start": "echo start done!\n"
+        }
     }
 }
 `)
@@ -71,6 +80,9 @@ func TestUnmarshal(t *testing.T) {
 	}
 	if group, ok := actual.RawGroups["default"]; !ok || len(group) != 1 {
 		t.Errorf("Config should have one `default` group with one container, got %v", actual.RawGroups)
+	}
+	if defaultHooks, ok := actual.RawHooksMap["default"]; !ok || defaultHooks.RawPreStart == "" || defaultHooks.RawPostStart == "" {
+		t.Errorf("Config should have hooks for `default`, got %v", actual.RawHooksMap)
 	}
 	actual = nil
 
@@ -87,6 +99,12 @@ func TestUnmarshal(t *testing.T) {
 groups:
   default:
     - apache
+hooks:
+  apache:
+    post-stop: echo apache container stopped!\n
+  default:
+    pre-start: echo start...
+    post-start: echo start done!\n
 `)
 	actual = unmarshal(yaml, ".yml")
 	if _, ok := actual.RawContainerMap["apache"]; !ok {
@@ -97,6 +115,9 @@ groups:
 	}
 	if group, ok := actual.RawGroups["default"]; !ok || len(group) != 1 {
 		t.Errorf("Config should have one `default` group with one container, got %v", actual.RawGroups)
+	}
+	if defaultHooks, ok := actual.RawHooksMap["default"]; !ok || defaultHooks.RawPreStart == "" || defaultHooks.RawPostStart == "" {
+		t.Errorf("Config should have hooks for `default`, got %v", actual.RawHooksMap)
 	}
 }
 
@@ -137,16 +158,77 @@ func TestUnmarshalInvalidYAML(t *testing.T) {
 	unmarshal(yaml, ".yml")
 }
 
-func TestExpandEnv(t *testing.T) {
+func TestInitialize(t *testing.T) {
+	// use different, undefined environment variables throughout the config to detect any issue in expansion
+	rawContainerMap := map[string]*container{
+		"${UNDEFINED1}a": &container{},
+		"${UNDEFINED2}b": &container{},
+	}
+	rawGroups := map[string][]string{
+		"${UNDEFINED3}default": []string{
+			"${UNDEFINED4}a",
+			"${UNDEFINED4}b",
+		},
+	}
+	rawHooksMap := map[string]hooks{
+		"${UNDEFINED5}default": hooks{
+			RawPreStart:  "${UNDEFINED6}default-pre-start",
+			RawPostStart: "${UNDEFINED7}default-post-start",
+		},
+		"${UNDEFINED8}a": hooks{
+			RawPreStart: "${UNDEFINED9}custom-pre-start",
+		},
+	}
+	c := &config{
+		RawContainerMap: rawContainerMap,
+		RawGroups:       rawGroups,
+		RawHooksMap:     rawHooksMap,
+	}
+	c.initialize()
+	if c.containerMap["a"].Name() != "a" || c.containerMap["b"].Name() != "b" {
+		t.Errorf("Names should be 'a' and 'b', got %s and %s", c.containerMap["a"].Name(), c.containerMap["b"].Name())
+	}
+	if len(c.groups["default"]) != 2 || c.groups["default"][0] != "a" || c.groups["default"][1] != "b" {
+		t.Errorf("Expected one group 'default' with two containers 'a' & 'b', got %v", c.groups)
+	}
+	if hook := c.containerMap["a"].Hooks().PreStart(); hook != "custom-pre-start" {
+		t.Errorf("Container a should have a custom pre-start hook overriding the default one, got %v", hook)
+	}
+	if hook := c.containerMap["a"].Hooks().PostStart(); hook != "default-post-start" {
+		t.Errorf("Container a should have a default post-start hook, got %v", hook)
+	}
+	if hook := c.containerMap["b"].Hooks().PreStart(); hook != "default-pre-start" {
+		t.Errorf("Container b should have a default pre-start hook, got %v", hook)
+	}
+	if hook := c.containerMap["b"].Hooks().PostStart(); hook != "default-post-start" {
+		t.Errorf("Container b should have a default post-start hook, got %v", hook)
+	}
+}
+
+func TestInitializeAmbiguousHooks(t *testing.T) {
 	rawContainerMap := map[string]*container{
 		"a": &container{},
 		"b": &container{},
 	}
-	c := &config{RawContainerMap: rawContainerMap}
-	c.expandEnv()
-	if c.containerMap["a"].Name() != "a" || c.containerMap["b"].Name() != "b" {
-		t.Errorf("Names should be 'a' and 'b', got %s and %s", c.containerMap["a"].Name(), c.containerMap["b"].Name())
+	rawGroups := map[string][]string{
+		"group1": []string{"a"},
+		"group2": []string{"a", "b"},
 	}
+	rawHooksMap := map[string]hooks{
+		"group1": hooks{RawPreStart: "group1-pre-start"},
+		"group2": hooks{RawPreStart: "group2-pre-start"},
+	}
+	c := &config{
+		RawContainerMap: rawContainerMap,
+		RawGroups:       rawGroups,
+		RawHooksMap:     rawHooksMap,
+	}
+	defer func() {
+		if err := recover(); err == nil {
+			t.Errorf("Error expected but not found")
+		}
+	}()
+	c.initialize()
 }
 
 func TestGraph(t *testing.T) {

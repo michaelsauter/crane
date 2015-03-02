@@ -20,6 +20,7 @@ type Config interface {
 type config struct {
 	RawContainerMap map[string]*container `json:"containers" yaml:"containers"`
 	RawGroups       map[string][]string   `json:"groups" yaml:"groups"`
+	RawHooksMap     map[string]hooks      `json:"hooks" yaml:"hooks"`
 	containerMap    ContainerMap
 	dependencyGraph DependencyGraph
 	target          Target
@@ -115,7 +116,7 @@ func NewConfig(options Options, forceOrder bool) Config {
 	if config == nil {
 		panic(StatusError{fmt.Errorf("No configuration found %v", configFiles(options)), 78})
 	}
-	config.expandEnv()
+	config.initialize()
 	config.dependencyGraph = config.DependencyGraph()
 	config.determineTarget(options.target, options.cascadeDependencies, options.cascadeAffected)
 
@@ -136,23 +137,43 @@ func (c *config) TargetedContainers() Containers {
 	return containers
 }
 
-// expandEnv creates a new container map
-// with expanded names and sets the RawName of each
-// container to the map key.
-// It also expand variables in the groups.
-func (c *config) expandEnv() {
-	// Container map
-	c.containerMap = make(map[string]Container)
+// Load configuration into the internal structs from the raw, parsed ones
+func (c *config) initialize() {
+	// Local container map to query by expanded name
+	containerMap := make(map[string]*container)
 	for rawName, container := range c.RawContainerMap {
 		container.RawName = rawName
-		c.containerMap[container.Name()] = container
+		containerMap[container.Name()] = container
+	}
+	// Local hooks map to query by expanded name
+	hooksMap := make(map[string]hooks)
+	for hooksRawName, hooks := range c.RawHooksMap {
+		hooksMap[os.ExpandEnv(hooksRawName)] = hooks
 	}
 	// Groups
 	c.groups = make(map[string][]string)
 	for groupRawName, rawNames := range c.RawGroups {
+		groupName := os.ExpandEnv(groupRawName)
 		for _, rawName := range rawNames {
-			c.groups[groupRawName] = append(c.groups[groupRawName], os.ExpandEnv(rawName))
+			c.groups[groupName] = append(c.groups[groupName], os.ExpandEnv(rawName))
 		}
+		if hooks, ok := hooksMap[groupName]; ok {
+			// attach group-defined hooks to the group containers
+			for _, name := range c.groups[groupName] {
+				if overriden := containerMap[name].hooks.CopyFrom(hooks); overriden {
+					panic(StatusError{fmt.Errorf("Multiple conflicting hooks inherited from groups for container `%s`", name), 64})
+				}
+			}
+		}
+	}
+	// Container map
+	c.containerMap = make(map[string]Container)
+	for name, container := range containerMap {
+		if hooks, ok := hooksMap[name]; ok {
+			// attach container-defined hooks, overriding potential group-inherited hooks
+			container.hooks.CopyFrom(hooks)
+		}
+		c.containerMap[name] = container
 	}
 }
 
