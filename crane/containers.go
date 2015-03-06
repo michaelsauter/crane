@@ -33,15 +33,15 @@ func (containers Containers) reversed() Containers {
 // Lift containers (provision + run).
 // When recreate is set, this will re-provision all images
 // and recreate all containers.
-func (containers Containers) lift(recreate bool, nocache bool) {
-	containers.provisionOrSkip(recreate, nocache)
+func (containers Containers) lift(recreate bool, nocache bool, tag string) {
+	containers.provisionOrSkip(recreate, nocache, tag)
 	containers.runOrStart(recreate)
 }
 
 // Provision containers.
-func (containers Containers) provision(nocache bool) {
+func (containers Containers) provision(nocache bool, tag string) {
 	for _, container := range containers {
-		container.Provision(nocache)
+		container.Provision(nocache, tag)
 	}
 }
 
@@ -80,9 +80,9 @@ func (containers Containers) runOrStart(recreate bool) {
 
 // Provision or skip images.
 // When update is true, provisions all images.
-func (containers Containers) provisionOrSkip(update bool, nocache bool) {
+func (containers Containers) provisionOrSkip(update bool, nocache bool, tag string) {
 	for _, container := range containers {
-		container.ProvisionOrSkip(update, nocache)
+		container.ProvisionOrSkip(update, nocache, tag)
 	}
 }
 
@@ -130,9 +130,9 @@ func (containers Containers) rm(force bool) {
 }
 
 // Push containers.
-func (containers Containers) push() {
+func (containers Containers) push(tag string) {
 	for _, container := range containers {
-		container.Push()
+		container.Push(tag)
 	}
 }
 
