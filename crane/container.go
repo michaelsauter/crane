@@ -117,29 +117,30 @@ func (o *OptBool) UnmarshalJSON(b []byte) (err error) {
 	return
 }
 
+func hasOptionalPrefix(str *string) bool {
+	if len(*str) > 1 && (*str)[0] == '?' {
+		*str = (*str)[1:]
+		return true
+	}
+	return false
+}
+
 func (c *container) Dependencies() *Dependencies {
 	var linkParts []string
 	dependencies := &Dependencies{}
 	for _, link := range c.RunParams.Link() {
 		linkParts = strings.Split(link, ":")
-		dependencies.All = append(dependencies.All, linkParts[0])
-		dependencies.Link = append(dependencies.Link, linkParts[0])
+		dependencies.add(linkParts[0], "link", !hasOptionalPrefix(&linkParts[0]))
 	}
 	for _, volumeFrom := range c.RunParams.VolumesFrom() {
-		if !dependencies.includes(volumeFrom) {
-			dependencies.All = append(dependencies.All, volumeFrom)
-			dependencies.VolumesFrom = append(dependencies.VolumesFrom, volumeFrom)
-		}
+		dependencies.add(volumeFrom, "volumesFrom", !hasOptionalPrefix(&volumeFrom))
 	}
 	if netParts := strings.Split(c.RunParams.Net(), ":"); len(netParts) == 2 && netParts[0] == "container" {
 		// We'll just assume here that the reference is a name, and not an id, even
 		// though docker supports it, since we have no bullet-proof way to tell:
 		// heuristics to detect whether it's an id could bring false positives, and
 		// a lookup in the list of container names could bring false negatives
-		dependencies.Net = netParts[1]
-		if !dependencies.includes(dependencies.Net) {
-			dependencies.All = append(dependencies.All, dependencies.Net)
-		}
+		dependencies.add(netParts[1], "net", true)
 	}
 	return dependencies
 }
@@ -517,6 +518,13 @@ func (c *container) createArgs() []string {
 	}
 	// Link
 	for _, link := range c.RunParams.Link() {
+		// Silently omit optional, non-running targets
+		if hasOptionalPrefix(&link) {
+			target := container{RawName: strings.Split(link, ":")[0]}
+			if !target.Running() {
+				continue
+			}
+		}
 		args = append(args, "--link", link)
 	}
 	// LxcConf
@@ -589,6 +597,13 @@ func (c *container) createArgs() []string {
 	}
 	// VolumesFrom
 	for _, volumeFrom := range c.RunParams.VolumesFrom() {
+		// Silently omit optional, non-existing targets
+		if hasOptionalPrefix(&volumeFrom) {
+			target := container{RawName: volumeFrom}
+			if !target.Exists() {
+				continue
+			}
+		}
 		args = append(args, "--volumes-from", volumeFrom)
 	}
 	// Workdir

@@ -66,9 +66,9 @@ func (graph DependencyGraph) order(target Target, force bool) (order []string, e
 		if !success {
 			for _, name := range target {
 				if dependencies, ok := graph[name]; ok {
-					for _, name := range dependencies.All {
+					for _, name := range dependencies.Required {
 						if !target.includes(name) {
-							container := graph.tmpContainer(name)
+							container := &container{RawName: name}
 							satisfied := false
 							if dependencies.mustRun(name) {
 								satisfied = container.Running()
@@ -93,7 +93,7 @@ func (graph DependencyGraph) order(target Target, force bool) (order []string, e
 		if !success && force {
 			for _, name := range target {
 				if dependencies, ok := graph[name]; ok {
-					for _, name := range dependencies.All {
+					for _, name := range dependencies.Required {
 						if !target.includes(name) {
 							success = true
 							graph.resolve(name)
@@ -118,10 +118,6 @@ func (graph DependencyGraph) order(target Target, force bool) (order []string, e
 	}
 
 	return
-}
-
-func (d DependencyGraph) tmpContainer(name string) Container {
-	return &container{RawName: name}
 }
 
 // resolve deletes the given name from the

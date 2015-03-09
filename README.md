@@ -169,6 +169,8 @@ If you want to use JSON instead of YAML, here's what a simple configuration look
 ```
 
 ## Advanced Usage
+
+### Groups
 Next to containers, you can also specify groups, and then execute Crane commands that only target those groups. If you do not specify any target as non-option arguments, the command will apply to all containers. However, you can override this by specifying a `default` group. Also, every container can be targeted individually by using the name of the container in the non-option arguments. Note that any number of group or container references can be used as target, and that ordering doesn't matter since containers will be ordered according to the dependency graph. Groups of containers can be specified like this (YAML shown):
 
 ```
@@ -190,7 +192,26 @@ groups:
 
 This could be used like so: `crane provision service1`, `crane run -v databases` or `crane lift -r services database1`. `crane status` is an alias for `crane status default`, which in that example is an alias for `crane status service1 database1`.
 
-When using targets, it is also possible to cascade the commands to related containers. There are 2 different flags, `--cascade-affected` and `--cascade-dependencies`. In our example configuration above, when targeting the `mysql` container, the `apache` container would be considered to be "affected". When targeting the `apache` container, the `mysql` container would be considered as a "dependency". Both flags take a string argument, which specifies which type of cascading is desired, options are `volumesFrom`, `link`, `net` and `all`.
+
+### Cascading
+When using targets, it is also possible to cascade the commands to related containers. There are 2 different flags, `--cascade-affected` and `--cascade-dependencies`. In our example configuration above, when targeting the `mysql` container, the `apache` container would be considered to be "affected". When targeting the `apache` container, the `mysql` container would be considered as a "dependency". Both flags take a string argument, which specifies which type of cascading is desired, options are `all`, `required`, `link`, `volumesFrom` and `net`.
+
+### Optional dependencies
+All dependencies are considered required, and thus enforced, unless their declaration is prefixed with a "?". Apart from allowing to get more control for selecting containers implicitly via cascading, when declaring a `link` (respectively a `volumesFrom`) optional, the dependency will be silently omitted if the target is not running (respectively not existing). In the following example, `foo` has an optional link dependency to `bar`, meaning that that link will only be created if `bar` already exists when starting `foo`, or if `bar` is part of the targeted containers list when starting `foo`, explictly or implicitly (via `--cascade-dependencies=all` for instance):
+```
+containers:
+  foo:
+    image: busybox
+    run:
+      detach: true
+      cmd: ["sleep", "50"]
+      link: ["?bar:bar"]
+  bar:
+    image: busybox
+    run:
+      detach: true
+      cmd: ["sleep", "50"]
+```
 
 ## Some Crane-backed sample environments
 * [Silex + Nginx/php-fpm + MySQL](https://github.com/michaelsauter/silex-crane-env)

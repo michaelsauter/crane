@@ -7,9 +7,10 @@ import (
 
 func TestIncludes(t *testing.T) {
 	dependencies := Dependencies{
-		All:         []string{"link", "volumesFrom", "net"},
-		Link:        []string{"link"},
-		VolumesFrom: []string{"volumesFrom"},
+		All:         []string{"link", "optionalLink", "volumesFrom", "optionalVolumesFrom", "net"},
+		Required:    []string{"link", "volumesFrom", "net"},
+		Link:        []string{"link", "optionalLink"},
+		VolumesFrom: []string{"volumesFrom", "optionalVolumesFrom"},
 		Net:         "net",
 	}
 
@@ -23,9 +24,10 @@ func TestIncludes(t *testing.T) {
 
 func TestIncludesAsKind(t *testing.T) {
 	dependencies := Dependencies{
-		All:         []string{"link", "volumesFrom", "net"},
-		Link:        []string{"link"},
-		VolumesFrom: []string{"volumesFrom"},
+		All:         []string{"link", "optionalLink", "volumesFrom", "optionalVolumesFrom", "net"},
+		Required:    []string{"link", "volumesFrom", "net"},
+		Link:        []string{"link", "optionalLink"},
+		VolumesFrom: []string{"volumesFrom", "optionalVolumesFrom"},
 		Net:         "net",
 	}
 
@@ -40,7 +42,17 @@ func TestIncludesAsKind(t *testing.T) {
 			expected: true,
 		},
 		{
+			needle:   "optionalLink",
+			kind:     "all",
+			expected: true,
+		},
+		{
 			needle:   "volumesFrom",
+			kind:     "all",
+			expected: true,
+		},
+		{
+			needle:   "optionalVolumesFrom",
 			kind:     "all",
 			expected: true,
 		},
@@ -49,13 +61,48 @@ func TestIncludesAsKind(t *testing.T) {
 			kind:     "all",
 			expected: true,
 		},
+		{ // kind required
+			needle:   "link",
+			kind:     "required",
+			expected: true,
+		},
+		{
+			needle:   "optionalLink",
+			kind:     "required",
+			expected: false,
+		},
+		{
+			needle:   "volumesFrom",
+			kind:     "required",
+			expected: true,
+		},
+		{
+			needle:   "optionalVolumesFrom",
+			kind:     "required",
+			expected: false,
+		},
+		{
+			needle:   "net",
+			kind:     "required",
+			expected: true,
+		},
 		{ // kind link
 			needle:   "link",
 			kind:     "link",
 			expected: true,
 		},
 		{
+			needle:   "optionalLink",
+			kind:     "link",
+			expected: true,
+		},
+		{
 			needle:   "volumesFrom",
+			kind:     "link",
+			expected: false,
+		},
+		{
+			needle:   "optionalVolumesFrom",
 			kind:     "link",
 			expected: false,
 		},
@@ -70,7 +117,17 @@ func TestIncludesAsKind(t *testing.T) {
 			expected: false,
 		},
 		{
+			needle:   "optionalLink",
+			kind:     "volumesFrom",
+			expected: false,
+		},
+		{
 			needle:   "volumesFrom",
+			kind:     "volumesFrom",
+			expected: true,
+		},
+		{
+			needle:   "optionalVolumesFrom",
 			kind:     "volumesFrom",
 			expected: true,
 		},
@@ -85,7 +142,17 @@ func TestIncludesAsKind(t *testing.T) {
 			expected: false,
 		},
 		{
+			needle:   "optionalLink",
+			kind:     "net",
+			expected: false,
+		},
+		{
 			needle:   "volumesFrom",
+			kind:     "net",
+			expected: false,
+		},
+		{
+			needle:   "optionalVolumesFrom",
 			kind:     "net",
 			expected: false,
 		},
@@ -107,9 +174,10 @@ func TestIncludesAsKind(t *testing.T) {
 
 func TestForKind(t *testing.T) {
 	dependencies := Dependencies{
-		All:         []string{"link", "volumesFrom", "net"},
-		Link:        []string{"link"},
-		VolumesFrom: []string{"volumesFrom"},
+		All:         []string{"link", "optionalLink", "volumesFrom", "optionalVolumesFrom", "net"},
+		Required:    []string{"link", "volumesFrom", "net"},
+		Link:        []string{"link", "optionalLink"},
+		VolumesFrom: []string{"volumesFrom", "optionalVolumesFrom"},
 		Net:         "net",
 	}
 
@@ -119,15 +187,19 @@ func TestForKind(t *testing.T) {
 	}{
 		{
 			kind:     "all",
+			expected: []string{"link", "optionalLink", "volumesFrom", "optionalVolumesFrom", "net"},
+		},
+		{
+			kind:     "required",
 			expected: []string{"link", "volumesFrom", "net"},
 		},
 		{
 			kind:     "link",
-			expected: []string{"link"},
+			expected: []string{"link", "optionalLink"},
 		},
 		{
 			kind:     "volumesFrom",
-			expected: []string{"volumesFrom"},
+			expected: []string{"volumesFrom", "optionalVolumesFrom"},
 		},
 		{
 			kind:     "net",
@@ -152,14 +224,14 @@ func TestSatisfied(t *testing.T) {
 	var dependencies Dependencies
 
 	dependencies = Dependencies{
-		All: []string{"a"},
+		Required: []string{"a"},
 	}
 	if dependencies.satisfied() {
 		t.Errorf("Dependencies was not empty, but appeared to be satisfied")
 	}
 
 	dependencies = Dependencies{
-		All: []string{},
+		Required: []string{},
 	}
 	if !dependencies.satisfied() {
 		t.Errorf("Dependencies was empty, but appeared not to be satisfied")
