@@ -183,6 +183,15 @@ formatted in bold provided the 'colorize' flag is on.`,
 		}, true),
 	}
 
+	var cmdPs = &cobra.Command{
+		Use:   "ps",
+		Short: "Displays status of containers",
+		Long:  `Displays the current status of all targeted containers.`,
+		Run: configCommand(func(config Config) {
+			config.TargetedContainers().status(options.notrunc)
+		}, true),
+	}
+
 	var cmdStats = &cobra.Command{
 		Use:   "stats",
 		Short: "Displays statistics about containers",
@@ -246,6 +255,7 @@ See the corresponding docker commands for more information.`,
 	cmdRm.Flags().BoolVarP(&options.forceRm, "force", "f", false, "Kill containers if they are running first")
 
 	cmdStatus.Flags().BoolVarP(&options.notrunc, "no-trunc", "", false, "Don't truncate output")
+	cmdPs.Flags().BoolVarP(&options.notrunc, "no-trunc", "", false, "Don't truncate output")
 
 	cmdLogs.Flags().BoolVarP(&options.follow, "follow", "f", false, "Follow log output")
 	cmdLogs.Flags().BoolVarP(&options.timestamps, "timestamps", "t", false, "Show timestamps")
@@ -277,7 +287,7 @@ Additional help topics: {{if gt .Commands 0 }}{{range .Commands}}{{if not .Runna
 Use "{{.Root.Name}} help [command]" for more information about that command.
 `)
 
-	craneCmd.AddCommand(cmdLift, cmdProvision, cmdCreate, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdPause, cmdUnpause, cmdPush, cmdLogs, cmdStatus, cmdStats, cmdGraph, cmdVersion)
+	craneCmd.AddCommand(cmdLift, cmdProvision, cmdCreate, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdPause, cmdUnpause, cmdPush, cmdLogs, cmdStatus, cmdPs, cmdStats, cmdGraph, cmdVersion)
 	err := craneCmd.Execute()
 	if err != nil {
 		panic(StatusError{status: 64})
