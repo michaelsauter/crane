@@ -235,6 +235,9 @@ func (r *RunParameters) Hostname() string {
 func (r *RunParameters) Link() []string {
 	var link []string
 	for _, rawLink := range r.RawLink {
+    if len(strings.Split(rawLink, ":")) == 1 {
+    	rawLink += ":" + rawLink
+    }
 		link = append(link, os.ExpandEnv(rawLink))
 	}
 	return link
