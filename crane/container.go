@@ -61,7 +61,7 @@ type RunParameters struct {
 	RawDevice      []string    `json:"device" yaml:"device"`
 	RawDns         []string    `json:"dns" yaml:"dns"`
 	RawEntrypoint  string      `json:"entrypoint" yaml:"entrypoint"`
-	RawEnv         []string    `json:"env" yaml:"env"`
+	RawEnv         interface{} `json:"env" yaml:"env"`
 	RawEnvFile     []string    `json:"env-file" yaml:"env-file"`
 	RawExpose      []string    `json:"expose" yaml:"expose"`
 	RawHostname    string      `json:"hostname" yaml:"hostname"`
@@ -208,8 +208,19 @@ func (r *RunParameters) Entrypoint() string {
 
 func (r *RunParameters) Env() []string {
 	var env []string
-	for _, rawEnv := range r.RawEnv {
-		env = append(env, os.ExpandEnv(rawEnv))
+	if r.RawEnv != nil {
+		switch rawEnv := r.RawEnv.(type) {
+		case []interface{}:
+			for _, v := range rawEnv {
+				env = append(env, os.ExpandEnv(v.(string)))
+			}
+		case map[interface{}]interface{}:
+			for k, v := range rawEnv {
+				env = append(env, os.ExpandEnv(k.(string))+"="+os.ExpandEnv(v.(string)))
+			}
+		default:
+			print.Errorf("env is of unknown type!")
+		}
 	}
 	return env
 }

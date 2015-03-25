@@ -84,6 +84,25 @@ func TestCmd(t *testing.T) {
 	}
 }
 
+func TestEnv(t *testing.T) {
+	var c *container
+	// Array
+	os.Clearenv()
+	os.Setenv("FOO", "fooKey=fooValue")
+	c = &container{RunParams: RunParameters{RawEnv: []interface{}{"$FOO", "barKey=barValue"}}}
+	if len(c.RunParams.Env()) != 2 || c.RunParams.Env()[0] != "fooKey=fooValue" || c.RunParams.Env()[1] != "barKey=barValue" {
+		t.Errorf("Env should have been [fooKey=fooValue barKey=barValue], got %v", c.RunParams.Env())
+	}
+	// Mapping
+	os.Clearenv()
+	os.Setenv("FOO_KEY", "fooKey")
+	os.Setenv("FOO_VALUE", "fooValue")
+	c = &container{RunParams: RunParameters{RawEnv: map[interface{}]interface{}{"$FOO_KEY": "$FOO_VALUE", "barKey": "barValue"}}}
+	if len(c.RunParams.Env()) != 2 || c.RunParams.Env()[0] != "fooKey=fooValue" || c.RunParams.Env()[1] != "barKey=barValue" {
+		t.Errorf("Env should have been [fooKey=fooValue barKey=barValue], got %v", c.RunParams.Env())
+	}
+}
+
 type OptBoolWrapper struct {
 	OptBool OptBool `json:"OptBool" yaml:"OptBool"`
 }

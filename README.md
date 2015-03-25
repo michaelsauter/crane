@@ -81,7 +81,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `device` (array) Add host devices.
 	* `dns` (array)
 	* `entrypoint` (string)
-	* `env` (array)
+	* `env` (array/mapping) It can be declared as a string array with `"key=value"` format or a mapping where each `key: value` will be translated to the corresponding `"key=value"` string.
 	* `env-file` (array)
 	* `expose` (array) Ports to expose to linked containers.
 	* `hostname` (string)
@@ -142,6 +142,12 @@ containers:
 		image: tutum/memcached
 		run:
 			detach: true
+```
+Note you can also declare the `env` parameter as:
+
+```
+env:
+  MYSQL_ROOT_PASSWORD: mysecretpassword
 ```
 All specified Docker containers can then be created and started with:
 
