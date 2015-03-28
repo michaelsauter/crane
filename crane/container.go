@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -15,6 +16,7 @@ import (
 type Container interface {
 	Name() string
 	Dockerfile() string
+	Location() string
 	Image() string
 	Id() string
 	Dependencies() *Dependencies
@@ -42,6 +44,7 @@ type container struct {
 	id            string
 	RawName       string
 	RawDockerfile string          `json:"dockerfile" yaml:"dockerfile"`
+	RawLocation   string          `json:"location" yaml:"location"`
 	RawImage      string          `json:"image" yaml:"image"`
 	RunParams     RunParameters   `json:"run" yaml:"run"`
 	RmParams      RmParameters    `json:"rm" yaml:"rm"`
@@ -150,6 +153,10 @@ func (c *container) Name() string {
 
 func (c *container) Dockerfile() string {
 	return os.ExpandEnv(c.RawDockerfile)
+}
+
+func (c *container) Location() string {
+	return os.ExpandEnv(c.RawLocation)
 }
 
 func (c *container) Image() string {
@@ -403,7 +410,7 @@ func (c *container) Status() []string {
 }
 
 func (c *container) Provision(nocache bool) {
-	if len(c.Dockerfile()) > 0 {
+	if len(c.Dockerfile()) > 0 || len(c.Location()) > 0 {
 		c.buildImage(nocache)
 	} else {
 		c.pullImage()
@@ -728,14 +735,78 @@ func (c *container) pullImage() {
 	executeCommand("docker", args)
 }
 
+func isFile(path string) bool {
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return fileInfo.Mode().IsRegular()
+}
+
+func isDirectory(path string) bool {
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return fileInfo.IsDir()
+}
+
 // Build image for container
 func (c *container) buildImage(nocache bool) {
 	fmt.Printf("Building image %s ... ", c.Image())
 	args := []string{"build"}
+	var dockerfile, build_context string
 	if nocache {
 		args = append(args, "--no-cache")
 	}
-	args = append(args, "--rm", "--tag="+c.Image(), c.Dockerfile())
+	args = append(args, "--rm", "--tag="+c.Image())
+
+	// Intelligent handling of the location (build context) and dockerfile
+	if len(c.Location()) > 0 {
+		build_context = c.Location()
+	}
+
+	// If both the location and dockerfile variables are set
+	if len(c.Dockerfile()) > 0 {
+		if len(c.Location()) > 0 {
+
+			// If the location (build context) is a folder (not a URL, tarball or something else)
+			if isDirectory(c.Location()) {
+				// 1. Search for the specified dockerfile within the provided folder location (build context)
+				// 2. Fall back to 'CWD', the location from which crane was executed
+
+				context_dockerfile := filepath.Join(c.Location(), c.Dockerfile())
+				context_dockerfile_Dockerfile := filepath.Join(context_dockerfile, "Dockerfile")
+
+				if isFile(context_dockerfile) {
+					dockerfile = context_dockerfile
+				} else if isFile(context_dockerfile_Dockerfile) {
+					dockerfile = context_dockerfile_Dockerfile
+				} else if isDirectory(c.Dockerfile()) {
+					dockerfile = filepath.Join(c.Dockerfile(), "Dockerfile")
+				} else {
+					dockerfile = c.Dockerfile()
+				}
+			} else {
+				dockerfile = c.Dockerfile()
+			}
+		} else {
+			// If the location (build context) is not set, determine it from the dockerfile variable
+			if isFile(c.Dockerfile()) {
+				build_context = filepath.Dir(c.Dockerfile())
+				dockerfile = c.Dockerfile()
+			} else {
+				build_context = c.Dockerfile()
+			}
+		}
+	}
+
+	// By this time, dockerfile has been correctly translated to 'docker build --file=' argument
+	if len(dockerfile) > 0 {
+		args = append(args, "--file="+dockerfile)
+	}
+
+	args = append(args, build_context)
 	executeCommand("docker", args)
 }
 

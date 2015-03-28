@@ -42,7 +42,11 @@ Maps to `docker pause`.
 Maps to `docker unpause`.
 
 ### `provision`
-Either calls Docker's `build` or `pull`, depending on whether a Dockerfile is specified. The Docker cache can be disabled by passing `--no-cache`.
+Calls Docker's `build` command if a `location:` or `dockerfile:` was specified. Else is there is only an image name to go on, calls Docker's `pull` command.
+
+***Note regarding backwards compatibility:***
+
+Previously only the `dockerfile:` key was available to set the location of the docker build context. Which is now set by `location:` key. However for backwards compatibility the previous usage still works, and will continue work (it is never going away). In fact, all usages of the `location:` + `dockerfile:` keys will be smartly interpreted. And you may set either one or both keys.
 
 ### `push`
 Maps to `docker push`.
@@ -69,7 +73,8 @@ The configuration defines a map of containers in either JSON or YAML. By default
 The map of containers consists of the name of the container mapped to the container configuration, which consists of:
 
 * `image` (string, required): Name of the image to build/pull
-* `dockerfile` (string, optional): Relative path to the Dockerfile
+* `location` (string, optional): Docker build context `PATH | URL`. Includes `Dockerfile`.
+* `dockerfile` (string, optional): Path to the Dockerfile. *[Note](#provision)*
 * `run` (object, optional): Parameters mapped to Docker's `run` & `create`.
 	* `add-host` (array) Add custom host-to-IP mappings.
 	* `cap-add` (array) Add Linux capabilities.
@@ -128,7 +133,7 @@ containers:
 			link: ["mysql:db", "memcached:cache"]
 			detach: true
 	app:
-		dockerfile: app
+		location: app
 		image: michaelsauter/app
 		run:
 			volume: ["app/www:/srv/www:rw"]
