@@ -59,6 +59,9 @@ Displays information about the state of the containers.
 ### `stats`
 Maps to `docker stats`. Need Docker >= 1.5
 
+### `template`
+Generates a textual output using [Go templates](http://golang.org/pkg/text/template/). See the Templating section for more information.
+
 ### `graph`
 Parses your config file and dumps the relations between containers as a dependency graph, using the DOT format. See built-in help for more information about style conventions used in that representation.
 
@@ -203,6 +206,7 @@ This could be used like so: `crane provision service1`, `crane run -v databases`
 
 When using targets, it is also possible to cascade the commands to related containers. There are 2 different flags, `--cascade-affected` and `--cascade-dependencies`. In our example configuration above, when targeting the `mysql` container, the `apache` container would be considered to be "affected". When targeting the `apache` container, the `mysql` container would be considered as a "dependency". Both flags take a string argument, which specifies which type of cascading is desired, options are `volumesFrom`, `link`, `net` and `all`.
 
+
 ### Hooks
 
 In order to run certain commands before or after key lifecycle events of containers, hooks can declared in the configuration. They are run synchronously on the host where Crane is installed, outside containers, via an `exec` call. They may interrupt the flow by returning a non-zero status. If shell features more advanced than basic variable expansion is required, you should explicitly spawn a shell to run the command in (`sh -c 'ls *'`).
@@ -270,6 +274,74 @@ containers:
 ```
 
 As a summary, `&anchor` declares the anchor property, `*alias` is the alias indicator to simply copy the mapping it references, and `<<: *merge` includes all the mapping but let you override some keys.
+
+## Templating
+You can also generate a textual output using  [Go templates](http://golang.org/pkg/text/template/). You need to specify your custom template file with `--template` (`-t`) flag. Depending on the optional `--output` (`-o`) flag's value the behaviour is different:
+
+* __Dump to `Stdout`:__ Leave it to dump the output to `os.Stdout`.
+```
+crane template -t path/to/myTemplate.tmpl
+```
+
+* __Dump to a file:__ Specify a file name to render the output in a file with that name.
+```
+crane template -t path/to/myTemplate.tmpl -o output/myOutput.txt
+```
+
+* __Generate a file per container:__ Specify a file format containing `%s` to use the template to generate a different output file for each container using the same template (substituting the `%s` by the corresponding container's name).
+```
+crane template -t path/to/myTemplate.tmpl -o output/%s.txt
+```
+
+The data object passed to the template is a `TemplateInfo` struct, or a `TemplateInfoForContainer` one if you want to generate a file per container. You can see here the structure of each struct or interface needed.
+
+```go
+type TemplateInfo struct {
+  TargetedContainers []ContainerInfo
+  DependencyMap      DependencyGraph
+  Groups             map[string][]string
+}
+type TemplateInfoForContainer struct {
+  CurrentContainer   ContainerInfo
+  TargetedContainers []ContainerInfo
+  DependencyMap      DependencyGraph
+  Groups             map[string][]string
+}
+type ContainerInfo interface {
+  Name()             string
+  Dockerfile()       string
+  Image()            string
+  Id()               string
+  Dependencies()     *Dependencies
+  Exists()           bool
+  Running()          bool
+  Paused()           bool
+  ImageExists()      bool
+  Status()           []string
+}
+type Dependencies struct {
+  All                []string
+  Link               []string
+  VolumesFrom        []string
+  Net                string
+}
+type DependencyGraph map[string]*Dependencies
+```
+
+Moreover, Crane provides a number of additional functions to make it simpler to generate your desired output:
+
+* strings.Contains
+* strings.ContainsAny
+* strings.HasPrefix
+* strings.Join
+* strings.Split
+* strings.ToLower
+* strings.ToTitle
+* strings.ToUpper
+* regexp.MatchString
+
+### Examples
+You can see some template examples within [templates](templates/) folder.
 
 ## Some Crane-backed sample environments
 * [Silex + Nginx/php-fpm + MySQL](https://github.com/michaelsauter/silex-crane-env)

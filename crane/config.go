@@ -15,6 +15,7 @@ import (
 type Config interface {
 	TargetedContainers() Containers
 	DependencyGraph() DependencyGraph
+	Groups() map[string][]string
 }
 
 type config struct {
@@ -185,6 +186,11 @@ func (c *config) DependencyGraph() DependencyGraph {
 		dependencyGraph[container.Name()] = container.Dependencies()
 	}
 	return dependencyGraph
+}
+
+// return groups
+func (c *config) Groups() map[string][]string {
+	return c.groups
 }
 
 // determineTarget receives the specified target

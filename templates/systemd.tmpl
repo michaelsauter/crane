@@ -1,0 +1,16 @@
+{{ define "DEPENDENCIES" }}docker.service{{ range $dep := .Dependencies.All }}{{ if MatchString ".*-(storage|data)" . }}{{ else }} {{ . }}.service{{ end }}{{ end }}{{ end }}{{ with .CurrentContainer }}
+[Unit]
+Description={{ .Name }} container
+Requires={{ template "DEPENDENCIES" . }}
+After={{ template "DEPENDENCIES" . }}
+
+[Service]
+Restart=on-failure
+RestartSec=10{{ range $dep := .Dependencies.All }}{{ if MatchString ".*-(storage|data)" . }}
+ExecStartPre=/home/core/bin/crane run -c /home/core/crane.yml {{ . }}{{ end }}{{ end }}
+ExecStart=/home/core/bin/crane run -c /home/core/crane.yml --recreate {{ .Name }}
+ExecStop=/home/core/bin/crane stop -c /home/core/crane.yml {{ .Name }}
+
+[Install]
+WantedBy=multi-user.target
+{{ end }}

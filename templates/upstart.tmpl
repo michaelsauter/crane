@@ -1,0 +1,10 @@
+{{ with .CurrentContainer }}description "{{ .Name }} container"
+author "Me"
+start on filesystem and started docker{{ range $dep := .Dependencies.All }}{{ if MatchString ".*-(storage|data)" . }}{{ else }} and started {{ . }}{{ end }}{{ end }}
+stop on runlevel [!2345]
+respawn
+script{{ range $dep := .Dependencies.All }}{{ if MatchString ".*-(storage|data)" . }}
+  /home/core/bin/crane run -c /home/core/crane.yml {{ . }}{{ end }}{{ end }}
+  /home/core/bin/crane run -c /home/core/crane.yml --recreate {{ .Name }}
+end script
+{{ end }}

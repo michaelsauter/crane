@@ -1,0 +1,29 @@
+CURRENT-CONTAINER:{{ with .CurrentContainer }}
+  {{ .Name }}:
+    dockerfile: {{ .Dockerfile }}
+    image: {{ .Image }}
+    id: {{ .Id }}
+    dependencies: {{ Join .Dependencies.All ", " }}
+    exists: {{ .Exists }}
+    running: {{ .Running }}
+    paused: {{ .Paused }}
+    imageExists: {{ .ImageExists }}
+    status: [{{ Join .Status ", " }}]{{ end }}
+
+TARGETED-CONTAINERS:{{ range $container := .TargetedContainers }}{{ with $container }}
+  {{ .Name }}:
+    dockerfile: {{ .Dockerfile }}
+    image: {{ .Image }}
+    id: {{ .Id }}
+    dependencies: {{ Join .Dependencies.All ", " }}
+    exists: {{ .Exists }}
+    running: {{ .Running }}
+    paused: {{ .Paused }}
+    imageExists: {{ .ImageExists }}
+    status: [{{ Join .Status ", " }}]{{ end }}{{ end }}
+
+DEPENDECY-MAP:{{ range $name, $dependencies := .DependencyMap }}
+  {{ $name }}: {{ Join $dependencies.All ", " }}{{ end }}
+
+GROUPS:{{ range $name, $members := .Groups }}
+  {{ $name }}: {{ Join $members ", " }}{{ end }}
