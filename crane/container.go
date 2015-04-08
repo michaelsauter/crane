@@ -59,6 +59,7 @@ type RunParameters struct {
 	RawDevice      []string    `json:"device" yaml:"device"`
 	RawDns         []string    `json:"dns" yaml:"dns"`
 	RawEntrypoint  string      `json:"entrypoint" yaml:"entrypoint"`
+	RawEnvDefault  []string    `json:"env-default" yaml:"env-default"`
 	RawEnv         []string    `json:"env" yaml:"env"`
 	RawEnvFile     []string    `json:"env-file" yaml:"env-file"`
 	RawExpose      []string    `json:"expose" yaml:"expose"`
@@ -210,6 +211,29 @@ func (r *RunParameters) Env() []string {
 		env = append(env, os.ExpandEnv(rawEnv))
 	}
 	return env
+}
+
+func (r *RunParameters) EnvDefault() []string {
+	var envDefault []string
+	for _, rawEnvDefault := range r.RawEnvDefault {
+		expanded := os.ExpandEnv(rawEnvDefault)
+		parts := strings.SplitN(expanded, "=", 2)
+		if len(parts) == 2 {
+			name := parts[0]
+			var value string = os.Getenv(name)
+
+			if value == "" {
+				value = parts[1]
+			}
+			variable := name + "=" + value
+			envDefault = append(envDefault, variable)
+		} else if len(parts) == 1 {
+			// User specified no default value, just hand
+			// it over to docker.
+			envDefault = append(envDefault, parts[0])
+		}
+	}
+	return envDefault
 }
 
 func (r *RunParameters) EnvFile() []string {
@@ -495,6 +519,12 @@ func (c *container) createArgs() []string {
 	if len(c.RunParams.Entrypoint()) > 0 {
 		args = append(args, "--entrypoint", c.RunParams.Entrypoint())
 	}
+
+	// Env Default
+	for _, envDefault := range c.RunParams.EnvDefault() {
+		args = append(args, "--env", envDefault)
+	}
+
 	// Env
 	for _, env := range c.RunParams.Env() {
 		args = append(args, "--env", env)
