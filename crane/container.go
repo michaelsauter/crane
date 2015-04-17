@@ -122,8 +122,10 @@ func (c *container) Dependencies() *Dependencies {
 	dependencies := &Dependencies{}
 	for _, link := range c.RunParams.Link() {
 		linkParts = strings.Split(link, ":")
-		dependencies.All = append(dependencies.All, linkParts[0])
-		dependencies.Link = append(dependencies.Link, linkParts[0])
+		if !dependencies.includes(linkParts[0]) {
+			dependencies.All = append(dependencies.All, linkParts[0])
+			dependencies.Link = append(dependencies.Link, linkParts[0])
+		}
 	}
 	for _, volumeFrom := range c.RunParams.VolumesFrom() {
 		if !dependencies.includes(volumeFrom) {
