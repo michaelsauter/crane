@@ -36,6 +36,7 @@ type Container interface {
 	Rm(force bool)
 	Logs(follow bool, tail string) (stdout, stderr io.Reader)
 	Push()
+	Hooks() Hooks
 }
 
 type container struct {
@@ -46,6 +47,7 @@ type container struct {
 	RunParams     RunParameters   `json:"run" yaml:"run"`
 	RmParams      RmParameters    `json:"rm" yaml:"rm"`
 	StartParams   StartParameters `json:"start" yaml:"start"`
+	hooks         hooks
 }
 
 type RunParameters struct {
@@ -445,6 +447,7 @@ func (c *container) Run() {
 			c.Start()
 		}
 	} else {
+		executeHook(c.Hooks().PreStart())
 		fmt.Printf("Running container %s ... ", c.Name())
 		args := []string{"run"}
 		// Detach
@@ -453,6 +456,7 @@ func (c *container) Run() {
 		}
 		args = append(args, c.createArgs()...)
 		executeCommand("docker", args)
+		executeHook(c.Hooks().PostStart())
 	}
 }
 
@@ -608,6 +612,7 @@ func (c *container) createArgs() []string {
 func (c *container) Start() {
 	if c.Exists() {
 		if !c.Running() {
+			executeHook(c.Hooks().PreStart())
 			fmt.Printf("Starting container %s ... ", c.Name())
 			args := []string{"start"}
 			if c.StartParams.Attach {
@@ -618,6 +623,7 @@ func (c *container) Start() {
 			}
 			args = append(args, c.Name())
 			executeCommand("docker", args)
+			executeHook(c.Hooks().PostStart())
 		}
 	} else {
 		print.Errorf("Container %s does not exist.\n", c.Name())
@@ -636,9 +642,11 @@ func (c *container) Kill() {
 // Stop container
 func (c *container) Stop() {
 	if c.Running() {
+		executeHook(c.Hooks().PreStop())
 		fmt.Printf("Stopping container %s ... ", c.Name())
 		args := []string{"stop", c.Name()}
 		executeCommand("docker", args)
+		executeHook(c.Hooks().PostStop())
 	}
 }
 
@@ -719,6 +727,10 @@ func (c *container) Push() {
 	} else {
 		print.Noticef("Skipping %s as it does not have an image name.\n", c.Name())
 	}
+}
+
+func (c *container) Hooks() Hooks {
+	return &c.hooks
 }
 
 // Pull image for container

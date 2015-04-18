@@ -169,6 +169,9 @@ If you want to use JSON instead of YAML, here's what a simple configuration look
 ```
 
 ## Advanced Usage
+
+### Groups
+
 Next to containers, you can also specify groups, and then execute Crane commands that only target those groups. If you do not specify any target as non-option arguments, the command will apply to all containers. However, you can override this by specifying a `default` group. Also, every container can be targeted individually by using the name of the container in the non-option arguments. Note that any number of group or container references can be used as target, and that ordering doesn't matter since containers will be ordered according to the dependency graph. Groups of containers can be specified like this (YAML shown):
 
 ```
@@ -190,7 +193,58 @@ groups:
 
 This could be used like so: `crane provision service1`, `crane run -v databases` or `crane lift -r services database1`. `crane status` is an alias for `crane status default`, which in that example is an alias for `crane status service1 database1`.
 
+### Cascading commands
+
 When using targets, it is also possible to cascade the commands to related containers. There are 2 different flags, `--cascade-affected` and `--cascade-dependencies`. In our example configuration above, when targeting the `mysql` container, the `apache` container would be considered to be "affected". When targeting the `apache` container, the `mysql` container would be considered as a "dependency". Both flags take a string argument, which specifies which type of cascading is desired, options are `volumesFrom`, `link`, `net` and `all`.
+
+### Hooks
+
+In order to run certain commands before or after key lifecycle events of containers, hooks can declared in the configuration. They are run synchronously on the host where Crane is installed, outside containers, via an `exec` call. They may interrupt the flow by returning a non-zero status. If shell features more advanced than basic variable expansion is required, you should explicitly spawn a shell to run the command in (`sh -c 'ls *'`).
+
+Hooks are declared at the top level of the configuration, under the `hooks` key. See YAML example below:
+
+```
+containers:
+  service1:
+    image: busybox
+    run:
+      detach: true
+      cmd: ["sleep", "50"]
+  service2:
+    image: busybox
+    run:
+      detach: true
+      cmd: ["sleep", "50"]
+  service3:
+    image: busybox
+    run:
+      detach: true
+      cmd: ["sleep", "50"]
+groups:
+  foo:
+    - service1
+    - service2
+  bar:
+    - service2
+    - service3
+hooks:
+  foo:
+    post-start: echo container from foo started
+  bar:
+    post-stop: echo container from bar stopped
+  service3:
+    post-stop: echo container service3 stopped
+```
+
+Hooks can be defined on a group level (`foo`, `bar`) so that they apply to all containers within that group, or directly on a container (`service3`). At most one hook can be registered per container and per event. When more than one hook is found for a given container and a given event, the following rules apply:
+* Container-defined hooks have priority over group-defined ones, so in the example above, only "container service3 stopped" will be echoed when stopping `service3`.
+* A fatal error will be raised at startup when 2 group-inherited hooks conflict. This is not the case in the previous example; even though `foo` and `bar` both contain `service2`, the hooks they declare are disjoint.
+
+The following hooks are currently available:
+* `pre-start`: Executed before starting or running a container
+* `post-start`: Executed after starting or running a container
+* `pre-stop`: Executed before stopping a container
+* `post-stop`: Executed after stopping a container
 
 ## Some Crane-backed sample environments
 * [Silex + Nginx/php-fpm + MySQL](https://github.com/michaelsauter/silex-crane-env)
