@@ -252,6 +252,25 @@ The following hooks are currently available:
 * `pre-stop`: Executed before stopping a container
 * `post-stop`: Executed after stopping a container
 
+### YAML advanced usage
+YAML gives you some advanced features like [alias](http://www.yaml.org/spec/1.2/spec.html#id2786196) and [merge](http://yaml.org/type/merge.html). They allow you to easily avoid duplicated code in your `crane.yml` file. As a example, imagine you need to define 2 different containers: `web` and `admin`. They share almost the same configuration but the `cmd` declaration. And imagine you also need 2 instances for each one for using with a node balancer. Then you can declare them as simply:
+
+```
+containers:
+  web1: &web
+    image: my-web-app
+    run: &web-run
+      link: ["db:db"]
+      ...
+      cmd: web
+  web2: *web
+
+  admin1: &admin { <<: *web, run: { <<: *web-run , cmd: admin }}
+  admin2: *admin
+```
+
+As a summary, `&anchor` declares the anchor property, `*alias` is the alias indicator to simply copy the mapping it references, and `<<: *merge` includes all the mapping but let you override some keys.
+
 ## Some Crane-backed sample environments
 * [Silex + Nginx/php-fpm + MySQL](https://github.com/michaelsauter/silex-crane-env)
 * [Symfony2 + Apache + MySQL](https://github.com/michaelsauter/symfony2-crane-env)
