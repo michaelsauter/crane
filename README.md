@@ -282,3 +282,4 @@ Copyright © 2013-2014 Michael Sauter. See the LICENSE file for details.
 ---
 
 [![GoDoc](https://godoc.org/github.com/michaelsauter/crane?status.png)](https://godoc.org/github.com/michaelsauter/crane)
+[![Build Status](https://travis-ci.org/michaelsauter/crane.svg?branch=master)](https://travis-ci.org/michaelsauter/crane)
