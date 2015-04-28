@@ -274,7 +274,7 @@ As a summary, `&anchor` declares the anchor property, `*alias` is the alias indi
 ## Some Crane-backed sample environments
 * [Silex + Nginx/php-fpm + MySQL](https://github.com/michaelsauter/silex-crane-env)
 * [Symfony2 + Apache + MySQL](https://github.com/michaelsauter/symfony2-crane-env)
-* [Sinatra + PostrgeSQL](https://github.com/michaelsauter/sinatra-crane-env)
+* [Sinatra + PostgreSQL](https://github.com/michaelsauter/sinatra-crane-env)
 
 ## Copyright & Licensing
 Copyright © 2013-2014 Michael Sauter. See the LICENSE file for details.
