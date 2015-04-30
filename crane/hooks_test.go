@@ -1,6 +1,7 @@
 package crane
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -13,12 +14,8 @@ func TestCopyFromBehavior(t *testing.T) {
 		RawPreStart: "from source",
 	}
 	target.CopyFrom(source)
-	if target.RawPreStart != "from source" {
-		t.Errorf("Source hook should have precedence but got %v", target.RawPreStart)
-	}
-	if target.RawPostStart != "from target" {
-		t.Errorf("Undefined hooks in target should not affect existing hooks, got %v", target.RawPostStart)
-	}
+	assert.Equal(t, "from source", target.RawPreStart, "Source hook should have precedence")
+	assert.Equal(t, "from target", target.RawPostStart, "Undefined hooks in target should not affect existing hooks")
 }
 
 func TestCopyFromReturnValue(t *testing.T) {
@@ -28,9 +25,7 @@ func TestCopyFromReturnValue(t *testing.T) {
 	source := hooks{
 		RawPostStart: "bar",
 	}
-	if overriden := target.CopyFrom(source); overriden {
-		t.Errorf("Copying unrelated hooks should not trigger an override")
-	}
+	assert.False(t, target.CopyFrom(source), "Copying unrelated hooks should not trigger an override")
 	target = hooks{
 		RawPreStart: "foo",
 	}
@@ -38,7 +33,5 @@ func TestCopyFromReturnValue(t *testing.T) {
 		RawPreStart:  "bar",
 		RawPostStart: "bar",
 	}
-	if overriden := target.CopyFrom(source); !overriden {
-		t.Errorf("Copying related hooks should trigger an override")
-	}
+	assert.True(t, target.CopyFrom(source), "Copying related hooks should trigger an override")
 }

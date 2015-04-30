@@ -2,70 +2,71 @@ package crane
 
 import (
 	"encoding/json"
+	"github.com/stretchr/testify/assert"
 	"gopkg.in/v2/yaml"
 	"os"
 	"testing"
 )
 
 func TestDependencies(t *testing.T) {
-	c := &container{RunParams: RunParameters{RawNet: "container:n", RawLink: []string{"a:b", "b:d"}, RawVolumesFrom: []string{"c"}}}
-	if deps := c.Dependencies(); deps.All[0] != "a" || deps.All[1] != "b" || deps.All[2] != "c" || deps.All[3] != "n" || deps.Link[0] != "a" || deps.Link[1] != "b" || deps.Net != "n" {
-		t.Errorf("Dependencies should have been a, b, c, n. Got %v", deps)
+	c := &container{
+		RunParams: RunParameters{
+			RawNet:         "container:n",
+			RawLink:        []string{"a:b", "b:d"},
+			RawVolumesFrom: []string{"c"},
+		},
 	}
-	c = &container{RunParams: RunParameters{RawLink: []string{}, RawVolumesFrom: []string{}}}
-	if deps := c.Dependencies(); len(deps.All) != 0 && len(deps.Link) != 0 && deps.Net == "" {
-		t.Error("Dependencies should have been empty")
+	expected := &Dependencies{
+		All:         []string{"a", "b", "c", "n"},
+		Link:        []string{"a", "b"},
+		VolumesFrom: []string{"c"},
+		Net:         "n",
 	}
+	assert.Equal(t, expected, c.Dependencies())
+
+	c = &container{}
+	expected = &Dependencies{}
+	assert.Equal(t, expected, c.Dependencies())
 }
 
 func TestMultipleLinkAliases(t *testing.T) {
 	c := &container{RunParams: RunParameters{RawLink: []string{"a:b", "a:c"}}}
-	if deps := c.Dependencies(); len(deps.All) != 1 || len(deps.Link) != 1 || deps.All[0] != "a" || deps.Link[0] != "a" {
-		t.Errorf("Dependencies should have been a. Got %v", deps)
+	expected := &Dependencies{
+		All:  []string{"a"},
+		Link: []string{"a"},
 	}
+	assert.Equal(t, expected, c.Dependencies())
 }
 
 func TestVolume(t *testing.T) {
 	var c *container
 	// Absolute path
 	c = &container{RunParams: RunParameters{RawVolume: []string{"/a:b"}}}
-	if c.RunParams.Volume()[0] != "/a:b" {
-		t.Errorf("Volume mapping should have been a:b, was %v", c.RunParams.Volume()[0])
-	}
+	assert.Equal(t, "/a:b", c.RunParams.Volume()[0])
 	// Relative path
 	c = &container{RunParams: RunParameters{RawVolume: []string{"a:b"}}}
 	dir, _ := os.Getwd()
-	if c.RunParams.Volume()[0] != (dir + "/a:b") {
-		t.Errorf("Volume mapping should have been pwd/a:b, was %v", c.RunParams.Volume()[0])
-	}
+	assert.Equal(t, dir+"/a:b", c.RunParams.Volume()[0])
 	// Environment variable
 	c = &container{RunParams: RunParameters{RawVolume: []string{"$HOME/a:b"}}}
 	os.Clearenv()
 	os.Setenv("HOME", "/home")
-	if c.RunParams.Volume()[0] != (os.Getenv("HOME") + "/a:b") {
-		t.Errorf("Volume mapping should have been $HOME/a:b, was %v", c.RunParams.Volume()[0])
-	}
+	assert.Equal(t, os.Getenv("HOME")+"/a:b", c.RunParams.Volume()[0])
 	// Container-only path
 	c = &container{RunParams: RunParameters{RawVolume: []string{"/b"}}}
-	if c.RunParams.Volume()[0] != "/b" {
-		t.Errorf("Volume mapping should have been /b, was %v", c.RunParams.Volume()[0])
-	}
+	assert.Equal(t, "/b", c.RunParams.Volume()[0])
 }
 
 func TestNet(t *testing.T) {
 	var c *container
 	// Empty defaults to "bridge"
 	c = &container{RunParams: RunParameters{}}
-	if c.RunParams.Net() != "bridge" {
-		t.Errorf("Net should have been bridge, got %v", c.RunParams.Net())
-	}
+	assert.Equal(t, "bridge", c.RunParams.Net())
 	// Environment variable
 	os.Clearenv()
 	os.Setenv("NET", "container")
 	c = &container{RunParams: RunParameters{RawNet: "$NET"}}
-	if c.RunParams.Net() != "container" {
-		t.Errorf("Net should have been container, got %v", c.RunParams.Net())
-	}
+	assert.Equal(t, "container", c.RunParams.Net())
 }
 
 func TestCmd(t *testing.T) {
@@ -74,39 +75,16 @@ func TestCmd(t *testing.T) {
 	os.Clearenv()
 	os.Setenv("CMD", "true")
 	c = &container{RunParams: RunParameters{RawCmd: "$CMD"}}
-	if len(c.RunParams.Cmd()) != 1 || c.RunParams.Cmd()[0] != "true" {
-		t.Errorf("Command should have been true, got %v", c.RunParams.Cmd())
-	}
+	assert.Equal(t, []string{"true"}, c.RunParams.Cmd())
 	// String with multiple parts
 	c = &container{RunParams: RunParameters{RawCmd: "bundle exec rails s -p 3000"}}
-	if len(c.RunParams.Cmd()) != 6 || c.RunParams.Cmd()[0] != "bundle" || c.RunParams.Cmd()[1] != "exec" || c.RunParams.Cmd()[2] != "rails" || c.RunParams.Cmd()[3] != "s" || c.RunParams.Cmd()[4] != "-p" || c.RunParams.Cmd()[5] != "3000" {
-		t.Errorf("Command should have been [bundle exec rails s -p 3000], got %v", c.RunParams.Cmd())
-	}
+	assert.Equal(t, []string{"bundle", "exec", "rails", "s", "-p", "3000"}, c.RunParams.Cmd())
 	// Array
 	os.Clearenv()
 	os.Setenv("CMD", "1")
 	c = &container{RunParams: RunParameters{RawCmd: []interface{}{"echo", "$CMD"}}}
 	if len(c.RunParams.Cmd()) != 2 || c.RunParams.Cmd()[0] != "echo" || c.RunParams.Cmd()[1] != "1" {
 		t.Errorf("Command should have been true, got %v", c.RunParams.Cmd())
-	}
-}
-
-func TestEnv(t *testing.T) {
-	var c *container
-	// Array
-	os.Clearenv()
-	os.Setenv("FOO", "fooKey=fooValue")
-	c = &container{RunParams: RunParameters{RawEnv: []interface{}{"$FOO", "barKey=barValue"}}}
-	if len(c.RunParams.Env()) != 2 || c.RunParams.Env()[0] != "fooKey=fooValue" || c.RunParams.Env()[1] != "barKey=barValue" {
-		t.Errorf("Env should have been [fooKey=fooValue barKey=barValue], got %v", c.RunParams.Env())
-	}
-	// Mapping
-	os.Clearenv()
-	os.Setenv("FOO_KEY", "fooKey")
-	os.Setenv("FOO_VALUE", "fooValue")
-	c = &container{RunParams: RunParameters{RawEnv: map[interface{}]interface{}{"$FOO_KEY": "$FOO_VALUE", "barKey": "barValue"}}}
-	if len(c.RunParams.Env()) != 2 || c.RunParams.Env()[0] != "fooKey=fooValue" || c.RunParams.Env()[1] != "barKey=barValue" {
-		t.Errorf("Env should have been [fooKey=fooValue barKey=barValue], got %v", c.RunParams.Env())
 	}
 }
 
@@ -117,51 +95,35 @@ type OptBoolWrapper struct {
 func TestOptBoolJSON(t *testing.T) {
 	wrapper := OptBoolWrapper{}
 	json.Unmarshal([]byte("{\"OptBool\": true}"), &wrapper)
-	if !wrapper.OptBool.Defined || !wrapper.OptBool.Value {
-		t.Errorf("OptBool should have been defined and true, got %v", wrapper.OptBool)
-	}
+	assert.Equal(t, OptBool{Defined: true, Value: true}, wrapper.OptBool)
 
 	wrapper = OptBoolWrapper{}
 	json.Unmarshal([]byte("{\"OptBool\": false}"), &wrapper)
-	if !wrapper.OptBool.Defined || wrapper.OptBool.Value {
-		t.Errorf("OptBool should have been defined and false, got %v", wrapper.OptBool)
-	}
+	assert.Equal(t, OptBool{Defined: true, Value: false}, wrapper.OptBool)
 
 	wrapper = OptBoolWrapper{}
 	json.Unmarshal([]byte("{}"), &wrapper)
-	if wrapper.OptBool.Defined {
-		t.Errorf("OptBool should have been undefined, got %v", wrapper.OptBool)
-	}
+	assert.False(t, wrapper.OptBool.Defined)
 
 	wrapper = OptBoolWrapper{}
 	err := json.Unmarshal([]byte("{\"OptBool\": \"notaboolean\"}"), &wrapper)
-	if err == nil {
-		t.Errorf("Error expected but not found")
-	}
+	assert.Error(t, err)
 }
 
 func TestOptBoolYAML(t *testing.T) {
 	wrapper := OptBoolWrapper{}
 	yaml.Unmarshal([]byte("OptBool: true"), &wrapper)
-	if !wrapper.OptBool.Defined || !wrapper.OptBool.Value {
-		t.Errorf("OptBool should have been defined and true, got %v", wrapper.OptBool)
-	}
+	assert.Equal(t, OptBool{Defined: true, Value: true}, wrapper.OptBool)
 
 	wrapper = OptBoolWrapper{}
 	yaml.Unmarshal([]byte("OptBool: false"), &wrapper)
-	if !wrapper.OptBool.Defined || wrapper.OptBool.Value {
-		t.Errorf("OptBool should have been defined and false, got %v", wrapper.OptBool)
-	}
+	assert.Equal(t, OptBool{Defined: true, Value: false}, wrapper.OptBool)
 
 	wrapper = OptBoolWrapper{}
 	yaml.Unmarshal([]byte(""), &wrapper)
-	if wrapper.OptBool.Defined {
-		t.Errorf("OptBool should have been undefined, got %v", wrapper.OptBool)
-	}
+	assert.False(t, wrapper.OptBool.Defined)
 
 	wrapper = OptBoolWrapper{}
 	err := yaml.Unmarshal([]byte("OptBool: notaboolean"), &wrapper)
-	if err == nil {
-		t.Errorf("Error expected but not found")
-	}
+	assert.Error(t, err)
 }

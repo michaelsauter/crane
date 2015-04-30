@@ -2,7 +2,7 @@ package crane
 
 import (
 	"bytes"
-	"reflect"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -24,9 +24,7 @@ func TestDOT(t *testing.T) {
   "c"->"d" [style=dotted]
 }
 `
-	if expected != buffer.String() {
-		t.Errorf("Invalid graph received. Expected `%v`, but got `%v`", expected, buffer.String())
-	}
+	assert.Equal(t, expected, buffer.String())
 }
 
 func TestOrder(t *testing.T) {
@@ -128,12 +126,10 @@ func TestOrder(t *testing.T) {
 	for _, example := range examples {
 		order, err := example.graph.order(example.target, example.ignoreMissing)
 		if example.err {
-			if err == nil {
-				t.Errorf("Should have not gotten an order, got %v", order)
-			}
+			assert.Error(t, err)
 		} else {
-			if err != nil || !reflect.DeepEqual(order, example.expected) {
-				t.Errorf("Order should have been %v, got %v. Err: %v", example.expected, order, err)
+			if assert.NoError(t, err) {
+				assert.Equal(t, example.expected, order)
 			}
 		}
 	}
