@@ -39,11 +39,7 @@ func (graph DependencyGraph) DOT(writer io.Writer, targetedContainers Containers
 
 // order works on the dependency graph and returns the order
 // of the given the target (a subset of the graph).
-// If force is true, the map will be ordered even if dependencies
-// are missing.
-// If force is false and the graph cannot be resolved properly,
-// an error is returned.
-func (graph DependencyGraph) order(target Target, force bool) (order []string, err error) {
+func (graph DependencyGraph) order(target Target, ignoreMissing string) (order []string, err error) {
 	success := true
 	for success && len(order) < len(target) {
 		success = false
@@ -87,13 +83,19 @@ func (graph DependencyGraph) order(target Target, force bool) (order []string, e
 		}
 
 		// If we still have not resolved a dependency, we can't
-		// order the given target properly. However, if the order
-		// is forced, we just resolve the first non-targeted
-		// dependency.
-		if !success && force {
+		// order the given target properly. However, if some
+		// type of dependencies can be ignored is missing, we
+		// just resolve the first non-targeted dependency.
+		if !success && ignoreMissing != "none" {
 			for _, name := range target {
 				if dependencies, ok := graph[name]; ok {
-					for _, name := range dependencies.All {
+					// Note about the corner case of dependencies of two kinds (both
+					// link & volumesFrom for example): a missing dependency is resolved
+					// if at least one of its kinds is requested to be ignored, given the
+					// current naive check below. That can trigger false negatives here, but
+					// further on, the "other" kind won't be removed from the CLI command, so
+					// it will just fail a bit less nicely
+					for _, name := range dependencies.forKind(ignoreMissing) {
 						if !target.includes(name) {
 							success = true
 							graph.resolve(name)
@@ -114,7 +116,7 @@ func (graph DependencyGraph) order(target Target, force bool) (order []string, e
 				unresolved = append(unresolved, name)
 			}
 		}
-		err = fmt.Errorf("Dependencies for container(s) %s could not be resolved. Check for cyclic or missing dependencies, or use -d/--cascade-dependencies to automatically attempt to recursively include dependencies in the set of targeted containers.", strings.Join(unresolved, ", "))
+		err = fmt.Errorf("Dependencies for container(s) %s could not be resolved. Check for cyclic or missing dependencies, ignore them via -i/--ignore-missing or use -d/--cascade-dependencies to automatically attempt to recursively include dependencies in the set of targeted containers.", strings.Join(unresolved, ", "))
 	}
 
 	return

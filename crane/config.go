@@ -120,8 +120,12 @@ func NewConfig(options Options, forceOrder bool) Config {
 	config.dependencyGraph = config.DependencyGraph()
 	config.determineTarget(options.target, options.cascadeDependencies, options.cascadeAffected)
 
+	ignoreMissing := options.ignoreMissing
+	if forceOrder {
+		ignoreMissing = "all"
+	}
 	var err error
-	config.order, err = config.dependencyGraph.order(config.target, forceOrder)
+	config.order, err = config.dependencyGraph.order(config.target, ignoreMissing)
 	if err != nil {
 		panic(StatusError{err, 78})
 	}
