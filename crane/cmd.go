@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/michaelsauter/crane/print"
 	"github.com/spf13/cobra"
-	"os"
 	"strings"
 )
 
@@ -23,6 +22,8 @@ type Options struct {
 	ignoreMissing       string
 	config              string
 	target              []string
+	tmplInput           string
+	tmplOutput          string
 }
 
 var options Options
@@ -193,6 +194,21 @@ formatted in bold provided the 'colorize' flag is on.`,
 		}, true),
 	}
 
+	var cmdTmpl = &cobra.Command{
+		Use:   "template",
+		Short: "Generates a textual output using Go templates",
+		Long: `Generates a textual output using Go templates. Use the 'template' flag to
+indicate the input template. Depending on the optional 'output' flag's value the
+behaviour is different. If you leave it, the output will be dumped through Stdout.
+If you specify a filename, the output will be rendered on that file. Additionally,
+if you specify a file format containing '%s', it will generate a different output
+file for each container using the same template (substituting the '%s' by the
+corresponding container's name)`,
+		Run: configCommand(func(config Config) {
+			ConfigToTemplateInfo(config).template(options.tmplInput, options.tmplOutput)
+		}, true),
+	}
+
 	var cmdGraph = &cobra.Command{
 		Use:   "graph",
 		Short: "Dumps the dependency graph as a DOT file",
@@ -200,9 +216,9 @@ formatted in bold provided the 'colorize' flag is on.`,
 containers declared in the config (as opposed to non-bold ones that are referenced
 in the config, but not defined). Targeted containers are highlighted with color
 borders. Solid edges represent links, dashed edges volumesFrom, and dotted edges
-net=container relations.`,
+net=container relations. You can also add the 'output' flag to render it to a file.`,
 		Run: configCommand(func(config Config) {
-			config.DependencyGraph().DOT(os.Stdout, config.TargetedContainers())
+			ConfigToTemplateInfo(config).DOT(options.tmplOutput)
 		}, true),
 	}
 
@@ -256,6 +272,11 @@ See the corresponding docker commands for more information.`,
 	cmdLogs.Flags().StringVarP(&options.tail, "tail", "", "all", "Output the specified number of lines at the end of logs")
 	cmdLogs.Flags().BoolVarP(&options.colorize, "colorize", "z", false, "Output the lines with one color per container")
 
+	cmdTmpl.Flags().StringVarP(&options.tmplInput, "template", "t", "", "The input template file name")
+	cmdTmpl.Flags().StringVarP(&options.tmplOutput, "output", "o", "", "The output file name or format (os.Stdout as default)")
+
+	cmdGraph.Flags().StringVarP(&options.tmplOutput, "output", "o", "", "The output file name (os.Stdout as default)")
+
 	// default usage template with target arguments & description
 	craneCmd.SetUsageTemplate(`{{ $cmd := . }}
 Usage: {{if .Runnable}}
@@ -281,7 +302,7 @@ Additional help topics: {{if gt .Commands 0 }}{{range .Commands}}{{if not .Runna
 Use "{{.Root.Name}} help [command]" for more information about that command.
 `)
 
-	craneCmd.AddCommand(cmdLift, cmdProvision, cmdCreate, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdPause, cmdUnpause, cmdPush, cmdLogs, cmdStatus, cmdStats, cmdGraph, cmdVersion)
+	craneCmd.AddCommand(cmdLift, cmdProvision, cmdCreate, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdPause, cmdUnpause, cmdPush, cmdLogs, cmdStatus, cmdStats, cmdGraph, cmdTmpl, cmdVersion)
 	err := craneCmd.Execute()
 	if err != nil {
 		panic(StatusError{status: 64})

@@ -1,0 +1,6 @@
+{{ $targetedContainers := .TargetedContainers }}digraph {
+{{ range $name, $dependencies := .DependencyMap }}{{ with $dependencies }}  "{{ $name }}" [style=bold{{ range $targetedContainers }}{{ if eq $name .Name }},color=red{{ end }}{{ end }}]
+{{ range .Link }}  "{{ $name }}"->"{{ . }}"
+{{ end }}{{ range .VolumesFrom }}  "{{ $name }}"->"{{ . }}" [style=dashed]
+{{ end }}{{ if ne .Net "" }}  "{{ $name }}"->"{{ .Net }}" [style=dotted]
+{{ end }}{{ end }}{{ end }}}

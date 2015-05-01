@@ -1,0 +1,43 @@
+CURRENT-CONTAINER:
+  a:
+    dockerfile: dockerfileA
+    image: imageA
+    id: idA
+    dependencies: c
+    exists: true
+    running: true
+    paused: true
+    imageExists: true
+    status: [1, 2, 3, 4, 5]
+
+TARGETED-CONTAINERS:
+  a:
+    dockerfile: dockerfileA
+    image: imageA
+    id: idA
+    dependencies: c
+    exists: true
+    running: true
+    paused: true
+    imageExists: true
+    status: [1, 2, 3, 4, 5]
+  b:
+    dockerfile: dockerfileB
+    image: imageB
+    id: idB
+    dependencies: a, c
+    exists: false
+    running: false
+    paused: false
+    imageExists: false
+    status: [6, 7, 8, 9, 10]
+
+DEPENDECY-MAP:
+  a: c
+  b: a, c
+  c: d
+
+GROUPS:
+  group1: a, c
+  group2: b, d
+  group3: a, b, c, d

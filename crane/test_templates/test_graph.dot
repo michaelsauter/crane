@@ -1,0 +1,9 @@
+digraph {
+  "a" [style=bold,color=red]
+  "a"->"c"
+  "b" [style=bold,color=red]
+  "b"->"c"
+  "b"->"a" [style=dashed]
+  "c" [style=bold]
+  "c"->"d" [style=dotted]
+}
