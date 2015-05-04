@@ -142,33 +142,33 @@ func (containers Containers) logs(follow bool, timestamps bool, tail string, col
 		sources         = make([]multiplexio.Source, 0, 2*len(containers))
 		maxPrefixLength = strconv.Itoa(containers.maxNameLength())
 	)
-	appendSources := func(reader io.Reader, color *ansi.Color, name string, separator string) {
+	appendSources := func(reader io.Reader, attributes []ansi.Attribute, name string, separator string) {
 		if reader != nil {
 			prefix := fmt.Sprintf("%"+maxPrefixLength+"s "+separator+" ", name)
 			sources = append(sources, multiplexio.Source{
 				Reader: reader,
-				Write:  write(prefix, color, timestamps),
+				Write:  write(prefix, attributes, timestamps),
 			})
 		}
 	}
 	for i, container := range containers {
 		var (
-			stdout, stderr = container.Logs(follow, tail)
-			stdoutColor    *ansi.Color
-			stderrColor    *ansi.Color
+			stdout, stderr   = container.Logs(follow, tail)
+			stdoutAttributes []ansi.Attribute
+			stderrAttributes []ansi.Attribute
 		)
 		if colorize {
 			// red has a negative/error connotation, so skip it
 			ansiAttribute := ansi.Attribute(int(ansi.FgGreen) + i%int(ansi.FgWhite-ansi.FgGreen))
-			stdoutColor = ansi.New(ansiAttribute)
+			stdoutAttributes = []ansi.Attribute{ansiAttribute}
 			// To synchronize their output, we need to multiplex stdout & stderr
 			// onto the same stream. Unfortunately, that means that the user won't
 			// be able to pipe them separately, so we use bold as a distinguishing
 			// characteristic.
-			stderrColor = ansi.New(ansiAttribute).Add(ansi.Bold)
+			stderrAttributes = []ansi.Attribute{ansiAttribute, ansi.Bold}
 		}
-		appendSources(stdout, stdoutColor, container.Name(), "|")
-		appendSources(stderr, stderrColor, container.Name(), "*")
+		appendSources(stdout, stdoutAttributes, container.Name(), "|")
+		appendSources(stderr, stderrAttributes, container.Name(), "*")
 	}
 	if len(sources) > 0 {
 		aggregatedReader := multiplexio.NewReader(multiplexio.Options{}, sources...)
@@ -238,12 +238,12 @@ func (c *countingWriter) Write(p []byte) (n int, err error) {
 }
 
 // returns a function that will format and writes the line extracted from the logs of a given container
-func write(prefix string, color *ansi.Color, timestamps bool) func(dest io.Writer, token []byte) (n int, err error) {
+func write(prefix string, attributes []ansi.Attribute, timestamps bool) func(dest io.Writer, token []byte) (n int, err error) {
 	return func(dest io.Writer, token []byte) (n int, err error) {
 		countingWriter := countingWriter{Writer: dest}
-		if color != nil {
+		if len(attributes) > 0 {
 			ansi.Output = &countingWriter
-			color.Set()
+			ansi.Set(attributes...)
 		}
 		_, err = countingWriter.Write([]byte(prefix))
 		if err == nil {
@@ -263,7 +263,7 @@ func write(prefix string, color *ansi.Color, timestamps bool) func(dest io.Write
 			_, err = countingWriter.Write(token)
 		}
 		if err == nil {
-			if color != nil {
+			if len(attributes) > 0 {
 				ansi.Unset()
 			}
 			_, err = dest.Write([]byte("\n"))
