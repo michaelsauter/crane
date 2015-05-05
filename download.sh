@@ -2,7 +2,7 @@
 
 # Set version to latest unless set by user
 if [ -z "$VERSION" ]; then
-  VERSION="1.1.1"
+  VERSION="1.2.0"
 fi
 
 echo "Downloading version ${VERSION}..."
