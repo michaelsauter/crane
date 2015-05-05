@@ -1,7 +1,7 @@
 package crane
 
 import (
-	"reflect"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -12,13 +12,10 @@ func TestIncludes(t *testing.T) {
 		VolumesFrom: []string{"volumesFrom"},
 		Net:         "net",
 	}
-
-	if !dependencies.includes("link") || !dependencies.includes("volumesFrom") || !dependencies.includes("net") {
-		t.Errorf("Dependencies should have included link, volumesFrom and net")
-	}
-	if dependencies.includes("non-existant") {
-		t.Errorf("Dependencies should not have included 'non-existant'")
-	}
+	assert.True(t, dependencies.includes("link"))
+	assert.True(t, dependencies.includes("volumesFrom"))
+	assert.True(t, dependencies.includes("net"))
+	assert.False(t, dependencies.includes("non-existent"))
 }
 
 func TestIncludesAsKind(t *testing.T) {
@@ -97,10 +94,7 @@ func TestIncludesAsKind(t *testing.T) {
 	}
 
 	for _, example := range examples {
-		actual := dependencies.includesAsKind(example.needle, example.kind)
-		if actual != example.expected {
-			t.Errorf("includesAsKind should have returned %v, got %v for %v, %v", example.expected, actual, example.needle, example.kind)
-		}
+		assert.Equal(t, example.expected, dependencies.includesAsKind(example.needle, example.kind))
 	}
 
 }
@@ -140,10 +134,7 @@ func TestForKind(t *testing.T) {
 	}
 
 	for _, example := range examples {
-		kindDeps := dependencies.forKind(example.kind)
-		if !reflect.DeepEqual(kindDeps, example.expected) {
-			t.Errorf("%v dependencies expected for kind %v, got %v", example.expected, example.kind, kindDeps)
-		}
+		assert.Equal(t, example.expected, dependencies.forKind(example.kind))
 	}
 
 }
@@ -154,14 +145,10 @@ func TestSatisfied(t *testing.T) {
 	dependencies = Dependencies{
 		All: []string{"a"},
 	}
-	if dependencies.satisfied() {
-		t.Errorf("Dependencies was not empty, but appeared to be satisfied")
-	}
+	assert.False(t, dependencies.satisfied(), "Dependencies was not empty, but appeared to be satisfied")
 
 	dependencies = Dependencies{
 		All: []string{},
 	}
-	if !dependencies.satisfied() {
-		t.Errorf("Dependencies was empty, but appeared not to be satisfied")
-	}
+	assert.True(t, dependencies.satisfied(), "Dependencies was empty, but appeared not to be satisfied")
 }

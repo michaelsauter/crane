@@ -1,7 +1,7 @@
 package crane
 
 import (
-	"reflect"
+	"github.com/stretchr/testify/assert"
 	"sort"
 	"testing"
 )
@@ -29,14 +29,10 @@ func TestConfigFiles(t *testing.T) {
 	filename := "some/file.yml"
 	options := Options{config: filename}
 	files := configFiles(options)
-	if len(files) > 1 {
-		t.Errorf("Config files should be just [%s], got %v", filename, files)
-	}
+	assert.Equal(t, []string{filename}, files)
 	// Without given filename
 	files = configFiles(Options{})
-	if len(files) != 3 {
-		t.Errorf("Config files should be [crane.json crane.yaml crane.yml], got %v", files)
-	}
+	assert.Equal(t, []string{"crane.json", "crane.yaml", "crane.yml"}, files)
 }
 
 func TestUnmarshal(t *testing.T) {
@@ -72,19 +68,12 @@ func TestUnmarshal(t *testing.T) {
 }
 `)
 	actual = unmarshal(json, ".json")
-	if _, ok := actual.RawContainerMap["apache"]; !ok {
-		t.Errorf("Config should have one container, got %v", actual.RawContainerMap)
-	}
-	if len(actual.RawContainerMap["apache"].RunParams.Link()) != 2 {
-		t.Errorf("Container should have been linked to 2 other containers, got %v", actual.RawContainerMap["apache"].RunParams.Link())
-	}
-	if group, ok := actual.RawGroups["default"]; !ok || len(group) != 1 {
-		t.Errorf("Config should have one `default` group with one container, got %v", actual.RawGroups)
-	}
-	if defaultHooks, ok := actual.RawHooksMap["default"]; !ok || defaultHooks.RawPreStart == "" || defaultHooks.RawPostStart == "" {
-		t.Errorf("Config should have hooks for `default`, got %v", actual.RawHooksMap)
-	}
-	actual = nil
+	assert.Len(t, actual.RawContainerMap, 1)
+	assert.Len(t, actual.RawContainerMap["apache"].RunParams.Link(), 2)
+	assert.Len(t, actual.RawGroups, 1)
+	assert.Len(t, actual.RawHooksMap, 2)
+	assert.NotEmpty(t, actual.RawHooksMap["default"].RawPreStart)
+	assert.NotEmpty(t, actual.RawHooksMap["default"].RawPostStart)
 
 	yaml := []byte(
 		`containers:
@@ -107,18 +96,12 @@ hooks:
     post-start: echo start done!\n
 `)
 	actual = unmarshal(yaml, ".yml")
-	if _, ok := actual.RawContainerMap["apache"]; !ok {
-		t.Errorf("Config should have one container, got %v", actual.RawContainerMap)
-	}
-	if len(actual.RawContainerMap["apache"].RunParams.Link()) != 2 {
-		t.Errorf("Container should have been linked to 2 other containers, got %v", actual.RawContainerMap["apache"].RunParams.Link())
-	}
-	if group, ok := actual.RawGroups["default"]; !ok || len(group) != 1 {
-		t.Errorf("Config should have one `default` group with one container, got %v", actual.RawGroups)
-	}
-	if defaultHooks, ok := actual.RawHooksMap["default"]; !ok || defaultHooks.RawPreStart == "" || defaultHooks.RawPostStart == "" {
-		t.Errorf("Config should have hooks for `default`, got %v", actual.RawHooksMap)
-	}
+	assert.Len(t, actual.RawContainerMap, 1)
+	assert.Len(t, actual.RawContainerMap["apache"].RunParams.Link(), 2)
+	assert.Len(t, actual.RawGroups, 1)
+	assert.Len(t, actual.RawHooksMap, 2)
+	assert.NotEmpty(t, actual.RawHooksMap["default"].RawPreStart)
+	assert.NotEmpty(t, actual.RawHooksMap["default"].RawPostStart)
 }
 
 func TestUnmarshalInvalidJSON(t *testing.T) {
@@ -134,12 +117,9 @@ func TestUnmarshalInvalidJSON(t *testing.T) {
     }
 }
 `)
-	defer func() {
-		if err := recover(); err == nil {
-			t.Errorf("Error expected but not found")
-		}
-	}()
-	unmarshal(json, ".json")
+	assert.Panics(t, func() {
+		unmarshal(json, ".json")
+	})
 }
 
 func TestUnmarshalInvalidYAML(t *testing.T) {
@@ -150,12 +130,9 @@ func TestUnmarshalInvalidYAML(t *testing.T) {
     run:
       publish: "shouldbeanarray"
 `)
-	defer func() {
-		if err := recover(); err == nil {
-			t.Errorf("Error expected but not found")
-		}
-	}()
-	unmarshal(yaml, ".yml")
+	assert.Panics(t, func() {
+		unmarshal(yaml, ".yml")
+	})
 }
 
 func TestInitialize(t *testing.T) {
@@ -185,24 +162,13 @@ func TestInitialize(t *testing.T) {
 		RawHooksMap:     rawHooksMap,
 	}
 	c.initialize()
-	if c.containerMap["a"].Name() != "a" || c.containerMap["b"].Name() != "b" {
-		t.Errorf("Names should be 'a' and 'b', got %s and %s", c.containerMap["a"].Name(), c.containerMap["b"].Name())
-	}
-	if len(c.groups["default"]) != 2 || c.groups["default"][0] != "a" || c.groups["default"][1] != "b" {
-		t.Errorf("Expected one group 'default' with two containers 'a' & 'b', got %v", c.groups)
-	}
-	if hook := c.containerMap["a"].Hooks().PreStart(); hook != "custom-pre-start" {
-		t.Errorf("Container a should have a custom pre-start hook overriding the default one, got %v", hook)
-	}
-	if hook := c.containerMap["a"].Hooks().PostStart(); hook != "default-post-start" {
-		t.Errorf("Container a should have a default post-start hook, got %v", hook)
-	}
-	if hook := c.containerMap["b"].Hooks().PreStart(); hook != "default-pre-start" {
-		t.Errorf("Container b should have a default pre-start hook, got %v", hook)
-	}
-	if hook := c.containerMap["b"].Hooks().PostStart(); hook != "default-post-start" {
-		t.Errorf("Container b should have a default post-start hook, got %v", hook)
-	}
+	assert.Equal(t, "a", c.containerMap["a"].Name())
+	assert.Equal(t, "b", c.containerMap["b"].Name())
+	assert.Equal(t, map[string][]string{"default": []string{"a", "b"}}, c.groups)
+	assert.Equal(t, "custom-pre-start", c.containerMap["a"].Hooks().PreStart(), "Container should have a custom pre-start hook overriding the default one")
+	assert.Equal(t, "default-post-start", c.containerMap["a"].Hooks().PostStart(), "Container should have a default post-start hook")
+	assert.Equal(t, "default-pre-start", c.containerMap["b"].Hooks().PreStart(), "Container should have a default post-start hook")
+	assert.Equal(t, "default-post-start", c.containerMap["b"].Hooks().PostStart(), "Container should have a default post-start hook")
 }
 
 func TestInitializeAmbiguousHooks(t *testing.T) {
@@ -223,12 +189,9 @@ func TestInitializeAmbiguousHooks(t *testing.T) {
 		RawGroups:       rawGroups,
 		RawHooksMap:     rawHooksMap,
 	}
-	defer func() {
-		if err := recover(); err == nil {
-			t.Errorf("Error expected but not found")
-		}
-	}()
-	c.initialize()
+	assert.Panics(t, func() {
+		c.initialize()
+	})
 }
 
 func TestGraph(t *testing.T) {
@@ -239,15 +202,10 @@ func TestGraph(t *testing.T) {
 	)
 	c := &config{containerMap: containerMap}
 	dependencyGraph := c.DependencyGraph()
-	if len(dependencyGraph) != 3 {
-		t.Errorf("Expecting the graph to contain all containers (defined in %v), got %v", containerMap, dependencyGraph)
-	}
+	assert.Len(t, dependencyGraph, 3)
 	// make sure a new graph is returned each time
 	dependencyGraph.resolve("a") // mutate the previous graph
-	dependencyGraph = c.DependencyGraph()
-	if len(dependencyGraph) != 3 {
-		t.Errorf("Expecting the graph to contain all containers (defined in %v), got %v", containerMap, dependencyGraph)
-	}
+	assert.Len(t, c.DependencyGraph(), 3)
 }
 
 func TestDetermineTargetLinearChainDependencies(t *testing.T) {
@@ -299,9 +257,7 @@ func TestDetermineTargetLinearChainDependencies(t *testing.T) {
 
 	for _, example := range examples {
 		c.determineTarget(example.target, example.cascadeDependencies, example.cascadeAffected)
-		if !reflect.DeepEqual(c.target, example.expected) {
-			t.Errorf("Target should have been %v, got %v", example.expected, c.target)
-		}
+		assert.Equal(t, example.expected, c.target)
 	}
 }
 
@@ -315,26 +271,21 @@ func TestDetermineTargetGraphDependencies(t *testing.T) {
 	)
 	c := &config{containerMap: containerMap}
 	c.dependencyGraph = c.DependencyGraph()
+
 	c.determineTarget([]string{"a"}, "all", "none")
-	if len(c.target) != 5 {
-		t.Errorf("all containers should have been targeted but got %v", c.target)
-	}
+	assert.Len(t, c.target, 5, "all containers should have been targeted")
+
 	c.determineTarget([]string{"b"}, "all", "none")
-	if c.target[0] != "b" || c.target[1] != "d" || len(c.target) != 2 {
-		t.Errorf("all b and d should have been targeted but got %v", c.target)
-	}
+	assert.Equal(t, Target{"b", "d"}, c.target)
+
 	c.determineTarget([]string{"b", "c"}, "all", "none")
-	if c.target[0] != "b" || c.target[1] != "c" || c.target[2] != "d" || c.target[3] != "e" || len(c.target) != 4 {
-		t.Errorf("a should have been left out but got %v", c.target)
-	}
+	assert.Equal(t, Target{"b", "c", "d", "e"}, c.target)
+
 	c.determineTarget([]string{"b", "c"}, "none", "all")
-	if c.target[0] != "a" || c.target[1] != "b" || c.target[2] != "c" || len(c.target) != 3 {
-		t.Errorf("d and e should have been left out but got %v", c.target)
-	}
+	assert.Equal(t, Target{"a", "b", "c"}, c.target)
+
 	c.determineTarget([]string{"b", "c"}, "all", "all")
-	if len(c.target) != 5 {
-		t.Errorf("all containers should have been targeted but got %v", c.target)
-	}
+	assert.Len(t, c.target, 5, "all containers should have been targeted")
 }
 
 func TestDetermineTargetMissingDependencies(t *testing.T) {
@@ -345,18 +296,15 @@ func TestDetermineTargetMissingDependencies(t *testing.T) {
 	)
 	c := &config{containerMap: containerMap}
 	c.dependencyGraph = c.DependencyGraph()
+
 	c.determineTarget([]string{"a"}, "all", "none")
-	if len(c.target) != 3 {
-		t.Errorf("only declared containers should have been targeted but got %v", c.target)
-	}
+	assert.Len(t, c.target, 3, "only declared containers should have been targeted")
+
 	c.determineTarget([]string{"c"}, "none", "all")
-	if len(c.target) != 3 {
-		t.Errorf("only declared containers should have been targeted but got %v", c.target)
-	}
+	assert.Len(t, c.target, 3, "only declared containers should have been targeted")
+
 	c.determineTarget([]string{"a"}, "all", "all")
-	if len(c.target) != 3 {
-		t.Errorf("only declared containers should have been targeted but got %v", c.target)
-	}
+	assert.Len(t, c.target, 3, "only declared containers should have been targeted")
 }
 
 func TestDetermineTargetCustomCascading(t *testing.T) {
@@ -371,38 +319,30 @@ func TestDetermineTargetCustomCascading(t *testing.T) {
 	)
 	c := &config{containerMap: containerMap}
 	c.dependencyGraph = c.DependencyGraph()
+
 	c.determineTarget([]string{"x"}, "all", "none")
-	if c.target[0] != "linkTarget" || c.target[1] != "netTarget" || c.target[2] != "volumesFromTarget" || c.target[3] != "x" || len(c.target) != 4 {
-		t.Errorf("all *Target containers should have been targeted but got %v", c.target)
-	}
+	assert.Equal(t, Target{"linkTarget", "netTarget", "volumesFromTarget", "x"}, c.target)
+
 	c.determineTarget([]string{"x"}, "link", "none")
-	if c.target[0] != "linkTarget" || c.target[1] != "x" || len(c.target) != 2 {
-		t.Errorf("linkTarget should have been targeted but got %v", c.target)
-	}
+	assert.Equal(t, Target{"linkTarget", "x"}, c.target)
+
 	c.determineTarget([]string{"x"}, "net", "none")
-	if c.target[0] != "netTarget" || c.target[1] != "x" || len(c.target) != 2 {
-		t.Errorf("netTarget should have been targeted but got %v", c.target)
-	}
+	assert.Equal(t, Target{"netTarget", "x"}, c.target)
+
 	c.determineTarget([]string{"x"}, "volumesFrom", "none")
-	if c.target[0] != "volumesFromTarget" || c.target[1] != "x" || len(c.target) != 2 {
-		t.Errorf("volumesFromTarget should have been targeted but got %v", c.target)
-	}
+	assert.Equal(t, Target{"volumesFromTarget", "x"}, c.target)
+
 	c.determineTarget([]string{"x"}, "none", "all")
-	if c.target[0] != "linkSource" || c.target[1] != "netSource" || c.target[2] != "volumesFromSource" || c.target[3] != "x" || len(c.target) != 4 {
-		t.Errorf("all *Source containers should have been targeted but got %v", c.target)
-	}
+	assert.Equal(t, Target{"linkSource", "netSource", "volumesFromSource", "x"}, c.target)
+
 	c.determineTarget([]string{"x"}, "none", "net")
-	if c.target[0] != "netSource" || c.target[1] != "x" || len(c.target) != 2 {
-		t.Errorf("netSource should have been targeted but got %v", c.target)
-	}
+	assert.Equal(t, Target{"netSource", "x"}, c.target)
+
 	c.determineTarget([]string{"x"}, "none", "volumesFrom")
-	if c.target[0] != "volumesFromSource" || c.target[1] != "x" || len(c.target) != 2 {
-		t.Errorf("volumesFromSource should have been targeted but got %v", c.target)
-	}
+	assert.Equal(t, Target{"volumesFromSource", "x"}, c.target)
+
 	c.determineTarget([]string{"x"}, "volumesFrom", "volumesFrom")
-	if c.target[0] != "volumesFromSource" || c.target[1] != "volumesFromTarget" || c.target[2] != "x" || len(c.target) != 3 {
-		t.Errorf("all volumesFrom* containers should have been targeted but got %v", c.target)
-	}
+	assert.Equal(t, Target{"volumesFromSource", "volumesFromTarget", "x"}, c.target)
 }
 
 func TestDetermineTargetCascadingToExisting(t *testing.T) {
@@ -417,18 +357,15 @@ func TestDetermineTargetCascadingToExisting(t *testing.T) {
 	containerMap["nonExistingTarget"].(*StubbedContainer).exists = false
 	c := &config{containerMap: containerMap}
 	c.dependencyGraph = c.DependencyGraph()
+
 	c.determineTarget([]string{"x"}, "all", "none")
-	if c.target[0] != "existingTarget" || c.target[1] != "nonExistingTarget" || c.target[2] != "x" || len(c.target) != 3 {
-		t.Errorf("all *Target containers should have been targeted but got %v", c.target)
-	}
+	assert.Equal(t, Target{"existingTarget", "nonExistingTarget", "x"}, c.target)
+
 	c.determineTarget([]string{"x"}, "none", "all")
-	if c.target[0] != "existingSource" || c.target[1] != "x" || len(c.target) != 2 {
-		t.Errorf("from the *Source containers, only existingSource should have been targeted but got %v", c.target)
-	}
+	assert.Equal(t, Target{"existingSource", "x"}, c.target)
 }
 
 func TestExplicitlyTargeted(t *testing.T) {
-	var expected []string
 	var containers []string
 	containerMap := NewStubbedContainerMap(true,
 		&container{RawName: "a"},
@@ -438,52 +375,34 @@ func TestExplicitlyTargeted(t *testing.T) {
 
 	// No target given
 	// If default group exist, it returns its containers
-	expected = []string{"a", "b"}
 	groups := map[string][]string{
-		"default": expected,
+		"default": []string{"a", "b"},
 	}
 	c := &config{containerMap: containerMap, groups: groups}
 	containers = c.explicitlyTargeted([]string{})
-	if len(containers) != 2 || containers[0] != "a" || containers[1] != "b" {
-		t.Errorf("Expected %v, got %v", expected, containers)
-	}
+	assert.Equal(t, []string{"a", "b"}, containers)
 	// If no default group, returns all containers
-	expected = []string{"a", "b", "c"}
 	c = &config{containerMap: containerMap}
 	containers = c.explicitlyTargeted([]string{})
 	sort.Strings(containers)
-	if len(containers) != 3 || containers[0] != "a" || containers[1] != "b" || containers[2] != "c" {
-		t.Errorf("Expected %v, got %v", expected, containers)
-	}
+	assert.Equal(t, []string{"a", "b", "c"}, containers)
 	// Target given
 	// Target is a group
-	expected = []string{"b", "c"}
 	groups = map[string][]string{
-		"second": expected,
+		"second": []string{"b", "c"},
 	}
 	c = &config{containerMap: containerMap, groups: groups}
 	containers = c.explicitlyTargeted([]string{"second"})
-	if len(containers) != 2 || containers[0] != "b" || containers[1] != "c" {
-		t.Errorf("Expected %v, got %v", expected, containers)
-	}
+	assert.Equal(t, []string{"b", "c"}, containers)
 	// Target is a container
-	expected = []string{"a"}
 	containers = c.explicitlyTargeted([]string{"a"})
-	if len(containers) != 1 || containers[0] != "a" {
-		t.Errorf("Expected %v, got %v", expected, containers)
-	}
+	assert.Equal(t, []string{"a"}, containers)
 	// Target is 2 containers
-	expected = []string{"a", "b"}
 	containers = c.explicitlyTargeted([]string{"a", "b"})
-	if len(containers) != 2 || containers[0] != "a" || containers[1] != "b" {
-		t.Errorf("Expected %v, got %v", expected, containers)
-	}
+	assert.Equal(t, []string{"a", "b"}, containers)
 	// Target is a container and a group
-	expected = []string{"a", "b", "c"}
 	containers = c.explicitlyTargeted([]string{"a", "second"})
-	if len(containers) != 3 || containers[0] != "a" || containers[1] != "b" || containers[2] != "c" {
-		t.Errorf("Expected %v, got %v", expected, containers)
-	}
+	assert.Equal(t, []string{"a", "b", "c"}, containers)
 }
 
 func TestExplicitlyTargetedInvalidReference(t *testing.T) {
@@ -495,12 +414,9 @@ func TestExplicitlyTargetedInvalidReference(t *testing.T) {
 		"foo": []string{"a", "doesntexist", "b"},
 	}
 	c := &config{containerMap: containerMap, groups: groups}
-	defer func() {
-		if err := recover(); err == nil {
-			t.Errorf("Error expected but not found")
-		}
-	}()
-	c.explicitlyTargeted([]string{"foo"})
+	assert.Panics(t, func() {
+		c.explicitlyTargeted([]string{"foo"})
+	})
 }
 
 func TestExplicitlyTargetedInvalidTarget(t *testing.T) {
@@ -512,12 +428,9 @@ func TestExplicitlyTargetedInvalidTarget(t *testing.T) {
 		"foo": []string{"a", "b"},
 	}
 	c := &config{containerMap: containerMap, groups: groups}
-	defer func() {
-		if err := recover(); err == nil {
-			t.Errorf("Error expected but not found")
-		}
-	}()
-	c.explicitlyTargeted([]string{"foo", "a", "doesntexist"})
+	assert.Panics(t, func() {
+		c.explicitlyTargeted([]string{"foo", "a", "doesntexist"})
+	})
 }
 
 func TestTargetedContainers(t *testing.T) {
@@ -526,7 +439,7 @@ func TestTargetedContainers(t *testing.T) {
 		order:        []string{"a", "b"},
 	}
 	containers := c.TargetedContainers()
-	if containers[0].Name() != "b" || containers[1].Name() != "a" {
-		t.Errorf("Expected [b a], got %v", containers)
-	}
+	assert.Len(t, containers, 2)
+	assert.Equal(t, "b", containers[0].Name())
+	assert.Equal(t, "a", containers[1].Name())
 }
