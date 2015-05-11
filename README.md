@@ -87,6 +87,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `hostname` (string)
 	* `interactive` (boolean)
 	* `link` (array) Link containers.
+	* `log-driver` (string) Need Docker >= 1.6
 	* `lxc-conf` (array)
 	* `mac-address` (string) Need Docker >= 1.4
 	* `memory` (string)

@@ -67,6 +67,7 @@ type RunParameters struct {
 	RawHostname    string      `json:"hostname" yaml:"hostname"`
 	Interactive    bool        `json:"interactive" yaml:"interactive"`
 	RawLink        []string    `json:"link" yaml:"link"`
+	RawLogDriver   string      `json:"log-driver" yaml:"log-driver"`
 	RawLxcConf     []string    `json:"lxc-conf" yaml:"lxc-conf"`
 	RawMacAddress  string      `json:"mac-address" yaml:"mac-address"`
 	RawMemory      string      `json:"memory" yaml:"memory"`
@@ -260,6 +261,10 @@ func (r *RunParameters) Link() []string {
 		link = append(link, os.ExpandEnv(rawLink))
 	}
 	return link
+}
+
+func (r *RunParameters) LogDriver() string {
+	return os.ExpandEnv(r.RawLogDriver)
 }
 
 func (r *RunParameters) LxcConf() []string {
@@ -557,6 +562,10 @@ func (c *container) createArgs(ignoreMissing string) []string {
 			}
 		}
 		args = append(args, "--link", link)
+	}
+	// LogDriver
+	if len(c.RunParams.LogDriver()) > 0 {
+		args = append(args, "--log-driver", c.RunParams.LogDriver())
 	}
 	// LxcConf
 	for _, lxcConf := range c.RunParams.LxcConf() {
