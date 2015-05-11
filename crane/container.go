@@ -82,6 +82,7 @@ type RunParameters struct {
 	RawSecurityOpt []string    `json:"security-opt" yaml:"security-opt"`
 	SigProxy       OptBool     `json:"sig-proxy" yaml:"sig-proxy"`
 	Tty            bool        `json:"tty" yaml:"tty"`
+	RawUlimit      []string    `json:"ulimit" yaml:"ulimit"`
 	RawUser        string      `json:"user" yaml:"user"`
 	RawVolume      []string    `json:"volume" yaml:"volume"`
 	RawVolumesFrom []string    `json:"volumes-from" yaml:"volumes-from"`
@@ -312,6 +313,14 @@ func (r *RunParameters) SecurityOpt() []string {
 		securityOpt = append(securityOpt, os.ExpandEnv(rawSecurityOpt))
 	}
 	return securityOpt
+}
+
+func (r *RunParameters) Ulimit() []string {
+	var ulimit []string
+	for _, rawUlimit := range r.RawUlimit {
+		ulimit = append(ulimit, os.ExpandEnv(rawUlimit))
+	}
+	return ulimit
 }
 
 func (r *RunParameters) User() string {
@@ -618,6 +627,10 @@ func (c *container) createArgs(ignoreMissing string) []string {
 	// Tty
 	if c.RunParams.Tty {
 		args = append(args, "--tty")
+	}
+	// Ulimit
+	for _, ulimit := range c.RunParams.Ulimit() {
+		args = append(args, "--ulimit", ulimit)
 	}
 	// User
 	if len(c.RunParams.User()) > 0 {

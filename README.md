@@ -100,6 +100,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `restart` (string) Restart policy.
 	* `rm` (boolean)
 	* `tty` (boolean)
+	* `ulimit` (array) Need Docker >= 1.6
 	* `user` (string)
 	* `volume` (array) In contrast to plain Docker, the host path can be relative.
 	* `volumes-from` (array) Mount volumes from other containers
