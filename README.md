@@ -74,6 +74,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `add-host` (array) Add custom host-to-IP mappings.
 	* `cap-add` (array) Add Linux capabilities.
 	* `cap-drop` (array) Drop Linux capabilities.
+	* `cgroup-parent` (string) Need Docker >= 1.6
 	* `cidfile` (string)
 	* `cpuset` (integer)
 	* `cpu-shares` (integer)
