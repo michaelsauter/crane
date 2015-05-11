@@ -66,6 +66,8 @@ type RunParameters struct {
 	RawExpose      []string    `json:"expose" yaml:"expose"`
 	RawHostname    string      `json:"hostname" yaml:"hostname"`
 	Interactive    bool        `json:"interactive" yaml:"interactive"`
+	RawLabel       interface{} `json:"label" yaml:"label"`
+	RawLabelFile   []string    `json:"label-file" yaml:"label-file"`
 	RawLink        []string    `json:"link" yaml:"link"`
 	RawLogDriver   string      `json:"log-driver" yaml:"log-driver"`
 	RawLxcConf     []string    `json:"lxc-conf" yaml:"lxc-conf"`
@@ -253,6 +255,33 @@ func (r *RunParameters) Expose() []string {
 
 func (r *RunParameters) Hostname() string {
 	return os.ExpandEnv(r.RawHostname)
+}
+
+func (r *RunParameters) Label() []string {
+	var label []string
+	if r.RawLabel != nil {
+		switch rawLabel := r.RawLabel.(type) {
+		case []interface{}:
+			for _, v := range rawLabel {
+				label = append(label, os.ExpandEnv(v.(string)))
+			}
+		case map[interface{}]interface{}:
+			for k, v := range rawLabel {
+				label = append(label, os.ExpandEnv(k.(string))+"="+os.ExpandEnv(v.(string)))
+			}
+		default:
+			print.Errorf("label is of unknown type!")
+		}
+	}
+	return label
+}
+
+func (r *RunParameters) LabelFile() []string {
+	var labelFile []string
+	for _, rawLabelFile := range r.RawLabelFile {
+		labelFile = append(labelFile, os.ExpandEnv(rawLabelFile))
+	}
+	return labelFile
 }
 
 func (r *RunParameters) Link() []string {
@@ -551,6 +580,14 @@ func (c *container) createArgs(ignoreMissing string) []string {
 	// Interactive
 	if c.RunParams.Interactive {
 		args = append(args, "--interactive")
+	}
+	// Label
+	for _, label := range c.RunParams.Label() {
+		args = append(args, "--label", label)
+	}
+	// LabelFile
+	for _, labelFile := range c.RunParams.LabelFile() {
+		args = append(args, "--label-file", labelFile)
 	}
 	// Link
 	for _, link := range c.RunParams.Link() {

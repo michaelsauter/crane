@@ -81,11 +81,13 @@ The map of containers consists of the name of the container mapped to the contai
 	* `device` (array) Add host devices.
 	* `dns` (array)
 	* `entrypoint` (string)
-	* `env` (array/mapping) It can be declared as a string array with `"key=value"` format or a mapping where each `key: value` will be translated to the corresponding `"key=value"` string.
+	* `env` (array/mapping) Can be declared as a string array with `"key[=value]"` items or a string-to-string mapping where each `key: value` will be translated to the corresponding `"key=value"` string.
 	* `env-file` (array)
 	* `expose` (array) Ports to expose to linked containers.
 	* `hostname` (string)
 	* `interactive` (boolean)
+	* `label` (array/mapping) Can be declared as a string array with `"key[=value]"` items or a string-to-string mapping where each `key: value` will be translated to the corresponding `"key=value"` string.. Need Docker >= 1.6
+	* `label-file` (array) Need Docker >= 1.6
 	* `link` (array) Link containers.
 	* `log-driver` (string) Need Docker >= 1.6
 	* `lxc-conf` (array)
