@@ -29,6 +29,15 @@ func TestDependencies(t *testing.T) {
 	assert.Equal(t, expected, c.Dependencies())
 }
 
+func TestVolumesFromSuffixes(t *testing.T) {
+	c := &container{RunParams: RunParameters{RawVolumesFrom: []string{"a:rw", "b:ro"}}}
+	expected := &Dependencies{
+		All:         []string{"a", "b"},
+		VolumesFrom: []string{"a", "b"},
+	}
+	assert.Equal(t, expected, c.Dependencies())
+}
+
 func TestMultipleLinkAliases(t *testing.T) {
 	c := &container{RunParams: RunParameters{RawLink: []string{"a:b", "a:c"}}}
 	expected := &Dependencies{

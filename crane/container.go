@@ -131,19 +131,19 @@ func (c *container) netContainer() (name string) {
 }
 
 func (c *container) Dependencies() *Dependencies {
-	var linkParts []string
 	dependencies := &Dependencies{}
 	for _, link := range c.RunParams.Link() {
-		linkParts = strings.Split(link, ":")
-		if !dependencies.includes(linkParts[0]) {
-			dependencies.All = append(dependencies.All, linkParts[0])
-			dependencies.Link = append(dependencies.Link, linkParts[0])
+		linkName := strings.Split(link, ":")[0]
+		if !dependencies.includes(linkName) {
+			dependencies.All = append(dependencies.All, linkName)
+			dependencies.Link = append(dependencies.Link, linkName)
 		}
 	}
 	for _, volumesFrom := range c.RunParams.VolumesFrom() {
-		if !dependencies.includes(volumesFrom) {
-			dependencies.All = append(dependencies.All, volumesFrom)
-			dependencies.VolumesFrom = append(dependencies.VolumesFrom, volumesFrom)
+		volumesFromName := strings.Split(volumesFrom, ":")[0]
+		if !dependencies.includes(volumesFromName) {
+			dependencies.All = append(dependencies.All, volumesFromName)
+			dependencies.VolumesFrom = append(dependencies.VolumesFrom, volumesFromName)
 		}
 	}
 	if dependencies.Net = c.netContainer(); dependencies.Net != "" {
@@ -631,7 +631,7 @@ func (c *container) createArgs(ignoreMissing string) []string {
 	for _, volumesFrom := range c.RunParams.VolumesFrom() {
 		if ignoreMissing == "all" || ignoreMissing == "volumesFrom" {
 			// Omit non-existing targets
-			target := container{RawName: volumesFrom}
+			target := container{RawName: strings.Split(volumesFrom, ":")[0]}
 			if !target.Exists() {
 				continue
 			}
