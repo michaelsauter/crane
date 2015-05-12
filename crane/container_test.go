@@ -38,6 +38,15 @@ func TestMultipleLinkAliases(t *testing.T) {
 	assert.Equal(t, expected, c.Dependencies())
 }
 
+func TestImplicitLinkAliases(t *testing.T) {
+	c := &container{RunParams: RunParameters{RawLink: []string{"a"}}}
+	expected := &Dependencies{
+		All:  []string{"a"},
+		Link: []string{"a"},
+	}
+	assert.Equal(t, expected, c.Dependencies())
+}
+
 func TestVolume(t *testing.T) {
 	var c *container
 	// Absolute path
