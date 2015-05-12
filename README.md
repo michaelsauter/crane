@@ -74,6 +74,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `add-host` (array) Add custom host-to-IP mappings.
 	* `cap-add` (array) Add Linux capabilities.
 	* `cap-drop` (array) Drop Linux capabilities.
+	* `cgroup-parent` (string) Need Docker >= 1.6
 	* `cidfile` (string)
 	* `cpuset` (integer)
 	* `cpu-shares` (integer)
@@ -81,12 +82,15 @@ The map of containers consists of the name of the container mapped to the contai
 	* `device` (array) Add host devices.
 	* `dns` (array)
 	* `entrypoint` (string)
-	* `env` (array/mapping) It can be declared as a string array with `"key=value"` format or a mapping where each `key: value` will be translated to the corresponding `"key=value"` string.
+	* `env` (array/mapping) Can be declared as a string array with `"key[=value]"` items or a string-to-string mapping where each `key: value` will be translated to the corresponding `"key=value"` string.
 	* `env-file` (array)
 	* `expose` (array) Ports to expose to linked containers.
 	* `hostname` (string)
 	* `interactive` (boolean)
+	* `label` (array/mapping) Can be declared as a string array with `"key[=value]"` items or a string-to-string mapping where each `key: value` will be translated to the corresponding `"key=value"` string.. Need Docker >= 1.6
+	* `label-file` (array) Need Docker >= 1.6
 	* `link` (array) Link containers.
+	* `log-driver` (string) Need Docker >= 1.6
 	* `lxc-conf` (array)
 	* `mac-address` (string) Need Docker >= 1.4
 	* `memory` (string)
@@ -100,6 +104,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `restart` (string) Restart policy.
 	* `rm` (boolean)
 	* `tty` (boolean)
+	* `ulimit` (array) Need Docker >= 1.6
 	* `user` (string)
 	* `volume` (array) In contrast to plain Docker, the host path can be relative.
 	* `volumes-from` (array) Mount volumes from other containers

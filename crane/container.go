@@ -51,42 +51,47 @@ type container struct {
 }
 
 type RunParameters struct {
-	RawAddHost     []string    `json:"add-host" yaml:"add-host"`
-	RawCapAdd      []string    `json:"cap-add" yaml:"cap-add"`
-	RawCapDrop     []string    `json:"cap-drop" yaml:"cap-drop"`
-	RawCidfile     string      `json:"cidfile" yaml:"cidfile"`
-	Cpuset         int         `json:"cpuset" yaml:"cpuset"`
-	CpuShares      int         `json:"cpu-shares" yaml:"cpu-shares"`
-	Detach         bool        `json:"detach" yaml:"detach"`
-	RawDevice      []string    `json:"device" yaml:"device"`
-	RawDns         []string    `json:"dns" yaml:"dns"`
-	RawEntrypoint  string      `json:"entrypoint" yaml:"entrypoint"`
-	RawEnv         interface{} `json:"env" yaml:"env"`
-	RawEnvFile     []string    `json:"env-file" yaml:"env-file"`
-	RawExpose      []string    `json:"expose" yaml:"expose"`
-	RawHostname    string      `json:"hostname" yaml:"hostname"`
-	Interactive    bool        `json:"interactive" yaml:"interactive"`
-	RawLink        []string    `json:"link" yaml:"link"`
-	RawLxcConf     []string    `json:"lxc-conf" yaml:"lxc-conf"`
-	RawMacAddress  string      `json:"mac-address" yaml:"mac-address"`
-	RawMemory      string      `json:"memory" yaml:"memory"`
-	RawMemorySwap  string      `json:"memory-swap" yaml:"memory-swap"`
-	RawNet         string      `json:"net" yaml:"net"`
-	RawPid         string      `json:"pid" yaml:"pid"`
-	Privileged     bool        `json:"privileged" yaml:"privileged"`
-	RawPublish     []string    `json:"publish" yaml:"publish"`
-	PublishAll     bool        `json:"publish-all" yaml:"publish-all"`
-	ReadOnly       bool        `json:"read-only" yaml:"read-only"`
-	RawRestart     string      `json:"restart" yaml:"restart"`
-	Rm             bool        `json:"rm" yaml:"rm"`
-	RawSecurityOpt []string    `json:"security-opt" yaml:"security-opt"`
-	SigProxy       OptBool     `json:"sig-proxy" yaml:"sig-proxy"`
-	Tty            bool        `json:"tty" yaml:"tty"`
-	RawUser        string      `json:"user" yaml:"user"`
-	RawVolume      []string    `json:"volume" yaml:"volume"`
-	RawVolumesFrom []string    `json:"volumes-from" yaml:"volumes-from"`
-	RawWorkdir     string      `json:"workdir" yaml:"workdir"`
-	RawCmd         interface{} `json:"cmd" yaml:"cmd"`
+	RawAddHost      []string    `json:"add-host" yaml:"add-host"`
+	RawCapAdd       []string    `json:"cap-add" yaml:"cap-add"`
+	RawCapDrop      []string    `json:"cap-drop" yaml:"cap-drop"`
+	RawCgroupParent string      `json:"cgroup-parent" yaml:"cgroup-parent"`
+	RawCidfile      string      `json:"cidfile" yaml:"cidfile"`
+	Cpuset          int         `json:"cpuset" yaml:"cpuset"`
+	CpuShares       int         `json:"cpu-shares" yaml:"cpu-shares"`
+	Detach          bool        `json:"detach" yaml:"detach"`
+	RawDevice       []string    `json:"device" yaml:"device"`
+	RawDns          []string    `json:"dns" yaml:"dns"`
+	RawEntrypoint   string      `json:"entrypoint" yaml:"entrypoint"`
+	RawEnv          interface{} `json:"env" yaml:"env"`
+	RawEnvFile      []string    `json:"env-file" yaml:"env-file"`
+	RawExpose       []string    `json:"expose" yaml:"expose"`
+	RawHostname     string      `json:"hostname" yaml:"hostname"`
+	Interactive     bool        `json:"interactive" yaml:"interactive"`
+	RawLabel        interface{} `json:"label" yaml:"label"`
+	RawLabelFile    []string    `json:"label-file" yaml:"label-file"`
+	RawLink         []string    `json:"link" yaml:"link"`
+	RawLogDriver    string      `json:"log-driver" yaml:"log-driver"`
+	RawLxcConf      []string    `json:"lxc-conf" yaml:"lxc-conf"`
+	RawMacAddress   string      `json:"mac-address" yaml:"mac-address"`
+	RawMemory       string      `json:"memory" yaml:"memory"`
+	RawMemorySwap   string      `json:"memory-swap" yaml:"memory-swap"`
+	RawNet          string      `json:"net" yaml:"net"`
+	RawPid          string      `json:"pid" yaml:"pid"`
+	Privileged      bool        `json:"privileged" yaml:"privileged"`
+	RawPublish      []string    `json:"publish" yaml:"publish"`
+	PublishAll      bool        `json:"publish-all" yaml:"publish-all"`
+	ReadOnly        bool        `json:"read-only" yaml:"read-only"`
+	RawRestart      string      `json:"restart" yaml:"restart"`
+	Rm              bool        `json:"rm" yaml:"rm"`
+	RawSecurityOpt  []string    `json:"security-opt" yaml:"security-opt"`
+	SigProxy        OptBool     `json:"sig-proxy" yaml:"sig-proxy"`
+	Tty             bool        `json:"tty" yaml:"tty"`
+	RawUlimit       []string    `json:"ulimit" yaml:"ulimit"`
+	RawUser         string      `json:"user" yaml:"user"`
+	RawVolume       []string    `json:"volume" yaml:"volume"`
+	RawVolumesFrom  []string    `json:"volumes-from" yaml:"volumes-from"`
+	RawWorkdir      string      `json:"workdir" yaml:"workdir"`
+	RawCmd          interface{} `json:"cmd" yaml:"cmd"`
 }
 
 type RmParameters struct {
@@ -190,6 +195,10 @@ func (r *RunParameters) CapDrop() []string {
 	return capDrop
 }
 
+func (r *RunParameters) CgroupParent() string {
+	return os.ExpandEnv(r.RawCgroupParent)
+}
+
 func (r *RunParameters) Cidfile() string {
 	return os.ExpandEnv(r.RawCidfile)
 }
@@ -253,12 +262,43 @@ func (r *RunParameters) Hostname() string {
 	return os.ExpandEnv(r.RawHostname)
 }
 
+func (r *RunParameters) Label() []string {
+	var label []string
+	if r.RawLabel != nil {
+		switch rawLabel := r.RawLabel.(type) {
+		case []interface{}:
+			for _, v := range rawLabel {
+				label = append(label, os.ExpandEnv(v.(string)))
+			}
+		case map[interface{}]interface{}:
+			for k, v := range rawLabel {
+				label = append(label, os.ExpandEnv(k.(string))+"="+os.ExpandEnv(v.(string)))
+			}
+		default:
+			print.Errorf("label is of unknown type!")
+		}
+	}
+	return label
+}
+
+func (r *RunParameters) LabelFile() []string {
+	var labelFile []string
+	for _, rawLabelFile := range r.RawLabelFile {
+		labelFile = append(labelFile, os.ExpandEnv(rawLabelFile))
+	}
+	return labelFile
+}
+
 func (r *RunParameters) Link() []string {
 	var link []string
 	for _, rawLink := range r.RawLink {
 		link = append(link, os.ExpandEnv(rawLink))
 	}
 	return link
+}
+
+func (r *RunParameters) LogDriver() string {
+	return os.ExpandEnv(r.RawLogDriver)
 }
 
 func (r *RunParameters) LxcConf() []string {
@@ -312,6 +352,14 @@ func (r *RunParameters) SecurityOpt() []string {
 		securityOpt = append(securityOpt, os.ExpandEnv(rawSecurityOpt))
 	}
 	return securityOpt
+}
+
+func (r *RunParameters) Ulimit() []string {
+	var ulimit []string
+	for _, rawUlimit := range r.RawUlimit {
+		ulimit = append(ulimit, os.ExpandEnv(rawUlimit))
+	}
+	return ulimit
 }
 
 func (r *RunParameters) User() string {
@@ -494,6 +542,10 @@ func (c *container) createArgs(ignoreMissing string) []string {
 	for _, capDrop := range c.RunParams.CapDrop() {
 		args = append(args, "--cap-drop", capDrop)
 	}
+	// CgroupParent
+	if len(c.RunParams.CgroupParent()) > 0 {
+		args = append(args, "--cgroup-parent", c.RunParams.CgroupParent())
+	}
 	// Cidfile
 	if len(c.RunParams.Cidfile()) > 0 {
 		args = append(args, "--cidfile", c.RunParams.Cidfile())
@@ -538,6 +590,14 @@ func (c *container) createArgs(ignoreMissing string) []string {
 	if c.RunParams.Interactive {
 		args = append(args, "--interactive")
 	}
+	// Label
+	for _, label := range c.RunParams.Label() {
+		args = append(args, "--label", label)
+	}
+	// LabelFile
+	for _, labelFile := range c.RunParams.LabelFile() {
+		args = append(args, "--label-file", labelFile)
+	}
 	// Link
 	for _, link := range c.RunParams.Link() {
 		if ignoreMissing == "all" || ignoreMissing == "link" {
@@ -548,6 +608,10 @@ func (c *container) createArgs(ignoreMissing string) []string {
 			}
 		}
 		args = append(args, "--link", link)
+	}
+	// LogDriver
+	if len(c.RunParams.LogDriver()) > 0 {
+		args = append(args, "--log-driver", c.RunParams.LogDriver())
 	}
 	// LxcConf
 	for _, lxcConf := range c.RunParams.LxcConf() {
@@ -618,6 +682,10 @@ func (c *container) createArgs(ignoreMissing string) []string {
 	// Tty
 	if c.RunParams.Tty {
 		args = append(args, "--tty")
+	}
+	// Ulimit
+	for _, ulimit := range c.RunParams.Ulimit() {
+		args = append(args, "--ulimit", ulimit)
 	}
 	// User
 	if len(c.RunParams.User()) > 0 {
