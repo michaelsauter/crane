@@ -45,6 +45,13 @@ func (containers Containers) provision(nocache bool) {
 	}
 }
 
+// Pull images.
+func (containers Containers) pullImage() {
+	for _, container := range containers {
+		container.PullImage()
+	}
+}
+
 // Create containers.
 // When recreate is true, removes existing containers first.
 func (containers Containers) create(recreate bool, ignoreMissing string) {

@@ -25,6 +25,7 @@ type Container interface {
 	Status() []string
 	Provision(nocache bool)
 	ProvisionOrSkip(update bool, nocache bool)
+	PullImage()
 	Create(ignoreMissing string)
 	Run(ignoreMissing string)
 	Start()
@@ -475,7 +476,7 @@ func (c *container) Provision(nocache bool) {
 	if len(c.Dockerfile()) > 0 {
 		c.buildImage(nocache)
 	} else {
-		c.pullImage()
+		c.PullImage()
 	}
 }
 
@@ -845,7 +846,7 @@ func (c *container) Hooks() Hooks {
 }
 
 // Pull image for container
-func (c *container) pullImage() {
+func (c *container) PullImage() {
 	fmt.Printf("Pulling image %s ... ", c.Image())
 	args := []string{"pull", c.Image()}
 	executeCommand("docker", args)

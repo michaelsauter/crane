@@ -80,6 +80,16 @@ If no Dockerfile is given, it will pull the image(s) from the given registry.`,
 		}, true),
 	}
 
+	var cmdPull = &cobra.Command{
+		Use:   "pull",
+		Short: "Pull images",
+		Long: `
+pull will pull the image(s) from the given registry.`,
+		Run: configCommand(func(config Config) {
+			config.TargetedContainers().pullImage()
+		}, true),
+	}
+
 	var cmdCreate = &cobra.Command{
 		Use:   "create",
 		Short: "Create the containers",
@@ -281,7 +291,7 @@ Additional help topics: {{if gt .Commands 0 }}{{range .Commands}}{{if not .Runna
 Use "{{.Root.Name}} help [command]" for more information about that command.
 `)
 
-	craneCmd.AddCommand(cmdLift, cmdProvision, cmdCreate, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdPause, cmdUnpause, cmdPush, cmdLogs, cmdStatus, cmdStats, cmdGraph, cmdVersion)
+	craneCmd.AddCommand(cmdLift, cmdProvision, cmdPull, cmdCreate, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdPause, cmdUnpause, cmdPush, cmdLogs, cmdStatus, cmdStats, cmdGraph, cmdVersion)
 	err := craneCmd.Execute()
 	if err != nil {
 		panic(StatusError{status: 64})
