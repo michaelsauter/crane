@@ -22,7 +22,7 @@ echo "Update contributors..."
 git contributors | awk '{for (i=2; i<NF; i++) printf $i " "; print $NF}' > CONTRIBUTORS
 
 echo "Build binary..."
-gox -osarch="darwin/amd64" -osarch="linux/amd64" -osarch="linux/386"
+gox -osarch="darwin/amd64" -osarch="linux/amd64" -osarch="linux/386" -osarch="windows/amd64"
 
 echo "Update repository..."
 git add crane/cmd.go download.sh CONTRIBUTORS
