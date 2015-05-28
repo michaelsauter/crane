@@ -17,50 +17,24 @@ Of course, you will need to have Docker (>= 1.3) installed.
 ## Usage
 Crane is a very light wrapper around the Docker CLI. This means that most commands just call the corresponding Docker command, but for all targeted containers. Additionally, there are a few special commands.
 
-### `create`
-Maps to `docker create`. Containers can be recreated by passing `--recreate`.
-
-### `run`
-Maps to `docker run`.  If a container already exists, it is just started. However, containers can be recreated by passing `--recreate`.
-
-### `rm`
-Maps to `docker rm`. Running containers can be killed first with `--kill`.
-
-### `kill`
-Maps to `docker kill`.
-
-### `start`
-Maps to `docker start`.
-
-### `stop`
-Maps to `docker stop`.
-
-### `pause`
-Maps to `docker pause`.
-
-### `unpause`
-Maps to `docker unpause`.
-
-### `provision`
-Either calls Docker's `build` or `pull`, depending on whether a Dockerfile is specified. The Docker cache can be disabled by passing `--no-cache`.
-
-### `push`
-Maps to `docker push`.
-
-### `lift`
-Will provision and run the containers in one go. By default, it does as little as possible to get the containers running. This means it only provisions images if necessary and just starts containers if they already exist. To update the images and recreate the containers, pass `--recreate` (and optionally `--no-cache`).
-
-### `logs`
-Maps to `docker logs`, multiplexing the logs of the targeted containers chronologically.
-
-### `status`
-Displays information about the state of the containers.
-
-### `stats`
-Maps to `docker stats`. Need Docker >= 1.5
-
-### `graph`
-Parses your config file and dumps the relations between containers as a dependency graph, using the DOT format. See built-in help for more information about style conventions used in that representation.
+| Command | Maps to | Explanation and Options |
+| ------------- | ----------- | ---------|
+| create      | create           | Creates containers if they don't exist yet. Use `--recreate` to remove containers first. |
+| run         | run              | Runs containers if they don't exist yet, otherwise just starts them. Use `--recreate` to remove containers first. |
+| rm          | rm               | Removes containers if they exist. Use `--kill` to kill containers first. |
+| start       | start            | Starts containers unless they are running already. |
+| stop        | stop             | Stops containers if they are running. |
+| kill        | kill             | Kills containers if they are running. |
+| pause       | pause            |  |
+| unpause     | unpause          |  |
+| logs        | logs             | Logs of containers are multiplexed. Use `--follow` to follow log output. |
+| stats       | stats            | Needs Docker >= 1.5 |
+| provision   | pull/build       | Calls Docker's `pull` if no Dockerfile is specified. Otherwise it builds the image, optionally with disabled cache by passing `--no-cache`. |
+| pull        | pull             | |
+| push        | push             | |
+| lift        | pull/build + run | Provisions and runs containers in one go. Use `--recreate` to remove containers first, `--no-cache` to disable build cache. |
+| status      | -                | Displays information similar to `docker ps` for the given target. |
+| graph       | -                | Dumps the relations between containers as a dependency graph, using the DOT format. See built-in help for more information about style conventions used in that representation. |
 
 You can get more information about what's happening behind the scenes for all commands by using `--verbose`. All options have a short version as well, e.g. `lift -rn`.
 
