@@ -256,7 +256,7 @@ As a summary, `&anchor` declares the anchor property, `*alias` is the alias indi
 * [Sinatra + PostgreSQL](https://github.com/michaelsauter/sinatra-crane-env)
 
 ## Copyright & Licensing
-Copyright © 2013-2014 Michael Sauter. See the LICENSE file for details.
+Copyright © 2013-2015 Michael Sauter. See the LICENSE file for details.
 
 ---
 
