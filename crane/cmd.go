@@ -221,7 +221,7 @@ net=container relations.`,
 		Short: "Display version",
 		Long:  `Displays the version of Crane.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("v1.3.0")
+			fmt.Println("v1.3.1")
 		},
 	}
 
