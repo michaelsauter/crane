@@ -48,7 +48,9 @@ func (containers Containers) provision(nocache bool) {
 // Pull images.
 func (containers Containers) pullImage() {
 	for _, container := range containers {
-		container.PullImage()
+		if len(container.Dockerfile()) == 0 {
+			container.PullImage()
+		}
 	}
 }
 
