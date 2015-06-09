@@ -26,10 +26,10 @@ type Container interface {
 	Provision(nocache bool)
 	ProvisionOrSkip(update bool, nocache bool)
 	PullImage()
-	Create(ignoreMissing string)
-	Run(ignoreMissing string)
+	Create(ignoreMissing string, configPath string)
+	Run(ignoreMissing string, configPath string)
 	Start()
-	RunOrStart(ignoreMissing string)
+	RunOrStart(ignoreMissing string, configPath string)
 	Kill()
 	Stop()
 	Pause()
@@ -367,14 +367,13 @@ func (r *RunParameters) User() string {
 	return os.ExpandEnv(r.RawUser)
 }
 
-func (r *RunParameters) Volume() []string {
+func (r *RunParameters) Volume(configPath string) []string {
 	var volumes []string
 	for _, rawVolume := range r.RawVolume {
 		volume := os.ExpandEnv(rawVolume)
 		paths := strings.Split(volume, ":")
 		if !path.IsAbs(paths[0]) {
-			cwd, _ := os.Getwd()
-			paths[0] = cwd + "/" + paths[0]
+			paths[0] = configPath + "/" + paths[0]
 		}
 		volumes = append(volumes, strings.Join(paths, ":"))
 	}
@@ -481,11 +480,11 @@ func (c *container) Provision(nocache bool) {
 }
 
 // Run or start container
-func (c *container) RunOrStart(ignoreMissing string) {
+func (c *container) RunOrStart(ignoreMissing string, configPath string) {
 	if c.Exists() {
 		c.Start()
 	} else {
-		c.Run(ignoreMissing)
+		c.Run(ignoreMissing, configPath)
 	}
 }
 
@@ -497,18 +496,18 @@ func (c *container) ProvisionOrSkip(update bool, nocache bool) {
 }
 
 // Create container
-func (c *container) Create(ignoreMissing string) {
+func (c *container) Create(ignoreMissing string, configPath string) {
 	if c.Exists() {
 		print.Noticef("Container %s does already exist. Use --recreate to recreate.\n", c.Name())
 	} else {
 		fmt.Printf("Creating container %s ... ", c.Name())
-		args := append([]string{"create"}, c.createArgs(ignoreMissing)...)
+		args := append([]string{"create"}, c.createArgs(ignoreMissing, configPath)...)
 		executeCommand("docker", args)
 	}
 }
 
 // Run container, or start it if already existing
-func (c *container) Run(ignoreMissing string) {
+func (c *container) Run(ignoreMissing string, configPath string) {
 	if c.Exists() {
 		print.Noticef("Container %s does already exist. Use --recreate to recreate.\n", c.Name())
 		if !c.Running() {
@@ -522,14 +521,14 @@ func (c *container) Run(ignoreMissing string) {
 		if c.RunParams.Detach {
 			args = append(args, "--detach")
 		}
-		args = append(args, c.createArgs(ignoreMissing)...)
+		args = append(args, c.createArgs(ignoreMissing, configPath)...)
 		executeCommand("docker", args)
 		executeHook(c.Hooks().PostStart())
 	}
 }
 
 // Returns all the flags to be passed to `docker create`
-func (c *container) createArgs(ignoreMissing string) []string {
+func (c *container) createArgs(ignoreMissing string, configPath string) []string {
 	args := []string{}
 	// AddHost
 	for _, addHost := range c.RunParams.AddHost() {
@@ -693,7 +692,7 @@ func (c *container) createArgs(ignoreMissing string) []string {
 		args = append(args, "--user", c.RunParams.User())
 	}
 	// Volumes
-	for _, volume := range c.RunParams.Volume() {
+	for _, volume := range c.RunParams.Volume(configPath) {
 		args = append(args, "--volume", volume)
 	}
 	// VolumesFrom

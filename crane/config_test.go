@@ -2,7 +2,11 @@ package crane
 
 import (
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"sort"
+	"syscall"
 	"testing"
 )
 
@@ -24,15 +28,39 @@ func (stubbedContainer *StubbedContainer) Exists() bool {
 	return stubbedContainer.exists
 }
 
-func TestConfigFiles(t *testing.T) {
-	// With given filename
-	filename := "some/file.yml"
-	options := Options{config: filename}
-	files := configFiles(options)
-	assert.Equal(t, []string{filename}, files)
-	// Without given filename
-	files = configFiles(Options{})
+func TestConfigFilenames(t *testing.T) {
+	// With given fileName
+	fileName := "some/file.yml"
+	options := Options{config: fileName}
+	files := configFilenames(options)
+	assert.Equal(t, []string{fileName}, files)
+	// Without given fileName
+	files = configFilenames(Options{})
 	assert.Equal(t, []string{"crane.json", "crane.yaml", "crane.yml"}, files)
+}
+
+func TestFindConfig(t *testing.T) {
+	f, _ := ioutil.TempFile("", "crane.yml")
+	defer syscall.Unlink(f.Name())
+	configName := filepath.Base(f.Name())
+	absConfigName := os.TempDir() + "/" + configName
+	var fileName string
+
+	// Finds config in current dir
+	os.Chdir(os.TempDir())
+	fileName = findConfig(Options{config: configName})
+	assert.Equal(t, f.Name(), fileName)
+
+	// Finds config in parent dir
+	d, _ := ioutil.TempDir("", "sub")
+	defer syscall.Unlink(d)
+	os.Chdir(d)
+	fileName = findConfig(Options{config: configName})
+	assert.Equal(t, f.Name(), fileName)
+
+	// Finds config with absolute path
+	fileName = findConfig(Options{config: absConfigName})
+	assert.Equal(t, f.Name(), fileName)
 }
 
 func TestUnmarshal(t *testing.T) {

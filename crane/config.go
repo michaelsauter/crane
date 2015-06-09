@@ -8,6 +8,7 @@ import (
 	"gopkg.in/v2/yaml"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 )
@@ -15,6 +16,7 @@ import (
 type Config interface {
 	TargetedContainers() Containers
 	DependencyGraph() DependencyGraph
+	Path() string
 }
 
 type config struct {
@@ -26,6 +28,7 @@ type config struct {
 	target          Target
 	order           []string
 	groups          map[string][]string
+	path            string
 }
 
 // ContainerMap maps the container name
@@ -34,16 +37,42 @@ type ContainerMap map[string]Container
 
 type Target []string
 
-// configFiles returns a slice of
+// configFilenames returns a slice of
 // files to read the config from.
 // If the --config option was given,
 // it will only use the given file.
-func configFiles(options Options) []string {
+func configFilenames(options Options) []string {
 	if len(options.config) > 0 {
 		return []string{options.config}
 	} else {
 		return []string{"crane.json", "crane.yaml", "crane.yml"}
 	}
+}
+
+// findConfig returns the filename of the
+// config. It searches parent directories
+// if it can't find any of the config
+// filenames in the current directory.
+func findConfig(options Options) string {
+	configFiles := configFilenames(options)
+	// Absolute path to config given
+	if len(options.config) > 0 && path.IsAbs(options.config) {
+		if _, err := os.Stat(options.config); err == nil {
+			return options.config
+		}
+	} else { // Relative config
+		configPath, _ := os.Getwd()
+		for len(configPath) > 1 {
+			for _, f := range configFiles {
+				filename := configPath + "/" + f
+				if _, err := os.Stat(filename); err == nil {
+					return filename
+				}
+			}
+			configPath = path.Dir(configPath)
+		}
+	}
+	panic(StatusError{fmt.Errorf("No configuration found %v", configFiles), 78})
 }
 
 // readConfig will read the config file
@@ -107,18 +136,12 @@ func unmarshal(data []byte, ext string) *config {
 // brought up and down with Docker.
 func NewConfig(options Options, forceOrder bool) Config {
 	var config *config
-	for _, f := range configFiles(options) {
-		if _, err := os.Stat(f); err == nil {
-			config = readConfig(f)
-			break
-		}
-	}
-	if config == nil {
-		panic(StatusError{fmt.Errorf("No configuration found %v", configFiles(options)), 78})
-	}
+	configFile := findConfig(options)
+	config = readConfig(configFile)
 	config.initialize()
 	config.dependencyGraph = config.DependencyGraph()
 	config.determineTarget(options.target, options.cascadeDependencies, options.cascadeAffected)
+	config.path = path.Dir(configFile)
 
 	ignoreMissing := options.ignoreMissing
 	if forceOrder {
@@ -130,6 +153,11 @@ func NewConfig(options Options, forceOrder bool) Config {
 		panic(StatusError{err, 78})
 	}
 	return config
+}
+
+// Return path of config file
+func (c *config) Path() string {
+	return c.path
 }
 
 // Containers returns the containers of the config in order
