@@ -27,9 +27,9 @@ type Container interface {
 	ProvisionOrSkip(update bool, nocache bool)
 	PullImage()
 	Create(ignoreMissing string)
-	Run(ignoreMissing string)
+	Run(ignoreMissing string, cmd []string)
 	Start()
-	RunOrStart(ignoreMissing string)
+	RunOrStart(ignoreMissing string, cmd []string)
 	Kill()
 	Stop()
 	Pause()
@@ -481,11 +481,11 @@ func (c *container) Provision(nocache bool) {
 }
 
 // Run or start container
-func (c *container) RunOrStart(ignoreMissing string) {
+func (c *container) RunOrStart(ignoreMissing string, cmd []string) {
 	if c.Exists() {
 		c.Start()
 	} else {
-		c.Run(ignoreMissing)
+		c.Run(ignoreMissing, cmd)
 	}
 }
 
@@ -508,7 +508,7 @@ func (c *container) Create(ignoreMissing string) {
 }
 
 // Run container, or start it if already existing
-func (c *container) Run(ignoreMissing string) {
+func (c *container) Run(ignoreMissing string, cmd []string) {
 	if c.Exists() {
 		print.Noticef("Container %s does already exist. Use --recreate to recreate.\n", c.Name())
 		if !c.Running() {
@@ -523,6 +523,9 @@ func (c *container) Run(ignoreMissing string) {
 			args = append(args, "--detach")
 		}
 		args = append(args, c.createArgs(ignoreMissing)...)
+		if len(cmd) > 0 {
+			args = append(args, cmd...)
+		}
 		executeCommand("docker", args)
 		executeHook(c.Hooks().PostStart())
 	}
