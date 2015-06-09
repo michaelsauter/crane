@@ -23,6 +23,7 @@ type Options struct {
 	ignoreMissing       string
 	config              string
 	target              []string
+	cmd                 []string
 }
 
 var options Options
@@ -42,8 +43,11 @@ func configCommand(wrapped func(config Config), forceOrder bool) func(cmd *cobra
 			}
 		}
 
-		// Set target from args
-		options.target = args
+		// Set target and potentially command from args
+		if len(args) > 0 {
+			options.target = strings.Split(args[0], "+")
+			options.cmd = args[1:]
+		}
 
 		config := NewConfig(options, forceOrder)
 		if containers := config.TargetedContainers(); len(containers) == 0 {
@@ -65,7 +69,7 @@ func handleCmd() {
 		Long: `
 lift will provision missing images and run all targeted containers.`,
 		Run: configCommand(func(config Config) {
-			config.TargetedContainers().lift(options.recreate, options.nocache, options.ignoreMissing)
+			config.TargetedContainers().lift(options.recreate, options.nocache, options.ignoreMissing, options.cmd)
 		}, false),
 	}
 
@@ -104,7 +108,7 @@ pull will pull the image(s) from the given registry.`,
 		Short: "Run the containers",
 		Long:  `run will call docker run for all targeted containers.`,
 		Run: configCommand(func(config Config) {
-			config.TargetedContainers().run(options.recreate, options.ignoreMissing)
+			config.TargetedContainers().run(options.recreate, options.ignoreMissing, options.cmd)
 		}, false),
 	}
 
