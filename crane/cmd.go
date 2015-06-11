@@ -65,7 +65,7 @@ func handleCmd() {
 		Long: `
 lift will provision missing images and run all targeted containers.`,
 		Run: configCommand(func(config Config) {
-			config.TargetedContainers().lift(options.recreate, options.nocache, options.ignoreMissing)
+			config.TargetedContainers().lift(options.recreate, options.nocache, options.ignoreMissing, config.Path())
 		}, false),
 	}
 
@@ -95,7 +95,7 @@ pull will pull the image(s) from the given registry.`,
 		Short: "Create the containers",
 		Long:  `run will call docker create for all targeted containers.`,
 		Run: configCommand(func(config Config) {
-			config.TargetedContainers().create(options.recreate, options.ignoreMissing)
+			config.TargetedContainers().create(options.recreate, options.ignoreMissing, config.Path())
 		}, false),
 	}
 
@@ -104,7 +104,7 @@ pull will pull the image(s) from the given registry.`,
 		Short: "Run the containers",
 		Long:  `run will call docker run for all targeted containers.`,
 		Run: configCommand(func(config Config) {
-			config.TargetedContainers().run(options.recreate, options.ignoreMissing)
+			config.TargetedContainers().run(options.recreate, options.ignoreMissing, config.Path())
 		}, false),
 	}
 
