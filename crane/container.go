@@ -744,9 +744,11 @@ func (c *container) Start() {
 // Kill container
 func (c *container) Kill() {
 	if c.Running() {
+		executeHook(c.Hooks().PreStop())
 		fmt.Printf("Killing container %s ... ", c.Name())
 		args := []string{"kill", c.Name()}
 		executeCommand("docker", args)
+		executeHook(c.Hooks().PostStop())
 	}
 }
 
@@ -788,11 +790,13 @@ func (c *container) Unpause() {
 // Remove container
 func (c *container) Rm(force bool) {
 	if c.Exists() {
-		if !force && c.Running() {
+		containerIsRunning := c.Running()
+		if !force && containerIsRunning {
 			print.Errorf("Container %s is running and cannot be removed. Use --force to remove anyway.\n", c.Name())
 		} else {
 			args := []string{"rm"}
-			if force {
+			if force && containerIsRunning {
+				executeHook(c.Hooks().PreStop())
 				args = append(args, "--force")
 			}
 			if c.RmParams.Volumes {
@@ -803,6 +807,9 @@ func (c *container) Rm(force bool) {
 			}
 			args = append(args, c.Name())
 			executeCommand("docker", args)
+			if force && containerIsRunning {
+				executeHook(c.Hooks().PostStop())
+			}
 			c.id = ""
 		}
 	}
