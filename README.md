@@ -92,7 +92,7 @@ The map of containers consists of the name of the container mapped to the contai
 
 Note that basic environment variable expansion (`${FOO}`, `$FOO`) is supported throughout the configuration, but advanced shell features such as command substitution (`$(cat foo)`, `` `cat foo` ``) or advanced expansions (`sp{el,il,al}l`, `foo*`, `~/project`, `$((A * B))`, `${PARAMETER#PATTERN}`) are *not* as the Docker CLI is called directly.
 
-See the [Docker documentation](http://docs.docker.io/en/latest/reference/commandline/cli/#run) for more details about the parameters. 
+See the [Docker documentation](http://docs.docker.io/en/latest/reference/commandline/cli/#run) for more details about the parameters.
 
 ## Example
 A typical `crane.yaml` looks like this:
@@ -228,8 +228,8 @@ Hooks can be defined on a group level (`foo`, `bar`) so that they apply to all c
 The following hooks are currently available:
 * `pre-start`: Executed before starting or running a container
 * `post-start`: Executed after starting or running a container
-* `pre-stop`: Executed before stopping a container
-* `post-stop`: Executed after stopping a container
+* `pre-stop`: Executed before stopping, killing or removing a running container
+* `post-stop`: Executed after stopping, killing or removing a running container
 
 ### YAML advanced usage
 YAML gives you some advanced features like [alias](http://www.yaml.org/spec/1.2/spec.html#id2786196) and [merge](http://yaml.org/type/merge.html). They allow you to easily avoid duplicated code in your `crane.yml` file. As a example, imagine you need to define 2 different containers: `web` and `admin`. They share almost the same configuration but the `cmd` declaration. And imagine you also need 2 instances for each one for using with a node balancer. Then you can declare them as simply:
