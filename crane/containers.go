@@ -40,14 +40,14 @@ func (containers Containers) lift(recreate bool, nocache bool, ignoreMissing str
 
 // Provision containers.
 func (containers Containers) provision(nocache bool) {
-	for _, container := range containers {
+	for _, container := range containers.stripProvisioningDuplicates() {
 		container.Provision(nocache)
 	}
 }
 
 // Pull images.
 func (containers Containers) pullImage() {
-	for _, container := range containers {
+	for _, container := range containers.stripProvisioningDuplicates() {
 		if len(container.Dockerfile()) == 0 {
 			container.PullImage()
 		}
@@ -90,7 +90,7 @@ func (containers Containers) runOrStart(recreate bool, ignoreMissing string, con
 // Provision or skip images.
 // When update is true, provisions all images.
 func (containers Containers) provisionOrSkip(update bool, nocache bool) {
-	for _, container := range containers {
+	for _, container := range containers.stripProvisioningDuplicates() {
 		container.ProvisionOrSkip(update, nocache)
 	}
 }
@@ -221,6 +221,22 @@ func (containers Containers) maxNameLength() (maxPrefixLength int) {
 		prefixLength := len(container.Name())
 		if prefixLength > maxPrefixLength {
 			maxPrefixLength = prefixLength
+		}
+	}
+	return
+}
+
+// returns another list of containers, stripping out containers which
+// would trigger some commands more than once for provisioning.
+func (containers Containers) stripProvisioningDuplicates() (deduplicated Containers) {
+	seenProvisioningKeys := make(map[string]bool)
+	for _, container := range containers {
+		// for 2 containers that would the same provisioning
+		// commands, the key should be equal
+		key := container.Dockerfile() + "#" + container.Image()
+		if _, ok := seenProvisioningKeys[key]; !ok {
+			deduplicated = append(deduplicated, container)
+			seenProvisioningKeys[key] = true
 		}
 	}
 	return
