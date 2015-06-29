@@ -65,6 +65,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `label-file` (array) Need Docker >= 1.6
 	* `link` (array) Link containers.
 	* `log-driver` (string) Need Docker >= 1.6
+	* `log-opt` (array) Need Docker >= 1.7
 	* `lxc-conf` (array)
 	* `mac-address` (string) Need Docker >= 1.4
 	* `memory` (string)

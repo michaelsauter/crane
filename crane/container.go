@@ -72,6 +72,7 @@ type RunParameters struct {
 	RawLabelFile    []string    `json:"label-file" yaml:"label-file"`
 	RawLink         []string    `json:"link" yaml:"link"`
 	RawLogDriver    string      `json:"log-driver" yaml:"log-driver"`
+	RawLogOpt       []string    `json:"log-opt" yaml:"log-opt"`
 	RawLxcConf      []string    `json:"lxc-conf" yaml:"lxc-conf"`
 	RawMacAddress   string      `json:"mac-address" yaml:"mac-address"`
 	RawMemory       string      `json:"memory" yaml:"memory"`
@@ -300,6 +301,14 @@ func (r *RunParameters) Link() []string {
 
 func (r *RunParameters) LogDriver() string {
 	return os.ExpandEnv(r.RawLogDriver)
+}
+
+func (r *RunParameters) LogOpt() []string {
+	var opt []string
+	for _, rawOpt := range r.RawLogOpt {
+		opt = append(opt, os.ExpandEnv(rawOpt))
+	}
+	return opt
 }
 
 func (r *RunParameters) LxcConf() []string {
@@ -612,6 +621,10 @@ func (c *container) createArgs(ignoreMissing string, configPath string) []string
 	// LogDriver
 	if len(c.RunParams.LogDriver()) > 0 {
 		args = append(args, "--log-driver", c.RunParams.LogDriver())
+	}
+	// LogOpt
+	for _, opt := range c.RunParams.LogOpt() {
+		args = append(args, "--log-opt", opt)
 	}
 	// LxcConf
 	for _, lxcConf := range c.RunParams.LxcConf() {
