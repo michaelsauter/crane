@@ -16,6 +16,7 @@ type Container interface {
 	Name() string
 	Dockerfile() string
 	Image() string
+	ImageWithTag() string
 	Id() string
 	Dependencies() *Dependencies
 	Exists() bool
@@ -171,6 +172,15 @@ func (c *container) Dockerfile() string {
 
 func (c *container) Image() string {
 	return os.ExpandEnv(c.RawImage)
+}
+
+func (c *container) ImageWithTag() string {
+	imageParts := strings.Split(c.Image(), "/")
+	lastImagePart := imageParts[len(imageParts)-1]
+	if !strings.Contains(lastImagePart, ":") {
+		return lastImagePart + ":latest"
+	}
+	return lastImagePart
 }
 
 func (r *RunParameters) AddHost() []string {
@@ -455,18 +465,8 @@ func (c *container) Paused() bool {
 }
 
 func (c *container) ImageExists() bool {
-	dockerCmd := []string{"docker", "images", "--no-trunc"}
-	grepCmd := []string{"grep", "-wF", c.Image()}
-	output, err := pipedCommandOutput(dockerCmd, grepCmd)
-	if err != nil {
-		return false
-	}
-	result := string(output)
-	if len(result) > 0 {
-		return true
-	} else {
-		return false
-	}
+	_, err := commandOutput("docker", []string{"inspect", c.ImageWithTag()})
+	return err == nil
 }
 
 func (c *container) Status() []string {
