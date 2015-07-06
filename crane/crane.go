@@ -104,6 +104,9 @@ func executeCommand(name string, args []string) {
 		print.Infof("\n--> %s %s\n", name, strings.Join(args, " "))
 	}
 	cmd := exec.Command(name, args...)
+	if cfg != nil {
+		cmd.Dir = cfg.Path()
+	}
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
@@ -119,6 +122,9 @@ func executeCommandBackground(name string, args []string) (stdout, stderr io.Rea
 		print.Infof("--> %s %s\n\n", name, strings.Join(args, " "))
 	}
 	cmd := exec.Command(name, args...)
+	if cfg != nil {
+		cmd.Dir = cfg.Path()
+	}
 	stdout, _ = cmd.StdoutPipe()
 	stderr, _ = cmd.StderrPipe()
 	cmd.Start()
@@ -126,7 +132,11 @@ func executeCommandBackground(name string, args []string) (stdout, stderr io.Rea
 }
 
 func commandOutput(name string, args []string) (string, error) {
-	out, err := exec.Command(name, args...).CombinedOutput()
+	cmd := exec.Command(name, args...)
+	if cfg != nil {
+		cmd.Dir = cfg.Path()
+	}
+	out, err := cmd.CombinedOutput()
 	return strings.TrimSpace(string(out)), err
 }
 
@@ -135,6 +145,9 @@ func pipedCommandOutput(pipedCommandArgs ...[]string) ([]byte, error) {
 	var commands []exec.Cmd
 	for _, commandArgs := range pipedCommandArgs {
 		cmd := exec.Command(commandArgs[0], commandArgs[1:]...)
+		if cfg != nil {
+			cmd.Dir = cfg.Path()
+		}
 		commands = append(commands, *cmd)
 	}
 	for i, command := range commands[:len(commands)-1] {

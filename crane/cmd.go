@@ -26,6 +26,7 @@ type Options struct {
 }
 
 var options Options
+var cfg Config
 
 func isVerbose() bool {
 	return options.verbose
@@ -44,15 +45,14 @@ func configCommand(wrapped func(config Config), forceOrder bool) func(cmd *cobra
 
 		// Set target from args
 		options.target = args
-
-		config := NewConfig(options, forceOrder)
-		if containers := config.TargetedContainers(); len(containers) == 0 {
+		cfg = NewConfig(options, forceOrder)
+		if containers := cfg.TargetedContainers(); len(containers) == 0 {
 			print.Errorf("ERROR: Command cannot be applied to any container.")
 		} else {
 			if isVerbose() {
 				print.Infof("Command will be applied to: %v\n\n", strings.Join(containers.names(), ", "))
 			}
-			wrapped(config)
+			wrapped(cfg)
 		}
 	}
 }
