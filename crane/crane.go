@@ -139,28 +139,3 @@ func commandOutput(name string, args []string) (string, error) {
 	out, err := cmd.CombinedOutput()
 	return strings.TrimSpace(string(out)), err
 }
-
-// From https://gist.github.com/dagoof/1477401
-func pipedCommandOutput(pipedCommandArgs ...[]string) ([]byte, error) {
-	var commands []exec.Cmd
-	for _, commandArgs := range pipedCommandArgs {
-		cmd := exec.Command(commandArgs[0], commandArgs[1:]...)
-		if cfg != nil {
-			cmd.Dir = cfg.Path()
-		}
-		commands = append(commands, *cmd)
-	}
-	for i, command := range commands[:len(commands)-1] {
-		out, err := command.StdoutPipe()
-		if err != nil {
-			return nil, err
-		}
-		command.Start()
-		commands[i+1].Stdin = out
-	}
-	final, err := commands[len(commands)-1].Output()
-	if err != nil {
-		return nil, err
-	}
-	return final, nil
-}
