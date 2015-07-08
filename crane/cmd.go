@@ -119,6 +119,48 @@ var (
 		"Stop the containers.",
 	)
 	stopTargetArg = stopCommand.Arg("target", "Target of command").String()
+
+	killCommand = app.Command(
+		"kill",
+		"Kill the containers.",
+	)
+	killTargetArg = killCommand.Arg("target", "Target of command").String()
+
+	rmCommand = app.Command(
+		"rm",
+		"Remove the containers.",
+	)
+	rmTargetArg = rmCommand.Arg("target", "Target of command").String()
+
+	runCommand = app.Command(
+		"run",
+		"Run the containers.",
+	)
+	runTargetArg = runCommand.Arg("target", "Target of command").String()
+
+	createCommand = app.Command(
+		"create",
+		"Create the containers.",
+	)
+	createTargetArg = createCommand.Arg("target", "Target of command").String()
+
+	provisionCommand = app.Command(
+		"provision",
+		"Build or pull images.",
+	)
+	provisionTargetArg = provisionCommand.Arg("target", "Target of command").String()
+
+	pullCommand = app.Command(
+		"pull",
+		"Pull images.",
+	)
+	pullTargetArg = pullCommand.Arg("target", "Target of command").String()
+
+	logsCommand = app.Command(
+		"logs",
+		"Display container logs.",
+	)
+	logsTargetArg = logsCommand.Arg("target", "Target of command").String()
 )
 
 func isVerbose() bool {
@@ -208,77 +250,47 @@ func handleCmd() {
 		}, true)
 	}
 
-	// 	var cmdProvision = &cobra.Command{
-	// 		Use:   "provision",
-	// 		Short: "Build or pull images",
-	// 		Long: `
-	// provision will use specified Dockerfiles to build all targeted images.
-	// If no Dockerfile is given, it will pull the image(s) from the given registry.`,
-	// 		Run: configCommand(func(config Config) {
-	// 			config.TargetedContainers().provision(options.nocache)
-	// 		}, true),
-	// 	}
+	case killCommand.FullCommand():
+		action(*killTargetArg, func() {
+			cfg.TargetedContainers().reversed().kill()
+		}, true)
+	}
 
-	// 	var cmdPull = &cobra.Command{
-	// 		Use:   "pull",
-	// 		Short: "Pull images",
-	// 		Long: `
-	// pull will pull the image(s) from the given registry.`,
-	// 		Run: configCommand(func(config Config) {
-	// 			config.TargetedContainers().pullImage()
-	// 		}, true),
-	// 	}
+	case rmCommand.FullCommand():
+		action(*rmTargetArg, func() {
+			cfg.TargetedContainers().reversed().rm(optins.forceRm)
+		}, true)
+	}
 
-	// 	var cmdCreate = &cobra.Command{
-	// 		Use:   "create",
-	// 		Short: "Create the containers",
-	// 		Long:  `run will call docker create for all targeted containers.`,
-	// 		Run: configCommand(func(config Config) {
-	// 			config.TargetedContainers().create(options.recreate, options.ignoreMissing, config.Path())
-	// 		}, false),
-	// 	}
+	case runCommand.FullCommand():
+		action(*runTargetArg, func() {
+			cfg.TargetedContainers().run(options.recreate, options.ignoreMissing, cfg.Path())
+		}, false)
+	}
 
-	// 	var cmdRun = &cobra.Command{
-	// 		Use:   "run",
-	// 		Short: "Run the containers",
-	// 		Long:  `run will call docker run for all targeted containers.`,
-	// 		Run: configCommand(func(config Config) {
-	// 			config.TargetedContainers().run(options.recreate, options.ignoreMissing, config.Path())
-	// 		}, false),
-	// 	}
+	case createCommand.FullCommand():
+		action(*createTargetArg, func() {
+			cfg.TargetedContainers().create(options.recreate, options.ignoreMissing, cfg.Path())
+		}, false)
+	}
 
-	// 	var cmdRm = &cobra.Command{
-	// 		Use:   "rm",
-	// 		Short: "Remove the containers",
-	// 		Long:  `rm will call docker rm for all targeted containers.`,
-	// 		Run: configCommand(func(config Config) {
-	// 			config.TargetedContainers().reversed().rm(options.forceRm)
-	// 		}, true),
-	// 	}
+	case provisionCommand.FullCommand():
+		action(*provisionTargetArg, func() {
+			cfg.TargetedContainers().provision(options.nocache)
+		}, true)
+	}
 
-	// 	var cmdKill = &cobra.Command{
-	// 		Use:   "kill",
-	// 		Short: "Kill the containers",
-	// 		Long:  `kill will call docker kill for all targeted containers.`,
-	// 		Run: configCommand(func(config Config) {
-	// 			config.TargetedContainers().reversed().kill()
-	// 		}, true),
-	// 	}
+	case pullCommand.FullCommand():
+		action(*pullTargetArg, func() {
+			cfg.TargetedContainers().pullImage()
+		}, true)
+	}
 
-	// 	var cmdLogs = &cobra.Command{
-	// 		Use:   "logs",
-	// 		Short: "Display container logs",
-	// 		Long: `Display an aggregated, name-prefixed view of the logs for the targeted
-	// containers. To distinguish the sources better, lines can be colorized by
-	// enabling the 'colorize' flag. Containers' STDERR and STDOUT are multiplexed
-	// together into the process STDOUT in order to interlace lines properly. Logs
-	// originally dumped to STDERR have a line header ending with a '*', and are
-	// formatted in bold provided the 'colorize' flag is on.`,
-	// 		Run: configCommand(func(config Config) {
-	// 			config.TargetedContainers().logs(options.follow, options.timestamps, options.tail, options.colorize)
-	// 		}, true),
-	// 	}
-
+	case logsCommand.FullCommand():
+		action(*logsTargetArg, func() {
+			cfg.TargetedContainers().logs(options.follow, options.timestamps, options.tail, options.colorize)
+		}, true)
+	}
 
 
 	// 	cmdProvision.Flags().BoolVarP(&options.nocache, "no-cache", "n", false, "Build the image without any cache")
