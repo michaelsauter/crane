@@ -15,7 +15,8 @@ import (
 
 type Config interface {
 	DependencyGraph() DependencyGraph
-	DetermineTarget(target []string, cascadeDependencies string, cascadeAffected string) Target
+	DetermineTarget(target string, cascadeDependencies string, cascadeAffected string) Target
+	ContainersForReference(reference string) (result []string)
 	Path() string
 	ContainerMap() ContainerMap
 }
@@ -207,11 +208,11 @@ func (c *config) DependencyGraph() DependencyGraph {
 // The target might be extended depending on the value
 // given for cascadeDependencies and cascadeAffected.
 // Additionally, the target is sorted alphabetically.
-func (c *config) DetermineTarget(target []string, cascadeDependencies string, cascadeAffected string) Target {
+func (c *config) DetermineTarget(target string, cascadeDependencies string, cascadeAffected string) Target {
 	// start from the explicitly targeted target
 	includedSet := make(map[string]bool)
 	cascadingSeeds := []string{}
-	for _, name := range c.explicitlyTargeted(target) {
+	for _, name := range c.ContainersForReference(target) {
 		includedSet[name] = true
 		cascadingSeeds = append(cascadingSeeds, name)
 	}
@@ -262,11 +263,11 @@ func (c *config) DetermineTarget(target []string, cascadeDependencies string, ca
 	return sortedTarget
 }
 
-// explicitlyTargeted receives a target and determines which
-// containers of the map are targeted.
-func (c *config) explicitlyTargeted(target []string) (result []string) {
-	if len(target) == 0 {
-		// target not given
+// ContainersForReference receives a reference and determines which
+// containers of the map that resolves to.
+func (c *config) ContainersForReference(reference string) (result []string) {
+	if len(reference) == 0 {
+		// reference not given
 		var defaultGroup []string
 		for group, containers := range c.groups {
 			if group == "default" {
@@ -284,33 +285,26 @@ func (c *config) explicitlyTargeted(target []string) (result []string) {
 			}
 		}
 	} else {
-		// target given
-		for _, reference := range target {
-			success := false
-			reference = os.ExpandEnv(reference)
-			// Select reference from listed groups
-			for group, containers := range c.groups {
-				if group == reference {
-					result = append(result, containers...)
-					success = true
-					break
-				}
+		// reference given
+		reference = os.ExpandEnv(reference)
+		// Select reference from listed groups
+		for group, containers := range c.groups {
+			if group == reference {
+				result = append(result, containers...)
+				break
 			}
-			if success {
-				continue
-			}
+		}
+		if len(result) == 0 {
 			// The reference might just be one container
 			for name, _ := range c.containerMap {
 				if name == reference {
 					result = append(result, reference)
-					success = true
 					break
 				}
 			}
-			if success {
-				continue
-			}
-			// Otherwise, fail verbosely
+		}
+		if len(result) == 0 {
+			// reference was not found anywhere
 			panic(StatusError{fmt.Errorf("No group or container matching `%s`", reference), 64})
 		}
 	}
