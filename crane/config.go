@@ -10,12 +10,10 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"sort"
 )
 
 type Config interface {
 	DependencyGraph() DependencyGraph
-	DetermineTarget(target string, cascadeDependencies string, cascadeAffected string) Target
 	ContainersForReference(reference string) (result []string)
 	Path() string
 	ContainerMap() ContainerMap
@@ -26,8 +24,6 @@ type config struct {
 	RawGroups       map[string][]string   `json:"groups" yaml:"groups"`
 	RawHooksMap     map[string]hooks      `json:"hooks" yaml:"hooks"`
 	containerMap    ContainerMap
-	target          Target
-	order           []string
 	groups          map[string][]string
 	path            string
 }
@@ -35,8 +31,6 @@ type config struct {
 // ContainerMap maps the container name
 // to its configuration
 type ContainerMap map[string]Container
-
-type Target []string
 
 // configFilenames returns a slice of
 // files to read the config from.
@@ -203,66 +197,6 @@ func (c *config) DependencyGraph() DependencyGraph {
 	return dependencyGraph
 }
 
-// determineTarget receives the specified target
-// and determines which containers should be targeted.
-// The target might be extended depending on the value
-// given for cascadeDependencies and cascadeAffected.
-// Additionally, the target is sorted alphabetically.
-func (c *config) DetermineTarget(target string, cascadeDependencies string, cascadeAffected string) Target {
-	// start from the explicitly targeted target
-	includedSet := make(map[string]bool)
-	cascadingSeeds := []string{}
-	for _, name := range c.ContainersForReference(target) {
-		includedSet[name] = true
-		cascadingSeeds = append(cascadingSeeds, name)
-	}
-
-	// Cascade until the graph has been fully traversed
-	// according to the cascading flags.
-	for len(cascadingSeeds) > 0 {
-		nextCascadingSeeds := []string{}
-		for _, seed := range cascadingSeeds {
-			if cascadeDependencies != "none" {
-				if dependencies, ok := dependencyGraph[seed]; ok {
-					// Queue direct dependencies if we haven't already considered them
-					for _, name := range dependencies.forKind(cascadeDependencies) {
-						if _, alreadyIncluded := includedSet[name]; !alreadyIncluded {
-							includedSet[name] = true
-							nextCascadingSeeds = append(nextCascadingSeeds, name)
-						}
-					}
-				}
-			}
-			if cascadeAffected != "none" {
-				// Queue all containers we haven't considered yet which exist
-				// and directly depend on the seed.
-				for name, container := range c.containerMap {
-					if _, alreadyIncluded := includedSet[name]; !alreadyIncluded {
-						if container.Dependencies().includesAsKind(seed, cascadeAffected) && container.Exists() {
-							includedSet[name] = true
-							nextCascadingSeeds = append(nextCascadingSeeds, name)
-						}
-					}
-				}
-			}
-		}
-		cascadingSeeds = nextCascadingSeeds
-	}
-
-	// Keep the ones that are part of the container map
-	included := []string{}
-	for name := range includedSet {
-		if _, exists := c.containerMap[name]; exists {
-			included = append(included, name)
-		}
-	}
-
-	// Sort alphabetically
-	sortedTarget := Target(included)
-	sort.Strings(sortedTarget)
-	return sortedTarget
-}
-
 // ContainersForReference receives a reference and determines which
 // containers of the map that resolves to.
 func (c *config) ContainersForReference(reference string) (result []string) {
@@ -322,15 +256,4 @@ func (c *config) ContainersForReference(reference string) (result []string) {
 		}
 	}
 	return
-}
-
-// includes checks whether the given needle is
-// included in the target
-func (t Target) includes(needle string) bool {
-	for _, name := range t {
-		if name == needle {
-			return true
-		}
-	}
-	return false
 }
