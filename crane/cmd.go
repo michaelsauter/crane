@@ -40,10 +40,6 @@ var (
 		"lift",
 		"Build or pull images if they don't exist, then run or start the containers.",
 	)
-	liftRecreateFlag = liftCommand.Flag(
-		"recreate",
-		"Recreate containers (force-remove containers if they exist, force-provision images, run containers).",
-	).Short('r').Bool()
 	liftIgnoreMissingFlag = liftCommand.Flag(
 		"ignore-missing",
 		"Rather than failing, ignore dependencies that are not fullfilled.",
@@ -103,6 +99,10 @@ var (
 		"start",
 		"Start the containers.",
 	)
+	startIgnoreMissingFlag = startCommand.Flag(
+		"ignore-missing",
+		"Rather than failing, ignore dependencies that are not fullfilled.",
+	).Short('i').Default("none").String()
 	startTargetArg = startCommand.Arg("target", "Target of command").String()
 
 	stopCommand = app.Command(
@@ -131,10 +131,6 @@ var (
 		"run",
 		"Run the containers.",
 	)
-	runRecreateFlag = runCommand.Flag(
-		"recreate",
-		"Recreate containers (force-remove containers if they exist, force-provision images, run containers).",
-	).Short('r').Bool()
 	runIgnoreMissingFlag = runCommand.Flag(
 		"ignore-missing",
 		"Rather than failing, ignore dependencies that are not fullfilled.",
@@ -145,10 +141,6 @@ var (
 		"create",
 		"Create the containers.",
 	)
-	createRecreateFlag = createCommand.Flag(
-		"recreate",
-		"Recreate containers (force-remove containers if they exist, force-provision images, run containers).",
-	).Short('r').Bool()
 	createIgnoreMissingFlag = createCommand.Flag(
 		"ignore-missing",
 		"Rather than failing, ignore dependencies that are not fullfilled.",
@@ -223,7 +215,7 @@ func handleCmd() {
 
 	case liftCommand.FullCommand():
 		action(*liftTargetArg, func() {
-			cfg.TargetedContainers().lift(*liftRecreateFlag, *liftNoCacheFlag, *liftIgnoreMissingFlag, cfg.Path())
+			cfg.TargetedContainers().lift(*liftNoCacheFlag, *liftIgnoreMissingFlag, cfg.Path())
 		}, false, *liftIgnoreMissingFlag)
 
 	case versionCommand.FullCommand():
@@ -261,7 +253,7 @@ func handleCmd() {
 
 	case startCommand.FullCommand():
 		action(*startTargetArg, func() {
-			cfg.TargetedContainers().start()
+			cfg.TargetedContainers().start(*startIgnoreMissingFlag, cfg.Path())
 		}, false, "none")
 
 	case stopCommand.FullCommand():
@@ -281,12 +273,12 @@ func handleCmd() {
 
 	case runCommand.FullCommand():
 		action(*runTargetArg, func() {
-			cfg.TargetedContainers().run(*runRecreateFlag, *runIgnoreMissingFlag, cfg.Path())
+			cfg.TargetedContainers().run(*runIgnoreMissingFlag, cfg.Path())
 		}, false, *runIgnoreMissingFlag)
 
 	case createCommand.FullCommand():
 		action(*createTargetArg, func() {
-			cfg.TargetedContainers().create(*createRecreateFlag, *createIgnoreMissingFlag, cfg.Path())
+			cfg.TargetedContainers().create(*createIgnoreMissingFlag, cfg.Path())
 		}, false, *createIgnoreMissingFlag)
 
 	case provisionCommand.FullCommand():

@@ -25,12 +25,10 @@ type Container interface {
 	ImageExists() bool
 	Status() []string
 	Provision(nocache bool)
-	ProvisionOrSkip(update bool, nocache bool)
 	PullImage()
 	Create(ignoreMissing string, configPath string)
 	Run(ignoreMissing string, configPath string)
-	Start()
-	RunOrStart(ignoreMissing string, configPath string)
+	Start(ignoreMissing string, configPath string)
 	Kill()
 	Stop()
 	Pause()
@@ -488,52 +486,25 @@ func (c *container) Provision(nocache bool) {
 	}
 }
 
-// Run or start container
-func (c *container) RunOrStart(ignoreMissing string, configPath string) {
-	if c.Exists() {
-		c.Start()
-	} else {
-		c.Run(ignoreMissing, configPath)
-	}
-}
-
-// Provision or skip container
-func (c *container) ProvisionOrSkip(update bool, nocache bool) {
-	if update || !c.ImageExists() {
-		c.Provision(nocache)
-	}
-}
-
 // Create container
 func (c *container) Create(ignoreMissing string, configPath string) {
-	if c.Exists() {
-		print.Noticef("Container %s does already exist. Use --recreate to recreate.\n", c.Name())
-	} else {
-		fmt.Printf("Creating container %s ... ", c.Name())
-		args := append([]string{"create"}, c.createArgs(ignoreMissing, configPath)...)
-		executeCommand("docker", args)
-	}
+	fmt.Printf("Creating container %s ... ", c.Name())
+	args := append([]string{"create"}, c.createArgs(ignoreMissing, configPath)...)
+	executeCommand("docker", args)
 }
 
 // Run container, or start it if already existing
 func (c *container) Run(ignoreMissing string, configPath string) {
-	if c.Exists() {
-		print.Noticef("Container %s does already exist. Use --recreate to recreate.\n", c.Name())
-		if !c.Running() {
-			c.Start()
-		}
-	} else {
-		executeHook(c.Hooks().PreStart())
-		fmt.Printf("Running container %s ... ", c.Name())
-		args := []string{"run"}
-		// Detach
-		if c.RunParams.Detach {
-			args = append(args, "--detach")
-		}
-		args = append(args, c.createArgs(ignoreMissing, configPath)...)
-		executeCommand("docker", args)
-		executeHook(c.Hooks().PostStart())
+	executeHook(c.Hooks().PreStart())
+	fmt.Printf("Running container %s ... ", c.Name())
+	args := []string{"run"}
+	// Detach
+	if c.RunParams.Detach {
+		args = append(args, "--detach")
 	}
+	args = append(args, c.createArgs(ignoreMissing, configPath)...)
+	executeCommand("docker", args)
+	executeHook(c.Hooks().PostStart())
 }
 
 // Returns all the flags to be passed to `docker create`
@@ -733,7 +704,7 @@ func (c *container) createArgs(ignoreMissing string, configPath string) []string
 }
 
 // Start container
-func (c *container) Start() {
+func (c *container) Start(ignoreMissing string, configPath string) {
 	if c.Exists() {
 		if !c.Running() {
 			executeHook(c.Hooks().PreStart())
@@ -750,7 +721,7 @@ func (c *container) Start() {
 			executeHook(c.Hooks().PostStart())
 		}
 	} else {
-		print.Errorf("Container %s does not exist.\n", c.Name())
+		c.Run(ignoreMissing, configPath)
 	}
 }
 
