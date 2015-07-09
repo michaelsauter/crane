@@ -14,9 +14,10 @@ import (
 )
 
 type Config interface {
-	TargetedContainers() Containers
 	DependencyGraph() DependencyGraph
+	DetermineTarget(target []string, cascadeDependencies string, cascadeAffected string) Target
 	Path() string
+	ContainerMap() ContainerMap
 }
 
 type config struct {
@@ -24,7 +25,6 @@ type config struct {
 	RawGroups       map[string][]string   `json:"groups" yaml:"groups"`
 	RawHooksMap     map[string]hooks      `json:"hooks" yaml:"hooks"`
 	containerMap    ContainerMap
-	dependencyGraph DependencyGraph
 	target          Target
 	order           []string
 	groups          map[string][]string
@@ -41,9 +41,9 @@ type Target []string
 // files to read the config from.
 // If the --config option was given,
 // it will only use the given file.
-func configFilenames(options Options) []string {
-	if len(options.config) > 0 {
-		return []string{options.config}
+func configFilenames(location string) []string {
+	if len(location) > 0 {
+		return []string{location}
 	} else {
 		return []string{"crane.json", "crane.yaml", "crane.yml"}
 	}
@@ -53,12 +53,12 @@ func configFilenames(options Options) []string {
 // config. It searches parent directories
 // if it can't find any of the config
 // filenames in the current directory.
-func findConfig(options Options) string {
-	configFiles := configFilenames(options)
+func findConfig(location string) string {
+	configFiles := configFilenames(location)
 	// Absolute path to config given
-	if len(options.config) > 0 && path.IsAbs(options.config) {
-		if _, err := os.Stat(options.config); err == nil {
-			return options.config
+	if len(location) > 0 && path.IsAbs(location) {
+		if _, err := os.Stat(location); err == nil {
+			return location
 		}
 	} else { // Relative config
 		configPath, _ := os.Getwd()
@@ -131,27 +131,15 @@ func unmarshal(data []byte, ext string) *config {
 }
 
 // NewConfig retus a new config based on given
-// options.
+// location.
 // Containers will be ordered so that they can be
 // brought up and down with Docker.
-func NewConfig(options Options, forceOrder bool) Config {
+func NewConfig(location string) Config {
 	var config *config
-	configFile := findConfig(options)
+	configFile := findConfig(location)
 	config = readConfig(configFile)
 	config.initialize()
-	config.dependencyGraph = config.DependencyGraph()
-	config.determineTarget(options.target, options.cascadeDependencies, options.cascadeAffected)
 	config.path = path.Dir(configFile)
-
-	ignoreMissing := options.ignoreMissing
-	if forceOrder {
-		ignoreMissing = "all"
-	}
-	var err error
-	config.order, err = config.dependencyGraph.order(config.target, ignoreMissing)
-	if err != nil {
-		panic(StatusError{err, 78})
-	}
 	return config
 }
 
@@ -160,13 +148,8 @@ func (c *config) Path() string {
 	return c.path
 }
 
-// Containers returns the containers of the config in order
-func (c *config) TargetedContainers() Containers {
-	var containers Containers
-	for _, name := range c.order {
-		containers = append([]Container{c.containerMap[name]}, containers...)
-	}
-	return containers
+func (c *config) ContainerMap() ContainerMap {
+	return c.containerMap
 }
 
 // Load configuration into the internal structs from the raw, parsed ones
@@ -224,7 +207,7 @@ func (c *config) DependencyGraph() DependencyGraph {
 // The target might be extended depending on the value
 // given for cascadeDependencies and cascadeAffected.
 // Additionally, the target is sorted alphabetically.
-func (c *config) determineTarget(target []string, cascadeDependencies string, cascadeAffected string) {
+func (c *config) DetermineTarget(target []string, cascadeDependencies string, cascadeAffected string) Target {
 	// start from the explicitly targeted target
 	includedSet := make(map[string]bool)
 	cascadingSeeds := []string{}
@@ -239,7 +222,7 @@ func (c *config) determineTarget(target []string, cascadeDependencies string, ca
 		nextCascadingSeeds := []string{}
 		for _, seed := range cascadingSeeds {
 			if cascadeDependencies != "none" {
-				if dependencies, ok := c.dependencyGraph[seed]; ok {
+				if dependencies, ok := dependencyGraph[seed]; ok {
 					// Queue direct dependencies if we haven't already considered them
 					for _, name := range dependencies.forKind(cascadeDependencies) {
 						if _, alreadyIncluded := includedSet[name]; !alreadyIncluded {
@@ -274,8 +257,9 @@ func (c *config) determineTarget(target []string, cascadeDependencies string, ca
 	}
 
 	// Sort alphabetically
-	c.target = Target(included)
-	sort.Strings(c.target)
+	sortedTarget := Target(included)
+	sort.Strings(sortedTarget)
+	return sortedTarget
 }
 
 // explicitlyTargeted receives a target and determines which
