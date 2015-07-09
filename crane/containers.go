@@ -31,11 +31,9 @@ func (containers Containers) reversed() Containers {
 }
 
 // Lift containers (provision + run).
-// When recreate is set, this will re-provision all images
-// and recreate all containers.
-func (containers Containers) lift(recreate bool, nocache bool, ignoreMissing string, configPath string) {
-	containers.provisionOrSkip(recreate, nocache)
-	containers.runOrStart(recreate, ignoreMissing, configPath)
+func (containers Containers) lift(nocache bool, ignoreMissing string, configPath string) {
+	containers.provision(nocache)
+	containers.run(ignoreMissing, configPath)
 }
 
 // Provision containers.
@@ -55,50 +53,27 @@ func (containers Containers) pullImage() {
 }
 
 // Create containers.
-// When recreate is true, removes existing containers first.
-func (containers Containers) create(recreate bool, ignoreMissing string, configPath string) {
-	if recreate {
-		containers.rm(true)
-	}
+// If any exist already, they will be removed first.
+func (containers Containers) create(ignoreMissing string, configPath string) {
+	containers.rm(true)
 	for _, container := range containers {
 		container.Create(ignoreMissing, configPath)
 	}
 }
 
 // Run containers.
-// When recreate is true, removes existing containers first.
-func (containers Containers) run(recreate bool, ignoreMissing string, configPath string) {
-	if recreate {
-		containers.rm(true)
-	}
+// If any exist already, they will be removed first.
+func (containers Containers) run(ignoreMissing string, configPath string) {
+	containers.rm(true)
 	for _, container := range containers {
 		container.Run(ignoreMissing, configPath)
 	}
 }
 
-// Run or start containers.
-// When recreate is true, removes existing containers first.
-func (containers Containers) runOrStart(recreate bool, ignoreMissing string, configPath string) {
-	if recreate {
-		containers.rm(true)
-	}
-	for _, container := range containers {
-		container.RunOrStart(ignoreMissing, configPath)
-	}
-}
-
-// Provision or skip images.
-// When update is true, provisions all images.
-func (containers Containers) provisionOrSkip(update bool, nocache bool) {
-	for _, container := range containers.stripProvisioningDuplicates() {
-		container.ProvisionOrSkip(update, nocache)
-	}
-}
-
 // Start containers.
-func (containers Containers) start() {
+func (containers Containers) start(ignoreMissing string, configPath string) {
 	for _, container := range containers {
-		container.Start()
+		container.Start(ignoreMissing, configPath)
 	}
 }
 
