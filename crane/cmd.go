@@ -186,26 +186,22 @@ func action(targetFlag string, wrapped func(containers Containers), forceOrder b
 
 	cfg = NewConfig(*configFlag)
 	dependencyGraph = cfg.DependencyGraph()
-	target := NewTarget(targetFlag, *cascadeDependenciesFlag, *cascadeAffectedFlag)
-	order, err := dependencyGraph.order(target, ignoreMissing)
+	target := NewTarget(targetFlag)
+	unitOfWork, err := NewUnitOfWork(dependencyGraph, target)
 	if err != nil {
 		panic(StatusError{err, 78})
 	}
 
 	var containers Containers
 	containerMap := cfg.ContainerMap()
-	for _, name := range order {
+	for _, name := range unitOfWork.order {
 		containers = append([]Container{containerMap[name]}, containers...)
 	}
 
-	if len(containers) == 0 {
-		print.Errorf("ERROR: Command cannot be applied to any container.")
-	} else {
-		if isVerbose() {
-			print.Infof("Command will be applied to: %v\n\n", strings.Join(containers.names(), ", "))
-		}
-		wrapped(containers)
+	if isVerbose() {
+		print.Infof("Command will be applied to: %v\n\n", strings.Join(containers.names(), ", "))
 	}
+	wrapped(containers)
 }
 
 func handleCmd() {
