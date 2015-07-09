@@ -9,15 +9,6 @@ import (
 )
 
 type Options struct {
-	verbose             bool
-	recreate            bool
-	nocache             bool
-	notrunc             bool
-	forceRm             bool
-	follow              bool
-	timestamps          bool
-	tail                string
-	colorize            bool
 	cascadeDependencies string
 	cascadeAffected     string
 	ignoreMissing       string
@@ -49,15 +40,15 @@ var (
 		"lift",
 		"Build or pull images if they don't exist, then run or start the containers.",
 	)
-	recreateFlag = liftCommand.Flag(
+	liftRecreateFlag = liftCommand.Flag(
 		"recreate",
 		"Recreate containers (force-remove containers if they exist, force-provision images, run containers).",
 	).Short('r').Bool()
-	ignoreMissingFlag = liftCommand.Flag(
+	liftIgnoreMissingFlag = liftCommand.Flag(
 		"ignore-missing",
 		"Rather than failing, ignore dependencies that are not fullfilled.",
 	).Short('i').Default("none").String()
-	noCacheFlag = liftCommand.Flag(
+	liftNoCacheFlag = liftCommand.Flag(
 		"no-cache",
 		"Build the image without any cache.",
 	).Short('n').Bool()
@@ -130,24 +121,48 @@ var (
 		"rm",
 		"Remove the containers.",
 	)
+	forceRmFlag = rmCommand.Flag(
+		"force",
+		"Kill containers if they are running first.",
+	).Short('f').Bool()
 	rmTargetArg = rmCommand.Arg("target", "Target of command").String()
 
 	runCommand = app.Command(
 		"run",
 		"Run the containers.",
 	)
+	runRecreateFlag = runCommand.Flag(
+		"recreate",
+		"Recreate containers (force-remove containers if they exist, force-provision images, run containers).",
+	).Short('r').Bool()
+	runIgnoreMissingFlag = runCommand.Flag(
+		"ignore-missing",
+		"Rather than failing, ignore dependencies that are not fullfilled.",
+	).Short('i').Default("none").String()
 	runTargetArg = runCommand.Arg("target", "Target of command").String()
 
 	createCommand = app.Command(
 		"create",
 		"Create the containers.",
 	)
+	createRecreateFlag = createCommand.Flag(
+		"recreate",
+		"Recreate containers (force-remove containers if they exist, force-provision images, run containers).",
+	).Short('r').Bool()
+	createIgnoreMissingFlag = createCommand.Flag(
+		"ignore-missing",
+		"Rather than failing, ignore dependencies that are not fullfilled.",
+	).Short('i').Default("none").String()
 	createTargetArg = createCommand.Arg("target", "Target of command").String()
 
 	provisionCommand = app.Command(
 		"provision",
 		"Build or pull images.",
 	)
+	provisionNoCacheFlag = provisionCommand.Flag(
+		"no-cache",
+		"Build the image without any cache.",
+	).Short('n').Bool()
 	provisionTargetArg = provisionCommand.Arg("target", "Target of command").String()
 
 	pullCommand = app.Command(
@@ -160,30 +175,35 @@ var (
 		"logs",
 		"Display container logs.",
 	)
+	followFlag = logsCommand.Flag(
+		"follow",
+		"Follow log output.",
+	).Short('f').Bool()
+	tailFlag = logsCommand.Flag(
+		"tail",
+		"Output the specified number of lines at the end of logs.",
+	).String()
+	timestampsFlag = logsCommand.Flag(
+		"timestamps",
+		"Show timestamps.",
+	).Short('t').Bool()
+	colorizeFlag = logsCommand.Flag(
+		"colorize",
+		"Output the lines with one color per container.",
+	).Short('z').Bool()
 	logsTargetArg = logsCommand.Arg("target", "Target of command").String()
 )
 
 func isVerbose() bool {
-	return options.verbose
+	return *verboseFlag
 }
 
-func action(target string, wrapped func(), forceOrder bool) {
+func action(target string, wrapped func(), forceOrder bool, ignoreMissing string) {
 
 	options.cascadeDependencies = *cascadeDependenciesFlag
 	options.cascadeAffected = *cascadeAffectedFlag
 	options.config = *configFlag
-	options.recreate = *recreateFlag
-	options.ignoreMissing = *ignoreMissingFlag
-	options.nocache = *noCacheFlag
-	options.verbose = *verboseFlag
-	options.notrunc = *noTruncFlag
-
-	// for _, value := range []string{options.cascadeDependencies, options.cascadeAffected, options.ignoreMissing} {
-	// 	if value != "none" && value != "all" && value != "link" && value != "volumesFrom" && value != "net" {
-	// 		print.Errorf("Error: invalid dependency type value: %v", value)
-	// 		panic(StatusError{status: 64})
-	// 	}
-	// }
+	options.ignoreMissing = ignoreMissing
 
 	// Set target from args
 	options.target = []string{target}
@@ -203,8 +223,8 @@ func handleCmd() {
 
 	case liftCommand.FullCommand():
 		action(*liftTargetArg, func() {
-			cfg.TargetedContainers().lift(options.recreate, options.nocache, options.ignoreMissing, cfg.Path())
-		}, false)
+			cfg.TargetedContainers().lift(*liftRecreateFlag, *liftNoCacheFlag, *liftIgnoreMissingFlag, cfg.Path())
+		}, false, *liftIgnoreMissingFlag)
 
 	case versionCommand.FullCommand():
 		fmt.Println("v1.5.0")
@@ -212,105 +232,76 @@ func handleCmd() {
 	case graphCommand.FullCommand():
 		action(*graphTargetArg, func() {
 			cfg.DependencyGraph().DOT(os.Stdout, cfg.TargetedContainers())
-		}, true)
+		}, true, "none")
 
 	case statsCommand.FullCommand():
 		action(*statsTargetArg, func() {
 			cfg.TargetedContainers().stats()
-		}, true)
+		}, true, "none")
 
 	case statusCommand.FullCommand():
 		action(*statusTargetArg, func() {
-			cfg.TargetedContainers().status(options.notrunc)
-		}, true)
+			cfg.TargetedContainers().status(*noTruncFlag)
+		}, true, "none")
 
 	case pushCommand.FullCommand():
 		action(*pushTargetArg, func() {
 			cfg.TargetedContainers().push()
-		}, true)
+		}, true, "none")
 
 	case unpauseCommand.FullCommand():
 		action(*unpauseTargetArg, func() {
 			cfg.TargetedContainers().unpause()
-		}, false)
+		}, false, "none")
 
 	case pauseCommand.FullCommand():
 		action(*pauseTargetArg, func() {
 			cfg.TargetedContainers().reversed().pause()
-		}, true)
+		}, true, "none")
 
 	case startCommand.FullCommand():
 		action(*startTargetArg, func() {
 			cfg.TargetedContainers().start()
-		}, false)
+		}, false, "none")
 
 	case stopCommand.FullCommand():
 		action(*stopTargetArg, func() {
 			cfg.TargetedContainers().reversed().stop()
-		}, true)
-	}
+		}, true, "none")
 
 	case killCommand.FullCommand():
 		action(*killTargetArg, func() {
 			cfg.TargetedContainers().reversed().kill()
-		}, true)
-	}
+		}, true, "none")
 
 	case rmCommand.FullCommand():
 		action(*rmTargetArg, func() {
-			cfg.TargetedContainers().reversed().rm(optins.forceRm)
-		}, true)
-	}
+			cfg.TargetedContainers().reversed().rm(*forceRmFlag)
+		}, true, "none")
 
 	case runCommand.FullCommand():
 		action(*runTargetArg, func() {
-			cfg.TargetedContainers().run(options.recreate, options.ignoreMissing, cfg.Path())
-		}, false)
-	}
+			cfg.TargetedContainers().run(*runRecreateFlag, *runIgnoreMissingFlag, cfg.Path())
+		}, false, *runIgnoreMissingFlag)
 
 	case createCommand.FullCommand():
 		action(*createTargetArg, func() {
-			cfg.TargetedContainers().create(options.recreate, options.ignoreMissing, cfg.Path())
-		}, false)
-	}
+			cfg.TargetedContainers().create(*createRecreateFlag, *createIgnoreMissingFlag, cfg.Path())
+		}, false, *createIgnoreMissingFlag)
 
 	case provisionCommand.FullCommand():
 		action(*provisionTargetArg, func() {
-			cfg.TargetedContainers().provision(options.nocache)
-		}, true)
-	}
+			cfg.TargetedContainers().provision(*provisionNoCacheFlag)
+		}, true, "none")
 
 	case pullCommand.FullCommand():
 		action(*pullTargetArg, func() {
 			cfg.TargetedContainers().pullImage()
-		}, true)
-	}
+		}, true, "none")
 
 	case logsCommand.FullCommand():
 		action(*logsTargetArg, func() {
-			cfg.TargetedContainers().logs(options.follow, options.timestamps, options.tail, options.colorize)
-		}, true)
+			cfg.TargetedContainers().logs(*followFlag, *timestampsFlag, *tailFlag, *colorizeFlag)
+		}, true, "none")
 	}
-
-
-	// 	cmdProvision.Flags().BoolVarP(&options.nocache, "no-cache", "n", false, "Build the image without any cache")
-
-	// 	cmdCreate.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (force-remove containers first)")
-	// 	cmdCreate.Flags().StringVarP(&options.ignoreMissing, "ignore-missing", "i", "none", "Rather than failing, ignore dependencies that are not fullfilled for:"+dependencyTypeValuesSuffix)
-
-	// 	cmdRun.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (force-remove containers first)")
-	// 	cmdRun.Flags().StringVarP(&options.ignoreMissing, "ignore-missing", "i", "none", "Rather than failing, ignore dependencies that are not fullfilled for:"+dependencyTypeValuesSuffix)
-
-	// 	cmdRm.Flags().BoolVarP(&options.forceRm, "force", "f", false, "Kill containers if they are running first")
-
-	// 	cmdLogs.Flags().BoolVarP(&options.follow, "follow", "f", false, "Follow log output")
-	// 	cmdLogs.Flags().BoolVarP(&options.timestamps, "timestamps", "t", false, "Show timestamps")
-	// 	cmdLogs.Flags().StringVarP(&options.tail, "tail", "", "all", "Output the specified number of lines at the end of logs")
-	// 	cmdLogs.Flags().BoolVarP(&options.colorize, "colorize", "z", false, "Output the lines with one color per container")
-
-	// 	craneCmd.AddCommand(cmdLift, cmdProvision, cmdPull, cmdCreate, cmdRun, cmdRm, cmdKill, cmdStart, cmdStop, cmdPause, cmdUnpause, cmdPush, cmdLogs, cmdStatus, cmdStats, cmdGraph, cmdVersion)
-	// 	err := craneCmd.Execute()
-	// 	if err != nil {
-	// 		panic(StatusError{status: 64})
-	// 	}
 }
