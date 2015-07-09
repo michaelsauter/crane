@@ -187,7 +187,7 @@ func action(targetFlag string, wrapped func(containers Containers), forceOrder b
 
 	cfg = NewConfig(*configFlag)
 	dependencyGraph = cfg.DependencyGraph()
-	target := cfg.DetermineTarget([]string{targetFlag}, *cascadeDependenciesFlag, *cascadeAffectedFlag)
+	target := cfg.DetermineTarget(targetFlag, *cascadeDependenciesFlag, *cascadeAffectedFlag)
 	order, err := dependencyGraph.order(target, ignoreMissing)
 	if err != nil {
 		panic(StatusError{err, 78})
