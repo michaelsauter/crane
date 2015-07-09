@@ -184,10 +184,9 @@ func isVerbose() bool {
 
 func action(targetFlag string, wrapped func(containers Containers), forceOrder bool, ignoreMissing string) {
 
-
 	cfg = NewConfig(*configFlag)
 	dependencyGraph = cfg.DependencyGraph()
-	target := cfg.DetermineTarget(targetFlag, *cascadeDependenciesFlag, *cascadeAffectedFlag)
+	target := NewTarget(targetFlag, *cascadeDependenciesFlag, *cascadeAffectedFlag)
 	order, err := dependencyGraph.order(target, ignoreMissing)
 	if err != nil {
 		panic(StatusError{err, 78})
