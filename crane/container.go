@@ -36,7 +36,7 @@ type Container interface {
 	Pause()
 	Unpause()
 	Rm(force bool)
-	Logs(follow bool, tail string) (stdout, stderr io.Reader)
+	Logs(follow bool, since string, tail string) (stdout, stderr io.Reader)
 	Push()
 	Hooks() Hooks
 }
@@ -829,11 +829,14 @@ func (c *container) Rm(force bool) {
 }
 
 // Dump container logs
-func (c *container) Logs(follow bool, tail string) (stdout, stderr io.Reader) {
+func (c *container) Logs(follow bool, since string, tail string) (stdout, stderr io.Reader) {
 	if c.Exists() {
 		args := []string{"logs"}
 		if follow {
 			args = append(args, "-f")
+		}
+		if len(since) > 0 {
+			args = append(args, "--since", since)
 		}
 		if len(tail) > 0 && tail != "all" {
 			args = append(args, "--tail", tail)
