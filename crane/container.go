@@ -80,6 +80,7 @@ type RunParameters struct {
 	RawMemorySwap   string      `json:"memory-swap" yaml:"memory-swap"`
 	Name            OptBool     `json:"name" yaml:"name"`
 	RawNet          string      `json:"net" yaml:"net"`
+	OomKillDisable  bool        `json:"oom-kill-disable" yaml:"oom-kill-disable"`
 	RawPid          string      `json:"pid" yaml:"pid"`
 	Privileged      bool        `json:"privileged" yaml:"privileged"`
 	RawPublish      []string    `json:"publish" yaml:"publish"`
@@ -654,6 +655,10 @@ func (c *container) createArgs(cmds []string, excluded []string, configPath stri
 		if !includes(excluded, c.netContainer()) {
 			args = append(args, "--net", c.RunParams.Net())
 		}
+	}
+	// OomKillDisable
+	if c.RunParams.OomKillDisable {
+		args = append(args, "--oom-kill-disable")
 	}
 	// PID
 	if len(c.RunParams.Pid()) > 0 {
