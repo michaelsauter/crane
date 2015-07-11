@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"sort"
+	"strings"
 )
 
 type Config interface {
@@ -62,14 +63,20 @@ func findConfig(options Options) string {
 		}
 	} else { // Relative config
 		configPath, _ := os.Getwd()
-		for len(configPath) > 1 {
+		for {
 			for _, f := range configFiles {
-				filename := configPath + "/" + f
+				// the root path is a `/` but others don't have a trailing `/`
+				filename := strings.TrimSuffix(configPath, "/") + "/" + f
 				if _, err := os.Stat(filename); err == nil {
 					return filename
 				}
 			}
-			configPath = path.Dir(configPath)
+			// loop only if we haven't yet reached the root
+			if parentPath := path.Dir(configPath); len(parentPath) != len(configPath) {
+				configPath = parentPath
+			} else {
+				break
+			}
 		}
 	}
 	panic(StatusError{fmt.Errorf("No configuration found %v", configFiles), 78})
