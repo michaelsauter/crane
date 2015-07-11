@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/michaelsauter/crane/print"
 	"gopkg.in/v2/yaml"
 	"io/ioutil"
 	"os"
@@ -144,6 +145,9 @@ func unmarshal(data []byte, ext string) *config {
 func NewConfig(options Options, forceOrder bool) Config {
 	var config *config
 	configFile := findConfig(options)
+	if isVerbose() {
+		print.Infof("Using configuration file `%s`\n", configFile)
+	}
 	config = readConfig(configFile)
 	config.initialize()
 	config.dependencyGraph = config.DependencyGraph()
