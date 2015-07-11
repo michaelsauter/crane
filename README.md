@@ -46,6 +46,7 @@ The map of containers consists of the name of the container mapped to the contai
 * `dockerfile` (string, optional): Relative path to the Dockerfile
 * `run` (object, optional): Parameters mapped to Docker's `run` & `create`.
 	* `add-host` (array) Add custom host-to-IP mappings.
+	* `blkio-weight` (integer) Need Docker >= 1.7
 	* `cap-add` (array) Add Linux capabilities.
 	* `cap-drop` (array) Drop Linux capabilities.
 	* `cgroup-parent` (string) Need Docker >= 1.6

@@ -53,6 +53,7 @@ type container struct {
 
 type RunParameters struct {
 	RawAddHost      []string    `json:"add-host" yaml:"add-host"`
+	BlkioWeight     int         `json:"blkio-weight" yaml:"blkio-weight"`
 	RawCapAdd       []string    `json:"cap-add" yaml:"cap-add"`
 	RawCapDrop      []string    `json:"cap-drop" yaml:"cap-drop"`
 	RawCgroupParent string      `json:"cgroup-parent" yaml:"cgroup-parent"`
@@ -544,6 +545,10 @@ func (c *container) createArgs(cmds []string, excluded []string, configPath stri
 	// AddHost
 	for _, addHost := range c.RunParams.AddHost() {
 		args = append(args, "--add-host", addHost)
+	}
+	// BlkioWeight
+	if c.RunParams.BlkioWeight > 0 {
+		args = append(args, "--blkio-weight", strconv.Itoa(c.RunParams.BlkioWeight))
 	}
 	// CapAdd
 	for _, capAdd := range c.RunParams.CapAdd() {
