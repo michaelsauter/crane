@@ -51,6 +51,8 @@ The map of containers consists of the name of the container mapped to the contai
 	* `cap-drop` (array) Drop Linux capabilities.
 	* `cgroup-parent` (string) Need Docker >= 1.6
 	* `cidfile` (string)
+	* `cpu-period` (integer) Need Docker >= 1.7
+	* `cpu-quota` (integer) Need Docker >= 1.7
 	* `cpuset` (integer)
 	* `cpu-shares` (integer)
 	* `detach` (boolean) `sudo docker attach <container name>` will work as normal.
