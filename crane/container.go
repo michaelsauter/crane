@@ -92,6 +92,7 @@ type RunParameters struct {
 	Tty             bool        `json:"tty" yaml:"tty"`
 	RawUlimit       []string    `json:"ulimit" yaml:"ulimit"`
 	RawUser         string      `json:"user" yaml:"user"`
+	RawUts          string      `json:"uts" yaml:"uts"`
 	RawVolume       []string    `json:"volume" yaml:"volume"`
 	RawVolumesFrom  []string    `json:"volumes-from" yaml:"volumes-from"`
 	RawWorkdir      string      `json:"workdir" yaml:"workdir"`
@@ -393,6 +394,10 @@ func (r *RunParameters) Ulimit() []string {
 
 func (r *RunParameters) User() string {
 	return os.ExpandEnv(r.RawUser)
+}
+
+func (r *RunParameters) Uts() string {
+	return os.ExpandEnv(r.RawUts)
 }
 
 func (r *RunParameters) Volume(configPath string) []string {
@@ -697,6 +702,10 @@ func (c *container) createArgs(cmds []string, excluded []string, configPath stri
 	// User
 	if len(c.RunParams.User()) > 0 {
 		args = append(args, "--user", c.RunParams.User())
+	}
+	// Uts
+	if len(c.RunParams.Uts()) > 0 {
+		args = append(args, "--uts", c.RunParams.Uts())
 	}
 	// Volumes
 	for _, volume := range c.RunParams.Volume(configPath) {
