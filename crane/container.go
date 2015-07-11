@@ -58,6 +58,8 @@ type RunParameters struct {
 	RawCapAdd       []string    `json:"cap-add" yaml:"cap-add"`
 	RawCapDrop      []string    `json:"cap-drop" yaml:"cap-drop"`
 	RawCgroupParent string      `json:"cgroup-parent" yaml:"cgroup-parent"`
+	CpuPeriod       int         `json:"cpu-period" yaml:"cpu-period"`
+	CpuQuota        int         `json:"cpu-quota" yaml:"cpu-quota"`
 	RawCidfile      string      `json:"cidfile" yaml:"cidfile"`
 	Cpuset          int         `json:"cpuset" yaml:"cpuset"`
 	CpuShares       int         `json:"cpu-shares" yaml:"cpu-shares"`
@@ -569,6 +571,14 @@ func (c *container) createArgs(ignoreMissing string, configPath string) []string
 	// Cidfile
 	if len(c.RunParams.Cidfile()) > 0 {
 		args = append(args, "--cidfile", c.RunParams.Cidfile())
+	}
+	// CpuPeriod
+	if c.RunParams.CpuPeriod > 0 {
+		args = append(args, "--cpu-period", strconv.Itoa(c.RunParams.CpuPeriod))
+	}
+	// CpuQuota
+	if c.RunParams.CpuQuota > 0 {
+		args = append(args, "--cpu-quota", strconv.Itoa(c.RunParams.CpuQuota))
 	}
 	// CPU set
 	if c.RunParams.Cpuset > 0 {
