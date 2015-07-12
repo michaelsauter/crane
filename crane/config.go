@@ -17,6 +17,7 @@ type Config interface {
 	ContainersForReference(reference string) (result []string)
 	Path() string
 	ContainerMap() ContainerMap
+	Container(name string) Container
 }
 
 type config struct {
@@ -145,6 +146,10 @@ func (c *config) Path() string {
 
 func (c *config) ContainerMap() ContainerMap {
 	return c.containerMap
+}
+
+func (c *config) Container(name string) Container {
+	return c.containerMap[name]
 }
 
 // Load configuration into the internal structs from the raw, parsed ones

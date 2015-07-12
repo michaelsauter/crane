@@ -19,23 +19,11 @@ var (
 		"config",
 		"Location of config file.",
 	).Short('c').PlaceHolder("~/crane.yaml").String()
-	cascadeDependenciesFlag = app.Flag(
-		"cascade-dependencies",
-		"Also apply the command for the containers that (any of) the explicitly targeted one(s) depend on.",
-	).Short('d').Default("none").String()
-	cascadeAffectedFlag = app.Flag(
-		"cascade-affected",
-		"Also apply the command for the existing containers depending on (any of) the explicitly targeted one(s).",
-	).Short('a').Default("none").String()
 
 	liftCommand = app.Command(
 		"lift",
 		"Build or pull images if they don't exist, then run or start the containers.",
 	)
-	liftIgnoreMissingFlag = liftCommand.Flag(
-		"ignore-missing",
-		"Rather than failing, ignore dependencies that are not fullfilled.",
-	).Short('i').Default("none").String()
 	liftNoCacheFlag = liftCommand.Flag(
 		"no-cache",
 		"Build the image without any cache.",
@@ -91,10 +79,6 @@ var (
 		"start",
 		"Start the containers.",
 	)
-	startIgnoreMissingFlag = startCommand.Flag(
-		"ignore-missing",
-		"Rather than failing, ignore dependencies that are not fullfilled.",
-	).Short('i').Default("none").String()
 	startTargetArg = startCommand.Arg("target", "Target of command").String()
 
 	stopCommand = app.Command(
@@ -123,20 +107,12 @@ var (
 		"run",
 		"Run the containers.",
 	)
-	runIgnoreMissingFlag = runCommand.Flag(
-		"ignore-missing",
-		"Rather than failing, ignore dependencies that are not fullfilled.",
-	).Short('i').Default("none").String()
 	runTargetArg = runCommand.Arg("target", "Target of command").String()
 
 	createCommand = app.Command(
 		"create",
 		"Create the containers.",
 	)
-	createIgnoreMissingFlag = createCommand.Flag(
-		"ignore-missing",
-		"Rather than failing, ignore dependencies that are not fullfilled.",
-	).Short('i').Default("none").String()
 	createTargetArg = createCommand.Arg("target", "Target of command").String()
 
 	provisionCommand = app.Command(
@@ -182,112 +158,106 @@ func isVerbose() bool {
 	return *verboseFlag
 }
 
-func action(targetFlag string, wrapped func(containers Containers), forceOrder bool, ignoreMissing string) {
+func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork)) {
 
 	cfg = NewConfig(*configFlag)
 	dependencyGraph = cfg.DependencyGraph()
-	target := NewTarget(targetFlag)
-	unitOfWork, err := NewUnitOfWork(dependencyGraph, target)
+	target := NewTarget(dependencyGraph, targetFlag)
+	unitOfWork, err := NewUnitOfWork(dependencyGraph, target.all())
 	if err != nil {
 		panic(StatusError{err, 78})
 	}
 
-	var containers Containers
-	containerMap := cfg.ContainerMap()
-	for _, name := range unitOfWork.order {
-		containers = append([]Container{containerMap[name]}, containers...)
-	}
-
 	if isVerbose() {
-		print.Infof("Command will be applied to: %v\n\n", strings.Join(containers.names(), ", "))
+		print.Infof("Command will be applied to: %v\n\n", strings.Join(unitOfWork.order, ", "))
 	}
-	wrapped(containers)
+	wrapped(unitOfWork)
 }
 
 func handleCmd() {
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 
 	case liftCommand.FullCommand():
-		action(*liftTargetArg, func(containers Containers) {
-			containers.lift(*liftNoCacheFlag, *liftIgnoreMissingFlag, cfg.Path())
-		}, false, *liftIgnoreMissingFlag)
+		commandAction(*liftTargetArg, func(uow *UnitOfWork) {
+			uow.Lift(*liftNoCacheFlag)
+		})
 
 	case versionCommand.FullCommand():
 		fmt.Println("v1.5.0")
 
 	case graphCommand.FullCommand():
-		action(*graphTargetArg, func(containers Containers) {
-			cfg.DependencyGraph().DOT(os.Stdout, containers)
-		}, true, "none")
+		commandAction(*graphTargetArg, func(uow *UnitOfWork) {
+			cfg.DependencyGraph().DOT(os.Stdout, uow.order)
+		})
 
 	case statsCommand.FullCommand():
-		action(*statsTargetArg, func(containers Containers) {
-			containers.stats()
-		}, true, "none")
+		commandAction(*statsTargetArg, func(uow *UnitOfWork) {
+			uow.Stats()
+		})
 
 	case statusCommand.FullCommand():
-		action(*statusTargetArg, func(containers Containers) {
-			containers.status(*noTruncFlag)
-		}, true, "none")
+		commandAction(*statusTargetArg, func(uow *UnitOfWork) {
+			uow.Status(*noTruncFlag)
+		})
 
 	case pushCommand.FullCommand():
-		action(*pushTargetArg, func(containers Containers) {
-			containers.push()
-		}, true, "none")
+		commandAction(*pushTargetArg, func(uow *UnitOfWork) {
+			uow.Push()
+		})
 
 	case unpauseCommand.FullCommand():
-		action(*unpauseTargetArg, func(containers Containers) {
-			containers.unpause()
-		}, false, "none")
+		commandAction(*unpauseTargetArg, func(uow *UnitOfWork) {
+			uow.Unpause()
+		})
 
 	case pauseCommand.FullCommand():
-		action(*pauseTargetArg, func(containers Containers) {
-			containers.reversed().pause()
-		}, true, "none")
+		commandAction(*pauseTargetArg, func(uow *UnitOfWork) {
+			uow.Pause()
+		})
 
 	case startCommand.FullCommand():
-		action(*startTargetArg, func(containers Containers) {
-			containers.start(*startIgnoreMissingFlag, cfg.Path())
-		}, false, "none")
+		commandAction(*startTargetArg, func(uow *UnitOfWork) {
+			uow.Start()
+		})
 
 	case stopCommand.FullCommand():
-		action(*stopTargetArg, func(containers Containers) {
-			containers.reversed().stop()
-		}, true, "none")
+		commandAction(*stopTargetArg, func(uow *UnitOfWork) {
+			uow.Stop()
+		})
 
 	case killCommand.FullCommand():
-		action(*killTargetArg, func(containers Containers) {
-			containers.reversed().kill()
-		}, true, "none")
+		commandAction(*killTargetArg, func(uow *UnitOfWork) {
+			uow.Kill()
+		})
 
 	case rmCommand.FullCommand():
-		action(*rmTargetArg, func(containers Containers) {
-			containers.reversed().rm(*forceRmFlag)
-		}, true, "none")
+		commandAction(*rmTargetArg, func(uow *UnitOfWork) {
+			uow.Rm(*forceRmFlag)
+		})
 
 	case runCommand.FullCommand():
-		action(*runTargetArg, func(containers Containers) {
-			containers.run(*runIgnoreMissingFlag, cfg.Path())
-		}, false, *runIgnoreMissingFlag)
+		commandAction(*runTargetArg, func(uow *UnitOfWork) {
+			uow.Run()
+		})
 
 	case createCommand.FullCommand():
-		action(*createTargetArg, func(containers Containers) {
-			containers.create(*createIgnoreMissingFlag, cfg.Path())
-		}, false, *createIgnoreMissingFlag)
+		commandAction(*createTargetArg, func(uow *UnitOfWork) {
+			uow.Create()
+		})
 
 	case provisionCommand.FullCommand():
-		action(*provisionTargetArg, func(containers Containers) {
-			containers.provision(*provisionNoCacheFlag)
-		}, true, "none")
+		commandAction(*provisionTargetArg, func(uow *UnitOfWork) {
+			uow.Provision(*provisionNoCacheFlag)
+		})
 
 	case pullCommand.FullCommand():
-		action(*pullTargetArg, func(containers Containers) {
-			containers.pullImage()
-		}, true, "none")
+		commandAction(*pullTargetArg, func(uow *UnitOfWork) {
+			uow.PullImage()
+		})
 
 	case logsCommand.FullCommand():
-		action(*logsTargetArg, func(containers Containers) {
-			containers.logs(*followFlag, *timestampsFlag, *tailFlag, *colorizeFlag)
-		}, true, "none")
+		commandAction(*logsTargetArg, func(uow *UnitOfWork) {
+			uow.Logs(*followFlag, *timestampsFlag, *tailFlag, *colorizeFlag)
+		})
 	}
 }
