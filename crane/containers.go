@@ -146,7 +146,7 @@ func (containers Containers) push() {
 }
 
 // Dump container logs.
-func (containers Containers) logs(follow bool, timestamps bool, tail string, colorize bool) {
+func (containers Containers) logs(follow bool, since string, timestamps bool, tail string, colorize bool) {
 	var (
 		sources         = make([]multiplexio.Source, 0, 2*len(containers))
 		maxPrefixLength = strconv.Itoa(containers.maxNameLength())
@@ -162,7 +162,7 @@ func (containers Containers) logs(follow bool, timestamps bool, tail string, col
 	}
 	for i, container := range containers {
 		var (
-			stdout, stderr = container.Logs(follow, tail)
+			stdout, stderr = container.Logs(follow, since, tail)
 			stdoutColor    *ansi.Color
 			stderrColor    *ansi.Color
 		)

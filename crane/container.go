@@ -36,7 +36,7 @@ type Container interface {
 	Pause()
 	Unpause()
 	Rm(force bool)
-	Logs(follow bool, tail string) (stdout, stderr io.Reader)
+	Logs(follow bool, since string, tail string) (stdout, stderr io.Reader)
 	Push()
 	Hooks() Hooks
 }
@@ -54,9 +54,12 @@ type container struct {
 
 type RunParameters struct {
 	RawAddHost      []string    `json:"add-host" yaml:"add-host"`
+	BlkioWeight     int         `json:"blkio-weight" yaml:"blkio-weight"`
 	RawCapAdd       []string    `json:"cap-add" yaml:"cap-add"`
 	RawCapDrop      []string    `json:"cap-drop" yaml:"cap-drop"`
 	RawCgroupParent string      `json:"cgroup-parent" yaml:"cgroup-parent"`
+	CpuPeriod       int         `json:"cpu-period" yaml:"cpu-period"`
+	CpuQuota        int         `json:"cpu-quota" yaml:"cpu-quota"`
 	RawCidfile      string      `json:"cidfile" yaml:"cidfile"`
 	Cpuset          int         `json:"cpuset" yaml:"cpuset"`
 	CpuShares       int         `json:"cpu-shares" yaml:"cpu-shares"`
@@ -79,6 +82,7 @@ type RunParameters struct {
 	RawMemory       string      `json:"memory" yaml:"memory"`
 	RawMemorySwap   string      `json:"memory-swap" yaml:"memory-swap"`
 	RawNet          string      `json:"net" yaml:"net"`
+	OomKillDisable  bool        `json:"oom-kill-disable" yaml:"oom-kill-disable"`
 	RawPid          string      `json:"pid" yaml:"pid"`
 	Privileged      bool        `json:"privileged" yaml:"privileged"`
 	RawPublish      []string    `json:"publish" yaml:"publish"`
@@ -91,6 +95,7 @@ type RunParameters struct {
 	Tty             bool        `json:"tty" yaml:"tty"`
 	RawUlimit       []string    `json:"ulimit" yaml:"ulimit"`
 	RawUser         string      `json:"user" yaml:"user"`
+	RawUts          string      `json:"uts" yaml:"uts"`
 	RawVolume       []string    `json:"volume" yaml:"volume"`
 	RawVolumesFrom  []string    `json:"volumes-from" yaml:"volumes-from"`
 	RawWorkdir      string      `json:"workdir" yaml:"workdir"`
@@ -386,6 +391,10 @@ func (r *RunParameters) User() string {
 	return os.ExpandEnv(r.RawUser)
 }
 
+func (r *RunParameters) Uts() string {
+	return os.ExpandEnv(r.RawUts)
+}
+
 func (r *RunParameters) Volume(configPath string) []string {
 	var volumes []string
 	for _, rawVolume := range r.RawVolume {
@@ -543,6 +552,10 @@ func (c *container) createArgs(ignoreMissing string, configPath string) []string
 	for _, addHost := range c.RunParams.AddHost() {
 		args = append(args, "--add-host", addHost)
 	}
+	// BlkioWeight
+	if c.RunParams.BlkioWeight > 0 {
+		args = append(args, "--blkio-weight", strconv.Itoa(c.RunParams.BlkioWeight))
+	}
 	// CapAdd
 	for _, capAdd := range c.RunParams.CapAdd() {
 		args = append(args, "--cap-add", capAdd)
@@ -558,6 +571,14 @@ func (c *container) createArgs(ignoreMissing string, configPath string) []string
 	// Cidfile
 	if len(c.RunParams.Cidfile()) > 0 {
 		args = append(args, "--cidfile", c.RunParams.Cidfile())
+	}
+	// CpuPeriod
+	if c.RunParams.CpuPeriod > 0 {
+		args = append(args, "--cpu-period", strconv.Itoa(c.RunParams.CpuPeriod))
+	}
+	// CpuQuota
+	if c.RunParams.CpuQuota > 0 {
+		args = append(args, "--cpu-quota", strconv.Itoa(c.RunParams.CpuQuota))
 	}
 	// CPU set
 	if c.RunParams.Cpuset > 0 {
@@ -656,6 +677,10 @@ func (c *container) createArgs(ignoreMissing string, configPath string) []string
 			args = append(args, "--net", c.RunParams.Net())
 		}
 	}
+	// OomKillDisable
+	if c.RunParams.OomKillDisable {
+		args = append(args, "--oom-kill-disable")
+	}
 	// PID
 	if len(c.RunParams.Pid()) > 0 {
 		args = append(args, "--pid", c.RunParams.Pid())
@@ -703,6 +728,10 @@ func (c *container) createArgs(ignoreMissing string, configPath string) []string
 	// User
 	if len(c.RunParams.User()) > 0 {
 		args = append(args, "--user", c.RunParams.User())
+	}
+	// Uts
+	if len(c.RunParams.Uts()) > 0 {
+		args = append(args, "--uts", c.RunParams.Uts())
 	}
 	// Volumes
 	for _, volume := range c.RunParams.Volume(configPath) {
@@ -829,11 +858,14 @@ func (c *container) Rm(force bool) {
 }
 
 // Dump container logs
-func (c *container) Logs(follow bool, tail string) (stdout, stderr io.Reader) {
+func (c *container) Logs(follow bool, since string, tail string) (stdout, stderr io.Reader) {
 	if c.Exists() {
 		args := []string{"logs"}
 		if follow {
 			args = append(args, "-f")
+		}
+		if len(since) > 0 {
+			args = append(args, "--since", since)
 		}
 		if len(tail) > 0 && tail != "all" {
 			args = append(args, "--tail", tail)
