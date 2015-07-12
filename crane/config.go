@@ -10,13 +10,14 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"sort"
 )
 
 type Config interface {
-	TargetedContainers() Containers
 	DependencyGraph() DependencyGraph
+	ContainersForReference(reference string) (result []string)
 	Path() string
+	ContainerMap() ContainerMap
+	Container(name string) Container
 }
 
 type config struct {
@@ -24,9 +25,6 @@ type config struct {
 	RawGroups       map[string][]string   `json:"groups" yaml:"groups"`
 	RawHooksMap     map[string]hooks      `json:"hooks" yaml:"hooks"`
 	containerMap    ContainerMap
-	dependencyGraph DependencyGraph
-	target          Target
-	order           []string
 	groups          map[string][]string
 	path            string
 }
@@ -35,15 +33,13 @@ type config struct {
 // to its configuration
 type ContainerMap map[string]Container
 
-type Target []string
-
 // configFilenames returns a slice of
 // files to read the config from.
 // If the --config option was given,
 // it will only use the given file.
-func configFilenames(options Options) []string {
-	if len(options.config) > 0 {
-		return []string{options.config}
+func configFilenames(location string) []string {
+	if len(location) > 0 {
+		return []string{location}
 	} else {
 		return []string{"crane.json", "crane.yaml", "crane.yml"}
 	}
@@ -53,12 +49,12 @@ func configFilenames(options Options) []string {
 // config. It searches parent directories
 // if it can't find any of the config
 // filenames in the current directory.
-func findConfig(options Options) string {
-	configFiles := configFilenames(options)
+func findConfig(location string) string {
+	configFiles := configFilenames(location)
 	// Absolute path to config given
-	if len(options.config) > 0 && path.IsAbs(options.config) {
-		if _, err := os.Stat(options.config); err == nil {
-			return options.config
+	if len(location) > 0 && path.IsAbs(location) {
+		if _, err := os.Stat(location); err == nil {
+			return location
 		}
 	} else { // Relative config
 		configPath, _ := os.Getwd()
@@ -131,27 +127,15 @@ func unmarshal(data []byte, ext string) *config {
 }
 
 // NewConfig retus a new config based on given
-// options.
+// location.
 // Containers will be ordered so that they can be
 // brought up and down with Docker.
-func NewConfig(options Options, forceOrder bool) Config {
+func NewConfig(location string) Config {
 	var config *config
-	configFile := findConfig(options)
+	configFile := findConfig(location)
 	config = readConfig(configFile)
 	config.initialize()
-	config.dependencyGraph = config.DependencyGraph()
-	config.determineTarget(options.target, options.cascadeDependencies, options.cascadeAffected)
 	config.path = path.Dir(configFile)
-
-	ignoreMissing := options.ignoreMissing
-	if forceOrder {
-		ignoreMissing = "all"
-	}
-	var err error
-	config.order, err = config.dependencyGraph.order(config.target, ignoreMissing)
-	if err != nil {
-		panic(StatusError{err, 78})
-	}
 	return config
 }
 
@@ -160,13 +144,12 @@ func (c *config) Path() string {
 	return c.path
 }
 
-// Containers returns the containers of the config in order
-func (c *config) TargetedContainers() Containers {
-	var containers Containers
-	for _, name := range c.order {
-		containers = append([]Container{c.containerMap[name]}, containers...)
-	}
-	return containers
+func (c *config) ContainerMap() ContainerMap {
+	return c.containerMap
+}
+
+func (c *config) Container(name string) Container {
+	return c.containerMap[name]
 }
 
 // Load configuration into the internal structs from the raw, parsed ones
@@ -219,70 +202,11 @@ func (c *config) DependencyGraph() DependencyGraph {
 	return dependencyGraph
 }
 
-// determineTarget receives the specified target
-// and determines which containers should be targeted.
-// The target might be extended depending on the value
-// given for cascadeDependencies and cascadeAffected.
-// Additionally, the target is sorted alphabetically.
-func (c *config) determineTarget(target []string, cascadeDependencies string, cascadeAffected string) {
-	// start from the explicitly targeted target
-	includedSet := make(map[string]bool)
-	cascadingSeeds := []string{}
-	for _, name := range c.explicitlyTargeted(target) {
-		includedSet[name] = true
-		cascadingSeeds = append(cascadingSeeds, name)
-	}
-
-	// Cascade until the graph has been fully traversed
-	// according to the cascading flags.
-	for len(cascadingSeeds) > 0 {
-		nextCascadingSeeds := []string{}
-		for _, seed := range cascadingSeeds {
-			if cascadeDependencies != "none" {
-				if dependencies, ok := c.dependencyGraph[seed]; ok {
-					// Queue direct dependencies if we haven't already considered them
-					for _, name := range dependencies.forKind(cascadeDependencies) {
-						if _, alreadyIncluded := includedSet[name]; !alreadyIncluded {
-							includedSet[name] = true
-							nextCascadingSeeds = append(nextCascadingSeeds, name)
-						}
-					}
-				}
-			}
-			if cascadeAffected != "none" {
-				// Queue all containers we haven't considered yet which exist
-				// and directly depend on the seed.
-				for name, container := range c.containerMap {
-					if _, alreadyIncluded := includedSet[name]; !alreadyIncluded {
-						if container.Dependencies().includesAsKind(seed, cascadeAffected) && container.Exists() {
-							includedSet[name] = true
-							nextCascadingSeeds = append(nextCascadingSeeds, name)
-						}
-					}
-				}
-			}
-		}
-		cascadingSeeds = nextCascadingSeeds
-	}
-
-	// Keep the ones that are part of the container map
-	included := []string{}
-	for name := range includedSet {
-		if _, exists := c.containerMap[name]; exists {
-			included = append(included, name)
-		}
-	}
-
-	// Sort alphabetically
-	c.target = Target(included)
-	sort.Strings(c.target)
-}
-
-// explicitlyTargeted receives a target and determines which
-// containers of the map are targeted.
-func (c *config) explicitlyTargeted(target []string) (result []string) {
-	if len(target) == 0 {
-		// target not given
+// ContainersForReference receives a reference and determines which
+// containers of the map that resolves to.
+func (c *config) ContainersForReference(reference string) (result []string) {
+	if len(reference) == 0 {
+		// reference not given
 		var defaultGroup []string
 		for group, containers := range c.groups {
 			if group == "default" {
@@ -300,33 +224,26 @@ func (c *config) explicitlyTargeted(target []string) (result []string) {
 			}
 		}
 	} else {
-		// target given
-		for _, reference := range target {
-			success := false
-			reference = os.ExpandEnv(reference)
-			// Select reference from listed groups
-			for group, containers := range c.groups {
-				if group == reference {
-					result = append(result, containers...)
-					success = true
-					break
-				}
+		// reference given
+		reference = os.ExpandEnv(reference)
+		// Select reference from listed groups
+		for group, containers := range c.groups {
+			if group == reference {
+				result = append(result, containers...)
+				break
 			}
-			if success {
-				continue
-			}
+		}
+		if len(result) == 0 {
 			// The reference might just be one container
 			for name, _ := range c.containerMap {
 				if name == reference {
 					result = append(result, reference)
-					success = true
 					break
 				}
 			}
-			if success {
-				continue
-			}
-			// Otherwise, fail verbosely
+		}
+		if len(result) == 0 {
+			// reference was not found anywhere
 			panic(StatusError{fmt.Errorf("No group or container matching `%s`", reference), 64})
 		}
 	}
@@ -344,15 +261,4 @@ func (c *config) explicitlyTargeted(target []string) (result []string) {
 		}
 	}
 	return
-}
-
-// includes checks whether the given needle is
-// included in the target
-func (t Target) includes(needle string) bool {
-	for _, name := range t {
-		if name == needle {
-			return true
-		}
-	}
-	return false
 }

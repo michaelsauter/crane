@@ -31,8 +31,7 @@ func (stubbedContainer *StubbedContainer) Exists() bool {
 func TestConfigFilenames(t *testing.T) {
 	// With given fileName
 	fileName := "some/file.yml"
-	options := Options{config: fileName}
-	files := configFilenames(options)
+	files := configFilenames(fileName)
 	assert.Equal(t, []string{fileName}, files)
 	// Without given fileName
 	files = configFilenames(Options{})

@@ -31,11 +31,9 @@ func (containers Containers) reversed() Containers {
 }
 
 // Lift containers (provision + run).
-// When recreate is set, this will re-provision all images
-// and recreate all containers.
-func (containers Containers) lift(recreate bool, nocache bool, ignoreMissing string, configPath string) {
-	containers.provisionOrSkip(recreate, nocache)
-	containers.runOrStart(recreate, ignoreMissing, configPath)
+func (containers Containers) lift(nocache bool, ignoreMissing string, configPath string) {
+	containers.provision(nocache)
+	containers.run(ignoreMissing, configPath)
 }
 
 // Provision containers.
@@ -45,105 +43,8 @@ func (containers Containers) provision(nocache bool) {
 	}
 }
 
-// Pull images.
-func (containers Containers) pullImage() {
-	for _, container := range containers.stripProvisioningDuplicates() {
-		if len(container.Dockerfile()) == 0 {
-			container.PullImage()
-		}
-	}
-}
 
-// Create containers.
-// When recreate is true, removes existing containers first.
-func (containers Containers) create(recreate bool, ignoreMissing string, configPath string) {
-	if recreate {
-		containers.rm(true)
-	}
-	for _, container := range containers {
-		container.Create(ignoreMissing, configPath)
-	}
-}
 
-// Run containers.
-// When recreate is true, removes existing containers first.
-func (containers Containers) run(recreate bool, ignoreMissing string, configPath string) {
-	if recreate {
-		containers.rm(true)
-	}
-	for _, container := range containers {
-		container.Run(ignoreMissing, configPath)
-	}
-}
-
-// Run or start containers.
-// When recreate is true, removes existing containers first.
-func (containers Containers) runOrStart(recreate bool, ignoreMissing string, configPath string) {
-	if recreate {
-		containers.rm(true)
-	}
-	for _, container := range containers {
-		container.RunOrStart(ignoreMissing, configPath)
-	}
-}
-
-// Provision or skip images.
-// When update is true, provisions all images.
-func (containers Containers) provisionOrSkip(update bool, nocache bool) {
-	for _, container := range containers.stripProvisioningDuplicates() {
-		container.ProvisionOrSkip(update, nocache)
-	}
-}
-
-// Start containers.
-func (containers Containers) start() {
-	for _, container := range containers {
-		container.Start()
-	}
-}
-
-// Kill containers.
-func (containers Containers) kill() {
-	for _, container := range containers {
-		container.Kill()
-	}
-}
-
-// Stop containers.
-func (containers Containers) stop() {
-	for _, container := range containers {
-		container.Stop()
-	}
-}
-
-// Pause containers.
-func (containers Containers) pause() {
-	for _, container := range containers {
-		container.Pause()
-	}
-}
-
-// Unpause containers.
-func (containers Containers) unpause() {
-	for _, container := range containers {
-		container.Unpause()
-	}
-}
-
-// Remove containers.
-// When force is true, kills existing containers first.
-func (containers Containers) rm(force bool) {
-	for _, container := range containers {
-		container.Rm(force)
-	}
-}
-
-// Push containers.
-func (containers Containers) push() {
-	for _, container := range containers {
-		container.Push()
-	}
-}
 
 // Dump container logs.
 func (containers Containers) logs(follow bool, timestamps bool, tail string, colorize bool) {
@@ -185,35 +86,7 @@ func (containers Containers) logs(follow bool, timestamps bool, tail string, col
 	}
 }
 
-// Status of containers.
-func (containers Containers) status(notrunc bool) {
-	w := new(tabwriter.Writer)
-	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
-	fmt.Fprintln(w, "NAME\tIMAGE\tID\tUP TO DATE\tIP\tPORTS\tRUNNING")
-	for _, container := range containers {
-		fields := container.Status()
-		if !notrunc {
-			fields[2] = truncateId(fields[2])
-		}
-		fmt.Fprintf(w, "%s\n", strings.Join(fields, "\t"))
-	}
-	w.Flush()
-}
 
-// Stats about containers.
-func (containers Containers) stats() {
-	args := []string{"stats"}
-	for _, container := range containers {
-		if container.Running() {
-			args = append(args, container.Name())
-		}
-	}
-	if len(args) > 1 {
-		executeCommand("docker", args)
-	} else {
-		print.Errorf("None of the targeted container is running.\n")
-	}
-}
 
 // Return the length of the longest container name.
 func (containers Containers) maxNameLength() (maxPrefixLength int) {
