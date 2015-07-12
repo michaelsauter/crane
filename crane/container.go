@@ -478,6 +478,11 @@ func (c *container) Status() []string {
 	return fields
 }
 
+func (c *container) Lift(nocache bool, ignoreMissing string, configPath string) {
+	c.provision(nocache)
+	c.run(ignoreMissing, configPath)
+}
+
 func (c *container) Provision(nocache bool) {
 	if len(c.Dockerfile()) > 0 {
 		c.buildImage(nocache)
@@ -488,6 +493,7 @@ func (c *container) Provision(nocache bool) {
 
 // Create container
 func (c *container) Create(ignoreMissing string, configPath string) {
+	c.Rm(true)
 	fmt.Printf("Creating container %s ... ", c.Name())
 	args := append([]string{"create"}, c.createArgs(ignoreMissing, configPath)...)
 	executeCommand("docker", args)
@@ -495,6 +501,7 @@ func (c *container) Create(ignoreMissing string, configPath string) {
 
 // Run container, or start it if already existing
 func (c *container) Run(ignoreMissing string, configPath string) {
+	c.Rm(true)
 	executeHook(c.Hooks().PreStart())
 	fmt.Printf("Running container %s ... ", c.Name())
 	args := []string{"run"}
