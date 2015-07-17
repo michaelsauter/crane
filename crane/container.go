@@ -125,6 +125,14 @@ func (o *OptBool) UnmarshalJSON(b []byte) (err error) {
 	return
 }
 
+func (o *OptBool) Truthy() bool {
+	!o.Defined || o.Value
+}
+
+func (o *OptBool) Falsy() bool {
+	o.Defined && !o.Value
+}
+
 func (c *container) netContainer() (name string) {
 	if netParts := strings.Split(c.RunParams.Net(), ":"); len(netParts) == 2 && netParts[0] == "container" {
 		// We'll just assume here that the reference is a name, and not an id, even
@@ -667,7 +675,7 @@ func (c *container) createArgs(ignoreMissing string, configPath string) []string
 		args = append(args, "--security-opt", securityOpt)
 	}
 	// SigProxy
-	if c.RunParams.SigProxy.Defined && !c.RunParams.SigProxy.Value {
+	if c.RunParams.SigProxy.Falsy() {
 		args = append(args, "--sig-proxy=false")
 	}
 	// Tty
