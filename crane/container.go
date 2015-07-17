@@ -76,6 +76,7 @@ type RunParameters struct {
 	RawMacAddress   string      `json:"mac-address" yaml:"mac-address"`
 	RawMemory       string      `json:"memory" yaml:"memory"`
 	RawMemorySwap   string      `json:"memory-swap" yaml:"memory-swap"`
+	Name            OptBool     `json:"name" yaml:"name"`
 	RawNet          string      `json:"net" yaml:"net"`
 	RawPid          string      `json:"pid" yaml:"pid"`
 	Privileged      bool        `json:"privileged" yaml:"privileged"`
@@ -170,6 +171,10 @@ func (c *container) Dependencies() *Dependencies {
 
 func (c *container) Name() string {
 	return os.ExpandEnv(c.RawName)
+}
+
+func (c *container) KnownName() string {
+	c.RunParams.Name.Truthy()
 }
 
 func (c *container) Dockerfile() string {
@@ -443,7 +448,7 @@ func (r *RunParameters) Cmd() []string {
 }
 
 func (c *container) Id() string {
-	if len(c.id) == 0 {
+	if len(c.id) == 0 && c.KnownName() {
 		// `docker inspect` works for both image and containers, make sure this is a
 		// container payload we get back, otherwise we might end up getting the Id
 		// of the image of the same name.
@@ -476,6 +481,10 @@ func (c *container) ImageExists() bool {
 }
 
 func (c *container) Status() []string {
+	if !c.KnownName() {
+		fmt.Printf("Cannot show status of randomly named container %s ... ", c.Name())
+		return
+	}
 	fields := []string{c.Name(), c.Image(), "-", "-", "-", "-", "-"}
 	output := inspectString(c.Id(), "{{.Id}}\t{{.Image}}\t{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}\t{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}\t{{.State.Running}}")
 	if output != "" {
@@ -501,17 +510,26 @@ func (c *container) Provision(nocache bool) {
 
 // Create container
 func (c *container) Create(ignoreMissing string, configPath string) {
-	c.Rm(true)
-	fmt.Printf("Creating container %s ... ", c.Name())
+	if c.KnownName() {
+		c.Rm(true)
+		fmt.Printf("Creating container %s ... ", c.Name())
+	} else {
+		fmt.Printf("Creating randomly named container %s ... ", c.Name())
+	}
 	args := append([]string{"create"}, c.createArgs(ignoreMissing, configPath)...)
 	executeCommand("docker", args)
 }
 
 // Run container, or start it if already existing
 func (c *container) Run(ignoreMissing string, configPath string) {
-	c.Rm(true)
-	executeHook(c.Hooks().PreStart())
-	fmt.Printf("Running container %s ... ", c.Name())
+	if c.KnownName() {
+		c.Rm(true)
+		executeHook(c.Hooks().PreStart())
+		fmt.Printf("Running container %s ... ", c.Name())
+	} else {
+		executeHook(c.Hooks().PreStart())
+		fmt.Printf("Running randomly named container %s ... ", c.Name())
+	}
 	args := []string{"run"}
 	// Detach
 	if c.RunParams.Detach {
@@ -710,7 +728,9 @@ func (c *container) createArgs(ignoreMissing string, configPath string) []string
 		args = append(args, "--workdir", c.RunParams.Workdir())
 	}
 	// Name
-	args = append(args, "--name", c.Name())
+	if c.KnownName() {
+		args = append(args, "--name", c.Name())
+	}
 	// Image
 	args = append(args, c.Image())
 	// Command
@@ -720,6 +740,10 @@ func (c *container) createArgs(ignoreMissing string, configPath string) []string
 
 // Start container
 func (c *container) Start(ignoreMissing string, configPath string) {
+	if !c.KnownName() {
+		fmt.Printf("Cannot start randomly named container %s ... ", c.Name())
+		return
+	}
 	if c.Exists() {
 		if !c.Running() {
 			executeHook(c.Hooks().PreStart())
@@ -742,6 +766,10 @@ func (c *container) Start(ignoreMissing string, configPath string) {
 
 // Kill container
 func (c *container) Kill() {
+	if !c.KnownName() {
+		fmt.Printf("Cannot kill randomly named container %s ... ", c.Name())
+		return
+	}
 	if c.Running() {
 		executeHook(c.Hooks().PreStop())
 		fmt.Printf("Killing container %s ... ", c.Name())
@@ -753,6 +781,10 @@ func (c *container) Kill() {
 
 // Stop container
 func (c *container) Stop() {
+	if !c.KnownName() {
+		fmt.Printf("Cannot stop randomly named container %s ... ", c.Name())
+		return
+	}
 	if c.Running() {
 		executeHook(c.Hooks().PreStop())
 		fmt.Printf("Stopping container %s ... ", c.Name())
@@ -764,6 +796,10 @@ func (c *container) Stop() {
 
 // Pause container
 func (c *container) Pause() {
+	if !c.KnownName() {
+		fmt.Printf("Cannot pause randomly named container %s ... ", c.Name())
+		return
+	}
 	if c.Running() {
 		if c.Paused() {
 			print.Noticef("Container %s is already paused.\n", c.Name())
@@ -779,6 +815,10 @@ func (c *container) Pause() {
 
 // Unpause container
 func (c *container) Unpause() {
+	if !c.KnownName() {
+		fmt.Printf("Cannot unpause randomly named container %s ... ", c.Name())
+		return
+	}
 	if c.Paused() {
 		fmt.Printf("Unpausing container %s ... ", c.Name())
 		args := []string{"unpause", c.Name()}
@@ -788,6 +828,10 @@ func (c *container) Unpause() {
 
 // Remove container
 func (c *container) Rm(force bool) {
+	if !c.KnownName() {
+		fmt.Printf("Cannot remove randomly named container %s ... ", c.Name())
+		return
+	}
 	if c.Exists() {
 		containerIsRunning := c.Running()
 		if !force && containerIsRunning {
@@ -816,6 +860,10 @@ func (c *container) Rm(force bool) {
 
 // Dump container logs
 func (c *container) Logs(follow bool, tail string) (stdout, stderr io.Reader) {
+	if !c.KnownName() {
+		fmt.Printf("Cannot show logs of randomly named container %s ... ", c.Name())
+		return
+	}
 	if c.Exists() {
 		args := []string{"logs"}
 		if follow {
