@@ -23,11 +23,11 @@ func includes(haystack []string, needle string) bool {
 func NewUnitOfWork(graph DependencyGraph, targeted []string) (uow *UnitOfWork, err error) {
 
 	uow = &UnitOfWork{
-		targeted:   targeted,
-		containers: targeted,
-		order:      []string{},
+		targeted:     targeted,
+		containers:   targeted,
+		order:        []string{},
 		reverseOrder: []string{},
-		mustRun:    []string{},
+		mustRun:      []string{},
 	}
 
 	// select all containers which we care about
@@ -70,11 +70,21 @@ func NewUnitOfWork(graph DependencyGraph, targeted []string) (uow *UnitOfWork, e
 		err = fmt.Errorf("ERROR: Command cannot be applied to any container.")
 	}
 
-	for _, name := uow.order {
+	for _, name := range uow.order {
 		uow.reverseOrder = append([]string{name}, uow.reverseOrder...)
 	}
 
 	return
+}
+
+func (uow *UnitOfWork) orderedTargetedContainers() Containers {
+	c = []Container{}
+	for _, name := range uow.order {
+		if !includes(uow.targeted, name) {
+			c = append(c, cfg.Container(name))
+		}
+	}
+	c
 }
 
 func (uow *UnitOfWork) ensureInContainers(name string) {
@@ -125,20 +135,7 @@ func (uow *UnitOfWork) Stats() {
 }
 
 func (uow *UnitOfWork) Status(noTrunc bool) {
-	w := new(tabwriter.Writer)
-	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
-	fmt.Fprintln(w, "NAME\tIMAGE\tID\tUP TO DATE\tIP\tPORTS\tRUNNING")
-	for _, name := range uow.order {
-		container := cfg.Container(name)
-		if includes(uow.targeted, name) {
-			fields := container.Status()
-			if !noTrunc {
-				fields[2] = truncateId(fields[2])
-			}
-			fmt.Fprintf(w, "%s\n", strings.Join(fields, "\t"))
-		}
-	}
-	w.Flush()
+	uow.orderedTargetedContainers().status(noTrunc)
 }
 
 // Push containers.
@@ -219,18 +216,14 @@ func (uow *UnitOfWork) Create() {
 
 // Provision containers.
 func (uow *UnitOfWork) Provision(noCache bool) {
-	for _, name := range uow.order {
-		if includes(uow.targeted, name) {
-			cfg.Container(name).Provision(noCache)
-		}
-	}
+	uow.orderedTargetedContainers().provision(noCache)
 }
 
 // Pull containers.
 func (uow *UnitOfWork) PullImage() {
 	for _, name := range uow.order {
 		container := cfg.Container(name)
-		if includes(uow.targeted, name) && len(container.Dockerfile()) == 0{
+		if includes(uow.targeted, name) && len(container.Dockerfile()) == 0 {
 			container.PullImage()
 		}
 	}
@@ -238,10 +231,5 @@ func (uow *UnitOfWork) PullImage() {
 
 // Log containers.
 func (uow *UnitOfWork) Logs(follow bool, timestamps bool, tail bool, colorize bool) {
-	for _, name := range uow.order {
-		if includes(uow.targeted, name) {
-			cfg.Container(name).Logs(follow, timestamps, tail, colorize)
-		}
-	}
+	uow.orderedTargetedContainers().logs(follow, timestamps, tail, colorize)
 }
-

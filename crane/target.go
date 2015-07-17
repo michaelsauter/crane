@@ -6,9 +6,9 @@ import (
 )
 
 type Target struct {
-	initial []string
+	initial      []string
 	dependencies []string
-	affected []string
+	affected     []string
 }
 
 // NewTarget receives the specified target
@@ -35,9 +35,9 @@ func NewTarget(graph DependencyGraph, targetFlag string) Target {
 	}
 
 	target := Target{
-		initial: cfg.ContainersForReference(targetName),
+		initial:      cfg.ContainersForReference(targetName),
 		dependencies: []string{},
-		affected: []string{},
+		affected:     []string{},
 	}
 
 	includedSet := make(map[string]bool)
@@ -134,4 +134,3 @@ func (t Target) all() []string {
 	sort.Strings(all)
 	return all
 }
-

@@ -14,37 +14,12 @@ import (
 
 type Containers []Container
 
-func (containers Containers) names() []string {
-	var names []string
-	for _, container := range containers {
-		names = append(names, container.Name())
-	}
-	return names
-}
-
-func (containers Containers) reversed() Containers {
-	var reversed []Container
-	for i := len(containers) - 1; i >= 0; i-- {
-		reversed = append(reversed, containers[i])
-	}
-	return reversed
-}
-
-// Lift containers (provision + run).
-func (containers Containers) lift(nocache bool, ignoreMissing string, configPath string) {
-	containers.provision(nocache)
-	containers.run(ignoreMissing, configPath)
-}
-
 // Provision containers.
 func (containers Containers) provision(nocache bool) {
 	for _, container := range containers.stripProvisioningDuplicates() {
 		container.Provision(nocache)
 	}
 }
-
-
-
 
 // Dump container logs.
 func (containers Containers) logs(follow bool, timestamps bool, tail string, colorize bool) {
@@ -86,7 +61,20 @@ func (containers Containers) logs(follow bool, timestamps bool, tail string, col
 	}
 }
 
-
+// Status of containers.
+func (containers Containers) status(notrunc bool) {
+	w := new(tabwriter.Writer)
+	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
+	fmt.Fprintln(w, "NAME\tIMAGE\tID\tUP TO DATE\tIP\tPORTS\tRUNNING")
+	for _, container := range containers {
+		fields := container.Status()
+		if !notrunc {
+			fields[2] = truncateId(fields[2])
+		}
+		fmt.Fprintf(w, "%s\n", strings.Join(fields, "\t"))
+	}
+	w.Flush()
+}
 
 // Return the length of the longest container name.
 func (containers Containers) maxNameLength() (maxPrefixLength int) {
