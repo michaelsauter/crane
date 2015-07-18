@@ -73,22 +73,22 @@ func NewUnitOfWork(graph DependencyGraph, targeted []string) (uow *UnitOfWork, e
 	return
 }
 
-func (uow *UnitOfWork) Run(cmds []string) {
+func (uow *UnitOfWork) Run(cmds []string, excluded []string) {
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Run(cmds, "none", cfg.Path())
+			container.Run(cmds, excluded, cfg.Path())
 		} else if includes(uow.mustRun, container.Name()) {
-			container.Start("none", cfg.Path())
+			container.Start(excluded, cfg.Path())
 		}
 	}
 }
 
-func (uow *UnitOfWork) Lift(cmds []string, noCache bool) {
+func (uow *UnitOfWork) Lift(cmds []string, excluded []string, noCache bool) {
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Lift(cmds, noCache, "none", cfg.Path())
+			container.Lift(cmds, noCache, excluded, cfg.Path())
 		} else if includes(uow.mustRun, container.Name()) {
-			container.Start("none", cfg.Path())
+			container.Start(excluded, cfg.Path())
 		}
 	}
 }
@@ -136,9 +136,9 @@ func (uow *UnitOfWork) Pause() {
 func (uow *UnitOfWork) Start() {
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Start("none", cfg.Path())
+			container.Start(excluded, cfg.Path())
 		} else if includes(uow.mustRun, container.Name()) {
-			container.Start("none", cfg.Path())
+			container.Start(excluded, cfg.Path())
 		}
 	}
 }
@@ -165,12 +165,12 @@ func (uow *UnitOfWork) Rm(force bool) {
 }
 
 // Create containers.
-func (uow *UnitOfWork) Create(cmds []string) {
+func (uow *UnitOfWork) Create(cmds []string, excluded []string) {
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Create(cmds, "none", cfg.Path())
+			container.Create(cmds, excluded, cfg.Path())
 		} else if includes(uow.mustRun, container.Name()) {
-			container.Start("none", cfg.Path())
+			container.Start(excluded, cfg.Path())
 		}
 	}
 }

@@ -18,18 +18,18 @@ type Container interface {
 	Image() string
 	ImageWithTag() string
 	Id() string
-	Dependencies() *Dependencies
+	Dependencies(excluded []string) *Dependencies
 	Exists() bool
 	Running() bool
 	Paused() bool
 	ImageExists() bool
 	Status() []string
-	Lift(cmds []string, nocache bool, ignoreMissing string, configPath string)
+	Lift(cmds []string, nocache bool, excluded []string, configPath string)
 	Provision(nocache bool)
 	PullImage()
-	Create(cmds []string, ignoreMissing string, configPath string)
-	Run(cmds []string, ignoreMissing string, configPath string)
-	Start(ignoreMissing string, configPath string)
+	Create(cmds []string, excluded []string, configPath string)
+	Run(cmds []string, excluded []string, configPath string)
+	Start(excluded []string, configPath string)
 	Kill()
 	Stop()
 	Pause()
@@ -146,24 +146,24 @@ func (c *container) netContainer() (name string) {
 	return
 }
 
-func (c *container) Dependencies() *Dependencies {
+func (c *container) Dependencies(excluded []string) *Dependencies {
 	dependencies := &Dependencies{}
 	for _, link := range c.RunParams.Link() {
 		linkName := strings.Split(link, ":")[0]
-		if !dependencies.includes(linkName) {
+		if !includes(excluded, linkName) && !dependencies.includes(linkName) {
 			dependencies.All = append(dependencies.All, linkName)
 			dependencies.Link = append(dependencies.Link, linkName)
 		}
 	}
 	for _, volumesFrom := range c.RunParams.VolumesFrom() {
 		volumesFromName := strings.Split(volumesFrom, ":")[0]
-		if !dependencies.includes(volumesFromName) {
+		if !includes(excluded, volumesFromName) && !dependencies.includes(volumesFromName) {
 			dependencies.All = append(dependencies.All, volumesFromName)
 			dependencies.VolumesFrom = append(dependencies.VolumesFrom, volumesFromName)
 		}
 	}
 	if dependencies.Net = c.netContainer(); dependencies.Net != "" {
-		if !dependencies.includes(dependencies.Net) {
+		if !includes(excluded, dependencies.Net) && !dependencies.includes(dependencies.Net) {
 			dependencies.All = append(dependencies.All, dependencies.Net)
 		}
 	}
@@ -496,9 +496,9 @@ func (c *container) Status() []string {
 	return fields
 }
 
-func (c *container) Lift(cmds []string, nocache bool, ignoreMissing string, configPath string) {
+func (c *container) Lift(cmds []string, nocache bool, excluded []string, configPath string) {
 	c.Provision(nocache)
-	c.Run(cmds, ignoreMissing, configPath)
+	c.Run(cmds, excluded, configPath)
 }
 
 func (c *container) Provision(nocache bool) {
@@ -510,19 +510,19 @@ func (c *container) Provision(nocache bool) {
 }
 
 // Create container
-func (c *container) Create(cmds []string, ignoreMissing string, configPath string) {
+func (c *container) Create(cmds []string, excluded []string, configPath string) {
 	if c.KnownName() {
 		c.Rm(true)
 		fmt.Printf("Creating container %s ... ", c.Name())
 	} else {
 		fmt.Printf("Creating randomly named container %s ... ", c.Name())
 	}
-	args := append([]string{"create"}, c.createArgs(cmds, ignoreMissing, configPath)...)
+	args := append([]string{"create"}, c.createArgs(cmds, excluded, configPath)...)
 	executeCommand("docker", args)
 }
 
 // Run container, or start it if already existing
-func (c *container) Run(cmds []string, ignoreMissing string, configPath string) {
+func (c *container) Run(cmds []string, excluded []string, configPath string) {
 	if c.KnownName() {
 		c.Rm(true)
 		executeHook(c.Hooks().PreStart())
@@ -536,13 +536,13 @@ func (c *container) Run(cmds []string, ignoreMissing string, configPath string) 
 	if c.RunParams.Detach {
 		args = append(args, "--detach")
 	}
-	args = append(args, c.createArgs(cmds, ignoreMissing, configPath)...)
+	args = append(args, c.createArgs(cmds, excluded, configPath)...)
 	executeCommand("docker", args)
 	executeHook(c.Hooks().PostStart())
 }
 
 // Returns all the flags to be passed to `docker create`
-func (c *container) createArgs(cmds []string, ignoreMissing string, configPath string) []string {
+func (c *container) createArgs(cmds []string, excluded []string, configPath string) []string {
 	args := []string{}
 	// AddHost
 	for _, addHost := range c.RunParams.AddHost() {
@@ -614,14 +614,9 @@ func (c *container) createArgs(cmds []string, ignoreMissing string, configPath s
 	}
 	// Link
 	for _, link := range c.RunParams.Link() {
-		if ignoreMissing == "all" || ignoreMissing == "link" {
-			// Omit non-running targets
-			target := container{RawName: strings.Split(link, ":")[0]}
-			if !target.Running() {
-				continue
-			}
+		if !includes(excluded, strings.Split(link, ":")[0]) {
+			args = append(args, "--link", link)
 		}
-		args = append(args, "--link", link)
 	}
 	// LogDriver
 	if len(c.RunParams.LogDriver()) > 0 {
@@ -649,15 +644,7 @@ func (c *container) createArgs(cmds []string, ignoreMissing string, configPath s
 	}
 	// Net
 	if c.RunParams.Net() != "bridge" {
-		skip := false
-		name := c.netContainer()
-		if name != "" && (ignoreMissing == "all" || ignoreMissing == "net") {
-			target := container{RawName: name}
-			if !target.Running() {
-				skip = true
-			}
-		}
-		if !skip {
+		if !includes(excluded, c.netContainer()) {
 			args = append(args, "--net", c.RunParams.Net())
 		}
 	}
@@ -715,14 +702,9 @@ func (c *container) createArgs(cmds []string, ignoreMissing string, configPath s
 	}
 	// VolumesFrom
 	for _, volumesFrom := range c.RunParams.VolumesFrom() {
-		if ignoreMissing == "all" || ignoreMissing == "volumesFrom" {
-			// Omit non-existing targets
-			target := container{RawName: strings.Split(volumesFrom, ":")[0]}
-			if !target.Exists() {
-				continue
-			}
+		if !includes(excluded, strings.Split(volumesFrom, ":")[0]) {
+			args = append(args, "--volumes-from", volumesFrom)
 		}
-		args = append(args, "--volumes-from", volumesFrom)
 	}
 	// Workdir
 	if len(c.RunParams.Workdir()) > 0 {
@@ -744,7 +726,7 @@ func (c *container) createArgs(cmds []string, ignoreMissing string, configPath s
 }
 
 // Start container
-func (c *container) Start(ignoreMissing string, configPath string) {
+func (c *container) Start(excluded []string, configPath string) {
 	if !c.KnownName() {
 		fmt.Printf("Cannot start randomly named container %s ... ", c.Name())
 		return
@@ -765,7 +747,7 @@ func (c *container) Start(ignoreMissing string, configPath string) {
 			executeHook(c.Hooks().PostStart())
 		}
 	} else {
-		c.Run([]string{}, ignoreMissing, configPath)
+		c.Run([]string{}, excluded, configPath)
 	}
 }
 

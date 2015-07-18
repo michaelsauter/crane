@@ -16,7 +16,7 @@ type Target struct {
 // The target might be extended depending on the value
 // given for cascadeDependencies and cascadeAffected.
 // Additionally, the target is sorted alphabetically.
-func NewTarget(graph DependencyGraph, targetFlag string) Target {
+func NewTarget(graph DependencyGraph, targetFlag string, excluded []string) Target {
 
 	containerMap := cfg.ContainerMap()
 
@@ -91,7 +91,7 @@ func NewTarget(graph DependencyGraph, targetFlag string) Target {
 			for _, seed := range cascadingSeeds {
 				for name, container := range containerMap {
 					if _, alreadyIncluded := includedSet[name]; !alreadyIncluded {
-						if container.Dependencies().includes(seed) {
+						if container.Dependencies(excluded).includes(seed) {
 							includedSet[name] = true
 							nextCascadingSeeds = append(nextCascadingSeeds, name)
 						}

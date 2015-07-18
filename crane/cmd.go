@@ -10,6 +10,7 @@ import (
 
 var cfg Config
 var dependencyGraph DependencyGraph
+var excluded []string
 
 var (
 	app          = kingpin.New("crane", "Lift containers with ease")
@@ -28,6 +29,10 @@ var (
 		"no-cache",
 		"Build the image without any cache.",
 	).Short('n').Bool()
+	liftExcludeFlag = liftCommand.Flag(
+		"exclude",
+		"Exclude group or container",
+	).Short('e').String()
 	liftTargetArg = liftCommand.Arg("target", "Target of command").String()
 	liftCmdArg    = liftCommand.Arg("cmd", "Command for container").Strings()
 
@@ -108,6 +113,10 @@ var (
 		"run",
 		"Run the containers.",
 	)
+	runExcludeFlag = runCommand.Flag(
+		"exclude",
+		"Exclude group or container",
+	).Short('e').String()
 	runTargetArg = runCommand.Arg("target", "Target of command").String()
 	runCmdArg    = runCommand.Arg("cmd", "Command for container").Strings()
 
@@ -115,6 +124,10 @@ var (
 		"create",
 		"Create the containers.",
 	)
+	createExcludeFlag = createCommand.Flag(
+		"exclude",
+		"Exclude group or container",
+	).Short('e').String()
 	createTargetArg = createCommand.Arg("target", "Target of command").String()
 	createCmdArg    = createCommand.Arg("cmd", "Command for container").Strings()
 
@@ -164,8 +177,9 @@ func isVerbose() bool {
 func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork)) {
 
 	cfg = NewConfig(*configFlag)
-	dependencyGraph = cfg.DependencyGraph()
-	target := NewTarget(dependencyGraph, targetFlag)
+	excluded = excludedContainers([]string{*liftExcludeFlag, *createExcludeFlag, *runExcludeFlag})
+	dependencyGraph = cfg.DependencyGraph(excluded)
+	target := NewTarget(dependencyGraph, targetFlag, excluded)
 	unitOfWork, err := NewUnitOfWork(dependencyGraph, target.all())
 	if err != nil {
 		panic(StatusError{err, 78})
@@ -177,12 +191,21 @@ func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork)) {
 	wrapped(unitOfWork)
 }
 
+func excludedContainers(flags []string) []string {
+	for _, flag := range flags {
+		if len(flag) > 0 {
+			return cfg.ContainersForReference(flag)
+		}
+	}
+	return []string{}
+}
+
 func handleCmd() {
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 
 	case liftCommand.FullCommand():
 		commandAction(*liftTargetArg, func(uow *UnitOfWork) {
-			uow.Lift(*liftCmdArg, *liftNoCacheFlag)
+			uow.Lift(*liftCmdArg, excluded, *liftNoCacheFlag)
 		})
 
 	case versionCommand.FullCommand():
@@ -190,7 +213,7 @@ func handleCmd() {
 
 	case graphCommand.FullCommand():
 		commandAction(*graphTargetArg, func(uow *UnitOfWork) {
-			cfg.DependencyGraph().DOT(os.Stdout, uow.Targeted())
+			dependencyGraph.DOT(os.Stdout, uow.Targeted())
 		})
 
 	case statsCommand.FullCommand():
@@ -240,12 +263,12 @@ func handleCmd() {
 
 	case runCommand.FullCommand():
 		commandAction(*runTargetArg, func(uow *UnitOfWork) {
-			uow.Run(*runCmdArg)
+			uow.Run(*runCmdArg, excluded)
 		})
 
 	case createCommand.FullCommand():
 		commandAction(*createTargetArg, func(uow *UnitOfWork) {
-			uow.Create(*createCmdArg)
+			uow.Create(*createCmdArg, excluded)
 		})
 
 	case provisionCommand.FullCommand():

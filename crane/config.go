@@ -13,7 +13,7 @@ import (
 )
 
 type Config interface {
-	DependencyGraph() DependencyGraph
+	DependencyGraph(excluded []string) DependencyGraph
 	ContainersForReference(reference string) (result []string)
 	Path() string
 	ContainerMap() ContainerMap
@@ -194,10 +194,12 @@ func (c *config) initialize() {
 
 // DependencyGraph returns the dependency graph, which is
 // a map describing the dependencies between the containers.
-func (c *config) DependencyGraph() DependencyGraph {
+func (c *config) DependencyGraph(excluded []string) DependencyGraph {
 	dependencyGraph := make(DependencyGraph)
 	for _, container := range c.containerMap {
-		dependencyGraph[container.Name()] = container.Dependencies()
+		if !includes(excluded, container.Name()) {
+			dependencyGraph[container.Name()] = container.Dependencies(excluded)
+		}
 	}
 	return dependencyGraph
 }
