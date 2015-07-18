@@ -2,6 +2,7 @@ package crane
 
 import (
 	"fmt"
+	"github.com/michaelsauter/crane/print"
 )
 
 type UnitOfWork struct {
@@ -72,20 +73,20 @@ func NewUnitOfWork(graph DependencyGraph, targeted []string) (uow *UnitOfWork, e
 	return
 }
 
-func (uow *UnitOfWork) Run() {
-	for _, container := range uow.containers() {
+func (uow *UnitOfWork) Run(cmds []string) {
+	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Run("none", cfg.Path())
+			container.Run(cmds, "none", cfg.Path())
 		} else if includes(uow.mustRun, container.Name()) {
 			container.Start("none", cfg.Path())
 		}
 	}
 }
 
-func (uow *UnitOfWork) Lift(noCache bool) {
-	for _, container := range uow.containers() {
+func (uow *UnitOfWork) Lift(cmds []string, noCache bool) {
+	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Lift(noCache, "none", cfg.Path())
+			container.Lift(cmds, noCache, "none", cfg.Path())
 		} else if includes(uow.mustRun, container.Name()) {
 			container.Start("none", cfg.Path())
 		}
@@ -94,7 +95,7 @@ func (uow *UnitOfWork) Lift(noCache bool) {
 
 func (uow *UnitOfWork) Stats() {
 	args := []string{"stats"}
-	for _, container := range uow.targeted() {
+	for _, container := range uow.Targeted() {
 		if container.Running() {
 			args = append(args, container.Name())
 		}
@@ -107,35 +108,35 @@ func (uow *UnitOfWork) Stats() {
 }
 
 func (uow *UnitOfWork) Status(noTrunc bool) {
-	uow.targeted().Status(noTrunc)
+	uow.Targeted().Status(noTrunc)
 }
 
 // Push containers.
 func (uow *UnitOfWork) Push() {
-	for _, container := range uow.targeted() {
+	for _, container := range uow.Targeted() {
 		container.Push()
 	}
 }
 
 // Unpause containers.
 func (uow *UnitOfWork) Unpause() {
-	for _, container := range uow.targeted() {
+	for _, container := range uow.Targeted() {
 		container.Unpause()
 	}
 }
 
 // Pause containers.
 func (uow *UnitOfWork) Pause() {
-	for _, container := range uow.targeted().Reversed() {
+	for _, container := range uow.Targeted().Reversed() {
 		container.Pause()
 	}
 }
 
 // Start containers.
 func (uow *UnitOfWork) Start() {
-	for _, container := range uow.containers() {
+	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Start()
+			container.Start("none", cfg.Path())
 		} else if includes(uow.mustRun, container.Name()) {
 			container.Start("none", cfg.Path())
 		}
@@ -144,30 +145,30 @@ func (uow *UnitOfWork) Start() {
 
 // Stop containers.
 func (uow *UnitOfWork) Stop() {
-	for _, container := range uow.targeted().Reversed() {
+	for _, container := range uow.Targeted().Reversed() {
 		container.Stop()
 	}
 }
 
 // Kill containers.
 func (uow *UnitOfWork) Kill() {
-	for _, container := range uow.targeted().Reversed() {
+	for _, container := range uow.Targeted().Reversed() {
 		container.Kill()
 	}
 }
 
 // Rm containers.
-func (uow *UnitOfWork) Rm() {
-	for _, container := range uow.targeted().Reversed() {
-		container.Rm()
+func (uow *UnitOfWork) Rm(force bool) {
+	for _, container := range uow.Targeted().Reversed() {
+		container.Rm(force)
 	}
 }
 
 // Create containers.
-func (uow *UnitOfWork) Create() {
-	for _, container := range uow.containers() {
+func (uow *UnitOfWork) Create(cmds []string) {
+	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Create("none", cfg.Path())
+			container.Create(cmds, "none", cfg.Path())
 		} else if includes(uow.mustRun, container.Name()) {
 			container.Start("none", cfg.Path())
 		}
@@ -176,12 +177,12 @@ func (uow *UnitOfWork) Create() {
 
 // Provision containers.
 func (uow *UnitOfWork) Provision(noCache bool) {
-	uow.targeted().Provision(noCache)
+	uow.Targeted().Provision(noCache)
 }
 
 // Pull containers.
 func (uow *UnitOfWork) PullImage() {
-	for _, container := range uow.targeted() {
+	for _, container := range uow.Targeted() {
 		if len(container.Dockerfile()) == 0 {
 			container.PullImage()
 		}
@@ -189,26 +190,26 @@ func (uow *UnitOfWork) PullImage() {
 }
 
 // Log containers.
-func (uow *UnitOfWork) Logs(follow bool, timestamps bool, tail bool, colorize bool) {
-	uow.targeted().Logs(follow, timestamps, tail, colorize)
+func (uow *UnitOfWork) Logs(follow bool, timestamps bool, tail string, colorize bool) {
+	uow.Targeted().Logs(follow, timestamps, tail, colorize)
 }
 
-func (uow *UnitOfWork) containers() Containers {
-	c = []Container{}
+func (uow *UnitOfWork) Containers() Containers {
+	c := []Container{}
 	for _, name := range uow.order {
 		c = append(c, cfg.Container(name))
 	}
-	c
+	return c
 }
 
-func (uow *UnitOfWork) targeted() Containers {
-	c = []Container{}
+func (uow *UnitOfWork) Targeted() Containers {
+	c := []Container{}
 	for _, name := range uow.order {
 		if includes(uow.targeted, name) {
 			c = append(c, cfg.Container(name))
 		}
 	}
-	c
+	return c
 }
 
 func (uow *UnitOfWork) ensureInContainers(name string) {

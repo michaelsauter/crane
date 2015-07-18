@@ -29,6 +29,7 @@ var (
 		"Build the image without any cache.",
 	).Short('n').Bool()
 	liftTargetArg = liftCommand.Arg("target", "Target of command").String()
+	liftCmdArg    = liftCommand.Arg("cmd", "Command for container").Strings()
 
 	versionCommand = app.Command(
 		"version",
@@ -108,12 +109,14 @@ var (
 		"Run the containers.",
 	)
 	runTargetArg = runCommand.Arg("target", "Target of command").String()
+	runCmdArg    = runCommand.Arg("cmd", "Command for container").Strings()
 
 	createCommand = app.Command(
 		"create",
 		"Create the containers.",
 	)
 	createTargetArg = createCommand.Arg("target", "Target of command").String()
+	createCmdArg    = createCommand.Arg("cmd", "Command for container").Strings()
 
 	provisionCommand = app.Command(
 		"provision",
@@ -179,7 +182,7 @@ func handleCmd() {
 
 	case liftCommand.FullCommand():
 		commandAction(*liftTargetArg, func(uow *UnitOfWork) {
-			uow.Lift(*liftNoCacheFlag)
+			uow.Lift(*liftCmdArg, *liftNoCacheFlag)
 		})
 
 	case versionCommand.FullCommand():
@@ -187,7 +190,7 @@ func handleCmd() {
 
 	case graphCommand.FullCommand():
 		commandAction(*graphTargetArg, func(uow *UnitOfWork) {
-			cfg.DependencyGraph().DOT(os.Stdout, uow.order)
+			cfg.DependencyGraph().DOT(os.Stdout, uow.Targeted())
 		})
 
 	case statsCommand.FullCommand():
@@ -237,12 +240,12 @@ func handleCmd() {
 
 	case runCommand.FullCommand():
 		commandAction(*runTargetArg, func(uow *UnitOfWork) {
-			uow.Run()
+			uow.Run(*runCmdArg)
 		})
 
 	case createCommand.FullCommand():
 		commandAction(*createTargetArg, func(uow *UnitOfWork) {
-			uow.Create()
+			uow.Create(*createCmdArg)
 		})
 
 	case provisionCommand.FullCommand():

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/bjaglin/multiplexio"
 	ansi "github.com/fatih/color"
-	"github.com/michaelsauter/crane/print"
 	"io"
 	"os"
 	"strconv"

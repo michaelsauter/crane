@@ -24,10 +24,11 @@ type Container interface {
 	Paused() bool
 	ImageExists() bool
 	Status() []string
+	Lift(cmds []string, nocache bool, ignoreMissing string, configPath string)
 	Provision(nocache bool)
 	PullImage()
-	Create(ignoreMissing string, configPath string)
-	Run(ignoreMissing string, configPath string)
+	Create(cmds []string, ignoreMissing string, configPath string)
+	Run(cmds []string, ignoreMissing string, configPath string)
 	Start(ignoreMissing string, configPath string)
 	Kill()
 	Stop()
@@ -127,11 +128,11 @@ func (o *OptBool) UnmarshalJSON(b []byte) (err error) {
 }
 
 func (o *OptBool) Truthy() bool {
-	!o.Defined || o.Value
+	return !o.Defined || o.Value
 }
 
 func (o *OptBool) Falsy() bool {
-	o.Defined && !o.Value
+	return o.Defined && !o.Value
 }
 
 func (c *container) netContainer() (name string) {
@@ -173,8 +174,8 @@ func (c *container) Name() string {
 	return os.ExpandEnv(c.RawName)
 }
 
-func (c *container) KnownName() string {
-	c.RunParams.Name.Truthy()
+func (c *container) KnownName() bool {
+	return c.RunParams.Name.Truthy()
 }
 
 func (c *container) Dockerfile() string {
@@ -483,7 +484,7 @@ func (c *container) ImageExists() bool {
 func (c *container) Status() []string {
 	if !c.KnownName() {
 		fmt.Printf("Cannot show status of randomly named container %s ... ", c.Name())
-		return
+		return []string{}
 	}
 	fields := []string{c.Name(), c.Image(), "-", "-", "-", "-", "-"}
 	output := inspectString(c.Id(), "{{.Id}}\t{{.Image}}\t{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}\t{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}\t{{.State.Running}}")
@@ -495,9 +496,9 @@ func (c *container) Status() []string {
 	return fields
 }
 
-func (c *container) Lift(nocache bool, ignoreMissing string, configPath string) {
-	c.provision(nocache)
-	c.run(ignoreMissing, configPath)
+func (c *container) Lift(cmds []string, nocache bool, ignoreMissing string, configPath string) {
+	c.Provision(nocache)
+	c.Run(cmds, ignoreMissing, configPath)
 }
 
 func (c *container) Provision(nocache bool) {
@@ -509,19 +510,19 @@ func (c *container) Provision(nocache bool) {
 }
 
 // Create container
-func (c *container) Create(ignoreMissing string, configPath string) {
+func (c *container) Create(cmds []string, ignoreMissing string, configPath string) {
 	if c.KnownName() {
 		c.Rm(true)
 		fmt.Printf("Creating container %s ... ", c.Name())
 	} else {
 		fmt.Printf("Creating randomly named container %s ... ", c.Name())
 	}
-	args := append([]string{"create"}, c.createArgs(ignoreMissing, configPath)...)
+	args := append([]string{"create"}, c.createArgs(cmds, ignoreMissing, configPath)...)
 	executeCommand("docker", args)
 }
 
 // Run container, or start it if already existing
-func (c *container) Run(ignoreMissing string, configPath string) {
+func (c *container) Run(cmds []string, ignoreMissing string, configPath string) {
 	if c.KnownName() {
 		c.Rm(true)
 		executeHook(c.Hooks().PreStart())
@@ -535,13 +536,13 @@ func (c *container) Run(ignoreMissing string, configPath string) {
 	if c.RunParams.Detach {
 		args = append(args, "--detach")
 	}
-	args = append(args, c.createArgs(ignoreMissing, configPath)...)
+	args = append(args, c.createArgs(cmds, ignoreMissing, configPath)...)
 	executeCommand("docker", args)
 	executeHook(c.Hooks().PostStart())
 }
 
 // Returns all the flags to be passed to `docker create`
-func (c *container) createArgs(ignoreMissing string, configPath string) []string {
+func (c *container) createArgs(cmds []string, ignoreMissing string, configPath string) []string {
 	args := []string{}
 	// AddHost
 	for _, addHost := range c.RunParams.AddHost() {
@@ -734,7 +735,11 @@ func (c *container) createArgs(ignoreMissing string, configPath string) []string
 	// Image
 	args = append(args, c.Image())
 	// Command
-	args = append(args, c.RunParams.Cmd()...)
+	if len(cmds) > 0 {
+		args = append(args, cmds...)
+	} else {
+		args = append(args, c.RunParams.Cmd()...)
+	}
 	return args
 }
 
@@ -760,7 +765,7 @@ func (c *container) Start(ignoreMissing string, configPath string) {
 			executeHook(c.Hooks().PostStart())
 		}
 	} else {
-		c.Run(ignoreMissing, configPath)
+		c.Run([]string{}, ignoreMissing, configPath)
 	}
 }
 
