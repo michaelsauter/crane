@@ -23,11 +23,10 @@ func includes(haystack []string, needle string) bool {
 func NewUnitOfWork(graph DependencyGraph, targeted []string) (uow *UnitOfWork, err error) {
 
 	uow = &UnitOfWork{
-		targeted:     targeted,
-		containers:   targeted,
-		order:        []string{},
-		reverseOrder: []string{},
-		mustRun:      []string{},
+		targeted:   targeted,
+		containers: targeted,
+		order:      []string{},
+		mustRun:    []string{},
 	}
 
 	// select all containers which we care about
@@ -70,17 +69,142 @@ func NewUnitOfWork(graph DependencyGraph, targeted []string) (uow *UnitOfWork, e
 		err = fmt.Errorf("ERROR: Command cannot be applied to any container.")
 	}
 
-	for _, name := range uow.order {
-		uow.reverseOrder = append([]string{name}, uow.reverseOrder...)
-	}
-
 	return
 }
 
-func (uow *UnitOfWork) orderedTargetedContainers() Containers {
+func (uow *UnitOfWork) Run() {
+	for _, container := range uow.containers() {
+		if includes(uow.targeted, container.Name()) {
+			container.Run("none", cfg.Path())
+		} else if includes(uow.mustRun, container.Name()) {
+			container.Start("none", cfg.Path())
+		}
+	}
+}
+
+func (uow *UnitOfWork) Lift(noCache bool) {
+	for _, container := range uow.containers() {
+		if includes(uow.targeted, container.Name()) {
+			container.Lift(noCache, "none", cfg.Path())
+		} else if includes(uow.mustRun, container.Name()) {
+			container.Start("none", cfg.Path())
+		}
+	}
+}
+
+func (uow *UnitOfWork) Stats() {
+	args := []string{"stats"}
+	for _, container := range uow.targeted() {
+		if container.Running() {
+			args = append(args, container.Name())
+		}
+	}
+	if len(args) > 1 {
+		executeCommand("docker", args)
+	} else {
+		print.Errorf("None of the targeted container is running.\n")
+	}
+}
+
+func (uow *UnitOfWork) Status(noTrunc bool) {
+	uow.targeted().Status(noTrunc)
+}
+
+// Push containers.
+func (uow *UnitOfWork) Push() {
+	for _, container := range uow.targeted() {
+		container.Push()
+	}
+}
+
+// Unpause containers.
+func (uow *UnitOfWork) Unpause() {
+	for _, container := range uow.targeted() {
+		container.Unpause()
+	}
+}
+
+// Pause containers.
+func (uow *UnitOfWork) Pause() {
+	for _, container := range uow.targeted().Reversed() {
+		container.Pause()
+	}
+}
+
+// Start containers.
+func (uow *UnitOfWork) Start() {
+	for _, container := range uow.containers() {
+		if includes(uow.targeted, container.Name()) {
+			container.Start()
+		} else if includes(uow.mustRun, container.Name()) {
+			container.Start("none", cfg.Path())
+		}
+	}
+}
+
+// Stop containers.
+func (uow *UnitOfWork) Stop() {
+	for _, container := range uow.targeted().Reversed() {
+		container.Stop()
+	}
+}
+
+// Kill containers.
+func (uow *UnitOfWork) Kill() {
+	for _, container := range uow.targeted().Reversed() {
+		container.Kill()
+	}
+}
+
+// Rm containers.
+func (uow *UnitOfWork) Rm() {
+	for _, container := range uow.targeted().Reversed() {
+		container.Rm()
+	}
+}
+
+// Create containers.
+func (uow *UnitOfWork) Create() {
+	for _, container := range uow.containers() {
+		if includes(uow.targeted, container.Name()) {
+			container.Create("none", cfg.Path())
+		} else if includes(uow.mustRun, container.Name()) {
+			container.Start("none", cfg.Path())
+		}
+	}
+}
+
+// Provision containers.
+func (uow *UnitOfWork) Provision(noCache bool) {
+	uow.targeted().Provision(noCache)
+}
+
+// Pull containers.
+func (uow *UnitOfWork) PullImage() {
+	for _, container := range uow.targeted() {
+		if len(container.Dockerfile()) == 0 {
+			container.PullImage()
+		}
+	}
+}
+
+// Log containers.
+func (uow *UnitOfWork) Logs(follow bool, timestamps bool, tail bool, colorize bool) {
+	uow.targeted().Logs(follow, timestamps, tail, colorize)
+}
+
+func (uow *UnitOfWork) containers() Containers {
 	c = []Container{}
 	for _, name := range uow.order {
-		if !includes(uow.targeted, name) {
+		c = append(c, cfg.Container(name))
+	}
+	c
+}
+
+func (uow *UnitOfWork) targeted() Containers {
+	c = []Container{}
+	for _, name := range uow.order {
+		if includes(uow.targeted, name) {
 			c = append(c, cfg.Container(name))
 		}
 	}
@@ -97,139 +221,4 @@ func (uow *UnitOfWork) ensureInMustRun(name string) {
 	if !includes(uow.mustRun, name) {
 		uow.mustRun = append(uow.mustRun, name)
 	}
-}
-
-func (uow *UnitOfWork) Run() {
-	for _, name := range uow.order {
-		if includes(uow.targeted, name) {
-			cfg.Container(name).Run("none", cfg.Path())
-		} else if includes(uow.mustRun, name) {
-			cfg.Container(name).Start("none", cfg.Path())
-		}
-	}
-}
-
-func (uow *UnitOfWork) Lift(noCache bool) {
-	for _, name := range uow.order {
-		if includes(uow.targeted, name) {
-			cfg.Container(name).Lift(noCache, "none", cfg.Path())
-		} else if includes(uow.mustRun, name) {
-			cfg.Container(name).Start("none", cfg.Path())
-		}
-	}
-}
-
-func (uow *UnitOfWork) Stats() {
-	args := []string{"stats"}
-	for _, name := range uow.order {
-		container := cfg.Container(name)
-		if includes(uow.targeted, name) && container.Running() {
-			args = append(args, container.Name())
-		}
-	}
-	if len(args) > 1 {
-		executeCommand("docker", args)
-	} else {
-		print.Errorf("None of the targeted container is running.\n")
-	}
-}
-
-func (uow *UnitOfWork) Status(noTrunc bool) {
-	uow.orderedTargetedContainers().status(noTrunc)
-}
-
-// Push containers.
-func (uow *UnitOfWork) Push() {
-	for _, name := range uow.order {
-		if includes(uow.targeted, name) {
-			cfg.Container(name).Push()
-		}
-	}
-}
-
-// Unpause containers.
-func (uow *UnitOfWork) Unpause() {
-	for _, name := range uow.order {
-		if includes(uow.targeted, name) {
-			cfg.Container(name).Unpause()
-		}
-	}
-}
-
-// Pause containers.
-func (uow *UnitOfWork) Pause() {
-	for _, name := range uow.reverseOrder {
-		if includes(uow.targeted, name) {
-			cfg.Container(name).Pause()
-		}
-	}
-}
-
-// Start containers.
-func (uow *UnitOfWork) Start() {
-	for _, name := range uow.order {
-		if includes(uow.targeted, name) {
-			cfg.Container(name).Start()
-		} else if includes(uow.mustRun, name) {
-			cfg.Container(name).Start("none", cfg.Path())
-		}
-	}
-}
-
-// Stop containers.
-func (uow *UnitOfWork) Stop() {
-	for _, name := range uow.reverseOrder {
-		if includes(uow.targeted, name) {
-			cfg.Container(name).Stop()
-		}
-	}
-}
-
-// Kill containers.
-func (uow *UnitOfWork) Kill() {
-	for _, name := range uow.reverseOrder {
-		if includes(uow.targeted, name) {
-			cfg.Container(name).Kill()
-		}
-	}
-}
-
-// Rm containers.
-func (uow *UnitOfWork) Rm() {
-	for _, name := range uow.reverseOrder {
-		if includes(uow.targeted, name) {
-			cfg.Container(name).Rm()
-		}
-	}
-}
-
-// Create containers.
-func (uow *UnitOfWork) Create() {
-	for _, name := range uow.order {
-		if includes(uow.targeted, name) {
-			cfg.Container(name).Create("none", cfg.Path())
-		} else if includes(uow.mustRun, name) {
-			cfg.Container(name).Start("none", cfg.Path())
-		}
-	}
-}
-
-// Provision containers.
-func (uow *UnitOfWork) Provision(noCache bool) {
-	uow.orderedTargetedContainers().provision(noCache)
-}
-
-// Pull containers.
-func (uow *UnitOfWork) PullImage() {
-	for _, name := range uow.order {
-		container := cfg.Container(name)
-		if includes(uow.targeted, name) && len(container.Dockerfile()) == 0 {
-			container.PullImage()
-		}
-	}
-}
-
-// Log containers.
-func (uow *UnitOfWork) Logs(follow bool, timestamps bool, tail bool, colorize bool) {
-	uow.orderedTargetedContainers().logs(follow, timestamps, tail, colorize)
 }
