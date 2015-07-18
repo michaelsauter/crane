@@ -14,15 +14,23 @@ import (
 
 type Containers []Container
 
+func (containers Containers) Reversed() Containers {
+	var reversed []Container
+	for i := len(containers) - 1; i >= 0; i-- {
+		reversed = append(reversed, containers[i])
+	}
+	return reversed
+}
+
 // Provision containers.
-func (containers Containers) provision(nocache bool) {
+func (containers Containers) Provision(nocache bool) {
 	for _, container := range containers.stripProvisioningDuplicates() {
 		container.Provision(nocache)
 	}
 }
 
 // Dump container logs.
-func (containers Containers) logs(follow bool, timestamps bool, tail string, colorize bool) {
+func (containers Containers) Logs(follow bool, timestamps bool, tail string, colorize bool) {
 	var (
 		sources         = make([]multiplexio.Source, 0, 2*len(containers))
 		maxPrefixLength = strconv.Itoa(containers.maxNameLength())
@@ -62,7 +70,7 @@ func (containers Containers) logs(follow bool, timestamps bool, tail string, col
 }
 
 // Status of containers.
-func (containers Containers) status(notrunc bool) {
+func (containers Containers) Status(notrunc bool) {
 	w := new(tabwriter.Writer)
 	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
 	fmt.Fprintln(w, "NAME\tIMAGE\tID\tUP TO DATE\tIP\tPORTS\tRUNNING")
