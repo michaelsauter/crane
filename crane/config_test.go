@@ -34,7 +34,7 @@ func TestConfigFilenames(t *testing.T) {
 	files := configFilenames(fileName)
 	assert.Equal(t, []string{fileName}, files)
 	// Without given fileName
-	files = configFilenames(Options{})
+	files = configFilenames("")
 	assert.Equal(t, []string{"crane.json", "crane.yaml", "crane.yml"}, files)
 }
 
@@ -47,18 +47,18 @@ func TestFindConfig(t *testing.T) {
 
 	// Finds config in current dir
 	os.Chdir(os.TempDir())
-	fileName = findConfig(Options{config: configName})
+	fileName = findConfig(configName)
 	assert.Equal(t, f.Name(), fileName)
 
 	// Finds config in parent dir
 	d, _ := ioutil.TempDir("", "sub")
 	defer syscall.Unlink(d)
 	os.Chdir(d)
-	fileName = findConfig(Options{config: configName})
+	fileName = findConfig(configName)
 	assert.Equal(t, f.Name(), fileName)
 
 	// Finds config with absolute path
-	fileName = findConfig(Options{config: absConfigName})
+	fileName = findConfig(absConfigName)
 	assert.Equal(t, f.Name(), fileName)
 }
 
@@ -228,11 +228,11 @@ func TestGraph(t *testing.T) {
 		&container{RawName: "c"},
 	)
 	c := &config{containerMap: containerMap}
-	dependencyGraph := c.DependencyGraph()
+	dependencyGraph := c.DependencyGraph([]string{})
 	assert.Len(t, dependencyGraph, 3)
 	// make sure a new graph is returned each time
 	dependencyGraph.resolve("a") // mutate the previous graph
-	assert.Len(t, c.DependencyGraph(), 3)
+	assert.Len(t, c.DependencyGraph([]string{}), 3)
 }
 
 func TestDetermineTargetLinearChainDependencies(t *testing.T) {
@@ -242,7 +242,7 @@ func TestDetermineTargetLinearChainDependencies(t *testing.T) {
 		&container{RawName: "c"},
 	)
 	c := &config{containerMap: containerMap}
-	c.dependencyGraph = c.DependencyGraph()
+	c.dependencyGraph = c.DependencyGraph([]string{})
 
 	examples := []struct {
 		target              []string
@@ -297,7 +297,7 @@ func TestDetermineTargetGraphDependencies(t *testing.T) {
 		&container{RawName: "e"},
 	)
 	c := &config{containerMap: containerMap}
-	c.dependencyGraph = c.DependencyGraph()
+	c.dependencyGraph = c.DependencyGraph([]string{})
 
 	c.determineTarget([]string{"a"}, "all", "none")
 	assert.Len(t, c.target, 5, "all containers should have been targeted")
