@@ -482,7 +482,7 @@ func (c *container) ImageExists() bool {
 
 func (c *container) Status() []string {
 	if !c.KnownName() {
-		fmt.Printf("Cannot show status of randomly named container %s ... ", c.Name())
+		printNoticef("Cannot show status of randomly named container %s ... ", c.Name())
 		return []string{}
 	}
 	fields := []string{c.Name(), c.Image(), "-", "-", "-", "-", "-"}
@@ -727,7 +727,7 @@ func (c *container) createArgs(cmds []string, excluded []string, configPath stri
 // Start container
 func (c *container) Start(excluded []string, configPath string) {
 	if !c.KnownName() {
-		fmt.Printf("Cannot start randomly named container %s ... ", c.Name())
+		printNoticef("Cannot start randomly named container %s ... ", c.Name())
 		return
 	}
 	if c.Exists() {
@@ -753,7 +753,7 @@ func (c *container) Start(excluded []string, configPath string) {
 // Kill container
 func (c *container) Kill() {
 	if !c.KnownName() {
-		fmt.Printf("Cannot kill randomly named container %s ... ", c.Name())
+		printNoticef("Cannot kill randomly named container %s ... ", c.Name())
 		return
 	}
 	if c.Running() {
@@ -768,7 +768,7 @@ func (c *container) Kill() {
 // Stop container
 func (c *container) Stop() {
 	if !c.KnownName() {
-		fmt.Printf("Cannot stop randomly named container %s ... ", c.Name())
+		printNoticef("Cannot stop randomly named container %s ... ", c.Name())
 		return
 	}
 	if c.Running() {
@@ -783,7 +783,7 @@ func (c *container) Stop() {
 // Pause container
 func (c *container) Pause() {
 	if !c.KnownName() {
-		fmt.Printf("Cannot pause randomly named container %s ... ", c.Name())
+		printNoticef("Cannot pause randomly named container %s ... ", c.Name())
 		return
 	}
 	if c.Running() {
@@ -802,7 +802,7 @@ func (c *container) Pause() {
 // Unpause container
 func (c *container) Unpause() {
 	if !c.KnownName() {
-		fmt.Printf("Cannot unpause randomly named container %s ... ", c.Name())
+		printNoticef("Cannot unpause randomly named container %s ... ", c.Name())
 		return
 	}
 	if c.Paused() {
@@ -815,7 +815,7 @@ func (c *container) Unpause() {
 // Remove container
 func (c *container) Rm(force bool) {
 	if !c.KnownName() {
-		fmt.Printf("Cannot remove randomly named container %s ... ", c.Name())
+		printNoticef("Cannot remove randomly named container %s ... ", c.Name())
 		return
 	}
 	if c.Exists() {
@@ -847,7 +847,7 @@ func (c *container) Rm(force bool) {
 // Dump container logs
 func (c *container) Logs(follow bool, tail string) (stdout, stderr io.Reader) {
 	if !c.KnownName() {
-		fmt.Printf("Cannot show logs of randomly named container %s ... ", c.Name())
+		printNoticef("Cannot show logs of randomly named container %s ... ", c.Name())
 		return
 	}
 	if c.Exists() {
