@@ -139,3 +139,13 @@ func commandOutput(name string, args []string) (string, error) {
 	out, err := cmd.CombinedOutput()
 	return strings.TrimSpace(string(out)), err
 }
+
+func includes(haystack []string, needle string) bool {
+	for _, name := range haystack {
+		if name == needle {
+			return true
+		}
+	}
+	return false
+}
+
