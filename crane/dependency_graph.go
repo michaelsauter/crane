@@ -1,7 +1,6 @@
 package crane
 
 import (
-	"github.com/michaelsauter/crane/print"
 	"io"
 	"text/template"
 )
@@ -26,12 +25,12 @@ func (graph DependencyGraph) DOT(writer io.Writer, targetedContainers Containers
 `
 	template, err := template.New("dot").Parse(dotTemplate)
 	if err != nil {
-		print.Errorf("ERROR: %s\n", err)
+		printErrorf("ERROR: %s\n", err)
 		return
 	}
 	err = template.Execute(writer, dotInput{graph, targetedContainers})
 	if err != nil {
-		print.Errorf("ERROR: %s\n", err)
+		printErrorf("ERROR: %s\n", err)
 	}
 }
 

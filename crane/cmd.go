@@ -3,7 +3,6 @@ package crane
 import (
 	"fmt"
 	"github.com/alecthomas/kingpin"
-	"github.com/michaelsauter/crane/print"
 	"os"
 	"strings"
 )
@@ -186,7 +185,7 @@ func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork)) {
 	}
 
 	if isVerbose() {
-		print.Infof("Command will be applied to: %v\n\n", strings.Join(unitOfWork.order, ", "))
+		printInfof("Command will be applied to: %v\n\n", strings.Join(unitOfWork.order, ", "))
 	}
 	wrapped(unitOfWork)
 }

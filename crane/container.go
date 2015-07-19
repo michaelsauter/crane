@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/flynn/go-shlex"
-	"github.com/michaelsauter/crane/print"
 	"io"
 	"os"
 	"path"
@@ -260,7 +259,7 @@ func (r *RunParameters) Env() []string {
 				env = append(env, os.ExpandEnv(k.(string))+"="+os.ExpandEnv(v.(string)))
 			}
 		default:
-			print.Errorf("env is of unknown type!")
+			printErrorf("env is of unknown type!")
 		}
 	}
 	return env
@@ -299,7 +298,7 @@ func (r *RunParameters) Label() []string {
 				label = append(label, os.ExpandEnv(k.(string))+"="+os.ExpandEnv(v.(string)))
 			}
 		default:
-			print.Errorf("label is of unknown type!")
+			printErrorf("label is of unknown type!")
 		}
 	}
 	return label
@@ -431,7 +430,7 @@ func (r *RunParameters) Cmd() []string {
 			if len(rawCmd) > 0 {
 				cmds, err := shlex.Split(os.ExpandEnv(rawCmd))
 				if err != nil {
-					print.Errorf("Error when parsing cmd `%v`: %v. Proceeding with %q.", rawCmd, err, cmds)
+					printErrorf("Error when parsing cmd `%v`: %v. Proceeding with %q.", rawCmd, err, cmds)
 				}
 				cmd = append(cmd, cmds...)
 			}
@@ -442,7 +441,7 @@ func (r *RunParameters) Cmd() []string {
 			}
 			cmd = append(cmd, cmds...)
 		default:
-			print.Errorf("cmd is of unknown type!")
+			printErrorf("cmd is of unknown type!")
 		}
 	}
 	return cmd
@@ -789,14 +788,14 @@ func (c *container) Pause() {
 	}
 	if c.Running() {
 		if c.Paused() {
-			print.Noticef("Container %s is already paused.\n", c.Name())
+			printNoticef("Container %s is already paused.\n", c.Name())
 		} else {
 			fmt.Printf("Pausing container %s ... ", c.Name())
 			args := []string{"pause", c.Name()}
 			executeCommand("docker", args)
 		}
 	} else {
-		print.Noticef("Container %s is not running.\n", c.Name())
+		printNoticef("Container %s is not running.\n", c.Name())
 	}
 }
 
@@ -822,7 +821,7 @@ func (c *container) Rm(force bool) {
 	if c.Exists() {
 		containerIsRunning := c.Running()
 		if !force && containerIsRunning {
-			print.Errorf("Container %s is running and cannot be removed. Use --force to remove anyway.\n", c.Name())
+			printErrorf("Container %s is running and cannot be removed. Use --force to remove anyway.\n", c.Name())
 		} else {
 			args := []string{"rm"}
 			if force && containerIsRunning {
@@ -877,7 +876,7 @@ func (c *container) Push() {
 		args := []string{"push", c.Image()}
 		executeCommand("docker", args)
 	} else {
-		print.Noticef("Skipping %s as it does not have an image name.\n", c.Name())
+		printNoticef("Skipping %s as it does not have an image name.\n", c.Name())
 	}
 }
 
