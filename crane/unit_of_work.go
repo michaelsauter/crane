@@ -12,15 +12,6 @@ type UnitOfWork struct {
 	mustRun    []string
 }
 
-func includes(haystack []string, needle string) bool {
-	for _, name := range haystack {
-		if name == needle {
-			return true
-		}
-	}
-	return false
-}
-
 func NewUnitOfWork(graph DependencyGraph, targeted []string) (uow *UnitOfWork, err error) {
 
 	uow = &UnitOfWork{
