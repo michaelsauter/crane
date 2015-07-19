@@ -2,7 +2,6 @@ package crane
 
 import (
 	"fmt"
-	"github.com/michaelsauter/crane/print"
 )
 
 type UnitOfWork struct {
@@ -94,7 +93,7 @@ func (uow *UnitOfWork) Stats() {
 	if len(args) > 1 {
 		executeCommand("docker", args)
 	} else {
-		print.Errorf("None of the targeted container is running.\n")
+		printErrorf("None of the targeted container is running.\n")
 	}
 }
 
