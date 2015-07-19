@@ -235,164 +235,164 @@ func TestGraph(t *testing.T) {
 	assert.Len(t, c.DependencyGraph([]string{}), 3)
 }
 
-func TestDetermineTargetLinearChainDependencies(t *testing.T) {
-	containerMap := NewStubbedContainerMap(true,
-		&container{RawName: "a", RunParams: RunParameters{RawLink: []string{"b:b"}}},
-		&container{RawName: "b", RunParams: RunParameters{RawLink: []string{"c:c"}}},
-		&container{RawName: "c"},
-	)
-	c := &config{containerMap: containerMap}
-	c.dependencyGraph = c.DependencyGraph([]string{})
+// func TestDetermineTargetLinearChainDependencies(t *testing.T) {
+// 	containerMap := NewStubbedContainerMap(true,
+// 		&container{RawName: "a", RunParams: RunParameters{RawLink: []string{"b:b"}}},
+// 		&container{RawName: "b", RunParams: RunParameters{RawLink: []string{"c:c"}}},
+// 		&container{RawName: "c"},
+// 	)
+// 	c := &config{containerMap: containerMap}
+// 	c.dependencyGraph = c.DependencyGraph([]string{})
 
-	examples := []struct {
-		target              []string
-		cascadeDependencies string
-		cascadeAffected     string
-		expected            Target
-	}{
-		{
-			target:              []string{"a"},
-			cascadeDependencies: "all",
-			cascadeAffected:     "none",
-			expected:            []string{"a", "b", "c"},
-		},
-		{
-			target:              []string{"b"},
-			cascadeDependencies: "all",
-			cascadeAffected:     "none",
-			expected:            []string{"b", "c"},
-		},
-		{
-			target:              []string{"c"},
-			cascadeDependencies: "none",
-			cascadeAffected:     "all",
-			expected:            []string{"a", "b", "c"},
-		},
-		{
-			target:              []string{"b"},
-			cascadeDependencies: "none",
-			cascadeAffected:     "all",
-			expected:            []string{"a", "b"},
-		},
-		{
-			target:              []string{"b"},
-			cascadeDependencies: "all",
-			cascadeAffected:     "all",
-			expected:            []string{"a", "b", "c"},
-		},
-	}
+// 	examples := []struct {
+// 		target              []string
+// 		cascadeDependencies string
+// 		cascadeAffected     string
+// 		expected            Target
+// 	}{
+// 		{
+// 			target:              []string{"a"},
+// 			cascadeDependencies: "all",
+// 			cascadeAffected:     "none",
+// 			expected:            []string{"a", "b", "c"},
+// 		},
+// 		{
+// 			target:              []string{"b"},
+// 			cascadeDependencies: "all",
+// 			cascadeAffected:     "none",
+// 			expected:            []string{"b", "c"},
+// 		},
+// 		{
+// 			target:              []string{"c"},
+// 			cascadeDependencies: "none",
+// 			cascadeAffected:     "all",
+// 			expected:            []string{"a", "b", "c"},
+// 		},
+// 		{
+// 			target:              []string{"b"},
+// 			cascadeDependencies: "none",
+// 			cascadeAffected:     "all",
+// 			expected:            []string{"a", "b"},
+// 		},
+// 		{
+// 			target:              []string{"b"},
+// 			cascadeDependencies: "all",
+// 			cascadeAffected:     "all",
+// 			expected:            []string{"a", "b", "c"},
+// 		},
+// 	}
 
-	for _, example := range examples {
-		c.determineTarget(example.target, example.cascadeDependencies, example.cascadeAffected)
-		assert.Equal(t, example.expected, c.target)
-	}
-}
+// 	for _, example := range examples {
+// 		c.determineTarget(example.target, example.cascadeDependencies, example.cascadeAffected)
+// 		assert.Equal(t, example.expected, c.target)
+// 	}
+// }
 
-func TestDetermineTargetGraphDependencies(t *testing.T) {
-	containerMap := NewStubbedContainerMap(true,
-		&container{RawName: "a", RunParams: RunParameters{RawLink: []string{"b:b", "c:c"}}},
-		&container{RawName: "b", RunParams: RunParameters{RawLink: []string{"d:d"}}},
-		&container{RawName: "c", RunParams: RunParameters{RawLink: []string{"e:e"}}},
-		&container{RawName: "d"},
-		&container{RawName: "e"},
-	)
-	c := &config{containerMap: containerMap}
-	c.dependencyGraph = c.DependencyGraph([]string{})
+// func TestDetermineTargetGraphDependencies(t *testing.T) {
+// 	containerMap := NewStubbedContainerMap(true,
+// 		&container{RawName: "a", RunParams: RunParameters{RawLink: []string{"b:b", "c:c"}}},
+// 		&container{RawName: "b", RunParams: RunParameters{RawLink: []string{"d:d"}}},
+// 		&container{RawName: "c", RunParams: RunParameters{RawLink: []string{"e:e"}}},
+// 		&container{RawName: "d"},
+// 		&container{RawName: "e"},
+// 	)
+// 	c := &config{containerMap: containerMap}
+// 	c.dependencyGraph = c.DependencyGraph([]string{})
 
-	c.determineTarget([]string{"a"}, "all", "none")
-	assert.Len(t, c.target, 5, "all containers should have been targeted")
+// 	c.determineTarget([]string{"a"}, "all", "none")
+// 	assert.Len(t, c.target, 5, "all containers should have been targeted")
 
-	c.determineTarget([]string{"b"}, "all", "none")
-	assert.Equal(t, Target{"b", "d"}, c.target)
+// 	c.determineTarget([]string{"b"}, "all", "none")
+// 	assert.Equal(t, Target{"b", "d"}, c.target)
 
-	c.determineTarget([]string{"b", "c"}, "all", "none")
-	assert.Equal(t, Target{"b", "c", "d", "e"}, c.target)
+// 	c.determineTarget([]string{"b", "c"}, "all", "none")
+// 	assert.Equal(t, Target{"b", "c", "d", "e"}, c.target)
 
-	c.determineTarget([]string{"b", "c"}, "none", "all")
-	assert.Equal(t, Target{"a", "b", "c"}, c.target)
+// 	c.determineTarget([]string{"b", "c"}, "none", "all")
+// 	assert.Equal(t, Target{"a", "b", "c"}, c.target)
 
-	c.determineTarget([]string{"b", "c"}, "all", "all")
-	assert.Len(t, c.target, 5, "all containers should have been targeted")
-}
+// 	c.determineTarget([]string{"b", "c"}, "all", "all")
+// 	assert.Len(t, c.target, 5, "all containers should have been targeted")
+// }
 
-func TestDetermineTargetMissingDependencies(t *testing.T) {
-	containerMap := NewStubbedContainerMap(true,
-		&container{RawName: "a", RunParams: RunParameters{RawLink: []string{"b:b", "d:d"}}},
-		&container{RawName: "b", RunParams: RunParameters{RawLink: []string{"c:c"}}},
-		&container{RawName: "c", RunParams: RunParameters{RawLink: []string{"d:d"}}},
-	)
-	c := &config{containerMap: containerMap}
-	c.dependencyGraph = c.DependencyGraph()
+// func TestDetermineTargetMissingDependencies(t *testing.T) {
+// 	containerMap := NewStubbedContainerMap(true,
+// 		&container{RawName: "a", RunParams: RunParameters{RawLink: []string{"b:b", "d:d"}}},
+// 		&container{RawName: "b", RunParams: RunParameters{RawLink: []string{"c:c"}}},
+// 		&container{RawName: "c", RunParams: RunParameters{RawLink: []string{"d:d"}}},
+// 	)
+// 	c := &config{containerMap: containerMap}
+// 	c.dependencyGraph = c.DependencyGraph()
 
-	c.determineTarget([]string{"a"}, "all", "none")
-	assert.Len(t, c.target, 3, "only declared containers should have been targeted")
+// 	c.determineTarget([]string{"a"}, "all", "none")
+// 	assert.Len(t, c.target, 3, "only declared containers should have been targeted")
 
-	c.determineTarget([]string{"c"}, "none", "all")
-	assert.Len(t, c.target, 3, "only declared containers should have been targeted")
+// 	c.determineTarget([]string{"c"}, "none", "all")
+// 	assert.Len(t, c.target, 3, "only declared containers should have been targeted")
 
-	c.determineTarget([]string{"a"}, "all", "all")
-	assert.Len(t, c.target, 3, "only declared containers should have been targeted")
-}
+// 	c.determineTarget([]string{"a"}, "all", "all")
+// 	assert.Len(t, c.target, 3, "only declared containers should have been targeted")
+// }
 
-func TestDetermineTargetCustomCascading(t *testing.T) {
-	containerMap := NewStubbedContainerMap(true,
-		&container{RawName: "linkSource", RunParams: RunParameters{RawLink: []string{"x:x"}}},
-		&container{RawName: "netSource", RunParams: RunParameters{RawNet: "container:x"}},
-		&container{RawName: "volumesFromSource", RunParams: RunParameters{RawVolumesFrom: []string{"x"}}},
-		&container{RawName: "x", RunParams: RunParameters{RawLink: []string{"linkTarget:linkTarget"}, RawNet: "container:netTarget", RawVolumesFrom: []string{"volumesFromTarget"}}},
-		&container{RawName: "linkTarget"},
-		&container{RawName: "netTarget"},
-		&container{RawName: "volumesFromTarget"},
-	)
-	c := &config{containerMap: containerMap}
-	c.dependencyGraph = c.DependencyGraph()
+// func TestDetermineTargetCustomCascading(t *testing.T) {
+// 	containerMap := NewStubbedContainerMap(true,
+// 		&container{RawName: "linkSource", RunParams: RunParameters{RawLink: []string{"x:x"}}},
+// 		&container{RawName: "netSource", RunParams: RunParameters{RawNet: "container:x"}},
+// 		&container{RawName: "volumesFromSource", RunParams: RunParameters{RawVolumesFrom: []string{"x"}}},
+// 		&container{RawName: "x", RunParams: RunParameters{RawLink: []string{"linkTarget:linkTarget"}, RawNet: "container:netTarget", RawVolumesFrom: []string{"volumesFromTarget"}}},
+// 		&container{RawName: "linkTarget"},
+// 		&container{RawName: "netTarget"},
+// 		&container{RawName: "volumesFromTarget"},
+// 	)
+// 	c := &config{containerMap: containerMap}
+// 	c.dependencyGraph = c.DependencyGraph()
 
-	c.determineTarget([]string{"x"}, "all", "none")
-	assert.Equal(t, Target{"linkTarget", "netTarget", "volumesFromTarget", "x"}, c.target)
+// 	c.determineTarget([]string{"x"}, "all", "none")
+// 	assert.Equal(t, Target{"linkTarget", "netTarget", "volumesFromTarget", "x"}, c.target)
 
-	c.determineTarget([]string{"x"}, "link", "none")
-	assert.Equal(t, Target{"linkTarget", "x"}, c.target)
+// 	c.determineTarget([]string{"x"}, "link", "none")
+// 	assert.Equal(t, Target{"linkTarget", "x"}, c.target)
 
-	c.determineTarget([]string{"x"}, "net", "none")
-	assert.Equal(t, Target{"netTarget", "x"}, c.target)
+// 	c.determineTarget([]string{"x"}, "net", "none")
+// 	assert.Equal(t, Target{"netTarget", "x"}, c.target)
 
-	c.determineTarget([]string{"x"}, "volumesFrom", "none")
-	assert.Equal(t, Target{"volumesFromTarget", "x"}, c.target)
+// 	c.determineTarget([]string{"x"}, "volumesFrom", "none")
+// 	assert.Equal(t, Target{"volumesFromTarget", "x"}, c.target)
 
-	c.determineTarget([]string{"x"}, "none", "all")
-	assert.Equal(t, Target{"linkSource", "netSource", "volumesFromSource", "x"}, c.target)
+// 	c.determineTarget([]string{"x"}, "none", "all")
+// 	assert.Equal(t, Target{"linkSource", "netSource", "volumesFromSource", "x"}, c.target)
 
-	c.determineTarget([]string{"x"}, "none", "net")
-	assert.Equal(t, Target{"netSource", "x"}, c.target)
+// 	c.determineTarget([]string{"x"}, "none", "net")
+// 	assert.Equal(t, Target{"netSource", "x"}, c.target)
 
-	c.determineTarget([]string{"x"}, "none", "volumesFrom")
-	assert.Equal(t, Target{"volumesFromSource", "x"}, c.target)
+// 	c.determineTarget([]string{"x"}, "none", "volumesFrom")
+// 	assert.Equal(t, Target{"volumesFromSource", "x"}, c.target)
 
-	c.determineTarget([]string{"x"}, "volumesFrom", "volumesFrom")
-	assert.Equal(t, Target{"volumesFromSource", "volumesFromTarget", "x"}, c.target)
-}
+// 	c.determineTarget([]string{"x"}, "volumesFrom", "volumesFrom")
+// 	assert.Equal(t, Target{"volumesFromSource", "volumesFromTarget", "x"}, c.target)
+// }
 
-func TestDetermineTargetCascadingToExisting(t *testing.T) {
-	containerMap := NewStubbedContainerMap(true,
-		&container{RawName: "existingSource", RunParams: RunParameters{RawLink: []string{"x:x"}}},
-		&container{RawName: "nonExistingSource", RunParams: RunParameters{RawLink: []string{"x:x"}}},
-		&container{RawName: "x", RunParams: RunParameters{RawLink: []string{"existingTarget:existingTarget", "nonExistingTarget:nonExistingTarget"}}},
-		&container{RawName: "existingTarget"},
-		&container{RawName: "nonExistingTarget"},
-	)
-	containerMap["nonExistingSource"].(*StubbedContainer).exists = false
-	containerMap["nonExistingTarget"].(*StubbedContainer).exists = false
-	c := &config{containerMap: containerMap}
-	c.dependencyGraph = c.DependencyGraph()
+// func TestDetermineTargetCascadingToExisting(t *testing.T) {
+// 	containerMap := NewStubbedContainerMap(true,
+// 		&container{RawName: "existingSource", RunParams: RunParameters{RawLink: []string{"x:x"}}},
+// 		&container{RawName: "nonExistingSource", RunParams: RunParameters{RawLink: []string{"x:x"}}},
+// 		&container{RawName: "x", RunParams: RunParameters{RawLink: []string{"existingTarget:existingTarget", "nonExistingTarget:nonExistingTarget"}}},
+// 		&container{RawName: "existingTarget"},
+// 		&container{RawName: "nonExistingTarget"},
+// 	)
+// 	containerMap["nonExistingSource"].(*StubbedContainer).exists = false
+// 	containerMap["nonExistingTarget"].(*StubbedContainer).exists = false
+// 	c := &config{containerMap: containerMap}
+// 	c.dependencyGraph = c.DependencyGraph()
 
-	c.determineTarget([]string{"x"}, "all", "none")
-	assert.Equal(t, Target{"existingTarget", "nonExistingTarget", "x"}, c.target)
+// 	c.determineTarget([]string{"x"}, "all", "none")
+// 	assert.Equal(t, Target{"existingTarget", "nonExistingTarget", "x"}, c.target)
 
-	c.determineTarget([]string{"x"}, "none", "all")
-	assert.Equal(t, Target{"existingSource", "x"}, c.target)
-}
+// 	c.determineTarget([]string{"x"}, "none", "all")
+// 	assert.Equal(t, Target{"existingSource", "x"}, c.target)
+// }
 
-func TestExplicitlyTargeted(t *testing.T) {
+func TestContainersForReference(t *testing.T) {
 	var containers []string
 	containerMap := NewStubbedContainerMap(true,
 		&container{RawName: "a"},
@@ -406,11 +406,11 @@ func TestExplicitlyTargeted(t *testing.T) {
 		"default": []string{"a", "b"},
 	}
 	c := &config{containerMap: containerMap, groups: groups}
-	containers = c.explicitlyTargeted([]string{})
+	containers = c.ContainersForReference("")
 	assert.Equal(t, []string{"a", "b"}, containers)
 	// If no default group, returns all containers
 	c = &config{containerMap: containerMap}
-	containers = c.explicitlyTargeted([]string{})
+	containers = c.ContainersForReference("")
 	sort.Strings(containers)
 	assert.Equal(t, []string{"a", "b", "c"}, containers)
 	// Target given
@@ -419,20 +419,14 @@ func TestExplicitlyTargeted(t *testing.T) {
 		"second": []string{"b", "c"},
 	}
 	c = &config{containerMap: containerMap, groups: groups}
-	containers = c.explicitlyTargeted([]string{"second"})
+	containers = c.ContainersForReference("second")
 	assert.Equal(t, []string{"b", "c"}, containers)
 	// Target is a container
-	containers = c.explicitlyTargeted([]string{"a"})
+	containers = c.ContainersForReference("a")
 	assert.Equal(t, []string{"a"}, containers)
-	// Target is 2 containers
-	containers = c.explicitlyTargeted([]string{"a", "b"})
-	assert.Equal(t, []string{"a", "b"}, containers)
-	// Target is a container and a group
-	containers = c.explicitlyTargeted([]string{"a", "second"})
-	assert.Equal(t, []string{"a", "b", "c"}, containers)
 }
 
-func TestExplicitlyTargetedInvalidReference(t *testing.T) {
+func TestContainersForReferenceInvalidReference(t *testing.T) {
 	containerMap := NewStubbedContainerMap(true,
 		&container{RawName: "a"},
 		&container{RawName: "b"},
@@ -442,31 +436,20 @@ func TestExplicitlyTargetedInvalidReference(t *testing.T) {
 	}
 	c := &config{containerMap: containerMap, groups: groups}
 	assert.Panics(t, func() {
-		c.explicitlyTargeted([]string{"foo"})
+		c.ContainersForReference("foo")
 	})
-}
-
-func TestExplicitlyTargetedInvalidTarget(t *testing.T) {
-	containerMap := NewStubbedContainerMap(true,
-		&container{RawName: "a"},
-		&container{RawName: "b"},
-	)
-	groups := map[string][]string{
-		"foo": []string{"a", "b"},
-	}
-	c := &config{containerMap: containerMap, groups: groups}
 	assert.Panics(t, func() {
-		c.explicitlyTargeted([]string{"foo", "a", "doesntexist"})
+		c.ContainersForReference("doesntexist")
 	})
 }
 
-func TestTargetedContainers(t *testing.T) {
-	c := &config{
-		containerMap: NewStubbedContainerMap(true, &container{RawName: "a"}, &container{RawName: "b"}),
-		order:        []string{"a", "b"},
-	}
-	containers := c.TargetedContainers()
-	assert.Len(t, containers, 2)
-	assert.Equal(t, "b", containers[0].Name())
-	assert.Equal(t, "a", containers[1].Name())
-}
+// func TestTargetedContainers(t *testing.T) {
+// 	c := &config{
+// 		containerMap: NewStubbedContainerMap(true, &container{RawName: "a"}, &container{RawName: "b"}),
+// 		order:        []string{"a", "b"},
+// 	}
+// 	containers := c.TargetedContainers()
+// 	assert.Len(t, containers, 2)
+// 	assert.Equal(t, "b", containers[0].Name())
+// 	assert.Equal(t, "a", containers[1].Name())
+// }

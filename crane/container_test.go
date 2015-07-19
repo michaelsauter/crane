@@ -44,11 +44,11 @@ func TestDependencies(t *testing.T) {
 		VolumesFrom: []string{"c"},
 		Net:         "n",
 	}
-	assert.Equal(t, expected, c.Dependencies())
+	assert.Equal(t, expected, c.Dependencies([]string{}))
 
 	c = &container{}
 	expected = &Dependencies{}
-	assert.Equal(t, expected, c.Dependencies())
+	assert.Equal(t, expected, c.Dependencies([]string{}))
 }
 
 func TestVolumesFromSuffixes(t *testing.T) {
@@ -57,7 +57,7 @@ func TestVolumesFromSuffixes(t *testing.T) {
 		All:         []string{"a", "b"},
 		VolumesFrom: []string{"a", "b"},
 	}
-	assert.Equal(t, expected, c.Dependencies())
+	assert.Equal(t, expected, c.Dependencies([]string{}))
 }
 
 func TestMultipleLinkAliases(t *testing.T) {
@@ -66,7 +66,7 @@ func TestMultipleLinkAliases(t *testing.T) {
 		All:  []string{"a"},
 		Link: []string{"a"},
 	}
-	assert.Equal(t, expected, c.Dependencies())
+	assert.Equal(t, expected, c.Dependencies([]string{}))
 }
 
 func TestImplicitLinkAliases(t *testing.T) {
@@ -75,7 +75,7 @@ func TestImplicitLinkAliases(t *testing.T) {
 		All:  []string{"a"},
 		Link: []string{"a"},
 	}
-	assert.Equal(t, expected, c.Dependencies())
+	assert.Equal(t, expected, c.Dependencies([]string{}))
 }
 
 func TestVolume(t *testing.T) {
