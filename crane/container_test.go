@@ -49,6 +49,21 @@ func TestDependencies(t *testing.T) {
 	c = &container{}
 	expected = &Dependencies{}
 	assert.Equal(t, expected, c.Dependencies([]string{}))
+
+	c = &container{
+		RunParams: RunParameters{
+			RawNet:         "container:n",
+			RawLink:        []string{"a:b", "b:d"},
+			RawVolumesFrom: []string{"c"},
+		},
+	}
+	expected = &Dependencies{
+		All:         []string{"a", "c", "n"},
+		Link:        []string{"a"},
+		VolumesFrom: []string{"c"},
+		Net:         "n",
+	}
+	assert.Equal(t, expected, c.Dependencies([]string{"b"}))
 }
 
 func TestVolumesFromSuffixes(t *testing.T) {
