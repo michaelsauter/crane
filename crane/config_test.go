@@ -235,58 +235,7 @@ func TestGraph(t *testing.T) {
 	assert.Len(t, c.DependencyGraph([]string{}), 3)
 }
 
-// func TestDetermineTargetLinearChainDependencies(t *testing.T) {
-// 	containerMap := NewStubbedContainerMap(true,
-// 		&container{RawName: "a", RunParams: RunParameters{RawLink: []string{"b:b"}}},
-// 		&container{RawName: "b", RunParams: RunParameters{RawLink: []string{"c:c"}}},
-// 		&container{RawName: "c"},
-// 	)
-// 	c := &config{containerMap: containerMap}
-// 	c.dependencyGraph = c.DependencyGraph([]string{})
 
-// 	examples := []struct {
-// 		target              []string
-// 		cascadeDependencies string
-// 		cascadeAffected     string
-// 		expected            Target
-// 	}{
-// 		{
-// 			target:              []string{"a"},
-// 			cascadeDependencies: "all",
-// 			cascadeAffected:     "none",
-// 			expected:            []string{"a", "b", "c"},
-// 		},
-// 		{
-// 			target:              []string{"b"},
-// 			cascadeDependencies: "all",
-// 			cascadeAffected:     "none",
-// 			expected:            []string{"b", "c"},
-// 		},
-// 		{
-// 			target:              []string{"c"},
-// 			cascadeDependencies: "none",
-// 			cascadeAffected:     "all",
-// 			expected:            []string{"a", "b", "c"},
-// 		},
-// 		{
-// 			target:              []string{"b"},
-// 			cascadeDependencies: "none",
-// 			cascadeAffected:     "all",
-// 			expected:            []string{"a", "b"},
-// 		},
-// 		{
-// 			target:              []string{"b"},
-// 			cascadeDependencies: "all",
-// 			cascadeAffected:     "all",
-// 			expected:            []string{"a", "b", "c"},
-// 		},
-// 	}
-
-// 	for _, example := range examples {
-// 		c.determineTarget(example.target, example.cascadeDependencies, example.cascadeAffected)
-// 		assert.Equal(t, example.expected, c.target)
-// 	}
-// }
 
 // func TestDetermineTargetGraphDependencies(t *testing.T) {
 // 	containerMap := NewStubbedContainerMap(true,
