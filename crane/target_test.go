@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestDetermineTargetLinearChainDependencies(t *testing.T) {
+func TestNewTarget(t *testing.T) {
 	containerMap := NewStubbedContainerMap(true,
 		&container{RawName: "a", RunParams: RunParameters{RawLink: []string{"b:b"}}},
 		&container{RawName: "b", RunParams: RunParameters{RawLink: []string{"c:c"}}},
@@ -39,7 +39,7 @@ func TestDetermineTargetLinearChainDependencies(t *testing.T) {
 			expected: Target{
 				initial:      []string{"c"},
 				dependencies: []string{},
-				affected:     []string{"b", "a"},
+				affected:     []string{"a", "b"},
 			},
 		},
 		{

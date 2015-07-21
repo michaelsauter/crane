@@ -73,6 +73,8 @@ func NewTarget(graph DependencyGraph, targetFlag string) Target {
 				target.dependencies = append(target.dependencies, name)
 			}
 		}
+
+		sort.Strings(target.dependencies)
 	}
 
 	if extendAffected {
@@ -104,6 +106,8 @@ func NewTarget(graph DependencyGraph, targetFlag string) Target {
 				target.affected = append(target.affected, name)
 			}
 		}
+
+		sort.Strings(target.affected)
 	}
 
 	return target
