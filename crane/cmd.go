@@ -166,6 +166,10 @@ var (
 		"colorize",
 		"Output the lines with one color per container.",
 	).Short('z').Bool()
+	sinceFlag = logsCommand.Flag(
+		"since",
+		"Show logs since timestamp (Docker >= 1.7).",
+	).String()
 	logsTargetArg = logsCommand.Arg("target", "Target of command").String()
 )
 
@@ -286,7 +290,7 @@ func handleCmd() {
 
 	case logsCommand.FullCommand():
 		commandAction(*logsTargetArg, func(uow *UnitOfWork) {
-			uow.Logs(*followFlag, *timestampsFlag, *tailFlag, *colorizeFlag)
+			uow.Logs(*followFlag, *timestampsFlag, *tailFlag, *colorizeFlag, *sinceFlag)
 		}, false)
 	}
 }

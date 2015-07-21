@@ -180,8 +180,8 @@ func (uow *UnitOfWork) PullImage() {
 }
 
 // Log containers.
-func (uow *UnitOfWork) Logs(follow bool, timestamps bool, tail string, colorize bool) {
-	uow.Targeted().Logs(follow, timestamps, tail, colorize)
+func (uow *UnitOfWork) Logs(follow bool, timestamps bool, tail string, colorize bool, since string) {
+	uow.Targeted().Logs(follow, timestamps, tail, colorize, since)
 }
 
 func (uow *UnitOfWork) Containers() Containers {
