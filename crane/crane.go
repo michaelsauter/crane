@@ -95,7 +95,8 @@ func intJoin(intSlice []int, sep string) string {
 	return strings.Join(stringSlice, ".")
 }
 
-func executeHook(hook string) {
+func executeHook(hook string, containerName string) {
+	os.Setenv("CRANE_HOOKED_CONTAINER", containerName)
 	cmds, err := shlex.Split(hook)
 	if err != nil {
 		panic(StatusError{fmt.Errorf("Error when parsing hook `%v`: %v", hook, err), 64})
