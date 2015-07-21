@@ -140,6 +140,9 @@ func unmarshal(data []byte, ext string) *config {
 func NewConfig(location string) Config {
 	var config *config
 	configFile := findConfig(location)
+	if isVerbose() {
+		printInfof("Using configuration file `%s`\n", configFile)
+	}
 	config = readConfig(configFile)
 	config.initialize()
 	config.path = path.Dir(configFile)
