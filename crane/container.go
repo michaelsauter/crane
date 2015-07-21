@@ -9,6 +9,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Container interface {
@@ -171,10 +172,6 @@ func (c *container) Dependencies(excluded []string) *Dependencies {
 
 func (c *container) Name() string {
 	return os.ExpandEnv(c.RawName)
-}
-
-func (c *container) KnownName() bool {
-	return c.RunParams.Name.Truthy()
 }
 
 func (c *container) Dockerfile() string {
@@ -448,7 +445,7 @@ func (r *RunParameters) Cmd() []string {
 }
 
 func (c *container) Id() string {
-	if len(c.id) == 0 && c.KnownName() {
+	if len(c.id) == 0 && !c.hasUniqueName() {
 		// `docker inspect` works for both image and containers, make sure this is a
 		// container payload we get back, otherwise we might end up getting the Id
 		// of the image of the same name.
@@ -481,8 +478,8 @@ func (c *container) ImageExists() bool {
 }
 
 func (c *container) Status() []string {
-	if !c.KnownName() {
-		printNoticef("Cannot show status of randomly named container %s ... ", c.Name())
+	if c.hasUniqueName() {
+		printNoticef("Cannot show status of uniquely named container %s ... ", c.Name())
 		return []string{}
 	}
 	fields := []string{c.Name(), c.Image(), "-", "-", "-", "-", "-"}
@@ -510,26 +507,27 @@ func (c *container) Provision(nocache bool) {
 
 // Create container
 func (c *container) Create(cmds []string, excluded []string, configPath string) {
-	if c.KnownName() {
-		c.Rm(true)
-		fmt.Printf("Creating container %s ... ", c.Name())
+	if c.hasUniqueName() {
+		c.setUniqueName()
 	} else {
-		fmt.Printf("Creating randomly named container %s ... ", c.Name())
+		c.Rm(true)
 	}
+	fmt.Printf("Creating container %s ... ", c.Name())
+
 	args := append([]string{"create"}, c.createArgs(cmds, excluded, configPath)...)
 	executeCommand("docker", args)
 }
 
 // Run container, or start it if already existing
 func (c *container) Run(cmds []string, excluded []string, configPath string) {
-	if c.KnownName() {
-		c.Rm(true)
-		executeHook(c.Hooks().PreStart())
-		fmt.Printf("Running container %s ... ", c.Name())
+	if c.hasUniqueName() {
+		c.setUniqueName()
 	} else {
-		executeHook(c.Hooks().PreStart())
-		fmt.Printf("Running randomly named container %s ... ", c.Name())
+		c.Rm(true)
 	}
+	executeHook(c.Hooks().PreStart(), c.Name())
+	fmt.Printf("Running container %s ... ", c.Name())
+
 	args := []string{"run"}
 	// Detach
 	if c.RunParams.Detach {
@@ -537,7 +535,7 @@ func (c *container) Run(cmds []string, excluded []string, configPath string) {
 	}
 	args = append(args, c.createArgs(cmds, excluded, configPath)...)
 	executeCommand("docker", args)
-	executeHook(c.Hooks().PostStart())
+	executeHook(c.Hooks().PostStart(), c.Name())
 }
 
 // Returns all the flags to be passed to `docker create`
@@ -710,9 +708,7 @@ func (c *container) createArgs(cmds []string, excluded []string, configPath stri
 		args = append(args, "--workdir", c.RunParams.Workdir())
 	}
 	// Name
-	if c.KnownName() {
-		args = append(args, "--name", c.Name())
-	}
+	args = append(args, "--name", c.Name())
 	// Image
 	args = append(args, c.Image())
 	// Command
@@ -726,13 +722,13 @@ func (c *container) createArgs(cmds []string, excluded []string, configPath stri
 
 // Start container
 func (c *container) Start(excluded []string, configPath string) {
-	if !c.KnownName() {
-		printNoticef("Cannot start randomly named container %s ... ", c.Name())
+	if c.hasUniqueName() {
+		printNoticef("Cannot start uniquely named container %s ... ", c.Name())
 		return
 	}
 	if c.Exists() {
 		if !c.Running() {
-			executeHook(c.Hooks().PreStart())
+			executeHook(c.Hooks().PreStart(), c.Name())
 			fmt.Printf("Starting container %s ... ", c.Name())
 			args := []string{"start"}
 			if c.StartParams.Attach {
@@ -743,7 +739,7 @@ func (c *container) Start(excluded []string, configPath string) {
 			}
 			args = append(args, c.Name())
 			executeCommand("docker", args)
-			executeHook(c.Hooks().PostStart())
+			executeHook(c.Hooks().PostStart(), c.Name())
 		}
 	} else {
 		c.Run([]string{}, excluded, configPath)
@@ -752,38 +748,38 @@ func (c *container) Start(excluded []string, configPath string) {
 
 // Kill container
 func (c *container) Kill() {
-	if !c.KnownName() {
-		printNoticef("Cannot kill randomly named container %s ... ", c.Name())
+	if c.hasUniqueName() {
+		printNoticef("Cannot kill uniquely named container %s ... ", c.Name())
 		return
 	}
 	if c.Running() {
-		executeHook(c.Hooks().PreStop())
+		executeHook(c.Hooks().PreStop(), c.Name())
 		fmt.Printf("Killing container %s ... ", c.Name())
 		args := []string{"kill", c.Name()}
 		executeCommand("docker", args)
-		executeHook(c.Hooks().PostStop())
+		executeHook(c.Hooks().PostStop(), c.Name())
 	}
 }
 
 // Stop container
 func (c *container) Stop() {
-	if !c.KnownName() {
-		printNoticef("Cannot stop randomly named container %s ... ", c.Name())
+	if c.hasUniqueName() {
+		printNoticef("Cannot stop uniquely named container %s ... ", c.Name())
 		return
 	}
 	if c.Running() {
-		executeHook(c.Hooks().PreStop())
+		executeHook(c.Hooks().PreStop(), c.Name())
 		fmt.Printf("Stopping container %s ... ", c.Name())
 		args := []string{"stop", c.Name()}
 		executeCommand("docker", args)
-		executeHook(c.Hooks().PostStop())
+		executeHook(c.Hooks().PostStop(), c.Name())
 	}
 }
 
 // Pause container
 func (c *container) Pause() {
-	if !c.KnownName() {
-		printNoticef("Cannot pause randomly named container %s ... ", c.Name())
+	if c.hasUniqueName() {
+		printNoticef("Cannot pause uniquely named container %s ... ", c.Name())
 		return
 	}
 	if c.Running() {
@@ -801,8 +797,8 @@ func (c *container) Pause() {
 
 // Unpause container
 func (c *container) Unpause() {
-	if !c.KnownName() {
-		printNoticef("Cannot unpause randomly named container %s ... ", c.Name())
+	if c.hasUniqueName() {
+		printNoticef("Cannot unpause uniquely named container %s ... ", c.Name())
 		return
 	}
 	if c.Paused() {
@@ -814,8 +810,8 @@ func (c *container) Unpause() {
 
 // Remove container
 func (c *container) Rm(force bool) {
-	if !c.KnownName() {
-		printNoticef("Cannot remove randomly named container %s ... ", c.Name())
+	if c.hasUniqueName() {
+		printNoticef("Cannot remove uniquely named container %s ... ", c.Name())
 		return
 	}
 	if c.Exists() {
@@ -825,7 +821,7 @@ func (c *container) Rm(force bool) {
 		} else {
 			args := []string{"rm"}
 			if force && containerIsRunning {
-				executeHook(c.Hooks().PreStop())
+				executeHook(c.Hooks().PreStop(), c.Name())
 				args = append(args, "--force")
 			}
 			if c.RmParams.Volumes {
@@ -837,7 +833,7 @@ func (c *container) Rm(force bool) {
 			args = append(args, c.Name())
 			executeCommand("docker", args)
 			if force && containerIsRunning {
-				executeHook(c.Hooks().PostStop())
+				executeHook(c.Hooks().PostStop(), c.Name())
 			}
 			c.id = ""
 		}
@@ -846,8 +842,8 @@ func (c *container) Rm(force bool) {
 
 // Dump container logs
 func (c *container) Logs(follow bool, tail string) (stdout, stderr io.Reader) {
-	if !c.KnownName() {
-		printNoticef("Cannot show logs of randomly named container %s ... ", c.Name())
+	if c.hasUniqueName() {
+		printNoticef("Cannot show logs of uniquely named container %s ... ", c.Name())
 		return
 	}
 	if c.Exists() {
@@ -900,6 +896,15 @@ func (c *container) buildImage(nocache bool) {
 	}
 	args = append(args, "--rm", "--tag="+c.Image(), c.Dockerfile())
 	executeCommand("docker", args)
+}
+
+func (c *container) hasUniqueName() bool {
+	return c.RunParams.Name.Truthy()
+}
+
+func (c *container) setUniqueName() {
+	milliseconds := time.Now().UnixNano() / 1000000
+	c.RawName = c.RawName + "-" + strconv.FormatInt(milliseconds, 10)
 }
 
 // Return the image id of a tag, or an empty string if it doesn't exist
