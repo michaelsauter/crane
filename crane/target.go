@@ -13,8 +13,9 @@ type Target struct {
 
 // NewTarget receives the specified target
 // and determines which containers should be targeted.
-// The target might be extended depending on the value
-// given for cascadeDependencies and cascadeAffected.
+// The target might be extended depending whether the
+// dynamic targets "dependencies" and/or "affected"
+// are included in the targetFlag.
 // Additionally, the target is sorted alphabetically.
 func NewTarget(graph DependencyGraph, targetFlag string) Target {
 
