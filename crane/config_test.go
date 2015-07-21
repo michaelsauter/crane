@@ -235,8 +235,8 @@ func TestDependencyGraph(t *testing.T) {
 	dependencyGraph.resolve("a") // mutate the previous graph
 	assert.Len(t, c.DependencyGraph([]string{}), 3)
 
-  dependencyGraph = c.DependencyGraph([]string{"b"})
-  assert.Len(t, dependencyGraph, 2)
+	dependencyGraph = c.DependencyGraph([]string{"b"})
+	assert.Len(t, dependencyGraph, 2)
 }
 
 func TestContainersForReference(t *testing.T) {

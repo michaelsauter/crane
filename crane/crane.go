@@ -3,8 +3,8 @@ package crane
 import (
 	"errors"
 	"fmt"
-	"github.com/flynn/go-shlex"
 	"github.com/fatih/color"
+	"github.com/flynn/go-shlex"
 	"io"
 	"os"
 	"os/exec"
@@ -160,4 +160,3 @@ func includes(haystack []string, needle string) bool {
 	}
 	return false
 }
-
