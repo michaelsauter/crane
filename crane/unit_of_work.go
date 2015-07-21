@@ -5,19 +5,19 @@ import (
 )
 
 type UnitOfWork struct {
-	targeted   []string
-	containers []string
-	order      []string
-	mustRun    []string
+	targeted       []string
+	containers     []string
+	order          []string
+	requireStarted []string
 }
 
 func NewUnitOfWork(graph DependencyGraph, targeted []string) (uow *UnitOfWork, err error) {
 
 	uow = &UnitOfWork{
-		targeted:   targeted,
-		containers: targeted,
-		order:      []string{},
-		mustRun:    []string{},
+		targeted:       targeted,
+		containers:     targeted,
+		order:          []string{},
+		requireStarted: []string{},
 	}
 
 	// select all containers which we care about
@@ -28,8 +28,8 @@ func NewUnitOfWork(graph DependencyGraph, targeted []string) (uow *UnitOfWork, e
 			dependencies := graph[name]
 			for _, dep := range dependencies.All {
 				uow.ensureInContainers(dep)
-				if dependencies.mustRun(dep) {
-					uow.ensureInMustRun(dep)
+				if dependencies.requireStarted(dep) {
+					uow.ensureInRequireStarted(dep)
 				}
 			}
 		}
@@ -67,7 +67,7 @@ func (uow *UnitOfWork) Run(cmds []string, excluded []string) {
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
 			container.Run(cmds, excluded, cfg.Path())
-		} else if includes(uow.mustRun, container.Name()) {
+		} else if includes(uow.requireStarted, container.Name()) {
 			container.Start(excluded, cfg.Path())
 		}
 	}
@@ -77,7 +77,7 @@ func (uow *UnitOfWork) Lift(cmds []string, excluded []string, noCache bool) {
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
 			container.Lift(cmds, noCache, excluded, cfg.Path())
-		} else if includes(uow.mustRun, container.Name()) {
+		} else if includes(uow.requireStarted, container.Name()) {
 			container.Start(excluded, cfg.Path())
 		}
 	}
@@ -127,7 +127,7 @@ func (uow *UnitOfWork) Start() {
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
 			container.Start(excluded, cfg.Path())
-		} else if includes(uow.mustRun, container.Name()) {
+		} else if includes(uow.requireStarted, container.Name()) {
 			container.Start(excluded, cfg.Path())
 		}
 	}
@@ -159,7 +159,7 @@ func (uow *UnitOfWork) Create(cmds []string, excluded []string) {
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
 			container.Create(cmds, excluded, cfg.Path())
-		} else if includes(uow.mustRun, container.Name()) {
+		} else if includes(uow.requireStarted, container.Name()) {
 			container.Start(excluded, cfg.Path())
 		}
 	}
@@ -202,14 +202,24 @@ func (uow *UnitOfWork) Targeted() Containers {
 	return c
 }
 
+func (uow *UnitOfWork) Affected() []string {
+	c := []string{}
+	for _, name := range uow.order {
+		if !includes(uow.targeted, name) {
+			c = append(c, name)
+		}
+	}
+	return c
+}
+
 func (uow *UnitOfWork) ensureInContainers(name string) {
 	if !includes(uow.containers, name) {
 		uow.containers = append(uow.containers, name)
 	}
 }
 
-func (uow *UnitOfWork) ensureInMustRun(name string) {
-	if !includes(uow.mustRun, name) {
-		uow.mustRun = append(uow.mustRun, name)
+func (uow *UnitOfWork) ensureInRequireStarted(name string) {
+	if !includes(uow.requireStarted, name) {
+		uow.requireStarted = append(uow.requireStarted, name)
 	}
 }

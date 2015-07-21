@@ -173,7 +173,7 @@ func isVerbose() bool {
 	return *verboseFlag
 }
 
-func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork)) {
+func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork), mightStartRelated bool) {
 
 	cfg = NewConfig(*configFlag)
 	excluded = excludedContainers([]string{*liftExcludeFlag, *createExcludeFlag, *runExcludeFlag})
@@ -185,7 +185,11 @@ func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork)) {
 	}
 
 	if isVerbose() {
-		printInfof("Command will be applied to: %v\n\n", strings.Join(unitOfWork.order, ", "))
+		printInfof("Command will be applied to: %s", strings.Join(unitOfWork.targeted, ", "))
+		if mightStartRelated && len(unitOfWork.Affected()) > 0 {
+			printInfof("\nIf needed, also starts: %s", strings.Join(unitOfWork.Affected(), ", "))
+		}
+		fmt.Println("\n")
 	}
 	wrapped(unitOfWork)
 }
@@ -205,7 +209,7 @@ func handleCmd() {
 	case liftCommand.FullCommand():
 		commandAction(*liftTargetArg, func(uow *UnitOfWork) {
 			uow.Lift(*liftCmdArg, excluded, *liftNoCacheFlag)
-		})
+		}, true)
 
 	case versionCommand.FullCommand():
 		fmt.Println("v1.5.0")
@@ -213,76 +217,76 @@ func handleCmd() {
 	case graphCommand.FullCommand():
 		commandAction(*graphTargetArg, func(uow *UnitOfWork) {
 			dependencyGraph.DOT(os.Stdout, uow.Targeted())
-		})
+		}, false)
 
 	case statsCommand.FullCommand():
 		commandAction(*statsTargetArg, func(uow *UnitOfWork) {
 			uow.Stats()
-		})
+		}, false)
 
 	case statusCommand.FullCommand():
 		commandAction(*statusTargetArg, func(uow *UnitOfWork) {
 			uow.Status(*noTruncFlag)
-		})
+		}, false)
 
 	case pushCommand.FullCommand():
 		commandAction(*pushTargetArg, func(uow *UnitOfWork) {
 			uow.Push()
-		})
+		}, false)
 
 	case unpauseCommand.FullCommand():
 		commandAction(*unpauseTargetArg, func(uow *UnitOfWork) {
 			uow.Unpause()
-		})
+		}, false)
 
 	case pauseCommand.FullCommand():
 		commandAction(*pauseTargetArg, func(uow *UnitOfWork) {
 			uow.Pause()
-		})
+		}, false)
 
 	case startCommand.FullCommand():
 		commandAction(*startTargetArg, func(uow *UnitOfWork) {
 			uow.Start()
-		})
+		}, true)
 
 	case stopCommand.FullCommand():
 		commandAction(*stopTargetArg, func(uow *UnitOfWork) {
 			uow.Stop()
-		})
+		}, false)
 
 	case killCommand.FullCommand():
 		commandAction(*killTargetArg, func(uow *UnitOfWork) {
 			uow.Kill()
-		})
+		}, false)
 
 	case rmCommand.FullCommand():
 		commandAction(*rmTargetArg, func(uow *UnitOfWork) {
 			uow.Rm(*forceRmFlag)
-		})
+		}, false)
 
 	case runCommand.FullCommand():
 		commandAction(*runTargetArg, func(uow *UnitOfWork) {
 			uow.Run(*runCmdArg, excluded)
-		})
+		}, true)
 
 	case createCommand.FullCommand():
 		commandAction(*createTargetArg, func(uow *UnitOfWork) {
 			uow.Create(*createCmdArg, excluded)
-		})
+		}, true)
 
 	case provisionCommand.FullCommand():
 		commandAction(*provisionTargetArg, func(uow *UnitOfWork) {
 			uow.Provision(*provisionNoCacheFlag)
-		})
+		}, false)
 
 	case pullCommand.FullCommand():
 		commandAction(*pullTargetArg, func(uow *UnitOfWork) {
 			uow.PullImage()
-		})
+		}, false)
 
 	case logsCommand.FullCommand():
 		commandAction(*logsTargetArg, func(uow *UnitOfWork) {
 			uow.Logs(*followFlag, *timestampsFlag, *tailFlag, *colorizeFlag)
-		})
+		}, false)
 	}
 }
