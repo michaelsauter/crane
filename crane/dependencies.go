@@ -23,9 +23,9 @@ func (d *Dependencies) includes(needle string) bool {
 	return false
 }
 
-// mustRun checks whether the given needle needs
+// requireStarted checks whether the given needle needs
 // to be running in order to be satisfied.
-func (d *Dependencies) mustRun(needle string) bool {
+func (d *Dependencies) requireStarted(needle string) bool {
 	if needle == d.Net {
 		return true
 	}
