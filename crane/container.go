@@ -1,11 +1,11 @@
 package crane
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"github.com/flynn/go-shlex"
 	"io"
-	"bufio"
 	"os"
 	"path"
 	"strconv"
@@ -548,16 +548,18 @@ func (c *container) Run(cmds []string, excluded []string, configPath string) {
 }
 
 func (c *container) executeArgsWithStartEventObserver(args []string) {
-	cmd, cmdOut, _ := executeCommandBackground("docker", []string{"events", "--filter", "event=start", "--filter", "container="+c.Name()})
+	cmd, cmdOut, _ := executeCommandBackground("docker", []string{"events", "--filter", "event=start", "--filter", "container=" + c.Name()})
+	go func() {
+		r := bufio.NewReader(cmdOut)
+		_, _, err := r.ReadLine()
+		cmd.Process.Kill()
+		if err != nil {
+			printNoticef("Could not execute post-start hook for %s.", c.Name())
+		} else {
+			executeHook(c.Hooks().PostStart(), c.Name())
+		}
+	}()
 	executeCommand("docker", args)
-	r := bufio.NewReader(cmdOut)
-	_, _, err := r.ReadLine()
-	cmd.Process.Kill()
-	if err != nil {
-		printNoticef("Could not execute post-start hook for %s.", c.Name())
-	} else {
-		executeHook(c.Hooks().PostStart(), c.Name())
-	}
 }
 
 // Returns all the flags to be passed to `docker create`
