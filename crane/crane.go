@@ -129,18 +129,18 @@ func executeCommand(name string, args []string) {
 	}
 }
 
-func executeCommandBackground(name string, args []string) (stdout, stderr io.ReadCloser) {
+func executeCommandBackground(name string, args []string) (cmd *exec.Cmd, stdout io.ReadCloser, stderr io.ReadCloser) {
 	if isVerbose() {
-		printInfof("--> %s %s\n\n", name, strings.Join(args, " "))
+		printInfof("--> %s %s\n", name, strings.Join(args, " "))
 	}
-	cmd := exec.Command(name, args...)
+	cmd = exec.Command(name, args...)
 	if cfg != nil {
 		cmd.Dir = cfg.Path()
 	}
 	stdout, _ = cmd.StdoutPipe()
 	stderr, _ = cmd.StderrPipe()
 	cmd.Start()
-	return stdout, stderr
+	return cmd, stdout, stderr
 }
 
 func commandOutput(name string, args []string) (string, error) {

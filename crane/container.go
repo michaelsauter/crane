@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/flynn/go-shlex"
 	"io"
+	"bufio"
 	"os"
 	"path"
 	"strconv"
@@ -543,8 +544,20 @@ func (c *container) Run(cmds []string, excluded []string, configPath string) {
 		args = append(args, "--detach")
 	}
 	args = append(args, c.createArgs(cmds, excluded, configPath)...)
+	c.executeArgsWithStartEventObserver(args)
+}
+
+func (c *container) executeArgsWithStartEventObserver(args []string) {
+	cmd, cmdOut, _ := executeCommandBackground("docker", []string{"events", "--filter", "event=start", "--filter", "container="+c.Name()})
 	executeCommand("docker", args)
-	executeHook(c.Hooks().PostStart(), c.Name())
+	r := bufio.NewReader(cmdOut)
+	_, _, err := r.ReadLine()
+	cmd.Process.Kill()
+	if err != nil {
+		printNoticef("Could not execute post-start hook for %s.", c.Name())
+	} else {
+		executeHook(c.Hooks().PostStart(), c.Name())
+	}
 }
 
 // Returns all the flags to be passed to `docker create`
@@ -767,8 +780,7 @@ func (c *container) Start(excluded []string, configPath string) {
 				args = append(args, "--interactive")
 			}
 			args = append(args, c.Name())
-			executeCommand("docker", args)
-			executeHook(c.Hooks().PostStart(), c.Name())
+			c.executeArgsWithStartEventObserver(args)
 		}
 	} else {
 		c.Run([]string{}, excluded, configPath)
@@ -890,7 +902,7 @@ func (c *container) Logs(follow bool, since string, tail string) (stdout, stderr
 		// them if the user doesn't want to see them
 		args = append(args, "-t")
 		args = append(args, c.Id())
-		stdout, stderr := executeCommandBackground("docker", args)
+		_, stdout, stderr := executeCommandBackground("docker", args)
 		return stdout, stderr
 	} else {
 		return nil, nil
