@@ -4,6 +4,9 @@ Lift containers with ease
 ## Overview
 Crane is a tool to orchestrate Docker containers. It works by reading in some configuration (JSON or YAML) which describes how to obtain images and how to run containers. This simplifies setting up a development environment a lot as you don't have to bring up every container manually, remembering all the arguments you need to pass. By storing the configuration next to the data and the app(s) in a repository, you can easily share the whole environment.
 
+The current version is 2.0. All releases can be found on the [releases](https://github.com/michaelsauter/crane/releases) page.
+
+
 ## Installation
 The latest release can be installed via:
 
@@ -19,24 +22,24 @@ Crane is a very light wrapper around the Docker CLI. This means that most comman
 
 | Command | Maps to | Explanation and Options |
 | ------------- | ----------- | ---------|
-| create      | create           | Creates containers if they don't exist yet. Use `--recreate` to remove containers first. |
-| run         | run              | Runs containers if they don't exist yet, otherwise just starts them. Use `--recreate` to remove containers first. |
-| rm          | rm               | Removes containers if they exist. Use `--kill` to kill containers first. |
-| start       | start            | Starts containers unless they are running already. |
+| create      | create           | Creates containers. Any existing containers are removed first. |
+| run         | run              | Runs containers. Any existing containers are removed first. |
+| rm          | rm               | Removes containers if they exist. Use `--force` to kill running containers first. |
+| start       | start            | Starts containers if not they are not running yet. Non-existing containers are created first. |
 | stop        | stop             | Stops containers if they are running. |
 | kill        | kill             | Kills containers if they are running. |
 | pause       | pause            |  |
 | unpause     | unpause          |  |
 | logs        | logs             | Logs of containers are multiplexed. Use `--follow` to follow log output. |
 | stats       | stats            | Needs Docker >= 1.5 |
-| provision   | pull/build       | Calls Docker's `pull` if no Dockerfile is specified. Otherwise it builds the image, optionally with disabled cache by passing `--no-cache`. |
-| pull        | pull             | |
 | push        | push             | |
-| lift        | pull/build + run | Provisions and runs containers in one go. Use `--recreate` to remove containers first, `--no-cache` to disable build cache. |
+| pull        | pull             | |
+| provision   | pull/build       | Calls Docker's `pull` if no Dockerfile is specified. Otherwise it builds the image, optionally with disabled cache by passing `--no-cache`. |
+| lift        | pull/build + run | Provisions and runs containers in one go. Use `--no-cache` to disable build cache. |
 | status      | -                | Displays information similar to `docker ps` for the given target. |
-| graph       | -                | Dumps the relations between containers as a dependency graph, using the DOT format. See built-in help for more information about style conventions used in that representation. |
+| graph       | -                | Dumps the relations between containers as a dependency graph, using the DOT format. |
 
-You can get more information about what's happening behind the scenes for all commands by using `--verbose`. All options have a short version as well, e.g. `lift -rn`.
+You can get more information about what's happening behind the scenes for all commands by using `--verbose`. Most options have a short version as well, e.g. `lift -rn`. The CLI provides a help for every command, e.g. `crane help run`.
 
 ## crane.json / crane.yaml
 The configuration defines a map of containers in either JSON or YAML. By default, the configuration is expected in a file named `crane.json` or `crane.yaml`/`crane.yml`, or a file given via `--config`. Those files are searched for in the current directory, then recursively in the parent directory. Dependencies between containers are automatically detected and resolved.
@@ -73,6 +76,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `mac-address` (string) Need Docker >= 1.4
 	* `memory` (string)
 	* `memory-swap` (string) Need Docker >= 1.5
+	* `name` (boolean) `true` by default. Set to `false` to assign a unique name to the container.
 	* `net` (string) The `container:id` syntax is not supported, use `container:name` if you want to reuse another container network stack.
 	* `oom-kill-disable` (bool) Need Docker >= 1.7
 	* `pid` (string) Need Docker >= 1.5
@@ -81,6 +85,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `publish-all` (boolean)
 	* `read-only` (boolean) Need Docker >= 1.5
 	* `restart` (string) Restart policy.
+	* `sig-proxy` (boolean) `true` by default
 	* `rm` (boolean)
 	* `tty` (boolean)
 	* `ulimit` (array) Need Docker >= 1.6
@@ -182,11 +187,11 @@ groups:
 
 ```
 
-This could be used like so: `crane provision service1`, `crane run -v databases` or `crane lift -r services database1`. `crane status` is an alias for `crane status default`, which in that example is an alias for `crane status service1 database1`.
+This could be used like so: `crane provision service1`, `crane run databases` or `crane lift services`. `crane status` is an alias for `crane status default`, which in that example is an alias for `crane status service1 database1`.
 
-### Cascading commands
+### Extending the target
 
-When using targets, it is also possible to cascade the commands to related containers. There are 2 different flags, `--cascade-affected` and `--cascade-dependencies`. In our example configuration above, when targeting the `mysql` container, the `apache` container would be considered to be "affected". When targeting the `apache` container, the `mysql` container would be considered as a "dependency". Both flags take a string argument, which specifies which type of cascading is desired, options are `volumesFrom`, `link`, `net` and `all`.
+It is also possible to cascade the target to related containers. There are 2 different "dynamic" groups, `affected` and `dependencies` (both have a short version `a` and `d`). In our example configuration above, when targeting the `mysql` container, the `apache` container would be considered to be "affected". When targeting the `apache` container, the `mysql` container would be considered as a "dependency". Therefore `crane run mysql+affected` will recreate both `apache` and `mysql`. Similarly, `crane run apache+dependencies` will recreate `apache`, `app`, `mysql` and `memcached`. It is possible to combine `affected` and `dependencies`.
 
 ### Hooks
 
@@ -236,6 +241,8 @@ The following hooks are currently available:
 * `post-start`: Executed after starting or running a container
 * `pre-stop`: Executed before stopping, killing or removing a running container
 * `post-stop`: Executed after stopping, killing or removing a running container
+
+Every hook will have the name of the container for which this hook runs available as the environment variable `CRANE_HOOKED_CONTAINER`.
 
 ### YAML advanced usage
 YAML gives you some advanced features like [alias](http://www.yaml.org/spec/1.2/spec.html#id2786196) and [merge](http://yaml.org/type/merge.html). They allow you to easily avoid duplicated code in your `crane.yml` file. As a example, imagine you need to define 2 different containers: `web` and `admin`. They share almost the same configuration but the `cmd` declaration. And imagine you also need 2 instances for each one for using with a node balancer. Then you can declare them as simply:
