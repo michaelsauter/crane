@@ -15,7 +15,7 @@ bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/master/
 ```
 You can also build Crane yourself by using the Go toolchain (`go get` and `go install`). Please have a look at the [release notes](https://github.com/michaelsauter/crane/releases) for the changelog if you're upgrading.
 
-Of course, you will need to have Docker (>= 1.3) installed.
+Of course, you will need to have Docker (>= 1.6) installed.
 
 ## Usage
 Crane is a very light wrapper around the Docker CLI. This means that most commands just call the corresponding Docker command, but for all targeted containers. Additionally, there are a few special commands.
@@ -31,7 +31,7 @@ Crane is a very light wrapper around the Docker CLI. This means that most comman
 | pause       | pause            |  |
 | unpause     | unpause          |  |
 | logs        | logs             | Logs of containers are multiplexed. Use `--follow` to follow log output. |
-| stats       | stats            | Needs Docker >= 1.5 |
+| stats       | stats            | |
 | push        | push             | |
 | pull        | pull             | |
 | provision   | pull/build       | Calls Docker's `pull` if no Dockerfile is specified. Otherwise it builds the image, optionally with disabled cache by passing `--no-cache`. |
@@ -53,7 +53,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `blkio-weight` (integer) Need Docker >= 1.7
 	* `cap-add` (array) Add Linux capabilities.
 	* `cap-drop` (array) Drop Linux capabilities.
-	* `cgroup-parent` (string) Need Docker >= 1.6
+	* `cgroup-parent` (string)
 	* `cidfile` (string)
 	* `cpu-period` (integer) Need Docker >= 1.7
 	* `cpu-quota` (integer) Need Docker >= 1.7
@@ -68,27 +68,27 @@ The map of containers consists of the name of the container mapped to the contai
 	* `expose` (array) Ports to expose to linked containers.
 	* `hostname` (string)
 	* `interactive` (boolean)
-	* `label` (array/mapping) Can be declared as a string array with `"key[=value]"` items or a string-to-string mapping where each `key: value` will be translated to the corresponding `"key=value"` string.. Need Docker >= 1.6
-	* `label-file` (array) Need Docker >= 1.6
+	* `label` (array/mapping) Can be declared as a string array with `"key[=value]"` items or a string-to-string mapping where each `key: value` will be translated to the corresponding `"key=value"` string.
+	* `label-file` (array)
 	* `link` (array) Link containers.
-	* `log-driver` (string) Need Docker >= 1.6
+	* `log-driver` (string)
 	* `log-opt` (array) Need Docker >= 1.7
 	* `lxc-conf` (array)
-	* `mac-address` (string) Need Docker >= 1.4
+	* `mac-address` (string)
 	* `memory` (string)
-	* `memory-swap` (string) Need Docker >= 1.5
+	* `memory-swap` (string)
 	* `net` (string) The `container:id` syntax is not supported, use `container:name` if you want to reuse another container network stack.
 	* `oom-kill-disable` (bool) Need Docker >= 1.7
-	* `pid` (string) Need Docker >= 1.5
+	* `pid` (string)
 	* `privileged` (boolean)
 	* `publish` (array) Map network ports to the container.
 	* `publish-all` (boolean)
-	* `read-only` (boolean) Need Docker >= 1.5
+	* `read-only` (boolean)
 	* `restart` (string) Restart policy.
 	* `sig-proxy` (boolean) `true` by default
 	* `rm` (boolean)
 	* `tty` (boolean)
-	* `ulimit` (array) Need Docker >= 1.6
+	* `ulimit` (array)
 	* `user` (string)
 	* `uts` (string) Need Docker >= 1.7
 	* `volume` (array) In contrast to plain Docker, the host path can be relative.

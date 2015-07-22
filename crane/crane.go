@@ -30,7 +30,7 @@ type StatusError struct {
 	status int
 }
 
-var requiredDockerVersion = []int{1, 3}
+var requiredDockerVersion = []int{1, 6}
 
 func RealMain() {
 	// On panic, recover the error, display it and return the given status code if any
