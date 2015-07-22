@@ -43,6 +43,7 @@ type Container interface {
 type container struct {
 	id            string
 	RawName       string
+	Unique        bool            `json:"unique" yaml:"unique"`
 	RawDockerfile string          `json:"dockerfile" yaml:"dockerfile"`
 	RawImage      string          `json:"image" yaml:"image"`
 	RunParams     RunParameters   `json:"run" yaml:"run"`
@@ -80,7 +81,6 @@ type RunParameters struct {
 	RawMacAddress   string      `json:"mac-address" yaml:"mac-address"`
 	RawMemory       string      `json:"memory" yaml:"memory"`
 	RawMemorySwap   string      `json:"memory-swap" yaml:"memory-swap"`
-	Name            OptBool     `json:"name" yaml:"name"`
 	RawNet          string      `json:"net" yaml:"net"`
 	OomKillDisable  bool        `json:"oom-kill-disable" yaml:"oom-kill-disable"`
 	RawPid          string      `json:"pid" yaml:"pid"`
@@ -454,7 +454,7 @@ func (r *RunParameters) Cmd() []string {
 }
 
 func (c *container) Id() string {
-	if len(c.id) == 0 && !c.hasUniqueName() {
+	if len(c.id) == 0 && !c.Unique {
 		// `docker inspect` works for both image and containers, make sure this is a
 		// container payload we get back, otherwise we might end up getting the Id
 		// of the image of the same name.
@@ -487,7 +487,7 @@ func (c *container) ImageExists() bool {
 }
 
 func (c *container) Status() []string {
-	if c.hasUniqueName() {
+	if c.Unique {
 		fmt.Printf("Cannot show status of uniquely named container(s) %s.\n", c.Name())
 		return []string{c.Name(), c.Image(), "-", "-", "-", "-", "-"}
 	}
@@ -516,7 +516,7 @@ func (c *container) Provision(nocache bool) {
 
 // Create container
 func (c *container) Create(cmds []string, excluded []string, configPath string) {
-	if c.hasUniqueName() {
+	if c.Unique {
 		c.setUniqueName()
 	} else {
 		c.Rm(true)
@@ -529,7 +529,7 @@ func (c *container) Create(cmds []string, excluded []string, configPath string) 
 
 // Run container, or start it if already existing
 func (c *container) Run(cmds []string, excluded []string, configPath string) {
-	if c.hasUniqueName() {
+	if c.Unique {
 		c.setUniqueName()
 	} else {
 		c.Rm(true)
@@ -751,7 +751,7 @@ func (c *container) createArgs(cmds []string, excluded []string, configPath stri
 
 // Start container
 func (c *container) Start(excluded []string, configPath string) {
-	if c.hasUniqueName() {
+	if c.Unique {
 		fmt.Printf("Cannot start uniquely named container(s) %s.\n", c.Name())
 		return
 	}
@@ -777,7 +777,7 @@ func (c *container) Start(excluded []string, configPath string) {
 
 // Kill container
 func (c *container) Kill() {
-	if c.hasUniqueName() {
+	if c.Unique {
 		fmt.Printf("Cannot kill uniquely named container(s) %s.\n", c.Name())
 		return
 	}
@@ -792,7 +792,7 @@ func (c *container) Kill() {
 
 // Stop container
 func (c *container) Stop() {
-	if c.hasUniqueName() {
+	if c.Unique {
 		fmt.Printf("Cannot stop uniquely named container(s) %s.\n", c.Name())
 		return
 	}
@@ -807,7 +807,7 @@ func (c *container) Stop() {
 
 // Pause container
 func (c *container) Pause() {
-	if c.hasUniqueName() {
+	if c.Unique {
 		fmt.Printf("Cannot pause uniquely named container(s) %s.\n", c.Name())
 		return
 	}
@@ -826,7 +826,7 @@ func (c *container) Pause() {
 
 // Unpause container
 func (c *container) Unpause() {
-	if c.hasUniqueName() {
+	if c.Unique {
 		fmt.Printf("Cannot unpause uniquely named container(s) %s.\n", c.Name())
 		return
 	}
@@ -839,7 +839,7 @@ func (c *container) Unpause() {
 
 // Remove container
 func (c *container) Rm(force bool) {
-	if c.hasUniqueName() {
+	if c.Unique {
 		fmt.Printf("Cannot remove uniquely named container(s) %s.\n", c.Name())
 		return
 	}
@@ -871,7 +871,7 @@ func (c *container) Rm(force bool) {
 
 // Dump container logs
 func (c *container) Logs(follow bool, since string, tail string) (stdout, stderr io.Reader) {
-	if c.hasUniqueName() {
+	if c.Unique {
 		fmt.Printf("Cannot show logs of uniquely named container(s) %s.\n", c.Name())
 		return
 	}
@@ -928,10 +928,6 @@ func (c *container) buildImage(nocache bool) {
 	}
 	args = append(args, "--rm", "--tag="+c.Image(), c.Dockerfile())
 	executeCommand("docker", args)
-}
-
-func (c *container) hasUniqueName() bool {
-	return c.RunParams.Name.Falsy()
 }
 
 func (c *container) setUniqueName() {

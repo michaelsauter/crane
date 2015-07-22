@@ -47,6 +47,7 @@ The map of containers consists of the name of the container mapped to the contai
 
 * `image` (string, required): Name of the image to build/pull
 * `dockerfile` (string, optional): Relative path to the Dockerfile
+* `unique` (boolean, optional) `true` assigns a unique name to the container
 * `run` (object, optional): Parameters mapped to Docker's `run` & `create`.
 	* `add-host` (array) Add custom host-to-IP mappings.
 	* `blkio-weight` (integer) Need Docker >= 1.7
@@ -76,7 +77,6 @@ The map of containers consists of the name of the container mapped to the contai
 	* `mac-address` (string) Need Docker >= 1.4
 	* `memory` (string)
 	* `memory-swap` (string) Need Docker >= 1.5
-	* `name` (boolean) `true` by default. Set to `false` to assign a unique name to the container.
 	* `net` (string) The `container:id` syntax is not supported, use `container:name` if you want to reuse another container network stack.
 	* `oom-kill-disable` (bool) Need Docker >= 1.7
 	* `pid` (string) Need Docker >= 1.5
