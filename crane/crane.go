@@ -30,28 +30,32 @@ type StatusError struct {
 	status int
 }
 
+func handleRecoveredError(recovered interface{}) {
+	var statusError StatusError
+
+	switch err := recovered.(type) {
+	case StatusError:
+		statusError = err
+	case error:
+		statusError = StatusError{err, 1}
+	case string:
+		statusError = StatusError{errors.New(err), 1}
+	default:
+		statusError = StatusError{}
+	}
+
+	if statusError.error != nil {
+		printErrorf("ERROR: %s\n", statusError.error)
+	}
+	os.Exit(statusError.status)
+}
+
 var requiredDockerVersion = []int{1, 6}
 
 func RealMain() {
 	// On panic, recover the error, display it and return the given status code if any
 	defer func() {
-		var statusError StatusError
-
-		switch err := recover().(type) {
-		case StatusError:
-			statusError = err
-		case error:
-			statusError = StatusError{err, 1}
-		case string:
-			statusError = StatusError{errors.New(err), 1}
-		default:
-			statusError = StatusError{}
-		}
-
-		if statusError.error != nil {
-			printErrorf("ERROR: %s\n", statusError.error)
-		}
-		os.Exit(statusError.status)
+		handleRecoveredError(recover())
 	}()
 	checkDockerClient()
 	handleCmd()

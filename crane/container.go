@@ -550,6 +550,9 @@ func (c *container) Run(cmds []string, excluded []string, configPath string) {
 func (c *container) executeArgsWithStartEventObserver(args []string) {
 	cmd, cmdOut, _ := executeCommandBackground("docker", []string{"events", "--filter", "event=start", "--filter", "container=" + c.Name()})
 	go func() {
+		defer func() {
+			handleRecoveredError(recover())
+		}()
 		r := bufio.NewReader(cmdOut)
 		_, _, err := r.ReadLine()
 		cmd.Process.Kill()
