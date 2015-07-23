@@ -31,6 +31,10 @@ type StatusError struct {
 }
 
 func handleRecoveredError(recovered interface{}) {
+	if recovered == nil {
+		return
+	}
+
 	var statusError StatusError
 
 	switch err := recovered.(type) {
