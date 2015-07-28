@@ -39,6 +39,7 @@ type Container interface {
 	Logs(follow bool, since string, tail string) (stdout, stderr io.Reader)
 	Push()
 	Hooks() Hooks
+	SetName(string)
 }
 
 type container struct {
@@ -495,6 +496,10 @@ func (c *container) Provision(nocache bool) {
 	} else {
 		c.PullImage()
 	}
+}
+
+func (c *container) SetName(name string) {
+	c.RawName = name
 }
 
 // Run or start container

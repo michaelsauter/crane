@@ -24,6 +24,7 @@ type Options struct {
 	ignoreMissing       string
 	config              string
 	target              []string
+	customName          string
 }
 
 var options Options
@@ -66,7 +67,7 @@ func handleCmd() {
 		Long: `
 lift will provision missing images and run all targeted containers.`,
 		Run: configCommand(func(config Config) {
-			config.TargetedContainers().lift(options.recreate, options.nocache, options.ignoreMissing, config.Path())
+			config.TargetedContainers().lift(options.recreate, options.nocache, options.ignoreMissing, config.Path(), options.customName)
 		}, false),
 	}
 
@@ -105,7 +106,7 @@ pull will pull the image(s) from the given registry.`,
 		Short: "Run the containers",
 		Long:  `run will call docker run for all targeted containers.`,
 		Run: configCommand(func(config Config) {
-			config.TargetedContainers().run(options.recreate, options.ignoreMissing, config.Path())
+			config.TargetedContainers().run(options.recreate, options.ignoreMissing, config.Path(), options.customName)
 		}, false),
 	}
 
@@ -249,6 +250,7 @@ See the corresponding docker commands for more information.`,
 	cmdLift.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (force-remove containers if they exist, force-provision images, run containers)")
 	cmdLift.Flags().StringVarP(&options.ignoreMissing, "ignore-missing", "i", "none", "Rather than failing, ignore dependencies that are not fullfilled for:"+dependencyTypeValuesSuffix)
 	cmdLift.Flags().BoolVarP(&options.nocache, "no-cache", "n", false, "Build the image without any cache")
+	cmdLift.Flags().StringVarP(&options.customName, "custom-name", "", "", "If target is a single container, lift it with the specified name")
 
 	cmdProvision.Flags().BoolVarP(&options.nocache, "no-cache", "n", false, "Build the image without any cache")
 
@@ -257,6 +259,7 @@ See the corresponding docker commands for more information.`,
 
 	cmdRun.Flags().BoolVarP(&options.recreate, "recreate", "r", false, "Recreate containers (force-remove containers first)")
 	cmdRun.Flags().StringVarP(&options.ignoreMissing, "ignore-missing", "i", "none", "Rather than failing, ignore dependencies that are not fullfilled for:"+dependencyTypeValuesSuffix)
+	cmdRun.Flags().StringVarP(&options.customName, "custom-name", "", "", "If target is a single container, run it with the specified name")
 
 	cmdRm.Flags().BoolVarP(&options.forceRm, "force", "f", false, "Kill containers if they are running first")
 
