@@ -36,7 +36,7 @@ func (containers Containers) reversed() Containers {
 func (containers Containers) lift(recreate bool, nocache bool, ignoreMissing string, configPath string, customName string) {
 	containers.provisionOrSkip(recreate, nocache)
 
-	if len(containers) == 1 {
+	if len(containers) == 1 && customName != "" {
 		containers[0].SetName(customName)
 	}
 
@@ -77,7 +77,7 @@ func (containers Containers) run(recreate bool, ignoreMissing string, configPath
 		containers.rm(true)
 	}
 
-	if len(containers) == 1 {
+	if len(containers) == 1 && customName != "" {
 		containers[0].SetName(customName)
 	}
 
