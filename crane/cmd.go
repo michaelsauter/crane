@@ -15,7 +15,6 @@ type Options struct {
 	notrunc             bool
 	forceRm             bool
 	follow              bool
-	since               string
 	timestamps          bool
 	tail                string
 	colorize            bool
@@ -182,7 +181,7 @@ together into the process STDOUT in order to interlace lines properly. Logs
 originally dumped to STDERR have a line header ending with a '*', and are
 formatted in bold provided the 'colorize' flag is on.`,
 		Run: configCommand(func(config Config) {
-			config.TargetedContainers().logs(options.follow, options.since, options.timestamps, options.tail, options.colorize)
+			config.TargetedContainers().logs(options.follow, options.timestamps, options.tail, options.colorize)
 		}, true),
 	}
 
@@ -263,7 +262,6 @@ See the corresponding docker commands for more information.`,
 	cmdStatus.Flags().BoolVarP(&options.notrunc, "no-trunc", "", false, "Don't truncate output")
 
 	cmdLogs.Flags().BoolVarP(&options.follow, "follow", "f", false, "Follow log output")
-	cmdLogs.Flags().StringVarP(&options.since, "since", "", "", "Show logs since timestamp (Docker >= 1.7)")
 	cmdLogs.Flags().BoolVarP(&options.timestamps, "timestamps", "t", false, "Show timestamps")
 	cmdLogs.Flags().StringVarP(&options.tail, "tail", "", "all", "Output the specified number of lines at the end of logs")
 	cmdLogs.Flags().BoolVarP(&options.colorize, "colorize", "z", false, "Output the lines with one color per container")

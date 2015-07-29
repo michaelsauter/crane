@@ -46,13 +46,10 @@ The map of containers consists of the name of the container mapped to the contai
 * `dockerfile` (string, optional): Relative path to the Dockerfile
 * `run` (object, optional): Parameters mapped to Docker's `run` & `create`.
 	* `add-host` (array) Add custom host-to-IP mappings.
-	* `blkio-weight` (integer) Need Docker >= 1.7
 	* `cap-add` (array) Add Linux capabilities.
 	* `cap-drop` (array) Drop Linux capabilities.
 	* `cgroup-parent` (string) Need Docker >= 1.6
 	* `cidfile` (string)
-	* `cpu-period` (integer) Need Docker >= 1.7
-	* `cpu-quota` (integer) Need Docker >= 1.7
 	* `cpuset` (integer)
 	* `cpu-shares` (integer)
 	* `detach` (boolean) `sudo docker attach <container name>` will work as normal.
@@ -74,7 +71,6 @@ The map of containers consists of the name of the container mapped to the contai
 	* `memory` (string)
 	* `memory-swap` (string) Need Docker >= 1.5
 	* `net` (string) The `container:id` syntax is not supported, use `container:name` if you want to reuse another container network stack.
-	* `oom-kill-disable` (bool) Need Docker >= 1.7
 	* `pid` (string) Need Docker >= 1.5
 	* `privileged` (boolean)
 	* `publish` (array) Map network ports to the container.
@@ -85,7 +81,6 @@ The map of containers consists of the name of the container mapped to the contai
 	* `tty` (boolean)
 	* `ulimit` (array) Need Docker >= 1.6
 	* `user` (string)
-	* `uts` (string) Need Docker >= 1.7
 	* `volume` (array) In contrast to plain Docker, the host path can be relative.
 	* `volumes-from` (array) Mount volumes from other containers
 	* `workdir` (string)
