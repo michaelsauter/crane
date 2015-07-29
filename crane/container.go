@@ -522,7 +522,7 @@ func (c *container) Create(cmds []string, excluded []string, configPath string) 
 	} else {
 		c.Rm(true)
 	}
-	fmt.Printf("Creating container %s.\n", c.Name())
+	fmt.Printf("Creating container %s ... ", c.Name())
 
 	args := append([]string{"create"}, c.createArgs(cmds, excluded, configPath)...)
 	executeCommand("docker", args)
@@ -536,7 +536,7 @@ func (c *container) Run(cmds []string, excluded []string, configPath string) {
 		c.Rm(true)
 	}
 	executeHook(c.Hooks().PreStart(), c.Name())
-	fmt.Printf("Running container %s.\n", c.Name())
+	fmt.Printf("Running container %s ... ", c.Name())
 
 	args := []string{"run"}
 	// Detach
@@ -776,7 +776,7 @@ func (c *container) Start(excluded []string, configPath string) {
 	if c.Exists() {
 		if !c.Running() {
 			executeHook(c.Hooks().PreStart(), c.Name())
-			fmt.Printf("Starting container %s.\n", c.Name())
+			fmt.Printf("Starting container %s ... ", c.Name())
 			args := []string{"start"}
 			if c.StartParams.Attach {
 				args = append(args, "--attach")
@@ -800,7 +800,7 @@ func (c *container) Kill() {
 	}
 	if c.Running() {
 		executeHook(c.Hooks().PreStop(), c.Name())
-		fmt.Printf("Killing container %s.\n", c.Name())
+		fmt.Printf("Killing container %s ... ", c.Name())
 		args := []string{"kill", c.Name()}
 		executeCommand("docker", args)
 		executeHook(c.Hooks().PostStop(), c.Name())
@@ -815,7 +815,7 @@ func (c *container) Stop() {
 	}
 	if c.Running() {
 		executeHook(c.Hooks().PreStop(), c.Name())
-		fmt.Printf("Stopping container %s.\n", c.Name())
+		fmt.Printf("Stopping container %s ... ", c.Name())
 		args := []string{"stop", c.Name()}
 		executeCommand("docker", args)
 		executeHook(c.Hooks().PostStop(), c.Name())
@@ -832,7 +832,7 @@ func (c *container) Pause() {
 		if c.Paused() {
 			printNoticef("Container %s is already paused.\n", c.Name())
 		} else {
-			fmt.Printf("Pausing container %s.\n", c.Name())
+			fmt.Printf("Pausing container %s ... ", c.Name())
 			args := []string{"pause", c.Name()}
 			executeCommand("docker", args)
 		}
@@ -848,7 +848,7 @@ func (c *container) Unpause() {
 		return
 	}
 	if c.Paused() {
-		fmt.Printf("Unpausing container %s.\n", c.Name())
+		fmt.Printf("Unpausing container %s ... ", c.Name())
 		args := []string{"unpause", c.Name()}
 		executeCommand("docker", args)
 	}
@@ -874,7 +874,7 @@ func (c *container) Rm(force bool) {
 				fmt.Printf("Removing container %s and its volumes ... ", c.Name())
 				args = append(args, "--volumes")
 			} else {
-				fmt.Printf("Removing container %s.\n", c.Name())
+				fmt.Printf("Removing container %s ... ", c.Name())
 			}
 			args = append(args, c.Name())
 			executeCommand("docker", args)
