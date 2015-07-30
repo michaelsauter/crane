@@ -8,7 +8,6 @@ import (
 )
 
 var cfg Config
-var dependencyGraph DependencyGraph
 var excluded []string
 
 var (
@@ -181,7 +180,7 @@ func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork), migh
 
 	cfg = NewConfig(*configFlag)
 	excluded = excludedContainers([]string{*liftExcludeFlag, *createExcludeFlag, *runExcludeFlag})
-	dependencyGraph = cfg.DependencyGraph(excluded)
+	dependencyGraph := cfg.DependencyGraph(excluded)
 	target := NewTarget(dependencyGraph, targetFlag)
 	unitOfWork, err := NewUnitOfWork(dependencyGraph, target.all())
 	if err != nil {
@@ -220,7 +219,7 @@ func handleCmd() {
 
 	case graphCommand.FullCommand():
 		commandAction(*graphTargetArg, func(uow *UnitOfWork) {
-			dependencyGraph.DOT(os.Stdout, uow.Targeted())
+			cfg.DependencyGraph(excluded).DOT(os.Stdout, uow.Targeted().Reversed())
 		}, false)
 
 	case statsCommand.FullCommand():
