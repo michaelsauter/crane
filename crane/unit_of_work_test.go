@@ -37,6 +37,13 @@ func TestNewUnitOfWork(t *testing.T) {
 			targeted: []string{"a", "b", "c"},
 			err:      true,
 		},
+		{ // incomplete map -> fails
+			graph: DependencyGraph{
+				"a": &Dependencies{All: []string{"b"}},
+			},
+			targeted: []string{"a"},
+			err:      true,
+		},
 		{ // partial target -> works
 			graph: DependencyGraph{
 				"b": &Dependencies{All: []string{"c"}, Link: []string{"c"}},

@@ -26,6 +26,10 @@ func NewUnitOfWork(graph DependencyGraph, targeted []string) (uow *UnitOfWork, e
 		initialLenContainers := len(c)
 		for _, name := range c {
 			dependencies := graph[name]
+			if dependencies == nil {
+				err = fmt.Errorf("Container %s referenced, but not defined.", name)
+				return
+			}
 			for _, dep := range dependencies.All {
 				uow.ensureInContainers(dep)
 				if dependencies.requireStarted(dep) {
