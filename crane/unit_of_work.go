@@ -71,7 +71,7 @@ func (uow *UnitOfWork) Run(cmds []string, excluded []string) {
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
 			container.Run(cmds, excluded, cfg.Path())
-		} else if includes(uow.requireStarted, container.Name()) {
+		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
 			container.Start(excluded, cfg.Path())
 		}
 	}
@@ -81,7 +81,7 @@ func (uow *UnitOfWork) Lift(cmds []string, excluded []string, noCache bool) {
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
 			container.Lift(cmds, noCache, excluded, cfg.Path())
-		} else if includes(uow.requireStarted, container.Name()) {
+		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
 			container.Start(excluded, cfg.Path())
 		}
 	}
@@ -131,7 +131,7 @@ func (uow *UnitOfWork) Start() {
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
 			container.Start(excluded, cfg.Path())
-		} else if includes(uow.requireStarted, container.Name()) {
+		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
 			container.Start(excluded, cfg.Path())
 		}
 	}
@@ -163,7 +163,7 @@ func (uow *UnitOfWork) Create(cmds []string, excluded []string) {
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
 			container.Create(cmds, excluded, cfg.Path())
-		} else if includes(uow.requireStarted, container.Name()) {
+		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
 			container.Start(excluded, cfg.Path())
 		}
 	}
