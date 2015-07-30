@@ -80,14 +80,14 @@ func findConfig(location string) string {
 
 // readConfig will read the config file
 // and return the created config.
-func readConfig(filename string) *config {
+func (c *config) readFile(filename string) {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		panic(StatusError{err, 74})
 	}
 
 	ext := filepath.Ext(filename)
-	return unmarshal(data, ext)
+	c.unmarshal(data, ext)
 }
 
 // displaySyntaxError will display more information
@@ -116,13 +116,12 @@ func displaySyntaxError(data []byte, syntaxError error) (err error) {
 
 // unmarshal converts either JSON
 // or YAML into a config object.
-func unmarshal(data []byte, ext string) *config {
-	var config *config
+func (c *config) unmarshal(data []byte, ext string) {
 	var err error
 	if ext == ".json" {
-		err = json.Unmarshal(data, &config)
+		err = json.Unmarshal(data, &c)
 	} else if ext == ".yml" || ext == ".yaml" {
-		err = yaml.Unmarshal(data, &config)
+		err = yaml.Unmarshal(data, &c)
 	} else {
 		panic(StatusError{errors.New("Unrecognized file extension"), 65})
 	}
@@ -130,7 +129,6 @@ func unmarshal(data []byte, ext string) *config {
 		err = displaySyntaxError(data, err)
 		panic(StatusError{err, 65})
 	}
-	return config
 }
 
 // NewConfig retus a new config based on given
@@ -138,15 +136,25 @@ func unmarshal(data []byte, ext string) *config {
 // Containers will be ordered so that they can be
 // brought up and down with Docker.
 func NewConfig(location string) Config {
-	var config *config
 	configFile := findConfig(location)
 	if isVerbose() {
 		printInfof("Using configuration file `%s`\n", configFile)
 	}
-	config = readConfig(configFile)
-	config.initialize()
-	config.path = path.Dir(configFile)
-	return config
+	c := &config{}
+	c.readFile(configFile)
+
+	ext := filepath.Ext(configFile)
+	localConfigFile := strings.Replace(configFile, ext, ".local"+ext, -1)
+	if _, err := os.Stat(localConfigFile); err == nil {
+		if isVerbose() {
+			printInfof("Applying local config file `%s`\n", localConfigFile)
+		}
+		c.readFile(localConfigFile)
+	}
+
+	c.initialize()
+	c.path = path.Dir(configFile)
+	return c
 }
 
 // Return path of config file
