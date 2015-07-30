@@ -873,6 +873,7 @@ func (c *container) PullImage() {
 
 // Build image for container
 func (c *container) buildImage(nocache bool) {
+	executeHook(c.Hooks().PreBuild())
 	fmt.Printf("Building image %s ... ", c.Image())
 	args := []string{"build"}
 	if nocache {
@@ -880,6 +881,7 @@ func (c *container) buildImage(nocache bool) {
 	}
 	args = append(args, "--rm", "--tag="+c.Image(), c.Dockerfile())
 	executeCommand("docker", args)
+	executeHook(c.Hooks().PostBuild())
 }
 
 // Return the image id of a tag, or an empty string if it doesn't exist
