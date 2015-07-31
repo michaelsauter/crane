@@ -139,7 +139,7 @@ func executeCommand(name string, args []string) {
 
 func executeCommandBackground(name string, args []string) (cmd *exec.Cmd, stdout io.ReadCloser, stderr io.ReadCloser) {
 	if isVerbose() {
-		printInfof("--> %s %s\n", name, strings.Join(args, " "))
+		printInfof("\n--> %s %s\n", name, strings.Join(args, " "))
 	}
 	cmd = exec.Command(name, args...)
 	if cfg != nil {
