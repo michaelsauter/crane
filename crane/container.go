@@ -787,11 +787,7 @@ func (c *container) createArgs(cmds []string, excluded []string, configPath stri
 
 // Start container
 func (c *container) Start(excluded []string, configPath string) {
-	if c.Unique() {
-		fmt.Printf("Cannot start uniquely named container(s) %s.\n", c.Name())
-		return
-	}
-	if c.Exists() {
+	if c.Exists() && !c.Unique() {
 		if !c.Running() {
 			executeHook(c.Hooks().PreStart(), c.Name())
 			fmt.Printf("Starting container %s ... ", c.Name())
