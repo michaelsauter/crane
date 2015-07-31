@@ -248,6 +248,13 @@ The following hooks are currently available:
 
 Every hook will have the name of the container for which this hook runs available as the environment variable `CRANE_HOOKED_CONTAINER`.
 
+### Container Prefixes
+It is possible to prefix containers with a global `--prefix` flag, which is just
+prepended to the container name. Remember that you will have to provide the same
+prefix for subsequent calls if you want to address the same set of containers. A
+common use case for this feature is to launch a set of containers
+in parallel, e.g. for CI builds.
+
 ### YAML advanced usage
 YAML gives you some advanced features like [alias](http://www.yaml.org/spec/1.2/spec.html#id2786196) and [merge](http://yaml.org/type/merge.html). They allow you to easily avoid duplicated code in your `crane.yml` file. As a example, imagine you need to define 2 different containers: `web` and `admin`. They share almost the same configuration but the `cmd` declaration. And imagine you also need 2 instances for each one for using with a node balancer. Then you can declare them as simply:
 

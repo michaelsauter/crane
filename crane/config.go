@@ -20,6 +20,7 @@ type Config interface {
 	ContainersForReference(reference string) (result []string)
 	Path() string
 	UniqueId() string
+	Prefix() string
 	ContainerMap() ContainerMap
 	Container(name string) Container
 }
@@ -31,6 +32,7 @@ type config struct {
 	containerMap    ContainerMap
 	groups          map[string][]string
 	path            string
+	prefix          string
 	uniqueId        string
 }
 
@@ -141,7 +143,7 @@ func unmarshal(data []byte, ext string) *config {
 // location.
 // Containers will be ordered so that they can be
 // brought up and down with Docker.
-func NewConfig(location string) Config {
+func NewConfig(location string, prefix string) Config {
 	var config *config
 	configFile := findConfig(location)
 	if isVerbose() {
@@ -150,6 +152,7 @@ func NewConfig(location string) Config {
 	config = readConfig(configFile)
 	config.initialize()
 	config.path = path.Dir(configFile)
+	config.prefix = prefix
 	milliseconds := time.Now().UnixNano() / 1000000
 	config.uniqueId = strconv.FormatInt(milliseconds, 10)
 	return config
@@ -162,6 +165,10 @@ func (c *config) Path() string {
 
 func (c *config) UniqueId() string {
 	return c.uniqueId
+}
+
+func (c *config) Prefix() string {
+	return c.prefix
 }
 
 func (c *config) ContainerMap() ContainerMap {

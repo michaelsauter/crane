@@ -18,6 +18,10 @@ var (
 		"config",
 		"Location of config file.",
 	).Short('c').PlaceHolder("~/crane.yaml").String()
+	prefixFlag   = app.Flag(
+		"prefix",
+		"Container prefix.",
+	).Short('p').String()
 
 	liftCommand = app.Command(
 		"lift",
@@ -185,7 +189,7 @@ func isVerbose() bool {
 
 func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork), mightStartRelated bool) {
 
-	cfg = NewConfig(*configFlag)
+	cfg = NewConfig(*configFlag, *prefixFlag)
 	excluded = excludedContainers([]string{*liftExcludeFlag, *createExcludeFlag, *runExcludeFlag})
 	dependencyGraph := cfg.DependencyGraph(excluded)
 	target := NewTarget(dependencyGraph, targetFlag)
