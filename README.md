@@ -30,6 +30,7 @@ Crane is a very light wrapper around the Docker CLI. This means that most comman
 | kill        | kill             | Kills containers if they are running. |
 | pause       | pause            |  |
 | unpause     | unpause          |  |
+| exec        | exec             | Starts container first if not running yet. |
 | logs        | logs             | Logs of containers are multiplexed. Use `--follow` to follow log output. |
 | stats       | stats            | |
 | push        | push             | |
@@ -100,6 +101,9 @@ The map of containers consists of the name of the container mapped to the contai
 * `start` (object, optional): Parameters mapped to Docker's `start`.
 	* `attach` (boolean)
 	* `interactive` (boolean)
+* `exec` (object, optional): Parameters mapped to Docker's `exec`.
+  * `interactive` (boolean)
+  * `tty` (boolean)
 
 Note that basic environment variable expansion (`${FOO}`, `$FOO`) is supported throughout the configuration, but advanced shell features such as command substitution (`$(cat foo)`, `` `cat foo` ``) or advanced expansions (`sp{el,il,al}l`, `foo*`, `~/project`, `$((A * B))`, `${PARAMETER#PATTERN}`) are *not* as the Docker CLI is called directly.
 

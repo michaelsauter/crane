@@ -97,6 +97,13 @@ var (
 	)
 	killTargetArg = killCommand.Arg("target", "Target of command").String()
 
+	execCommand = app.Command(
+		"exec",
+		"Execute command in the container(s).",
+	)
+	execTargetArg = execCommand.Arg("target", "Target of command").String()
+	execCmdArg    = execCommand.Arg("cmd", "Command for container").Strings()
+
 	rmCommand = app.Command(
 		"rm",
 		"Remove the containers.",
@@ -260,6 +267,11 @@ func handleCmd() {
 	case killCommand.FullCommand():
 		commandAction(*killTargetArg, func(uow *UnitOfWork) {
 			uow.Kill()
+		}, false)
+
+	case execCommand.FullCommand():
+		commandAction(*execTargetArg, func(uow *UnitOfWork) {
+			uow.Exec(*execCmdArg)
 		}, false)
 
 	case rmCommand.FullCommand():

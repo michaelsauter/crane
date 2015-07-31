@@ -151,6 +151,16 @@ func (uow *UnitOfWork) Kill() {
 	}
 }
 
+func (uow *UnitOfWork) Exec(cmds []string) {
+	for _, container := range uow.Containers() {
+		if includes(uow.targeted, container.Name()) {
+			container.Exec(cmds, cfg.Path())
+		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
+			container.Start(excluded, cfg.Path())
+		}
+	}
+}
+
 // Rm containers.
 func (uow *UnitOfWork) Rm(force bool) {
 	for _, container := range uow.Targeted().Reversed() {

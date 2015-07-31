@@ -35,6 +35,7 @@ type Container interface {
 	Stop()
 	Pause()
 	Unpause()
+	Exec(cmds []string, configPath string)
 	Rm(force bool)
 	Logs(follow bool, since string, tail string) (stdout, stderr io.Reader)
 	Push()
@@ -50,6 +51,7 @@ type container struct {
 	RunParams     RunParameters   `json:"run" yaml:"run"`
 	RmParams      RmParameters    `json:"rm" yaml:"rm"`
 	StartParams   StartParameters `json:"start" yaml:"start"`
+	ExecParams    ExecParameters  `json:"exec" yaml:"exec"`
 	hooks         hooks
 }
 
@@ -110,6 +112,11 @@ type RmParameters struct {
 type StartParameters struct {
 	Attach      bool `json:"attach" yaml:"attach"`
 	Interactive bool `json:"interactive" yaml:"interactive"`
+}
+
+type ExecParameters struct {
+	Interactive bool `json:"interactive" yaml:"interactive"`
+	Tty         bool `json:"tty" yaml:"tty"`
 }
 
 type OptBool struct {
@@ -866,6 +873,23 @@ func (c *container) Unpause() {
 		args := []string{"unpause", c.Name()}
 		executeCommand("docker", args)
 	}
+}
+
+// Exec command in container
+func (c *container) Exec(cmds []string, configPath string) {
+	if !c.Running() {
+		c.Start([]string{}, configPath)
+	}
+	args := []string{"exec"}
+	if c.ExecParams.Interactive {
+		args = append(args, "--interactive")
+	}
+	if c.ExecParams.Tty {
+		args = append(args, "--tty")
+	}
+	args = append(args, c.Name())
+	args = append(args, cmds...)
+	executeCommand("docker", args)
 }
 
 // Remove container
