@@ -10,7 +10,6 @@ import (
 	"path"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type Container interface {
@@ -22,6 +21,7 @@ type Container interface {
 	Dependencies(excluded []string) *Dependencies
 	Exists() bool
 	Running() bool
+	Unique() bool
 	Paused() bool
 	ImageExists() bool
 	Status() []string
@@ -44,7 +44,7 @@ type Container interface {
 type container struct {
 	id            string
 	RawName       string
-	Unique        bool            `json:"unique" yaml:"unique"`
+	RawUnique     bool            `json:"unique" yaml:"unique"`
 	RawDockerfile string          `json:"dockerfile" yaml:"dockerfile"`
 	RawImage      string          `json:"image" yaml:"image"`
 	RunParams     RunParameters   `json:"run" yaml:"run"`
@@ -186,6 +186,10 @@ func (c *container) Dockerfile() string {
 
 func (c *container) Image() string {
 	return os.ExpandEnv(c.RawImage)
+}
+
+func (c *container) Unique() bool {
+	return c.RawUnique
 }
 
 func (c *container) ImageWithTag() string {
@@ -455,7 +459,7 @@ func (r *RunParameters) Cmd() []string {
 }
 
 func (c *container) Id() string {
-	if len(c.id) == 0 && !c.Unique {
+	if len(c.id) == 0 && !c.Unique() {
 		// `docker inspect` works for both image and containers, make sure this is a
 		// container payload we get back, otherwise we might end up getting the Id
 		// of the image of the same name.
@@ -488,7 +492,7 @@ func (c *container) ImageExists() bool {
 }
 
 func (c *container) Status() []string {
-	if c.Unique {
+	if c.Unique() {
 		fmt.Printf("Cannot show status of uniquely named container(s) %s.\n", c.Name())
 		return []string{c.Name(), c.Image(), "-", "-", "-", "-", "-"}
 	}
@@ -517,8 +521,8 @@ func (c *container) Provision(nocache bool) {
 
 // Create container
 func (c *container) Create(cmds []string, excluded []string, configPath string) {
-	if c.Unique {
-		c.setUniqueName()
+	if c.Unique() {
+		c.RawName = nameWithUniqueId(c.RawName)
 	} else {
 		c.Rm(true)
 	}
@@ -530,8 +534,8 @@ func (c *container) Create(cmds []string, excluded []string, configPath string) 
 
 // Run container, or start it if already existing
 func (c *container) Run(cmds []string, excluded []string, configPath string) {
-	if c.Unique {
-		c.setUniqueName()
+	if c.Unique() {
+		c.RawName = nameWithUniqueId(c.RawName)
 	} else {
 		c.Rm(true)
 	}
@@ -650,8 +654,13 @@ func (c *container) createArgs(cmds []string, excluded []string, configPath stri
 	}
 	// Link
 	for _, link := range c.RunParams.Link() {
-		if !includes(excluded, strings.Split(link, ":")[0]) {
-			args = append(args, "--link", link)
+		linkParts := strings.Split(link, ":")
+		linkName := linkParts[0]
+		if !includes(excluded, linkName) {
+			if cfg.Container(linkName).Unique() {
+				linkParts[0] = nameWithUniqueId(linkName)
+			}
+			args = append(args, "--link", strings.Join(linkParts, ":"))
 		}
 	}
 	// LogDriver
@@ -681,7 +690,11 @@ func (c *container) createArgs(cmds []string, excluded []string, configPath stri
 	// Net
 	if c.RunParams.Net() != "bridge" {
 		if !includes(excluded, c.netContainer()) {
-			args = append(args, "--net", c.RunParams.Net())
+			netName := c.RunParams.Net()
+			if cfg.Container(netName).Unique() {
+				netName = nameWithUniqueId(netName)
+			}
+			args = append(args, "--net", netName)
 		}
 	}
 	// OomKillDisable
@@ -746,8 +759,13 @@ func (c *container) createArgs(cmds []string, excluded []string, configPath stri
 	}
 	// VolumesFrom
 	for _, volumesFrom := range c.RunParams.VolumesFrom() {
-		if !includes(excluded, strings.Split(volumesFrom, ":")[0]) {
-			args = append(args, "--volumes-from", volumesFrom)
+		volumesFromParts := strings.Split(volumesFrom, ":")
+		volumesFromName := volumesFromParts[0]
+		if !includes(excluded, volumesFromName) {
+			if cfg.Container(volumesFromName).Unique() {
+				volumesFromParts[0] = nameWithUniqueId(volumesFromName)
+			}
+			args = append(args, "--volumes-from", strings.Join(volumesFromParts, ":"))
 		}
 	}
 	// Workdir
@@ -769,7 +787,7 @@ func (c *container) createArgs(cmds []string, excluded []string, configPath stri
 
 // Start container
 func (c *container) Start(excluded []string, configPath string) {
-	if c.Unique {
+	if c.Unique() {
 		fmt.Printf("Cannot start uniquely named container(s) %s.\n", c.Name())
 		return
 	}
@@ -794,7 +812,7 @@ func (c *container) Start(excluded []string, configPath string) {
 
 // Kill container
 func (c *container) Kill() {
-	if c.Unique {
+	if c.Unique() {
 		fmt.Printf("Cannot kill uniquely named container(s) %s.\n", c.Name())
 		return
 	}
@@ -809,7 +827,7 @@ func (c *container) Kill() {
 
 // Stop container
 func (c *container) Stop() {
-	if c.Unique {
+	if c.Unique() {
 		fmt.Printf("Cannot stop uniquely named container(s) %s.\n", c.Name())
 		return
 	}
@@ -824,7 +842,7 @@ func (c *container) Stop() {
 
 // Pause container
 func (c *container) Pause() {
-	if c.Unique {
+	if c.Unique() {
 		fmt.Printf("Cannot pause uniquely named container(s) %s.\n", c.Name())
 		return
 	}
@@ -843,7 +861,7 @@ func (c *container) Pause() {
 
 // Unpause container
 func (c *container) Unpause() {
-	if c.Unique {
+	if c.Unique() {
 		fmt.Printf("Cannot unpause uniquely named container(s) %s.\n", c.Name())
 		return
 	}
@@ -856,7 +874,7 @@ func (c *container) Unpause() {
 
 // Remove container
 func (c *container) Rm(force bool) {
-	if c.Unique {
+	if c.Unique() {
 		fmt.Printf("Cannot remove uniquely named container(s) %s.\n", c.Name())
 		return
 	}
@@ -888,7 +906,7 @@ func (c *container) Rm(force bool) {
 
 // Dump container logs
 func (c *container) Logs(follow bool, since string, tail string) (stdout, stderr io.Reader) {
-	if c.Unique {
+	if c.Unique() {
 		fmt.Printf("Cannot show logs of uniquely named container(s) %s.\n", c.Name())
 		return
 	}
@@ -947,9 +965,8 @@ func (c *container) buildImage(nocache bool) {
 	executeCommand("docker", args)
 }
 
-func (c *container) setUniqueName() {
-	milliseconds := time.Now().UnixNano() / 1000000
-	c.RawName = c.RawName + "-" + strconv.FormatInt(milliseconds, 10)
+func nameWithUniqueId(name string) string {
+	return name + "-" + cfg.UniqueId()
 }
 
 // Return the image id of a tag, or an empty string if it doesn't exist

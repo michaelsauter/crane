@@ -10,13 +10,16 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 )
 
 type Config interface {
 	DependencyGraph(excluded []string) DependencyGraph
 	ContainersForReference(reference string) (result []string)
 	Path() string
+	UniqueId() string
 	ContainerMap() ContainerMap
 	Container(name string) Container
 }
@@ -28,6 +31,7 @@ type config struct {
 	containerMap    ContainerMap
 	groups          map[string][]string
 	path            string
+	uniqueId        string
 }
 
 // ContainerMap maps the container name
@@ -146,12 +150,18 @@ func NewConfig(location string) Config {
 	config = readConfig(configFile)
 	config.initialize()
 	config.path = path.Dir(configFile)
+	milliseconds := time.Now().UnixNano() / 1000000
+	config.uniqueId = strconv.FormatInt(milliseconds, 10)
 	return config
 }
 
 // Return path of config file
 func (c *config) Path() string {
 	return c.path
+}
+
+func (c *config) UniqueId() string {
+	return c.uniqueId
 }
 
 func (c *config) ContainerMap() ContainerMap {
