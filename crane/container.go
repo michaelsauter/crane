@@ -973,6 +973,7 @@ func (c *container) PullImage() {
 
 // Build image for container
 func (c *container) buildImage(nocache bool) {
+	executeHook(c.Hooks().PreBuild(), c.ActualName())
 	fmt.Printf("Building image %s ... ", c.Image())
 	args := []string{"build"}
 	if nocache {
@@ -980,6 +981,7 @@ func (c *container) buildImage(nocache bool) {
 	}
 	args = append(args, "--rm", "--tag="+c.Image(), c.Dockerfile())
 	executeCommand("docker", args)
+	executeHook(c.Hooks().PostBuild(), c.ActualName())
 }
 
 func (c *container) prefixedName() string {
