@@ -241,6 +241,8 @@ Hooks can be defined on a group level (`foo`, `bar`) so that they apply to all c
 * A fatal error will be raised at startup when 2 group-inherited hooks conflict. This is not the case in the previous example; even though `foo` and `bar` both contain `service2`, the hooks they declare are disjoint.
 
 The following hooks are currently available:
+* `pre-build`: Executed before building an image
+* `post-build`: Executed after building an image
 * `pre-start`: Executed before starting or running a container
 * `post-start`: Executed after starting or running a container
 * `pre-stop`: Executed before stopping, killing or removing a running container
