@@ -234,6 +234,7 @@ func (c *config) DependencyGraph(excluded []string) DependencyGraph {
 // ContainersForReference receives a reference and determines which
 // containers of the map that resolves to.
 func (c *config) ContainersForReference(reference string) (result []string) {
+	containers := []string{}
 	if len(reference) == 0 {
 		// reference not given
 		var defaultGroup []string
@@ -245,39 +246,39 @@ func (c *config) ContainersForReference(reference string) (result []string) {
 		}
 		if defaultGroup != nil {
 			// If default group exists, return its containers
-			result = defaultGroup
+			containers = defaultGroup
 		} else {
 			// Otherwise, return all containers
 			for name, _ := range c.containerMap {
-				result = append(result, name)
+				containers = append(containers, name)
 			}
 		}
 	} else {
 		// reference given
 		reference = os.ExpandEnv(reference)
 		// Select reference from listed groups
-		for group, containers := range c.groups {
+		for group, groupContainers := range c.groups {
 			if group == reference {
-				result = append(result, containers...)
+				containers = append(containers, groupContainers...)
 				break
 			}
 		}
-		if len(result) == 0 {
+		if len(containers) == 0 {
 			// The reference might just be one container
 			for name, _ := range c.containerMap {
 				if name == reference {
-					result = append(result, reference)
+					containers = append(containers, reference)
 					break
 				}
 			}
 		}
-		if len(result) == 0 {
+		if len(containers) == 0 {
 			// reference was not found anywhere
 			panic(StatusError{fmt.Errorf("No group or container matching `%s`", reference), 64})
 		}
 	}
 	// ensure all container references exist
-	for _, container := range result {
+	for _, container := range containers {
 		containerDeclared := false
 		for name, _ := range c.containerMap {
 			if container == name {
@@ -287,6 +288,9 @@ func (c *config) ContainersForReference(reference string) (result []string) {
 		}
 		if !containerDeclared {
 			panic(StatusError{fmt.Errorf("Invalid container reference `%s`", container), 64})
+		}
+		if !includes(result, container) {
+			result = append(result, container)
 		}
 	}
 	return
