@@ -65,3 +65,19 @@ func TestNewTarget(t *testing.T) {
 		assert.Equal(t, example.expected, target)
 	}
 }
+
+func TestDeduplicationAll(t *testing.T) {
+	containerMap := NewStubbedContainerMap(true,
+		&container{RawName: "a", RunParams: RunParameters{RawLink: []string{"b:b"}}},
+		&container{RawName: "b", RunParams: RunParameters{RawLink: []string{"c:c"}}},
+		&container{RawName: "c"},
+	)
+	groups := map[string][]string{
+		"ab": []string{"a", "b", "a"},
+	}
+	cfg = &config{containerMap: containerMap, groups: groups}
+	dependencyGraph := cfg.DependencyGraph([]string{})
+
+	target := NewTarget(dependencyGraph, "ab+dependencies+affected")
+	assert.Equal(t, []string{"a", "b", "c"}, target.all())
+}

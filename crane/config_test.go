@@ -289,3 +289,16 @@ func TestContainersForReferenceInvalidReference(t *testing.T) {
 		c.ContainersForReference("doesntexist")
 	})
 }
+
+func TestContainersForReferenceDeduplication(t *testing.T) {
+	containerMap := NewStubbedContainerMap(true,
+		&container{RawName: "a"},
+		&container{RawName: "b"},
+	)
+	groups := map[string][]string{
+		"foo": []string{"a", "b", "a"},
+	}
+	c := &config{containerMap: containerMap, groups: groups}
+	containers := c.ContainersForReference("foo")
+	assert.Equal(t, []string{"a", "b"}, containers)
+}
