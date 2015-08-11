@@ -58,6 +58,22 @@ func TestNewTarget(t *testing.T) {
 				affected:     []string{"a"},
 			},
 		},
+		{
+			target: "a+d",
+			expected: Target{
+				initial:      []string{"a"},
+				dependencies: []string{"b", "c"},
+				affected:     []string{},
+			},
+		},
+		{
+			target: "c+a",
+			expected: Target{
+				initial:      []string{"c"},
+				dependencies: []string{},
+				affected:     []string{"a", "b"},
+			},
+		},
 	}
 
 	for _, example := range examples {
