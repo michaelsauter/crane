@@ -18,7 +18,7 @@ var (
 		"config",
 		"Location of config file.",
 	).Short('c').PlaceHolder("~/crane.yaml").String()
-	prefixFlag   = app.Flag(
+	prefixFlag = app.Flag(
 		"prefix",
 		"Container prefix.",
 	).Short('p').String()
