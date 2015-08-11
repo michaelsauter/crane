@@ -560,25 +560,27 @@ func (c *container) Run(cmds []string, excluded []string, configPath string) {
 		args = append(args, "--detach")
 	}
 	args = append(args, c.createArgs(cmds, excluded, configPath)...)
-	c.executeArgsWithStartEventObserver(args)
+	c.executePostStartHook()
+	executeCommand("docker", args)
 }
 
-func (c *container) executeArgsWithStartEventObserver(args []string) {
-	cmd, cmdOut, _ := executeCommandBackground("docker", []string{"events", "--filter", "event=start", "--filter", "container=" + c.ActualName()})
-	go func() {
-		defer func() {
-			handleRecoveredError(recover())
+func (c *container) executePostStartHook() {
+	if len(c.Hooks().PostStart()) > 0 {
+		cmd, cmdOut, _ := executeCommandBackground("docker", []string{"events", "--filter", "event=start", "--filter", "container=" + c.ActualName()})
+		go func() {
+			defer func() {
+				handleRecoveredError(recover())
+			}()
+			r := bufio.NewReader(cmdOut)
+			_, _, err := r.ReadLine()
+			cmd.Process.Kill()
+			if err != nil {
+				printNoticef("Could not execute post-start hook for %s.", c.ActualName())
+			} else {
+				executeHook(c.Hooks().PostStart(), c.ActualName())
+			}
 		}()
-		r := bufio.NewReader(cmdOut)
-		_, _, err := r.ReadLine()
-		cmd.Process.Kill()
-		if err != nil {
-			printNoticef("Could not execute post-start hook for %s.", c.ActualName())
-		} else {
-			executeHook(c.Hooks().PostStart(), c.ActualName())
-		}
-	}()
-	executeCommand("docker", args)
+	}
 }
 
 // Returns all the flags to be passed to `docker create`
@@ -803,7 +805,8 @@ func (c *container) Start(excluded []string, configPath string) {
 				args = append(args, "--interactive")
 			}
 			args = append(args, c.ActualName())
-			c.executeArgsWithStartEventObserver(args)
+			c.executePostStartHook()
+			executeCommand("docker", args)
 		}
 	} else {
 		c.Run([]string{}, excluded, configPath)
