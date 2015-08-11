@@ -192,7 +192,10 @@ func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork), migh
 	cfg = NewConfig(*configFlag, *prefixFlag)
 	excluded = excludedContainers([]string{*liftExcludeFlag, *createExcludeFlag, *runExcludeFlag})
 	dependencyGraph := cfg.DependencyGraph(excluded)
-	target := NewTarget(dependencyGraph, targetFlag)
+	target, err := NewTarget(dependencyGraph, targetFlag)
+	if err != nil {
+		panic(StatusError{err, 78})
+	}
 	unitOfWork, err := NewUnitOfWork(dependencyGraph, target.all())
 	if err != nil {
 		panic(StatusError{err, 78})

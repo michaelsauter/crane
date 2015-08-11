@@ -1,6 +1,7 @@
 package crane
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 )
@@ -17,7 +18,7 @@ type Target struct {
 // dynamic targets "dependencies" and/or "affected"
 // are included in the targetFlag.
 // Additionally, the target is sorted alphabetically.
-func NewTarget(graph DependencyGraph, targetFlag string) Target {
+func NewTarget(graph DependencyGraph, targetFlag string) (target Target, err error) {
 
 	targetParts := strings.Split(targetFlag, "+")
 	targetName := targetParts[0]
@@ -29,11 +30,12 @@ func NewTarget(graph DependencyGraph, targetFlag string) Target {
 		} else if v == "affected" || v == "a" {
 			extendAffected = true
 		} else {
-
+			err = fmt.Errorf("Unknown target extension %s. Available options are 'dependencies'/'d' and 'affected'/'a'", v)
+			return
 		}
 	}
 
-	target := Target{
+	target = Target{
 		initial:      cfg.ContainersForReference(targetName),
 		dependencies: []string{},
 		affected:     []string{},
@@ -111,7 +113,7 @@ func NewTarget(graph DependencyGraph, targetFlag string) Target {
 		sort.Strings(target.affected)
 	}
 
-	return target
+	return
 }
 
 // includes checks whether the given needle is

@@ -61,7 +61,7 @@ func TestNewTarget(t *testing.T) {
 	}
 
 	for _, example := range examples {
-		target := NewTarget(dependencyGraph, example.target)
+		target, _ := NewTarget(dependencyGraph, example.target)
 		assert.Equal(t, example.expected, target)
 	}
 }
@@ -78,6 +78,6 @@ func TestDeduplicationAll(t *testing.T) {
 	cfg = &config{containerMap: containerMap, groups: groups}
 	dependencyGraph := cfg.DependencyGraph([]string{})
 
-	target := NewTarget(dependencyGraph, "ab+dependencies+affected")
+	target, _ := NewTarget(dependencyGraph, "ab+dependencies+affected")
 	assert.Equal(t, []string{"a", "b", "c"}, target.all())
 }
