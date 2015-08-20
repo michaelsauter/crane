@@ -2,9 +2,10 @@ package crane
 
 import (
 	"fmt"
-	"github.com/alecthomas/kingpin"
 	"os"
 	"strings"
+
+	"github.com/alecthomas/kingpin"
 )
 
 var cfg Config
@@ -21,7 +22,7 @@ var (
 	prefixFlag = app.Flag(
 		"prefix",
 		"Container prefix.",
-	).Short('p').String()
+	).Short('p').OverrideDefaultFromEnvar("CRANE_PREFIX").String()
 
 	liftCommand = app.Command(
 		"lift",
