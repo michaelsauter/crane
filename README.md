@@ -102,6 +102,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `interactive` (boolean)
 * `build` (object, optional): Parameters mapped to Docker's `build`.
 	* `context` (string)
+	* `file` (string)
 * `exec` (object, optional): Parameters mapped to Docker's `exec`.
   * `interactive` (boolean)
   * `tty` (boolean)
