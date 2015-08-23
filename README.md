@@ -47,7 +47,7 @@ The configuration defines a map of containers in either JSON or YAML. By default
 The map of containers consists of the name of the container mapped to the container configuration, which consists of:
 
 * `image` (string, required): Name of the image to build/pull
-* `unique` (boolean, optional) `true` assigns a unique name to the container
+* `unique` (boolean, optional) `true` assigns a unique name to the container (experimental)
 * `run` (object, optional): Parameters mapped to Docker's `run` & `create`.
 	* `add-host` (array) Add custom host-to-IP mappings.
 	* `blkio-weight` (integer) Need Docker >= 1.7
@@ -258,6 +258,9 @@ prepended to the container name. Remember that you will have to provide the same
 prefix for subsequent calls if you want to address the same set of containers. A
 common use case for this feature is to launch a set of containers
 in parallel, e.g. for CI builds.
+
+### Unique names
+If `unique` is set to true, Crane will add a timestamp to the container name, making it possible to have multiple containers based on the same Crane config. Since those containers can not be addressed by Crane later on (e.g. they cannot be stopped and removed), consider setting `rm` to `true` as well. This feature is experimental, which means it can be changed or even removed in with every minor version update.
 
 ### YAML advanced usage
 YAML gives you some advanced features like [alias](http://www.yaml.org/spec/1.2/spec.html#id2786196) and [merge](http://yaml.org/type/merge.html). They allow you to easily avoid duplicated code in your `crane.yml` file. As a example, imagine you need to define 2 different containers: `web` and `admin`. They share almost the same configuration but the `cmd` declaration. And imagine you also need 2 instances for each one for using with a node balancer. Then you can declare them as simply:
