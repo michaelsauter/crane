@@ -15,7 +15,7 @@ import (
 type Container interface {
 	Name() string
 	ActualName() string
-	Dockerfile() string
+	BuildContext() string
 	Image() string
 	ImageWithTag() string
 	Id() string
@@ -47,13 +47,17 @@ type container struct {
 	id            string
 	RawName       string
 	RawUnique     bool            `json:"unique" yaml:"unique"`
-	RawDockerfile string          `json:"dockerfile" yaml:"dockerfile"`
 	RawImage      string          `json:"image" yaml:"image"`
+	BuildParams   BuildParameters `json:"build" yaml:"build"`
 	RunParams     RunParameters   `json:"run" yaml:"run"`
 	RmParams      RmParameters    `json:"rm" yaml:"rm"`
 	StartParams   StartParameters `json:"start" yaml:"start"`
 	ExecParams    ExecParameters  `json:"exec" yaml:"exec"`
 	hooks         hooks
+}
+
+type BuildParameters struct {
+	RawContext string      `json:"context" yaml:"context"`
 }
 
 type RunParameters struct {
@@ -196,8 +200,8 @@ func (c *container) ActualName() string {
 	}
 }
 
-func (c *container) Dockerfile() string {
-	return os.ExpandEnv(c.RawDockerfile)
+func (c *container) BuildContext() string {
+	return os.ExpandEnv(c.BuildParams.RawContext)
 }
 
 func (c *container) Image() string {
@@ -528,7 +532,7 @@ func (c *container) Lift(cmds []string, nocache bool, excluded []string, configP
 }
 
 func (c *container) Provision(nocache bool) {
-	if len(c.Dockerfile()) > 0 {
+	if len(c.BuildContext()) > 0 {
 		c.buildImage(nocache)
 	} else {
 		c.PullImage()
@@ -982,7 +986,7 @@ func (c *container) buildImage(nocache bool) {
 	if nocache {
 		args = append(args, "--no-cache")
 	}
-	args = append(args, "--rm", "--tag="+c.Image(), c.Dockerfile())
+	args = append(args, "--rm", "--tag="+c.Image(), c.BuildContext())
 	executeCommand("docker", args)
 	executeHook(c.Hooks().PostBuild(), c.ActualName())
 }

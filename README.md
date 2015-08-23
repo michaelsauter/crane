@@ -47,7 +47,6 @@ The configuration defines a map of containers in either JSON or YAML. By default
 The map of containers consists of the name of the container mapped to the container configuration, which consists of:
 
 * `image` (string, required): Name of the image to build/pull
-* `dockerfile` (string, optional): Relative path to the Dockerfile
 * `unique` (boolean, optional) `true` assigns a unique name to the container
 * `run` (object, optional): Parameters mapped to Docker's `run` & `create`.
 	* `add-host` (array) Add custom host-to-IP mappings.
@@ -101,6 +100,8 @@ The map of containers consists of the name of the container mapped to the contai
 * `start` (object, optional): Parameters mapped to Docker's `start`.
 	* `attach` (boolean)
 	* `interactive` (boolean)
+* `build` (object, optional): Parameters mapped to Docker's `build`.
+	* `context` (string)
 * `exec` (object, optional): Parameters mapped to Docker's `exec`.
   * `interactive` (boolean)
   * `tty` (boolean)
@@ -122,7 +123,8 @@ containers:
 			link: ["mysql:db", "memcached:cache"]
 			detach: true
 	app:
-		dockerfile: app
+		build:
+			context: app
 		image: michaelsauter/app
 		run:
 			volume: ["app/www:/srv/www:rw"]
