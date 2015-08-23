@@ -216,7 +216,7 @@ func (uow *UnitOfWork) Targeted() Containers {
 	return c
 }
 
-func (uow *UnitOfWork) Affected() []string {
+func (uow *UnitOfWork) Associated() []string {
 	c := []string{}
 	for _, name := range uow.order {
 		if !includes(uow.targeted, name) {

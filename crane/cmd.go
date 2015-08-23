@@ -203,8 +203,8 @@ func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork), migh
 
 	if isVerbose() {
 		printInfof("Command will be applied to: %s", strings.Join(unitOfWork.targeted, ", "))
-		if mightStartRelated && len(unitOfWork.Affected()) > 0 {
-			printInfof("\nIf needed, also starts: %s", strings.Join(unitOfWork.Affected(), ", "))
+		if mightStartRelated && len(unitOfWork.Associated()) > 0 {
+			printInfof("\nIf needed, also starts: %s", strings.Join(unitOfWork.Associated(), ", "))
 		}
 		fmt.Println("\n")
 	}
