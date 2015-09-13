@@ -1,24 +1,36 @@
 # Crane
 Lift containers with ease
 
+
 ## Overview
 Crane is a tool to orchestrate Docker containers. It works by reading in some configuration (JSON or YAML) which describes how to obtain images and how to run containers. This simplifies setting up a development environment a lot as you don't have to bring up every container manually, remembering all the arguments you need to pass. By storing the configuration next to the data and the app(s) in a repository, you can easily share the whole environment.
 
-The current version is 2.0. All releases can be found on the [releases](https://github.com/michaelsauter/crane/releases) page.
-
 
 ## Installation
-The latest release can be installed via:
+The latest release (2.0.0) can be installed via:
 
 ```
-bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/master/download.sh`" && sudo mv crane /usr/local/bin/crane
+bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/v2.0.0/download.sh`" && sudo mv crane /usr/local/bin/crane
 ```
-You can also build Crane yourself by using the Go toolchain (`go get` and `go install`). Please have a look at the [release notes](https://github.com/michaelsauter/crane/releases) for the changelog if you're upgrading.
+
+All releases can be found on the [releases](https://github.com/michaelsauter/crane/releases) page. You can also build Crane yourself by using the standard Go toolchain.
+
+Please have a look at the [changelog](https://github.com/michaelsauter/crane/v2.0.0/CHANGELOG.md) when upgrading.
 
 Of course, you will need to have Docker (>= 1.6) installed.
 
+
 ## Usage
-Crane is a very light wrapper around the Docker CLI. This means that most commands just call the corresponding Docker command, but for all targeted containers. Additionally, there are a few special commands.
+Crane is a very light wrapper around the Docker CLI. This means that most commands just call the corresponding Docker command, but for all targeted containers. The basic format is `crane <command> <target>`.
+
+When executing commands, keep the following 2 rules in mind:
+
+1. Crane will apply the command ONLY to the target
+2. Crane will do with other containers in the configuration whatever it takes in order for (1) to succeed
+
+As an example, imagine you have a container `web` depending on container `database`. When you execute `crane run web`, then Crane will start `database` first, then run `web` (recreating `web` if it already exists). There are ways to dynamically extend the target (so that `database` would be recreated as well for example) described below.
+
+Following are a list of supported commands and possible options:
 
 | Command | Maps to | Explanation and Options |
 | ------------- | ----------- | ---------|
@@ -42,7 +54,8 @@ Crane is a very light wrapper around the Docker CLI. This means that most comman
 
 You can get more information about what's happening behind the scenes for all commands by using `--verbose`. Most options have a short version as well, e.g. `lift -rn`. The CLI provides a help for every command, e.g. `crane help run`.
 
-## crane.json / crane.yaml
+
+## Configuration
 The configuration defines a map of containers in either JSON or YAML. By default, the configuration is expected in a file named `crane.json` or `crane.yaml`/`crane.yml`, or a file given via `--config`. Those files are searched for in the current directory, then recursively in the parent directory. Dependencies between containers are automatically detected and resolved.
 The map of containers consists of the name of the container mapped to the container configuration, which consists of:
 
@@ -110,6 +123,7 @@ Note that basic environment variable expansion (`${FOO}`, `$FOO`) is supported t
 
 See the [Docker documentation](http://docs.docker.io/en/latest/reference/commandline/cli/#run) for more details about the parameters.
 
+
 ## Example
 A typical `crane.yaml` looks like this:
 
@@ -169,6 +183,7 @@ If you want to use JSON instead of YAML, here's what a simple configuration look
 	}
 }
 ```
+
 
 ## Advanced Usage
 
@@ -281,10 +296,12 @@ containers:
 
 As a summary, `&anchor` declares the anchor property, `*alias` is the alias indicator to simply copy the mapping it references, and `<<: *merge` includes all the mapping but let you override some keys.
 
+
 ## Some Crane-backed sample environments
 * [Silex + Nginx/php-fpm + MySQL](https://github.com/michaelsauter/silex-crane-env)
 * [Symfony2 + Apache + MySQL](https://github.com/michaelsauter/symfony2-crane-env)
 * [Sinatra + PostgreSQL](https://github.com/michaelsauter/sinatra-crane-env)
+
 
 ## Copyright & Licensing
 Copyright © 2013-2015 Michael Sauter. See the LICENSE file for details.
