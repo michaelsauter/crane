@@ -21,7 +21,7 @@ Of course, you will need to have Docker (>= 1.6) installed.
 
 
 ## Usage
-Crane is a very light wrapper around the Docker CLI. This means that most commands just call the corresponding Docker command, but for all targeted containers. The basic format is `crane <command> <target>`.
+Crane is a very light wrapper around the Docker CLI. This means that most commands just call the corresponding Docker command, but for all targeted containers. The basic format is `crane <command> <target>`, where `<command>` corresponds to a Docker command, and `<target>` either is a single container or a group (described below).
 
 When executing commands, keep the following 2 rules in mind:
 
