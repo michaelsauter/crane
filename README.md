@@ -16,7 +16,7 @@ The latest release (2.0.0) can be installed via:
 bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/v2.0.0/download.sh`" && sudo mv crane /usr/local/bin/crane
 ```
 
-All releases can be found on the
+Older releases can be found on the
 [releases](https://github.com/michaelsauter/crane/releases) page. You can also
 build Crane yourself by using the standard Go toolchain.
 
