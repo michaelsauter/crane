@@ -32,7 +32,7 @@ Crane is a very light wrapper around the Docker CLI. This means that most
 commands just call the corresponding Docker command, but for all targeted
 containers. The basic format is `crane <command> <target>`, where `<command>`
 corresponds to a Docker command, and `<target>` either is a single container or
-a [group](#groups).
+a [group](#groups-and-targeting).
 
 When executing commands, keep the following 2 rules in mind:
 
@@ -73,7 +73,7 @@ You can get more information about what's happening behind the scenes for all co
 
 ## Configuration
 The configuration defines a map of containers in either JSON or YAML. By default, the configuration is expected in a file named `crane.json` or `crane.yaml`/`crane.yml`. The file can also be set via `--config` or `CRANE_CONFIG`. If the given path is relative, Crane searches for the configuration in the current directory, then recursively in the parent directory. Dependencies between containers are automatically detected and resolved.
-The map of containers consists of the name of the container mapped to the container configuration, which consists of:
+The map of containers consists of the name of the container mapped to the container configuration, with the following keys:
 
 * `image` (string, required): Name of the image to build/pull
 * `unique` (boolean, optional) `true` assigns a unique name to the container (experimental)
@@ -137,7 +137,7 @@ The map of containers consists of the name of the container mapped to the contai
 
 Note that basic environment variable expansion (`${FOO}`, `$FOO`) is supported throughout the configuration, but advanced shell features such as command substitution (`$(cat foo)`, `` `cat foo` ``) or advanced expansions (`sp{el,il,al}l`, `foo*`, `~/project`, `$((A * B))`, `${PARAMETER#PATTERN}`) are *not* as the Docker CLI is called directly.
 
-See the [Docker documentation](http://docs.docker.io/en/latest/reference/commandline/cli/#run) for more details about the parameters.
+See the [Docker documentation](http://docs.docker.com/reference/commandline/cli/) for more details about the parameters.
 
 
 ## Example
@@ -169,19 +169,13 @@ containers:
 		run:
 			detach: true
 ```
-Note you can also declare the `env` parameter as:
 
-```
-env:
-  MYSQL_ROOT_PASSWORD: mysecretpassword
-```
-All specified Docker containers can then be created and started with:
+All specified Docker containers can then be created and started in the correct
+order with:
 
 ```
 crane lift
 ```
-
-This will bring up the containers. The container running Apache has the MySQL and Memcached containers automatically linked.
 
 If you want to use JSON instead of YAML, here's what a simple configuration looks like:
 
@@ -203,9 +197,13 @@ If you want to use JSON instead of YAML, here's what a simple configuration look
 
 ## Advanced Usage
 
-### Groups
+### Groups and Targeting
 
-Next to containers, you can also specify groups, and then execute Crane commands that only target those groups. If you do not specify any target as non-option arguments, the command will apply to all containers. However, you can override this by specifying a `default` group. Also, every container can be targeted individually by using the name of the container in the non-option arguments. Note that any number of group or container references can be used as target, and that ordering doesn't matter since containers will be ordered according to the dependency graph. Groups of containers can be specified like this (YAML shown):
+Next to containers, you can also specify groups, and then execute Crane commands
+against those groups. If you do not specify any target, the command will apply
+to all containers. However, you can override this by specifying a `default`
+group. Also, every container can be targeted individually by using the name of
+the container. Groups of containers can be specified like this (YAML shown):
 
 ```
 containers:
@@ -224,17 +222,22 @@ groups:
 
 ```
 
-This could be used like so: `crane provision service1`, `crane run databases` or `crane lift services`. `crane status` is an alias for `crane status default`, which in that example is an alias for `crane status service1 database1`.
+This could be used like so: `crane provision service1`, `crane run databases`
+or `crane lift services`. `crane status` is an alias for `crane status default`
+in this example. If `default` were not specified, then `crane lift` would start
+`database1`, `database2`, `service1` and `service2`.
+
 
 ### Extending the target
 
 It is also possible to cascade the target to related containers. There are 2 different "dynamic" groups, `affected` and `dependencies` (both have a short version `a` and `d`). In our example configuration above, when targeting the `mysql` container, the `apache` container would be considered to be "affected". When targeting the `apache` container, the `mysql` container would be considered as a "dependency". Therefore `crane run mysql+affected` will recreate both `apache` and `mysql`. Similarly, `crane run apache+dependencies` will recreate `apache`, `app`, `mysql` and `memcached`. It is possible to combine `affected` and `dependencies`.
 
+
 ### Excluding containers
 
-If you want to exclude a container or a whole group from being affected by a
-Crane command, you can specify this with `--exclude <target>` (or via
-`CRANE_EXCLUDE`).
+If you want to exclude a container or a whole group from a Crane command, you
+can specify this with `--exclude <target>` (or via `CRANE_EXCLUDE`).
+
 
 ### Hooks
 
@@ -276,6 +279,7 @@ hooks:
 ```
 
 Hooks can be defined on a group level (`foo`, `bar`) so that they apply to all containers within that group, or directly on a container (`service3`). At most one hook can be registered per container and per event. When more than one hook is found for a given container and a given event, the following rules apply:
+
 * Container-defined hooks have priority over group-defined ones, so in the example above, only "container service3 stopped" will be echoed when stopping `service3`.
 * A fatal error will be raised at startup when 2 group-inherited hooks conflict. This is not the case in the previous example; even though `foo` and `bar` both contain `service2`, the hooks they declare are disjoint.
 
@@ -289,6 +293,7 @@ The following hooks are currently available:
 
 Every hook will have the name of the container for which this hook runs available as the environment variable `CRANE_HOOKED_CONTAINER`.
 
+
 ### Container Prefixes
 It is possible to prefix containers with a global `--prefix` flag, which is just
 prepended to the container name. Remember that you will have to provide the same
@@ -297,8 +302,10 @@ common use case for this feature is to launch a set of containers
 in parallel, e.g. for CI builds. Container prefixes can also be supplied by the
 `CRANE_PREFIX` environment variable.
 
+
 ### Unique names
-If `unique` is set to true, Crane will add a timestamp to the container name, making it possible to have multiple containers based on the same Crane config. Since those containers can not be addressed by Crane later on (e.g. they cannot be stopped and removed), consider setting `rm` to `true` as well. This feature is experimental, which means it can be changed or even removed in with every minor version update.
+If `unique` is set to true, Crane will add a timestamp to the container name, making it possible to have multiple containers based on the same Crane config. Since those containers can not be addressed by Crane later on (e.g. they cannot be stopped and removed), consider setting `rm` to `true` as well. This feature is experimental, which means it can be changed or even removed in every minor version update.
+
 
 ### YAML advanced usage
 YAML gives you some advanced features like [alias](http://www.yaml.org/spec/1.2/spec.html#id2786196) and [merge](http://yaml.org/type/merge.html). They allow you to easily avoid duplicated code in your `crane.yml` file. As a example, imagine you need to define 2 different containers: `web` and `admin`. They share almost the same configuration but the `cmd` declaration. And imagine you also need 2 instances for each one for using with a node balancer. Then you can declare them as simply:
