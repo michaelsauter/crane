@@ -3,7 +3,10 @@ Lift containers with ease
 
 
 ## Overview
-Crane is a tool to orchestrate Docker containers. It works by reading in some configuration (JSON or YAML) which describes how to obtain images and how to run containers. This simplifies setting up a development environment a lot as you don't have to bring up every container manually, remembering all the arguments you need to pass. By storing the configuration next to the data and the app(s) in a repository, you can easily share the whole environment.
+Crane is a tool to orchestrate Docker containers. It works by reading in some
+configuration (JSON or YAML) which describes how to obtain images and how to run
+containers. Crane is ideally suited for setting up a development environment or
+continuous integration.
 
 
 ## Installation
@@ -13,22 +16,35 @@ The latest release (2.0.0) can be installed via:
 bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/v2.0.0/download.sh`" && sudo mv crane /usr/local/bin/crane
 ```
 
-All releases can be found on the [releases](https://github.com/michaelsauter/crane/releases) page. You can also build Crane yourself by using the standard Go toolchain.
+All releases can be found on the
+[releases](https://github.com/michaelsauter/crane/releases) page. You can also
+build Crane yourself by using the standard Go toolchain.
 
-Please have a look at the [changelog](https://github.com/michaelsauter/crane/v2.0.0/CHANGELOG.md) when upgrading.
+Please have a look at the
+[changelog](https://github.com/michaelsauter/crane/v2.0.0/CHANGELOG.md) when
+upgrading.
 
 Of course, you will need to have Docker (>= 1.6) installed.
 
 
 ## Usage
-Crane is a very light wrapper around the Docker CLI. This means that most commands just call the corresponding Docker command, but for all targeted containers. The basic format is `crane <command> <target>`, where `<command>` corresponds to a Docker command, and `<target>` either is a single container or a group (described below).
+Crane is a very light wrapper around the Docker CLI. This means that most
+commands just call the corresponding Docker command, but for all targeted
+containers. The basic format is `crane <command> <target>`, where `<command>`
+corresponds to a Docker command, and `<target>` either is a single container or
+a [group](#groups).
 
 When executing commands, keep the following 2 rules in mind:
 
 1. Crane will apply the command ONLY to the target
-2. Crane will do with other containers in the configuration whatever it takes in order for (1) to succeed
+2. Crane will do with other containers in the configuration whatever it takes in
+order for (1) to succeed
 
-As an example, imagine you have a container `web` depending on container `database`. When you execute `crane run web`, then Crane will start `database` first, then run `web` (recreating `web` if it already exists). There are ways to dynamically extend the target (so that `database` would be recreated as well for example) described below.
+As an example, imagine you have a container `web` depending on container
+`database`. When you execute `crane run web`, then Crane will start `database`
+first, then run `web` (recreating `web` if it already exists). There are ways to
+[dynamically extend the target](#extending-the-target) (so that `database` would
+be recreated as well for example).
 
 Following are a list of supported commands and possible options:
 
