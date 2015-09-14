@@ -8,7 +8,7 @@
 * Extension of target to affected containers and/or dependencies (replaces cascade flags `--cascade-affected` and `--cascade-dependencies`)
 * Ad-hoc cmd for `lift` / `run` / `create`
 * Uniquely named containers (allowing multiple containers of the same configuration with different commands at the same time)
-* `--exclude` groups/containers (can be used in most cases instead of the removed `--ignore-missing` flag)
+* Remove `--ignore-missing` flag. The new dependency resolution was not a good fit for it. As an alternative, a new `--exclude` flag has been intorduced, which allows to exclude a group or a container
 * Trigger `post-start` hooks after `start` event is sent
 * `crane exec`, which starts container first if necessary
 * Build hooks (`pre-build` and `post-build`) _@t-suwa_
