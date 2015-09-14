@@ -23,6 +23,10 @@ var (
 		"prefix",
 		"Container prefix.",
 	).Short('p').OverrideDefaultFromEnvar("CRANE_PREFIX").String()
+	excludeFlag = app.Flag(
+		"exclude",
+		"Exclude group or container",
+	).Short('e').OverrideDefaultFromEnvar("CRANE_EXCLUDE").String()
 
 	liftCommand = app.Command(
 		"lift",
@@ -32,10 +36,6 @@ var (
 		"no-cache",
 		"Build the image without any cache.",
 	).Short('n').Bool()
-	liftExcludeFlag = liftCommand.Flag(
-		"exclude",
-		"Exclude group or container",
-	).Short('e').String()
 	liftTargetArg = liftCommand.Arg("target", "Target of command").String()
 	liftCmdArg    = liftCommand.Arg("cmd", "Command for container").Strings()
 
@@ -123,10 +123,6 @@ var (
 		"run",
 		"Run the containers.",
 	)
-	runExcludeFlag = runCommand.Flag(
-		"exclude",
-		"Exclude group or container",
-	).Short('e').String()
 	runTargetArg = runCommand.Arg("target", "Target of command").String()
 	runCmdArg    = runCommand.Arg("cmd", "Command for container").Strings()
 
@@ -134,10 +130,6 @@ var (
 		"create",
 		"Create the containers.",
 	)
-	createExcludeFlag = createCommand.Flag(
-		"exclude",
-		"Exclude group or container",
-	).Short('e').String()
 	createTargetArg = createCommand.Arg("target", "Target of command").String()
 	createCmdArg    = createCommand.Arg("cmd", "Command for container").Strings()
 
@@ -191,9 +183,9 @@ func isVerbose() bool {
 func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork), mightStartRelated bool) {
 
 	cfg = NewConfig(*configFlag, *prefixFlag)
-	excluded = excludedContainers([]string{*liftExcludeFlag, *createExcludeFlag, *runExcludeFlag})
+	excluded = excludedContainers(*excludeFlag)
 	dependencyGraph := cfg.DependencyGraph(excluded)
-	target, err := NewTarget(dependencyGraph, targetFlag)
+	target, err := NewTarget(dependencyGraph, targetFlag, excluded)
 	if err != nil {
 		panic(StatusError{err, 78})
 	}
@@ -212,11 +204,9 @@ func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork), migh
 	wrapped(unitOfWork)
 }
 
-func excludedContainers(flags []string) []string {
-	for _, flag := range flags {
-		if len(flag) > 0 {
-			return cfg.ContainersForReference(flag)
-		}
+func excludedContainers(flag string) []string {
+	if len(flag) > 0  {
+		return cfg.ContainersForReference(flag)
 	}
 	return []string{}
 }

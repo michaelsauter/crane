@@ -18,7 +18,7 @@ type Target struct {
 // dynamic targets "dependencies" and/or "affected"
 // are included in the targetFlag.
 // Additionally, the target is sorted alphabetically.
-func NewTarget(graph DependencyGraph, targetFlag string) (target Target, err error) {
+func NewTarget(graph DependencyGraph, targetFlag string, excluded []string) (target Target, err error) {
 
 	targetParts := strings.Split(targetFlag, "+")
 	targetName := targetParts[0]
@@ -36,9 +36,16 @@ func NewTarget(graph DependencyGraph, targetFlag string) (target Target, err err
 	}
 
 	target = Target{
-		initial:      cfg.ContainersForReference(targetName),
+		initial:      []string{},
 		dependencies: []string{},
 		affected:     []string{},
+	}
+
+	initialTarget := cfg.ContainersForReference(targetName)
+	for _, c := range initialTarget {
+		if !includes(excluded, c) {
+			target.initial = append(target.initial, c)
+		}
 	}
 
 	includedSet := make(map[string]bool)

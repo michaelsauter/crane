@@ -61,7 +61,7 @@ func NewUnitOfWork(graph DependencyGraph, targeted []string) (uow *UnitOfWork, e
 	if len(uow.order) < len(uow.containers) {
 		err = fmt.Errorf("Dependencies for container(s) %s could not be resolved.", uow.targeted)
 	} else if len(uow.containers) == 0 {
-		err = fmt.Errorf("ERROR: Command cannot be applied to any container.")
+		err = fmt.Errorf("Command cannot be applied to any container.")
 	}
 
 	return
