@@ -13,6 +13,8 @@
 * `crane exec`, which starts container first if necessary
 * Build hooks (`pre-build` and `post-build`) _@t-suwa_
 * Replace `dockerfile` key with a `build` map (with a `context` key, which is the equivalent of `dockerfile`)
+* Add `--prefix` option, which adds a prefix to each container name in the target (can also be set via `CRANE_PREFIX`) _@tmc_
+* Allow configuration to be specified via `CRANE_CONFIG`, too
 
 Required Docker version: >= 1.6
 

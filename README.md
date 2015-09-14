@@ -56,7 +56,7 @@ You can get more information about what's happening behind the scenes for all co
 
 
 ## Configuration
-The configuration defines a map of containers in either JSON or YAML. By default, the configuration is expected in a file named `crane.json` or `crane.yaml`/`crane.yml`, or a file given via `--config`. Those files are searched for in the current directory, then recursively in the parent directory. Dependencies between containers are automatically detected and resolved.
+The configuration defines a map of containers in either JSON or YAML. By default, the configuration is expected in a file named `crane.json` or `crane.yaml`/`crane.yml`. The file can also be set via `--config` or `CRANE_CONFIG`. If the given path is relative, Crane searches for the configuration in the current directory, then recursively in the parent directory. Dependencies between containers are automatically detected and resolved.
 The map of containers consists of the name of the container mapped to the container configuration, which consists of:
 
 * `image` (string, required): Name of the image to build/pull
