@@ -272,7 +272,8 @@ It is possible to prefix containers with a global `--prefix` flag, which is just
 prepended to the container name. Remember that you will have to provide the same
 prefix for subsequent calls if you want to address the same set of containers. A
 common use case for this feature is to launch a set of containers
-in parallel, e.g. for CI builds.
+in parallel, e.g. for CI builds. Container prefixes can also be supplied by the
+`CRANE_PREFIX` environment variable.
 
 ### Unique names
 If `unique` is set to true, Crane will add a timestamp to the container name, making it possible to have multiple containers based on the same Crane config. Since those containers can not be addressed by Crane later on (e.g. they cannot be stopped and removed), consider setting `rm` to `true` as well. This feature is experimental, which means it can be changed or even removed in with every minor version update.
