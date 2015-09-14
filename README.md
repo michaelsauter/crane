@@ -68,7 +68,7 @@ Following are a list of supported commands and possible options:
 | status      | -                | Displays information similar to `docker ps` for the given target. |
 | graph       | -                | Dumps the relations between containers as a dependency graph, using the DOT format. |
 
-You can get more information about what's happening behind the scenes for all commands by using `--verbose`. Most options have a short version as well, e.g. `lift -rn`. The CLI provides a help for every command, e.g. `crane help run`.
+You can get more information about what's happening behind the scenes for all commands by using `--verbose`. Most options have a short version as well, e.g. `lift -n`. The CLI provides a help for every command, e.g. `crane help run`.
 
 
 ## Configuration
