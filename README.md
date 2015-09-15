@@ -230,18 +230,20 @@ in this example. If `default` were not specified, then `crane lift` would start
 
 ### Extending the target
 
-It is also possible to cascade the target to related containers. There are 2 different "dynamic" groups, `affected` and `dependencies` (both have a short version `a` and `d`). In our example configuration above, when targeting the `mysql` container, the `apache` container would be considered to be "affected". When targeting the `apache` container, the `mysql` container would be considered as a "dependency". Therefore `crane run mysql+affected` will recreate both `apache` and `mysql`. Similarly, `crane run apache+dependencies` will recreate `apache`, `app`, `mysql` and `memcached`. It is possible to combine `affected` and `dependencies`.
+It is also possible to extend the target to related containers. There are 2 different "dynamic" groups, `affected` and `dependencies` (both have a short version `a` and `d`). In our example configuration above, when targeting the `mysql` container, the `apache` container would be considered to be "affected". When targeting the `apache` container, the `mysql` container would be considered as a "dependency". Therefore `crane run mysql+affected` will recreate both `apache` and `mysql`. Similarly, `crane run apache+dependencies` will recreate `apache`, `app`, `mysql` and `memcached`. It is possible to combine `affected` and `dependencies`.
 
 
 ### Excluding containers
 
 If you want to exclude a container or a whole group from a Crane command, you
-can specify this with `--exclude <target>` (or via `CRANE_EXCLUDE`).
+can specify this with `--exclude <target>` (or via `CRANE_EXCLUDE`). This
+feature is experimental, which means it can be changed or even removed in every
+minor version update.
 
 
 ### Hooks
 
-In order to run certain commands before or after key lifecycle events of containers, hooks can declared in the configuration. They are run synchronously on the host where Crane is installed, outside containers, via an `exec` call. They may interrupt the flow by returning a non-zero status. If shell features more advanced than basic variable expansion is required, you should explicitly spawn a shell to run the command in (`sh -c 'ls *'`).
+In order to run certain commands before or after key lifecycle events of containers, hooks can be declared in the configuration. They are run synchronously on the host where Crane is installed, outside containers, via an `exec` call. They may interrupt the flow by returning a non-zero status. If shell features more advanced than basic variable expansion is required, you should explicitly spawn a shell to run the command in (`sh -c 'ls *'`).
 
 Hooks are declared at the top level of the configuration, under the `hooks` key. See YAML example below:
 
