@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0 (unreleased)
+## 2.0.0 (2015-09-15)
 
 * `start` behaves like `run` did in 1.x, `run` and `lift` behave like their
   `--recreate` counterparts in 1.x. The flag `--recreate` was removed
