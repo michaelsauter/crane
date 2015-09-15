@@ -3,8 +3,8 @@ package crane
 import (
 	"errors"
 	"fmt"
+	"github.com/fatih/color"
 	"github.com/flynn/go-shlex"
-	"github.com/michaelsauter/crane/print"
 	"io"
 	"os"
 	"os/exec"
@@ -14,33 +14,52 @@ import (
 	"syscall"
 )
 
+var printInfof func(format string, a ...interface{})
+var printNoticef func(format string, a ...interface{})
+var printErrorf func(format string, a ...interface{})
+
+func init() {
+	color.Output = os.Stderr
+	printInfof = color.New(color.FgBlue).PrintfFunc()
+	printNoticef = color.New(color.FgYellow).PrintfFunc()
+	printErrorf = color.New(color.FgRed).PrintfFunc()
+}
+
 type StatusError struct {
 	error  error
 	status int
 }
 
-var requiredDockerVersion = []int{1, 3}
+func handleRecoveredError(recovered interface{}) {
+	if recovered == nil {
+		return
+	}
+
+	var statusError StatusError
+
+	switch err := recovered.(type) {
+	case StatusError:
+		statusError = err
+	case error:
+		statusError = StatusError{err, 1}
+	case string:
+		statusError = StatusError{errors.New(err), 1}
+	default:
+		statusError = StatusError{}
+	}
+
+	if statusError.error != nil {
+		printErrorf("ERROR: %s\n", statusError.error)
+	}
+	os.Exit(statusError.status)
+}
+
+var requiredDockerVersion = []int{1, 6}
 
 func RealMain() {
 	// On panic, recover the error, display it and return the given status code if any
 	defer func() {
-		var statusError StatusError
-
-		switch err := recover().(type) {
-		case StatusError:
-			statusError = err
-		case error:
-			statusError = StatusError{err, 1}
-		case string:
-			statusError = StatusError{errors.New(err), 1}
-		default:
-			statusError = StatusError{}
-		}
-
-		if statusError.error != nil {
-			print.Errorf("ERROR: %s\n", statusError.error)
-		}
-		os.Exit(statusError.status)
+		handleRecoveredError(recover())
 	}()
 	checkDockerClient()
 	handleCmd()
@@ -59,7 +78,7 @@ func checkDockerClient() {
 	for _, rawVersion := range rawVersions[1:] {
 		version, err := strconv.Atoi(rawVersion)
 		if err != nil {
-			print.Errorf("Error when parsing Docker's version %v: %v", rawVersion, err)
+			printErrorf("Error when parsing Docker's version %v: %v", rawVersion, err)
 			break
 		}
 		versions = append(versions, version)
@@ -70,7 +89,7 @@ func checkDockerClient() {
 			break
 		}
 		if versions[i] < expectedVersion {
-			print.Errorf("Unsupported client version! Please upgrade to Docker %v or later.\n", intJoin(requiredDockerVersion, "."))
+			printErrorf("Unsupported client version! Please upgrade to Docker %v or later.\n", intJoin(requiredDockerVersion, "."))
 		}
 	}
 }
@@ -84,7 +103,8 @@ func intJoin(intSlice []int, sep string) string {
 	return strings.Join(stringSlice, ".")
 }
 
-func executeHook(hook string) {
+func executeHook(hook string, containerName string) {
+	os.Setenv("CRANE_HOOKED_CONTAINER", containerName)
 	cmds, err := shlex.Split(hook)
 	if err != nil {
 		panic(StatusError{fmt.Errorf("Error when parsing hook `%v`: %v", hook, err), 64})
@@ -101,7 +121,7 @@ func executeHook(hook string) {
 
 func executeCommand(name string, args []string) {
 	if isVerbose() {
-		print.Infof("\n--> %s %s\n", name, strings.Join(args, " "))
+		printInfof("\n--> %s %s\n", name, strings.Join(args, " "))
 	}
 	cmd := exec.Command(name, args...)
 	if cfg != nil {
@@ -117,18 +137,18 @@ func executeCommand(name string, args []string) {
 	}
 }
 
-func executeCommandBackground(name string, args []string) (stdout, stderr io.ReadCloser) {
+func executeCommandBackground(name string, args []string) (cmd *exec.Cmd, stdout io.ReadCloser, stderr io.ReadCloser) {
 	if isVerbose() {
-		print.Infof("--> %s %s\n\n", name, strings.Join(args, " "))
+		printInfof("\n--> %s %s\n", name, strings.Join(args, " "))
 	}
-	cmd := exec.Command(name, args...)
+	cmd = exec.Command(name, args...)
 	if cfg != nil {
 		cmd.Dir = cfg.Path()
 	}
 	stdout, _ = cmd.StdoutPipe()
 	stderr, _ = cmd.StderrPipe()
 	cmd.Start()
-	return stdout, stderr
+	return cmd, stdout, stderr
 }
 
 func commandOutput(name string, args []string) (string, error) {
@@ -138,4 +158,13 @@ func commandOutput(name string, args []string) (string, error) {
 	}
 	out, err := cmd.CombinedOutput()
 	return strings.TrimSpace(string(out)), err
+}
+
+func includes(haystack []string, needle string) bool {
+	for _, name := range haystack {
+		if name == needle {
+			return true
+		}
+	}
+	return false
 }

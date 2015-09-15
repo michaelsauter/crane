@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/bjaglin/multiplexio"
 	ansi "github.com/fatih/color"
-	"github.com/michaelsauter/crane/print"
 	"io"
 	"os"
 	"strconv"
@@ -14,15 +13,7 @@ import (
 
 type Containers []Container
 
-func (containers Containers) names() []string {
-	var names []string
-	for _, container := range containers {
-		names = append(names, container.Name())
-	}
-	return names
-}
-
-func (containers Containers) reversed() Containers {
+func (containers Containers) Reversed() Containers {
 	var reversed []Container
 	for i := len(containers) - 1; i >= 0; i-- {
 		reversed = append(reversed, containers[i])
@@ -30,123 +21,15 @@ func (containers Containers) reversed() Containers {
 	return reversed
 }
 
-// Lift containers (provision + run).
-// When recreate is set, this will re-provision all images
-// and recreate all containers.
-func (containers Containers) lift(recreate bool, nocache bool, ignoreMissing string, configPath string) {
-	containers.provisionOrSkip(recreate, nocache)
-	containers.runOrStart(recreate, ignoreMissing, configPath)
-}
-
 // Provision containers.
-func (containers Containers) provision(nocache bool) {
+func (containers Containers) Provision(nocache bool) {
 	for _, container := range containers.stripProvisioningDuplicates() {
 		container.Provision(nocache)
 	}
 }
 
-// Pull images.
-func (containers Containers) pullImage() {
-	for _, container := range containers.stripProvisioningDuplicates() {
-		if len(container.Dockerfile()) == 0 {
-			container.PullImage()
-		}
-	}
-}
-
-// Create containers.
-// When recreate is true, removes existing containers first.
-func (containers Containers) create(recreate bool, ignoreMissing string, configPath string) {
-	if recreate {
-		containers.rm(true)
-	}
-	for _, container := range containers {
-		container.Create(ignoreMissing, configPath)
-	}
-}
-
-// Run containers.
-// When recreate is true, removes existing containers first.
-func (containers Containers) run(recreate bool, ignoreMissing string, configPath string) {
-	if recreate {
-		containers.rm(true)
-	}
-	for _, container := range containers {
-		container.Run(ignoreMissing, configPath)
-	}
-}
-
-// Run or start containers.
-// When recreate is true, removes existing containers first.
-func (containers Containers) runOrStart(recreate bool, ignoreMissing string, configPath string) {
-	if recreate {
-		containers.rm(true)
-	}
-	for _, container := range containers {
-		container.RunOrStart(ignoreMissing, configPath)
-	}
-}
-
-// Provision or skip images.
-// When update is true, provisions all images.
-func (containers Containers) provisionOrSkip(update bool, nocache bool) {
-	for _, container := range containers.stripProvisioningDuplicates() {
-		container.ProvisionOrSkip(update, nocache)
-	}
-}
-
-// Start containers.
-func (containers Containers) start() {
-	for _, container := range containers {
-		container.Start()
-	}
-}
-
-// Kill containers.
-func (containers Containers) kill() {
-	for _, container := range containers {
-		container.Kill()
-	}
-}
-
-// Stop containers.
-func (containers Containers) stop() {
-	for _, container := range containers {
-		container.Stop()
-	}
-}
-
-// Pause containers.
-func (containers Containers) pause() {
-	for _, container := range containers {
-		container.Pause()
-	}
-}
-
-// Unpause containers.
-func (containers Containers) unpause() {
-	for _, container := range containers {
-		container.Unpause()
-	}
-}
-
-// Remove containers.
-// When force is true, kills existing containers first.
-func (containers Containers) rm(force bool) {
-	for _, container := range containers {
-		container.Rm(force)
-	}
-}
-
-// Push containers.
-func (containers Containers) push() {
-	for _, container := range containers {
-		container.Push()
-	}
-}
-
 // Dump container logs.
-func (containers Containers) logs(follow bool, timestamps bool, tail string, colorize bool) {
+func (containers Containers) Logs(follow bool, timestamps bool, tail string, colorize bool, since string) {
 	var (
 		sources         = make([]multiplexio.Source, 0, 2*len(containers))
 		maxPrefixLength = strconv.Itoa(containers.maxNameLength())
@@ -162,7 +45,7 @@ func (containers Containers) logs(follow bool, timestamps bool, tail string, col
 	}
 	for i, container := range containers {
 		var (
-			stdout, stderr = container.Logs(follow, tail)
+			stdout, stderr = container.Logs(follow, since, tail)
 			stdoutColor    *ansi.Color
 			stderrColor    *ansi.Color
 		)
@@ -186,7 +69,7 @@ func (containers Containers) logs(follow bool, timestamps bool, tail string, col
 }
 
 // Status of containers.
-func (containers Containers) status(notrunc bool) {
+func (containers Containers) Status(notrunc bool) {
 	w := new(tabwriter.Writer)
 	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
 	fmt.Fprintln(w, "NAME\tIMAGE\tID\tUP TO DATE\tIP\tPORTS\tRUNNING")
@@ -198,21 +81,6 @@ func (containers Containers) status(notrunc bool) {
 		fmt.Fprintf(w, "%s\n", strings.Join(fields, "\t"))
 	}
 	w.Flush()
-}
-
-// Stats about containers.
-func (containers Containers) stats() {
-	args := []string{"stats"}
-	for _, container := range containers {
-		if container.Running() {
-			args = append(args, container.Name())
-		}
-	}
-	if len(args) > 1 {
-		executeCommand("docker", args)
-	} else {
-		print.Errorf("None of the targeted container is running.\n")
-	}
 }
 
 // Return the length of the longest container name.
@@ -233,7 +101,7 @@ func (containers Containers) stripProvisioningDuplicates() (deduplicated Contain
 	for _, container := range containers {
 		// for 2 containers that would the same provisioning
 		// commands, the key should be equal
-		key := container.Dockerfile() + "#" + container.Image()
+		key := container.BuildContext() + "#" + container.Image()
 		if _, ok := seenProvisioningKeys[key]; !ok {
 			deduplicated = append(deduplicated, container)
 			seenProvisioningKeys[key] = true
