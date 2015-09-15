@@ -20,6 +20,11 @@ rm download.sh.bak
 sed -i.bak 's/[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}(-rc[0-9])*/'$version'/' README.md
 rm README.md.bak
 
+echo "Mark version as released in changelog..."
+today=$(date +'%Y-%m-%d')
+sed -i.bak 's/'$version' \(unreleased\)/'$version' ('$today')/' CHANGELOG.md
+rm CHANGELOG.md.bak
+
 echo "Update contributors..."
 git contributors | awk '{for (i=2; i<NF; i++) printf $i " "; print $NF}' > CONTRIBUTORS
 
@@ -27,7 +32,7 @@ echo "Build binary..."
 gox -osarch="darwin/amd64" -osarch="linux/amd64" -osarch="linux/386" -osarch="windows/amd64"
 
 echo "Update repository..."
-git add crane/cmd.go download.sh README.md CONTRIBUTORS
+git add crane/cmd.go download.sh README.md CHANGELOG.md CONTRIBUTORS
 git commit -m "Bump version to ${version}"
 git tag --sign --message="v$version" "v$version"
 
