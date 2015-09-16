@@ -2,13 +2,14 @@ package crane
 
 import (
 	"fmt"
-	"github.com/bjaglin/multiplexio"
-	ansi "github.com/fatih/color"
 	"io"
 	"os"
 	"strconv"
 	"strings"
 	"text/tabwriter"
+
+	"github.com/bjaglin/multiplexio"
+	ansi "github.com/fatih/color"
 )
 
 type Containers []Container
@@ -101,7 +102,7 @@ func (containers Containers) stripProvisioningDuplicates() (deduplicated Contain
 	for _, container := range containers {
 		// for 2 containers that would the same provisioning
 		// commands, the key should be equal
-		key := container.BuildContext() + "#" + container.Image()
+		key := strings.Join(container.BuildContext(), "") + "#" + container.Image()
 		if _, ok := seenProvisioningKeys[key]; !ok {
 			deduplicated = append(deduplicated, container)
 			seenProvisioningKeys[key] = true

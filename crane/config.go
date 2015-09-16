@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gopkg.in/v2/yaml"
 	"io/ioutil"
 	"os"
 	"path"
@@ -13,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"gopkg.in/v2/yaml"
 )
 
 type Config interface {
