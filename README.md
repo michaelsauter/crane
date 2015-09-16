@@ -21,8 +21,8 @@ Older releases can be found on the
 build Crane yourself by using the standard Go toolchain.
 
 Please have a look at the
-[changelog](https://github.com/michaelsauter/crane/v2.0.0/CHANGELOG.md) when
-upgrading.
+[changelog](https://github.com/michaelsauter/crane/blob/v2.0.0/CHANGELOG.md)
+when upgrading.
 
 Of course, you will need to have Docker (>= 1.6) installed.
 
