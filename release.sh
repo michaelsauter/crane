@@ -22,7 +22,7 @@ rm README.md.bak
 
 echo "Mark version as released in changelog..."
 today=$(date +'%Y-%m-%d')
-sed -i.bak 's/\(unreleased\)/'$today'/' CHANGELOG.md
+sed -i.bak 's/Unreleased/'$version' ('$today')/' CHANGELOG.md
 rm CHANGELOG.md.bak
 
 echo "Update contributors..."
