@@ -517,9 +517,9 @@ func (c *container) Status() []string {
 		return []string{c.prefixedName(), c.Image(), "-", "-", "-", "-", "-"}
 	}
 	fields := []string{c.ActualName(), c.Image(), "-", "-", "-", "-", "-"}
-	output := inspectString(c.Id(), "{{.Id}}\t{{.Image}}\t{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}\t{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}\t{{.State.Running}}")
+	output := inspectString(c.Id(), "{{.Id}}+++{{.Image}}+++{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}+++{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}+++{{.State.Running}}")
 	if output != "" {
-		copy(fields[2:], strings.Split(output, "\t"))
+		copy(fields[2:], strings.Split(output, "+++"))
 		// We asked for the image id the container was created from
 		fields[3] = strconv.FormatBool(imageIdFromTag(fields[1]) == fields[3])
 	}

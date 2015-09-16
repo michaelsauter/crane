@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Fixes messed up output for `crane status` using Docker 1.8.
+
 ## 2.0.0 (2015-09-15)
 
 * `start` behaves like `run` did in 1.x, `run` and `lift` behave like their
