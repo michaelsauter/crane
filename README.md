@@ -141,43 +141,42 @@ See the [Docker documentation](http://docs.docker.com/reference/commandline/cli/
 
 
 ## Example
-A typical `crane.yaml` looks like this:
+Taken from a basic
+[Sinatra blog app](https://github.com/michaelsauter/sinatra-crane-env), a
+typical `crane.yaml` looks like this:
 
 ```
 containers:
-	apache:
-		image: some-apache-image:latest
-		run:
-			volumes-from: ["app"]
-			publish: ["80:80"]
-			link: ["mysql:db", "memcached:cache"]
-			detach: true
-	app:
-		build:
-			context: app
-		image: michaelsauter/app
-		run:
-			volume: ["app/www:/srv/www:rw"]
-			detach: true
-	mysql:
-		image: mysql
-		run:
-			env: ["MYSQL_ROOT_PASSWORD=mysecretpassword"]
-			detach: true
-	memcached:
-		image: tutum/memcached
-		run:
-			detach: true
+  blog:
+    build:
+      context: image
+    image: michaelsauter/sinatra-example
+    run:
+      publish: ["9292:9292"]
+      volume: ["blog:/blog"]
+      link: ["postgres:db"]
+      env:
+        - "POSTGRESQL_DB=default"
+        - "POSTGRESQL_USER=default"
+        - "POSTGRESQL_PASS=default"
+      tty: true
+      interactive: true
+      cmd: "start-blog"
+  postgres:
+    image: d11wtq/postgres
+    run:
+      detach: true
 ```
 
-All specified Docker containers can then be created and started in the correct
+The specified Docker containers can then be created and started in the correct
 order with:
 
 ```
-crane lift
+crane lift blog
 ```
 
-If you want to use JSON instead of YAML, here's what a simple configuration looks like:
+If you want to use JSON instead of YAML, here's what a simple configuration
+looks like:
 
 ```
 {
@@ -230,7 +229,15 @@ in this example. If `default` were not specified, then `crane lift` would start
 
 ### Extending the target
 
-It is also possible to extend the target to related containers. There are 2 different "dynamic" groups, `affected` and `dependencies` (both have a short version `a` and `d`). In our example configuration above, when targeting the `mysql` container, the `apache` container would be considered to be "affected". When targeting the `apache` container, the `mysql` container would be considered as a "dependency". Therefore `crane run mysql+affected` will recreate both `apache` and `mysql`. Similarly, `crane run apache+dependencies` will recreate `apache`, `app`, `mysql` and `memcached`. It is possible to combine `affected` and `dependencies`.
+It is also possible to extend the target to related containers. There are 2
+different "dynamic" groups, `affected` and `dependencies` (both have a short
+version `a` and `d`). In our example configuration above, when targeting the
+`postgres` container, the `blog` container would be considered to be "affected".
+When targeting the `blog` container, the `postgres` container would be
+considered as a "dependency". Therefore `crane run postgres+affected` will
+recreate both `postgres` and `blog`. Similarly, `crane run blog+dependencies`
+will recreate `blog` and `postgres`. It is possible to combine `affected` and
+`dependencies`.
 
 
 ### Excluding containers
@@ -327,12 +334,6 @@ containers:
 ```
 
 As a summary, `&anchor` declares the anchor property, `*alias` is the alias indicator to simply copy the mapping it references, and `<<: *merge` includes all the mapping but let you override some keys.
-
-
-## Some Crane-backed sample environments
-* [Silex + Nginx/php-fpm + MySQL](https://github.com/michaelsauter/silex-crane-env)
-* [Symfony2 + Apache + MySQL](https://github.com/michaelsauter/symfony2-crane-env)
-* [Sinatra + PostgreSQL](https://github.com/michaelsauter/sinatra-crane-env)
 
 
 ## Copyright & Licensing
