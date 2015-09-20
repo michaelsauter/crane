@@ -311,6 +311,13 @@ common use case for this feature is to launch a set of containers
 in parallel, e.g. for CI builds. Container prefixes can also be supplied by the
 `CRANE_PREFIX` environment variable.
 
+### Override image tag
+Using a global `--tag` flag overrides image tag parts of containers. If you
+specify `--tag 2.0.0-rc2`, an image name `repo/app:1.0` is treated as
+`repo/app:2.0.0-rc2`. Crane always sets a value of `--tag` to the `CRANE_TAG`
+environment variable in order to be accessible from various hooks. The
+`CRANE_TAG` environment variable also will be used as a default value of
+`--tag`.
 
 ### Unique names
 If `unique` is set to true, Crane will add a timestamp to the container name, making it possible to have multiple containers based on the same Crane config. Since those containers can not be addressed by Crane later on (e.g. they cannot be stopped and removed), consider setting `rm` to `true` as well. This feature is experimental, which means it can be changed or even removed in every minor version update.

@@ -221,6 +221,52 @@ func TestInitializeAmbiguousHooks(t *testing.T) {
 	})
 }
 
+func TestOverrideImageTag(t *testing.T) {
+	rawContainers := []*container {
+		&container{RawName: "full-spec",	RawImage: "test/image-a:1.0"},
+		&container{RawName: "without-repo",	RawImage: "image-b:latest"},
+		&container{RawName: "without-tag",	RawImage: "test/image-c"},
+		&container{RawName: "image-only",	RawImage: "image-d"},
+		&container{RawName: "private-registry",	RawImage: "localhost:5000/foo/image-e:2.0"},
+		&container{RawName: "digest",		RawImage: "localhost:5000/foo/image-f@sha256:xxx"},
+	}
+	rawContainerMap := make(map[string]*container)
+	for _, container := range rawContainers {
+		rawContainerMap[container.Name()] = container
+	}
+	cfg = &config {	// container.prefiexedName() depends cfg object...
+	}
+	c := &config {
+		RawContainerMap: rawContainerMap,
+		tag: "rc-1",
+	}
+
+	os.Setenv("CRANE_TAG", "default-tag")
+
+	c.initialize()
+	c.overrideImageTag()
+
+	assert.Equal(t, "test/image-a:rc-1", c.containerMap["full-spec"].Image())
+	assert.Equal(t, "full-spec", c.containerMap["full-spec"].ActualName())
+
+	assert.Equal(t, "image-b:rc-1", c.containerMap["without-repo"].Image())
+	assert.Equal(t, "without-repo", c.containerMap["without-repo"].ActualName())
+
+	assert.Equal(t, "test/image-c:rc-1", c.containerMap["without-tag"].Image())
+	assert.Equal(t, "without-tag", c.containerMap["without-tag"].ActualName())
+
+	assert.Equal(t, "image-d:rc-1", c.containerMap["image-only"].Image())
+	assert.Equal(t, "image-only", c.containerMap["image-only"].ActualName())
+
+	assert.Equal(t, "localhost:5000/foo/image-e:rc-1", c.containerMap["private-registry"].Image())
+	assert.Equal(t, "private-registry", c.containerMap["private-registry"].ActualName())
+
+	assert.NotEqual(t, "localhost:5000/foo/image-f@sha256:rc-1", c.containerMap["digest"].Image())
+	assert.Equal(t, "digest", c.containerMap["digest"].ActualName())
+
+	assert.Equal(t, "rc-1", os.Getenv("CRANE_TAG"))
+}
+
 func TestDependencyGraph(t *testing.T) {
 	containerMap := NewStubbedContainerMap(true,
 		&container{RawName: "a", RunParams: RunParameters{RawLink: []string{"b:b"}}},

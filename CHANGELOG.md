@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+* Add `--tag` global flag, which overrides image tag part temporarily.
+  A typical use of `--tag` flag is to synchronize image tags with the tag of
+  VCSs. In order to be accessible from build hooks, Crane sets a value of
+  `--tag` to the `CRANE_TAG` environment variable. You can also set a default
+  value of `--tag` by the `CRANE_TAG` environment variable.
+  _@t-suwa_
+
+  Example:
+  If you specify a `--tag rc-2`, you will get these results:
+
+  |original image name|overridden image name|
+  |-------------------|---------------------|
+  |nginx              |nginx:rc-2           |
+  |nginx:1.9          |nginx:rc-2           |
+  |repo/nginx         |repo/nginx:rc-2      |
+  |host:5000/nginx    |host:5000/nginx:rc-2 |
+
 ## 2.0.1 (2015-09-16)
 
 * Fixes messed up output for `crane status` using Docker 1.8.
