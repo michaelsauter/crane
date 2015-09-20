@@ -21,6 +21,7 @@ type Config interface {
 	Path() string
 	UniqueId() string
 	Prefix() string
+	Tag() string
 	ContainerMap() ContainerMap
 	Container(name string) Container
 }
@@ -33,6 +34,7 @@ type config struct {
 	groups          map[string][]string
 	path            string
 	prefix          string
+	tag		string
 	uniqueId        string
 }
 
@@ -143,7 +145,7 @@ func unmarshal(data []byte, ext string) *config {
 // location.
 // Containers will be ordered so that they can be
 // brought up and down with Docker.
-func NewConfig(location string, prefix string) Config {
+func NewConfig(location string, prefix string, tag string) Config {
 	var config *config
 	configFile := findConfig(location)
 	if isVerbose() {
@@ -153,8 +155,10 @@ func NewConfig(location string, prefix string) Config {
 	config.initialize()
 	config.path = path.Dir(configFile)
 	config.prefix = prefix
+	config.tag = tag
 	milliseconds := time.Now().UnixNano() / 1000000
 	config.uniqueId = strconv.FormatInt(milliseconds, 10)
+	config.overrideWithGlobalFlags()
 	return config
 }
 
@@ -169,6 +173,10 @@ func (c *config) UniqueId() string {
 
 func (c *config) Prefix() string {
 	return c.prefix
+}
+
+func (c *config) Tag() string {
+	return c.tag
 }
 
 func (c *config) ContainerMap() ContainerMap {
@@ -216,6 +224,18 @@ func (c *config) initialize() {
 			container.hooks.CopyFrom(hooks)
 		}
 		c.containerMap[name] = container
+	}
+}
+
+// Override configuration
+func (c *config) overrideWithGlobalFlags() {
+	// At the moment, only `--tag` flag triggers override
+	if len(c.Tag()) == 0 {
+		return
+	}
+
+	for _, container := range c.containerMap {
+		container.OverrideImageTag(c.Tag())
 	}
 }
 

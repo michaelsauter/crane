@@ -18,6 +18,7 @@ type Container interface {
 	BuildContext() string
 	Image() string
 	ImageWithTag() string
+	OverrideImageTag(tag string)
 	Id() string
 	Dependencies(excluded []string) *Dependencies
 	Exists() bool
@@ -219,6 +220,23 @@ func (c *container) ImageWithTag() string {
 		return lastImagePart + ":latest"
 	}
 	return lastImagePart
+}
+
+func (c *container) OverrideImageTag(tag string) {
+	// Don't override docker image digest
+	if strings.Contains(c.Image(), "@") {
+		return
+	}
+
+	imagePrefix := c.Image()
+
+	// Remove tag part
+	startOfTag := strings.LastIndex(c.Image(), ":")
+	if startOfTag != -1 {
+		imagePrefix = imagePrefix[:startOfTag]
+	}
+
+	c.RawImage = imagePrefix + ":" + tag
 }
 
 func (r *RunParameters) AddHost() []string {
@@ -517,9 +535,12 @@ func (c *container) Status() []string {
 		return []string{c.prefixedName(), c.Image(), "-", "-", "-", "-", "-"}
 	}
 	fields := []string{c.ActualName(), c.Image(), "-", "-", "-", "-", "-"}
-	output := inspectString(c.Id(), "{{.Id}}+++{{.Image}}+++{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}+++{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}+++{{.State.Running}}")
+
+	// When using a `--tag` global flag, c.Image() may not represent an actual image tag.
+	// Instead we should get an image tag by inspecting "Config.Image".
+	output := inspectString(c.Id(), "{{.Config.Image}}+++{{.Id}}+++{{.Image}}+++{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}+++{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}+++{{.State.Running}}")
 	if output != "" {
-		copy(fields[2:], strings.Split(output, "+++"))
+		copy(fields[1:], strings.Split(output, "+++"))
 		// We asked for the image id the container was created from
 		fields[3] = strconv.FormatBool(imageIdFromTag(fields[1]) == fields[3])
 	}

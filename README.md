@@ -302,8 +302,12 @@ The following hooks are currently available:
 
 Every hook will have the name of the container for which this hook runs available as the environment variable `CRANE_HOOKED_CONTAINER`.
 
+### Global Flags
 
-### Container Prefixes
+Crane provides some global flags to override crane.{yaml|json} config temporarily
+on execution.
+
+#### Container Prefixes
 It is possible to prefix containers with a global `--prefix` flag, which is just
 prepended to the container name. Remember that you will have to provide the same
 prefix for subsequent calls if you want to address the same set of containers. A
@@ -311,6 +315,14 @@ common use case for this feature is to launch a set of containers
 in parallel, e.g. for CI builds. Container prefixes can also be supplied by the
 `CRANE_PREFIX` environment variable.
 
+#### Override image tag
+Using a global `--tag` flag overrides image tag parts of containers. If you
+specify `--tag 2.0.0-rc2`, an image name `repo/app:1.0` is treated as
+`repo/app:2.0.0-rc2`. Crane also accepts the `CRANE_TAG` environment variable as
+a default value of `--tag`. Note `--tag` is given priority over `CRANE_TAG`.
+Thus some hooks that rely on the `CRANE_TAG` environment variable may not work
+correctly if you specify `--tag` and `CRANE_TAG` at the same time. To avoid
+confusion, consistent use of `CRANE_TAG` is preferable.
 
 ### Unique names
 If `unique` is set to true, Crane will add a timestamp to the container name, making it possible to have multiple containers based on the same Crane config. Since those containers can not be addressed by Crane later on (e.g. they cannot be stopped and removed), consider setting `rm` to `true` as well. This feature is experimental, which means it can be changed or even removed in every minor version update.
