@@ -10,10 +10,10 @@ continuous integration.
 
 
 ## Installation
-The latest release (2.0.0) can be installed via:
+The latest release (2.0.1) can be installed via:
 
 ```
-bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/v2.0.0/download.sh`" && sudo mv crane /usr/local/bin/crane
+bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/v2.0.1/download.sh`" && sudo mv crane /usr/local/bin/crane
 ```
 
 Older releases can be found on the
@@ -21,8 +21,8 @@ Older releases can be found on the
 build Crane yourself by using the standard Go toolchain.
 
 Please have a look at the
-[changelog](https://github.com/michaelsauter/crane/v2.0.0/CHANGELOG.md) when
-upgrading.
+[changelog](https://github.com/michaelsauter/crane/blob/v2.0.1/CHANGELOG.md)
+when upgrading.
 
 Of course, you will need to have Docker (>= 1.6) installed.
 
@@ -141,43 +141,42 @@ See the [Docker documentation](http://docs.docker.com/reference/commandline/cli/
 
 
 ## Example
-A typical `crane.yaml` looks like this:
+Taken from a basic
+[Sinatra blog app](https://github.com/michaelsauter/sinatra-crane-env), a
+typical `crane.yaml` looks like this:
 
 ```
 containers:
-	apache:
-		image: some-apache-image:latest
-		run:
-			volumes-from: ["app"]
-			publish: ["80:80"]
-			link: ["mysql:db", "memcached:cache"]
-			detach: true
-	app:
-		build:
-			context: app
-		image: michaelsauter/app
-		run:
-			volume: ["app/www:/srv/www:rw"]
-			detach: true
-	mysql:
-		image: mysql
-		run:
-			env: ["MYSQL_ROOT_PASSWORD=mysecretpassword"]
-			detach: true
-	memcached:
-		image: tutum/memcached
-		run:
-			detach: true
+  blog:
+    build:
+      context: image
+    image: michaelsauter/sinatra-example
+    run:
+      publish: ["9292:9292"]
+      volume: ["blog:/blog"]
+      link: ["postgres:db"]
+      env:
+        - "POSTGRESQL_DB=default"
+        - "POSTGRESQL_USER=default"
+        - "POSTGRESQL_PASS=default"
+      tty: true
+      interactive: true
+      cmd: "start-blog"
+  postgres:
+    image: d11wtq/postgres
+    run:
+      detach: true
 ```
 
-All specified Docker containers can then be created and started in the correct
+The specified Docker containers can then be created and started in the correct
 order with:
 
 ```
-crane lift
+crane lift blog
 ```
 
-If you want to use JSON instead of YAML, here's what a simple configuration looks like:
+If you want to use JSON instead of YAML, here's what a simple configuration
+looks like:
 
 ```
 {
@@ -230,18 +229,28 @@ in this example. If `default` were not specified, then `crane lift` would start
 
 ### Extending the target
 
-It is also possible to cascade the target to related containers. There are 2 different "dynamic" groups, `affected` and `dependencies` (both have a short version `a` and `d`). In our example configuration above, when targeting the `mysql` container, the `apache` container would be considered to be "affected". When targeting the `apache` container, the `mysql` container would be considered as a "dependency". Therefore `crane run mysql+affected` will recreate both `apache` and `mysql`. Similarly, `crane run apache+dependencies` will recreate `apache`, `app`, `mysql` and `memcached`. It is possible to combine `affected` and `dependencies`.
+It is also possible to extend the target to related containers. There are 2
+different "dynamic" groups, `affected` and `dependencies` (both have a short
+version `a` and `d`). In our example configuration above, when targeting the
+`postgres` container, the `blog` container would be considered to be "affected".
+When targeting the `blog` container, the `postgres` container would be
+considered as a "dependency". Therefore `crane run postgres+affected` will
+recreate both `postgres` and `blog`. Similarly, `crane run blog+dependencies`
+will recreate `blog` and `postgres`. It is possible to combine `affected` and
+`dependencies`.
 
 
 ### Excluding containers
 
 If you want to exclude a container or a whole group from a Crane command, you
-can specify this with `--exclude <target>` (or via `CRANE_EXCLUDE`).
+can specify this with `--exclude <target>` (or via `CRANE_EXCLUDE`). This
+feature is experimental, which means it can be changed or even removed in every
+minor version update.
 
 
 ### Hooks
 
-In order to run certain commands before or after key lifecycle events of containers, hooks can declared in the configuration. They are run synchronously on the host where Crane is installed, outside containers, via an `exec` call. They may interrupt the flow by returning a non-zero status. If shell features more advanced than basic variable expansion is required, you should explicitly spawn a shell to run the command in (`sh -c 'ls *'`).
+In order to run certain commands before or after key lifecycle events of containers, hooks can be declared in the configuration. They are run synchronously on the host where Crane is installed, outside containers, via an `exec` call. They may interrupt the flow by returning a non-zero status. If shell features more advanced than basic variable expansion is required, you should explicitly spawn a shell to run the command in (`sh -c 'ls *'`).
 
 Hooks are declared at the top level of the configuration, under the `hooks` key. See YAML example below:
 
@@ -293,8 +302,12 @@ The following hooks are currently available:
 
 Every hook will have the name of the container for which this hook runs available as the environment variable `CRANE_HOOKED_CONTAINER`.
 
+### Global Flags
 
-### Container Prefixes
+Crane provides some global flags to override crane.{yaml|json} config temporarily
+on execution.
+
+#### Container Prefixes
 It is possible to prefix containers with a global `--prefix` flag, which is just
 prepended to the container name. Remember that you will have to provide the same
 prefix for subsequent calls if you want to address the same set of containers. A
@@ -302,6 +315,14 @@ common use case for this feature is to launch a set of containers
 in parallel, e.g. for CI builds. Container prefixes can also be supplied by the
 `CRANE_PREFIX` environment variable.
 
+#### Override image tag
+Using a global `--tag` flag overrides image tag parts of containers. If you
+specify `--tag 2.0.0-rc2`, an image name `repo/app:1.0` is treated as
+`repo/app:2.0.0-rc2`. Crane also accepts the `CRANE_TAG` environment variable as
+a default value of `--tag`. Note `--tag` is given priority over `CRANE_TAG`.
+Thus some hooks that rely on the `CRANE_TAG` environment variable may not work
+correctly if you specify `--tag` and `CRANE_TAG` at the same time. To avoid
+confusion, consistent use of `CRANE_TAG` is preferable.
 
 ### Unique names
 If `unique` is set to true, Crane will add a timestamp to the container name, making it possible to have multiple containers based on the same Crane config. Since those containers can not be addressed by Crane later on (e.g. they cannot be stopped and removed), consider setting `rm` to `true` as well. This feature is experimental, which means it can be changed or even removed in every minor version update.
@@ -325,12 +346,6 @@ containers:
 ```
 
 As a summary, `&anchor` declares the anchor property, `*alias` is the alias indicator to simply copy the mapping it references, and `<<: *merge` includes all the mapping but let you override some keys.
-
-
-## Some Crane-backed sample environments
-* [Silex + Nginx/php-fpm + MySQL](https://github.com/michaelsauter/silex-crane-env)
-* [Symfony2 + Apache + MySQL](https://github.com/michaelsauter/symfony2-crane-env)
-* [Sinatra + PostgreSQL](https://github.com/michaelsauter/sinatra-crane-env)
 
 
 ## Copyright & Licensing

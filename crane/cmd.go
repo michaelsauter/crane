@@ -27,6 +27,10 @@ var (
 		"exclude",
 		"Exclude group or container",
 	).Short('e').OverrideDefaultFromEnvar("CRANE_EXCLUDE").String()
+	tagFlag   = app.Flag(
+		"tag",
+		"Image tag part for temporarily override.",
+	).OverrideDefaultFromEnvar("CRANE_TAG").String()
 
 	liftCommand = app.Command(
 		"lift",
@@ -182,7 +186,7 @@ func isVerbose() bool {
 
 func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork), mightStartRelated bool) {
 
-	cfg = NewConfig(*configFlag, *prefixFlag)
+	cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
 	excluded = excludedContainers(*excludeFlag)
 	dependencyGraph := cfg.DependencyGraph(excluded)
 	target, err := NewTarget(dependencyGraph, targetFlag, excluded)
@@ -220,7 +224,7 @@ func handleCmd() {
 		}, true)
 
 	case versionCommand.FullCommand():
-		fmt.Println("v2.0.0-rc1")
+		fmt.Println("v2.0.1")
 
 	case graphCommand.FullCommand():
 		commandAction(*graphTargetArg, func(uow *UnitOfWork) {
