@@ -705,8 +705,12 @@ func (c *container) createArgs(cmds []string, excluded []string, configPath stri
 	}
 	// Net
 	if c.RunParams.Net() != "bridge" {
-		if !includes(excluded, c.netContainer()) {
-			args = append(args, "--net", cfg.Container(c.RunParams.Net()).ActualName())
+		if len(c.netContainer()) > 0 {
+			if !includes(excluded, c.netContainer()) {
+				args = append(args, "--net", cfg.Container(c.RunParams.Net()).ActualName())
+			}
+		} else {
+			args = append(args, "--net", c.RunParams.Net())
 		}
 	}
 	// OomKillDisable
