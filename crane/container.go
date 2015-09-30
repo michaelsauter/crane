@@ -707,7 +707,7 @@ func (c *container) createArgs(cmds []string, excluded []string, configPath stri
 	if c.RunParams.Net() != "bridge" {
 		if len(c.netContainer()) > 0 {
 			if !includes(excluded, c.netContainer()) {
-				args = append(args, "--net", cfg.Container(c.RunParams.Net()).ActualName())
+				args = append(args, "--net", cfg.Container(c.netContainer()).ActualName())
 			}
 		} else {
 			args = append(args, "--net", c.RunParams.Net())
