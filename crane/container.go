@@ -998,7 +998,7 @@ func (c *container) buildImage(nocache bool) {
 	}
 	args = append(args, "--rm", "--tag="+c.Image())
 	if len(c.BuildFile()) > 0 {
-		args = append(args, "--file="+c.BuildContext()+"/"+c.BuildFile())
+		args = append(args, "--file="+c.BuildContext()+os.PathSeparator+c.BuildFile())
 	}
 	args = append(args, c.BuildContext())
 	executeCommand("docker", args)
