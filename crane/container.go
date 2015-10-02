@@ -16,7 +16,7 @@ type Container interface {
 	Name() string
 	ActualName() string
 	BuildContext() string
-	BuildDockerfile() string
+	BuildFile() string
 	Image() string
 	ImageWithTag() string
 	Id() string
@@ -206,7 +206,7 @@ func (c *container) BuildContext() string {
 	return os.ExpandEnv(c.BuildParams.RawContext)
 }
 
-func (c *container) BuildDockerfile() string {
+func (c *container) BuildFile() string {
 	return os.ExpandEnv(c.BuildParams.RawDockerfile)
 }
 
@@ -997,8 +997,8 @@ func (c *container) buildImage(nocache bool) {
 		args = append(args, "--no-cache")
 	}
 	args = append(args, "--rm", "--tag="+c.Image())
-	if len(c.BuildDockerfile()) > 0 {
-		args = append(args, "--file="+c.BuildContext()+"/"+c.BuildDockerfile())
+	if len(c.BuildFile()) > 0 {
+		args = append(args, "--file="+c.BuildContext()+"/"+c.BuildFile())
 	}
 	args = append(args, c.BuildContext())
 	executeCommand("docker", args)
