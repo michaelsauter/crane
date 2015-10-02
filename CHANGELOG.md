@@ -1,5 +1,7 @@
 # Changelog
 
+## Unreleased
+
 ## 2.0.1 (2015-09-16)
 
 * Fixes messed up output for `crane status` using Docker 1.8.
