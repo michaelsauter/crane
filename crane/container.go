@@ -23,6 +23,7 @@ type Container interface {
 	Exists() bool
 	Running() bool
 	Unique() bool
+	Protected() bool
 	Paused() bool
 	ImageExists() bool
 	Status() []string
@@ -47,6 +48,7 @@ type container struct {
 	id            string
 	RawName       string
 	RawUnique     bool            `json:"unique" yaml:"unique"`
+	RawProtected  bool            `json:"protected" yaml:"protected"`
 	RawImage      string          `json:"image" yaml:"image"`
 	BuildParams   BuildParameters `json:"build" yaml:"build"`
 	RunParams     RunParameters   `json:"run" yaml:"run"`
@@ -210,6 +212,10 @@ func (c *container) Image() string {
 
 func (c *container) Unique() bool {
 	return c.RawUnique
+}
+
+func (c *container) Protected() bool {
+	return c.RawProtected
 }
 
 func (c *container) ImageWithTag() string {
@@ -541,6 +547,10 @@ func (c *container) Provision(nocache bool) {
 
 // Create container
 func (c *container) Create(cmds []string, excluded []string, configPath string) {
+	if c.Exists() && c.Protected() {
+		fmt.Printf("Protected container %s already exists.", c.ActualName())
+		return
+	}
 	if !c.Unique() {
 		c.Rm(true)
 	}
@@ -552,6 +562,10 @@ func (c *container) Create(cmds []string, excluded []string, configPath string) 
 
 // Run container, or start it if already existing
 func (c *container) Run(cmds []string, excluded []string, configPath string) {
+	if c.Exists() && c.Protected() {
+		c.Start(excluded, configPath)
+		return
+	}
 	if !c.Unique() {
 		c.Rm(true)
 	}
@@ -904,6 +918,10 @@ func (c *container) Exec(cmds []string, configPath string) {
 func (c *container) Rm(force bool) {
 	if c.Unique() {
 		fmt.Printf("Cannot remove uniquely named container(s) %s.\n", c.prefixedName())
+		return
+	}
+	if c.Protected() {
+		fmt.Printf("Keep protected container %s.\n", c.ActualName())
 		return
 	}
 	if c.Exists() {
