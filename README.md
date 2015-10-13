@@ -77,6 +77,7 @@ The map of containers consists of the name of the container mapped to the contai
 
 * `image` (string, required): Name of the image to build/pull
 * `unique` (boolean, optional) `true` assigns a unique name to the container (experimental)
+* `protected` (boolean, optional) `true` prevent the container from being deleted (experimental)
 * `run` (object, optional): Parameters mapped to Docker's `run` & `create`.
 	* `add-host` (array) Add custom host-to-IP mappings.
 	* `blkio-weight` (integer) Need Docker >= 1.7
