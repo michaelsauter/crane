@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -16,6 +17,7 @@ type Container interface {
 	Name() string
 	ActualName() string
 	BuildContext() string
+	BuildFile() string
 	Image() string
 	ImageWithTag() string
 	Id() string
@@ -44,20 +46,21 @@ type Container interface {
 }
 
 type container struct {
-	id            string
-	RawName       string
-	RawUnique     bool            `json:"unique" yaml:"unique"`
-	RawImage      string          `json:"image" yaml:"image"`
-	BuildParams   BuildParameters `json:"build" yaml:"build"`
-	RunParams     RunParameters   `json:"run" yaml:"run"`
-	RmParams      RmParameters    `json:"rm" yaml:"rm"`
-	StartParams   StartParameters `json:"start" yaml:"start"`
-	ExecParams    ExecParameters  `json:"exec" yaml:"exec"`
-	hooks         hooks
+	id          string
+	RawName     string
+	RawUnique   bool            `json:"unique" yaml:"unique"`
+	RawImage    string          `json:"image" yaml:"image"`
+	BuildParams BuildParameters `json:"build" yaml:"build"`
+	RunParams   RunParameters   `json:"run" yaml:"run"`
+	RmParams    RmParameters    `json:"rm" yaml:"rm"`
+	StartParams StartParameters `json:"start" yaml:"start"`
+	ExecParams  ExecParameters  `json:"exec" yaml:"exec"`
+	hooks       hooks
 }
 
 type BuildParameters struct {
-	RawContext string      `json:"context" yaml:"context"`
+	RawContext    string `json:"context" yaml:"context"`
+	RawDockerfile string `json:"file" yaml:"file"`
 }
 
 type RunParameters struct {
@@ -202,6 +205,10 @@ func (c *container) ActualName() string {
 
 func (c *container) BuildContext() string {
 	return os.ExpandEnv(c.BuildParams.RawContext)
+}
+
+func (c *container) BuildFile() string {
+	return os.ExpandEnv(c.BuildParams.RawDockerfile)
 }
 
 func (c *container) Image() string {
@@ -990,7 +997,11 @@ func (c *container) buildImage(nocache bool) {
 	if nocache {
 		args = append(args, "--no-cache")
 	}
-	args = append(args, "--rm", "--tag="+c.Image(), c.BuildContext())
+	args = append(args, "--rm", "--tag="+c.Image())
+	if len(c.BuildFile()) > 0 {
+		args = append(args, "--file="+filepath.FromSlash(c.BuildContext()+"/"+c.BuildFile()))
+	}
+	args = append(args, c.BuildContext())
 	executeCommand("docker", args)
 	executeHook(c.Hooks().PostBuild(), c.ActualName())
 }

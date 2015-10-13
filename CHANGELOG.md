@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+* Add new `file` key to the `build` map. Equivalent of `docker build --file=<file>` @dreamcat4
+
+  Example:
+  ```
+  containers:
+    foo:
+      image: foo
+      build:
+        context: "."
+        file: other_dockerfile.dkr
+  ```
+
 ## 2.0.1 (2015-09-16)
 
 * Fixes messed up output for `crane status` using Docker 1.8.
