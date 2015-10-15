@@ -8,6 +8,19 @@ configuration (JSON or YAML) which describes how to obtain images and how to run
 containers. Crane is ideally suited for setting up a development environment or
 continuous integration.
 
+* [Installation](#installation)
+* [Usage](#usage)
+* [Configuration](#configuration)
+* [Example](#example)
+* [Advanced Usage](#advanced-usage)
+  * [Groups and Targeting](#groups-and-targeting)
+  * [Extending the target](#extending-the-target)
+  * [Excluding containers](#excluding-containers)
+  * [Hooks](#hooks)
+  * [Container Prefixes](#container-prefixes)
+  * [Unique Names](#unique-names)
+  * [YAML advanced usage](#yaml-advanced-usage)
+
 
 ## Installation
 The latest release (2.1.0) can be installed via:
