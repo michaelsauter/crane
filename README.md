@@ -91,6 +91,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `detach` (boolean) `sudo docker attach <container name>` will work as normal.
 	* `device` (array) Add host devices.
 	* `dns` (array)
+	* `dns-search` (array)
 	* `entrypoint` (string)
 	* `env` (array/mapping) Can be declared as a string array with `"key[=value]"` items or a string-to-string mapping where each `key: value` will be translated to the corresponding `"key=value"` string.
 	* `env-file` (array)
