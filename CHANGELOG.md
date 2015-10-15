@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Add new `file` key to the `build` map. Equivalent of `docker build --file=<file>` @dreamcat4
+* Add new `file` key to the `build` map. Equivalent of `docker build --file=<file>`
 
   Example:
   ```
@@ -13,6 +13,12 @@
         context: "."
         file: other_dockerfile.dkr
   ```
+  _@dreamcat4_
+
+* Add support for `--dns-search` flag
+  _@scornelissen85_
+
+* Fix broken `net` flag
 
 ## 2.0.1 (2015-09-16)
 
