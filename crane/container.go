@@ -77,6 +77,7 @@ type RunParameters struct {
 	Detach          bool        `json:"detach" yaml:"detach"`
 	RawDevice       []string    `json:"device" yaml:"device"`
 	RawDns          []string    `json:"dns" yaml:"dns"`
+        RawDnsSearch	string	    `json:"dns_search yaml:"dns_search"`
 	RawEntrypoint   string      `json:"entrypoint" yaml:"entrypoint"`
 	RawEnv          interface{} `json:"env" yaml:"env"`
 	RawEnvFile      []string    `json:"env-file" yaml:"env-file"`
@@ -274,6 +275,10 @@ func (r *RunParameters) Dns() []string {
 		dns = append(dns, os.ExpandEnv(rawDns))
 	}
 	return dns
+}
+
+func (r *RunParameters) DnsSearch() string {
+	return os.ExpandEnv(r.RawDnsSearch)
 }
 
 func (r *RunParameters) Entrypoint() string {
@@ -644,6 +649,10 @@ func (c *container) createArgs(cmds []string, excluded []string, configPath stri
 	// Dns
 	for _, dns := range c.RunParams.Dns() {
 		args = append(args, "--dns", dns)
+	}
+	// Dns search
+	if len(c.RunParams.DnsSearch()) > 0 {
+		args = append(args, "--dns_search", c.RunParams.DnsSearch())
 	}
 	// Entrypoint
 	if len(c.RunParams.Entrypoint()) > 0 {
