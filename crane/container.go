@@ -77,7 +77,7 @@ type RunParameters struct {
 	Detach          bool        `json:"detach" yaml:"detach"`
 	RawDevice       []string    `json:"device" yaml:"device"`
 	RawDns          []string    `json:"dns" yaml:"dns"`
-        RawDnsSearch	string	    `json:"dns_search yaml:"dns_search"`
+	RawDnsSearch	string	    `json:"dns_search yaml:"dns_search"`
 	RawEntrypoint   string      `json:"entrypoint" yaml:"entrypoint"`
 	RawEnv          interface{} `json:"env" yaml:"env"`
 	RawEnvFile      []string    `json:"env-file" yaml:"env-file"`
