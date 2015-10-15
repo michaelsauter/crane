@@ -10,10 +10,10 @@ continuous integration.
 
 
 ## Installation
-The latest release (2.0.1) can be installed via:
+The latest release (2.1.0) can be installed via:
 
 ```
-bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/v2.0.1/download.sh`" && sudo mv crane /usr/local/bin/crane
+bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/v2.1.0/download.sh`" && sudo mv crane /usr/local/bin/crane
 ```
 
 Older releases can be found on the
@@ -21,7 +21,7 @@ Older releases can be found on the
 build Crane yourself by using the standard Go toolchain.
 
 Please have a look at the
-[changelog](https://github.com/michaelsauter/crane/blob/v2.0.1/CHANGELOG.md)
+[changelog](https://github.com/michaelsauter/crane/blob/v2.1.0/CHANGELOG.md)
 when upgrading.
 
 Of course, you will need to have Docker (>= 1.6) installed.

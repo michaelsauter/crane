@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.1.0 (2015-10-15)
 
 * Add new `file` key to the `build` map. Equivalent of `docker build --file=<file>`
 

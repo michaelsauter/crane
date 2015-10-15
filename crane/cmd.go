@@ -220,7 +220,7 @@ func handleCmd() {
 		}, true)
 
 	case versionCommand.FullCommand():
-		fmt.Println("v2.0.1")
+		fmt.Println("v2.1.0")
 
 	case graphCommand.FullCommand():
 		commandAction(*graphTargetArg, func(uow *UnitOfWork) {
