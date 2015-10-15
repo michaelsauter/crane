@@ -205,7 +205,7 @@ func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork), migh
 }
 
 func excludedContainers(flag string) []string {
-	if len(flag) > 0  {
+	if len(flag) > 0 {
 		return cfg.ContainersForReference(flag)
 	}
 	return []string{}
