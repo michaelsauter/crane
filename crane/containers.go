@@ -76,7 +76,7 @@ func (containers Containers) Status(notrunc bool) {
 	for _, container := range containers {
 		fields := container.Status()
 		if !notrunc {
-			fields[2] = truncateId(fields[2])
+			fields[2] = truncateID(fields[2])
 		}
 		fmt.Fprintf(w, "%s\n", strings.Join(fields, "\t"))
 	}
@@ -110,7 +110,7 @@ func (containers Containers) stripProvisioningDuplicates() (deduplicated Contain
 	return
 }
 
-func truncateId(id string) string {
+func truncateID(id string) string {
 	shortLen := 12
 	if len(id) < shortLen {
 		shortLen = len(id)

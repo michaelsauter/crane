@@ -19,7 +19,7 @@ type Config interface {
 	DependencyGraph(excluded []string) DependencyGraph
 	ContainersForReference(reference string) (result []string)
 	Path() string
-	UniqueId() string
+	UniqueID() string
 	Prefix() string
 	ContainerMap() ContainerMap
 	Container(name string) Container
@@ -34,7 +34,7 @@ type config struct {
 	groups          map[string][]string
 	path            string
 	prefix          string
-	uniqueId        string
+	uniqueID        string
 }
 
 // ContainerMap maps the container name
@@ -48,9 +48,8 @@ type ContainerMap map[string]Container
 func configFilenames(location string) []string {
 	if len(location) > 0 {
 		return []string{location}
-	} else {
-		return []string{"crane.json", "crane.yaml", "crane.yml"}
 	}
+	return []string{"crane.json", "crane.yaml", "crane.yml"}
 }
 
 // findConfig returns the filename of the
@@ -155,7 +154,7 @@ func NewConfig(location string, prefix string) Config {
 	config.path = path.Dir(configFile)
 	config.prefix = prefix
 	milliseconds := time.Now().UnixNano() / 1000000
-	config.uniqueId = strconv.FormatInt(milliseconds, 10)
+	config.uniqueID = strconv.FormatInt(milliseconds, 10)
 	return config
 }
 
@@ -164,8 +163,8 @@ func (c *config) Path() string {
 	return c.path
 }
 
-func (c *config) UniqueId() string {
-	return c.uniqueId
+func (c *config) UniqueID() string {
+	return c.uniqueID
 }
 
 func (c *config) Prefix() string {
@@ -254,7 +253,7 @@ func (c *config) ContainersForReference(reference string) (result []string) {
 			containers = defaultGroup
 		} else {
 			// Otherwise, return all containers
-			for name, _ := range c.containerMap {
+			for name := range c.containerMap {
 				containers = append(containers, name)
 			}
 		}
@@ -270,7 +269,7 @@ func (c *config) ContainersForReference(reference string) (result []string) {
 		}
 		if len(containers) == 0 {
 			// The reference might just be one container
-			for name, _ := range c.containerMap {
+			for name := range c.containerMap {
 				if name == reference {
 					containers = append(containers, reference)
 					break
@@ -285,7 +284,7 @@ func (c *config) ContainersForReference(reference string) (result []string) {
 	// ensure all container references exist
 	for _, container := range containers {
 		containerDeclared := false
-		for name, _ := range c.containerMap {
+		for name := range c.containerMap {
 			if container == name {
 				containerDeclared = true
 				break

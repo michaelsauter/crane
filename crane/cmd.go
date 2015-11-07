@@ -213,7 +213,7 @@ func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork), migh
 		if mightStartRelated && len(unitOfWork.Associated()) > 0 {
 			printInfof("\nIf needed, also starts: %s", strings.Join(unitOfWork.Associated(), ", "))
 		}
-		fmt.Println("\n")
+		fmt.Printf("\n\n")
 	}
 	wrapped(unitOfWork)
 }
