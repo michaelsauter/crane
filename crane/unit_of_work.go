@@ -2,6 +2,9 @@ package crane
 
 import (
 	"fmt"
+	"os"
+	"strings"
+	"text/template"
 )
 
 type UnitOfWork struct {
@@ -198,6 +201,42 @@ func (uow *UnitOfWork) Logs(follow bool, timestamps bool, tail string, colorize 
 	uow.Targeted().Logs(follow, timestamps, tail, colorize, since)
 }
 
+// Generate files.
+func (uow *UnitOfWork) Generate(templateFile string, output string) {
+	templateFileParts := strings.Split(templateFile, "/")
+	templateName := templateFileParts[len(templateFileParts)-1]
+
+	tmpl, err := template.New(templateName).ParseFiles(templateFile)
+	if err != nil {
+		printErrorf("ERROR: %s\n", err)
+		return
+	}
+
+	executeTemplate := func(outputFile string, templateInfo interface{}) {
+		writer := os.Stdout
+		if len(outputFile) > 0 {
+			writer, _ = os.Create(outputFile)
+		}
+		err = tmpl.Execute(writer, templateInfo)
+		if err != nil {
+			printErrorf("ERROR: %s\n", err)
+		}
+	}
+
+	if strings.Contains(output, "%s") {
+		for _, container := range uow.TargetedInfo() {
+			executeTemplate(fmt.Sprintf(output, container.Name()), container)
+		}
+	} else {
+		tmplInfo := struct {
+			Containers []ContainerInfo
+		}{
+			Containers: uow.TargetedInfo(),
+		}
+		executeTemplate(output, tmplInfo)
+	}
+}
+
 func (uow *UnitOfWork) Containers() Containers {
 	c := []Container{}
 	for _, name := range uow.order {
@@ -211,6 +250,16 @@ func (uow *UnitOfWork) Targeted() Containers {
 	for _, name := range uow.order {
 		if includes(uow.targeted, name) {
 			c = append(c, cfg.Container(name))
+		}
+	}
+	return c
+}
+
+func (uow *UnitOfWork) TargetedInfo() []ContainerInfo {
+	c := []ContainerInfo{}
+	for _, name := range uow.order {
+		if includes(uow.targeted, name) {
+			c = append(c, cfg.ContainerInfo(name))
 		}
 	}
 	return c

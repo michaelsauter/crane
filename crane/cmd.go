@@ -174,6 +174,20 @@ var (
 		"Show logs since timestamp (Docker >= 1.7).",
 	).String()
 	logsTargetArg = logsCommand.Arg("target", "Target of command").String()
+
+	generateCommand = app.Command(
+		"generate",
+		"Generate files by passing the config to a given template.",
+	)
+	templateFlag = generateCommand.Flag(
+		"template",
+		"Template to use.",
+	).Short('t').String()
+	outputFlag = generateCommand.Flag(
+		"output",
+		"The file(s) to write the output to.",
+	).Short('o').String()
+	generateTargetArg = generateCommand.Arg("target", "Target of command").String()
 )
 
 func isVerbose() bool {
@@ -300,6 +314,11 @@ func handleCmd() {
 	case logsCommand.FullCommand():
 		commandAction(*logsTargetArg, func(uow *UnitOfWork) {
 			uow.Logs(*followFlag, *timestampsFlag, *tailFlag, *colorizeFlag, *sinceFlag)
+		}, false)
+
+	case generateCommand.FullCommand():
+		commandAction(*generateTargetArg, func(uow *UnitOfWork) {
+			uow.Generate(*templateFlag, *outputFlag)
 		}, false)
 	}
 }
