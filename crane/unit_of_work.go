@@ -187,7 +187,7 @@ func (uow *UnitOfWork) Provision(noCache bool) {
 // Pull containers.
 func (uow *UnitOfWork) PullImage() {
 	for _, container := range uow.Targeted() {
-		if len(container.BuildContext()) == 0 {
+		if len(container.BuildParams().Context()) == 0 {
 			container.PullImage()
 		}
 	}

@@ -23,6 +23,7 @@ type Config interface {
 	Prefix() string
 	ContainerMap() ContainerMap
 	Container(name string) Container
+	ContainerInfo(name string) ContainerInfo
 }
 
 type config struct {
@@ -179,6 +180,10 @@ func (c *config) Container(name string) Container {
 	return c.containerMap[name]
 }
 
+func (c *config) ContainerInfo(name string) ContainerInfo {
+	return c.Container(name)
+}
+
 // Load configuration into the internal structs from the raw, parsed ones
 func (c *config) initialize() {
 	// Local container map to query by expanded name
@@ -225,7 +230,7 @@ func (c *config) DependencyGraph(excluded []string) DependencyGraph {
 	dependencyGraph := make(DependencyGraph)
 	for _, container := range c.containerMap {
 		if !includes(excluded, container.Name()) {
-			dependencyGraph[container.Name()] = container.Dependencies(excluded)
+			dependencyGraph[container.Name()] = container.Dependencies()
 		}
 	}
 	return dependencyGraph

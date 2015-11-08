@@ -101,7 +101,7 @@ func (containers Containers) stripProvisioningDuplicates() (deduplicated Contain
 	for _, container := range containers {
 		// for 2 containers that would the same provisioning
 		// commands, the key should be equal
-		key := container.BuildContext() + "#" + container.Image()
+		key := container.BuildParams().Context() + "#" + container.Image()
 		if _, ok := seenProvisioningKeys[key]; !ok {
 			deduplicated = append(deduplicated, container)
 			seenProvisioningKeys[key] = true

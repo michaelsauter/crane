@@ -96,7 +96,7 @@ func TestUnmarshal(t *testing.T) {
 `)
 	actual = unmarshal(json, ".json")
 	assert.Len(t, actual.RawContainerMap, 1)
-	assert.Len(t, actual.RawContainerMap["apache"].RunParams.Link(), 2)
+	assert.Len(t, actual.RawContainerMap["apache"].RunParams().Link(), 2)
 	assert.Len(t, actual.RawGroups, 1)
 	assert.Len(t, actual.RawHooksMap, 2)
 	assert.NotEmpty(t, actual.RawHooksMap["default"].RawPreStart)
@@ -124,7 +124,7 @@ hooks:
 `)
 	actual = unmarshal(yaml, ".yml")
 	assert.Len(t, actual.RawContainerMap, 1)
-	assert.Len(t, actual.RawContainerMap["apache"].RunParams.Link(), 2)
+	assert.Len(t, actual.RawContainerMap["apache"].RunParams().Link(), 2)
 	assert.Len(t, actual.RawGroups, 1)
 	assert.Len(t, actual.RawHooksMap, 2)
 	assert.NotEmpty(t, actual.RawHooksMap["default"].RawPreStart)
@@ -223,8 +223,8 @@ func TestInitializeAmbiguousHooks(t *testing.T) {
 
 func TestDependencyGraph(t *testing.T) {
 	containerMap := NewStubbedContainerMap(true,
-		&container{RawName: "a", RunParams: RunParameters{RawLink: []string{"b:b"}}},
-		&container{RawName: "b", RunParams: RunParameters{RawLink: []string{"c:c"}}},
+		&container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},
+		&container{RawName: "b", RawRun: RunParameters{RawLink: []string{"c:c"}}},
 		&container{RawName: "c"},
 	)
 	c := &config{containerMap: containerMap}

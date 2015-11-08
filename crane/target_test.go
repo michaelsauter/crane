@@ -7,8 +7,8 @@ import (
 
 func TestNewTarget(t *testing.T) {
 	containerMap := NewStubbedContainerMap(true,
-		&container{RawName: "a", RunParams: RunParameters{RawLink: []string{"b:b"}}},
-		&container{RawName: "b", RunParams: RunParameters{RawLink: []string{"c:c"}}},
+		&container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},
+		&container{RawName: "b", RawRun: RunParameters{RawLink: []string{"c:c"}}},
 		&container{RawName: "c"},
 	)
 	cfg = &config{containerMap: containerMap}
@@ -84,8 +84,8 @@ func TestNewTarget(t *testing.T) {
 
 func TestDeduplicationAll(t *testing.T) {
 	containerMap := NewStubbedContainerMap(true,
-		&container{RawName: "a", RunParams: RunParameters{RawLink: []string{"b:b"}}},
-		&container{RawName: "b", RunParams: RunParameters{RawLink: []string{"c:c"}}},
+		&container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},
+		&container{RawName: "b", RawRun: RunParameters{RawLink: []string{"c:c"}}},
 		&container{RawName: "c"},
 	)
 	groups := map[string][]string{
