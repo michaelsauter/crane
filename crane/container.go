@@ -15,6 +15,10 @@ import (
 
 type Container interface {
 	ContainerInfo
+	ImageExists() bool
+	Exists() bool
+	Running() bool
+	Paused() bool
 	Status() []string
 	Lift(cmds []string, nocache bool, excluded []string, configPath string)
 	Provision(nocache bool)
@@ -40,10 +44,6 @@ type ContainerInfo interface {
 	Id() string
 	Dependencies() *Dependencies
 	Unique() bool
-	ImageExists() bool
-	Exists() bool
-	Running() bool
-	Paused() bool
 	BuildParams() BuildParameters
 	RunParams() RunParameters
 	RmParams() RmParameters
