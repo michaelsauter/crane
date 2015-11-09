@@ -317,6 +317,10 @@ func handleCmd() {
 		}, false)
 
 	case generateCommand.FullCommand():
+		if len(*templateFlag) == 0 {
+			printErrorf("ERROR: No template specified. The flag `--template` is required.\n")
+			return
+		}
 		commandAction(*generateTargetArg, func(uow *UnitOfWork) {
 			uow.Generate(*templateFlag, *outputFlag)
 		}, false)
