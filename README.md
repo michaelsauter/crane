@@ -19,6 +19,7 @@ continuous integration.
   * [Hooks](#hooks)
   * [Container Prefixes](#container-prefixes)
   * [Unique Names](#unique-names)
+  * [Generate command](#generate-command)
   * [YAML advanced usage](#yaml-advanced-usage)
 
 
@@ -80,6 +81,7 @@ Following are a list of supported commands and possible options:
 | lift        | pull/build + run | Provisions and runs containers in one go. Use `--no-cache` to disable build cache. |
 | status      | -                | Displays information similar to `docker ps` for the given target. |
 | graph       | -                | Dumps the relations between containers as a dependency graph, using the DOT format. |
+| generate    | -                | Passes the targeted portion of the config through given `--template` and outputs the result to STDOUT or given `--output` file. |
 
 You can get more information about what's happening behind the scenes for all commands by using `--verbose`. Most options have a short version as well, e.g. `lift -n`. The CLI provides help for every command, e.g. `crane help run`.
 
@@ -329,6 +331,22 @@ in parallel, e.g. for CI builds. Container prefixes can also be supplied by the
 
 ### Unique names
 If `unique` is set to true, Crane will add a timestamp to the container name, making it possible to have multiple containers based on the same Crane config. Since those containers can not be addressed by Crane later on (e.g. they cannot be stopped and removed), consider setting `rm` to `true` as well. This feature is experimental, which means it can be changed or even removed in every minor version update.
+
+
+### Generate command
+The `generate` command can transform (part of) the configuration based on a
+given template, making it easy to re-use the configuation with other tools.
+`--template` is a required flag, which should point to a Go template. By
+default, the output is printed to STDOUT. It can also be written to a file using
+the `--output` flag. If the given filename contains `%s`, then multiple files
+are written (one per container), substituting `%s` with the name of the
+container. For each container, an object of type
+[ContainerInfo](https://godoc.org/github.com/michaelsauter/crane/crane#ContainerInfo)
+is passed to the template. If one file is generated for all targeted containers,
+a list of containers is located under the key `Containers`.
+
+Example templates can be found at
+[crane-templates](https://github.com/michaelsauter/crane-templates).
 
 
 ### YAML advanced usage
