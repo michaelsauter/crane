@@ -78,7 +78,7 @@ func NewTarget(graph DependencyGraph, targetFlag string, excluded []string) (tar
 			cascadingSeeds = nextCascadingSeeds
 		}
 
-		for name, _ := range includedSet {
+		for name := range includedSet {
 			if !includes(target.initial, name) {
 				target.dependencies = append(target.dependencies, name)
 			}
@@ -111,7 +111,7 @@ func NewTarget(graph DependencyGraph, targetFlag string, excluded []string) (tar
 			cascadingSeeds = nextCascadingSeeds
 		}
 
-		for name, _ := range includedSet {
+		for name := range includedSet {
 			if !includes(target.initial, name) {
 				target.affected = append(target.affected, name)
 			}

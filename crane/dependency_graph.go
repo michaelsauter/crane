@@ -37,9 +37,9 @@ func (graph DependencyGraph) DOT(writer io.Writer, targetedContainers Containers
 // resolve deletes the given name from the
 // dependency graph and removes it from all
 // dependencies.
-func (d DependencyGraph) resolve(resolved string) {
-	delete(d, resolved)
-	for _, dependencies := range d {
+func (graph DependencyGraph) resolve(resolved string) {
+	delete(graph, resolved)
+	for _, dependencies := range graph {
 		dependencies.remove(resolved)
 	}
 }

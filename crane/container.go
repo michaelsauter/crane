@@ -41,7 +41,7 @@ type ContainerInfo interface {
 	ActualName() string
 	Image() string
 	ImageWithTag() string
-	Id() string
+	ID() string
 	Dependencies() *Dependencies
 	Unique() bool
 	BuildParams() BuildParameters
@@ -76,15 +76,15 @@ type RunParameters struct {
 	RawCapAdd       []string    `json:"cap-add" yaml:"cap-add"`
 	RawCapDrop      []string    `json:"cap-drop" yaml:"cap-drop"`
 	RawCgroupParent string      `json:"cgroup-parent" yaml:"cgroup-parent"`
-	CpuPeriod       int         `json:"cpu-period" yaml:"cpu-period"`
-	CpuQuota        int         `json:"cpu-quota" yaml:"cpu-quota"`
+	CPUPeriod       int         `json:"cpu-period" yaml:"cpu-period"`
+	CPUQuota        int         `json:"cpu-quota" yaml:"cpu-quota"`
 	RawCidfile      string      `json:"cidfile" yaml:"cidfile"`
-	Cpuset          int         `json:"cpuset" yaml:"cpuset"`
-	CpuShares       int         `json:"cpu-shares" yaml:"cpu-shares"`
+	CPUset          int         `json:"cpuset" yaml:"cpuset"`
+	CPUShares       int         `json:"cpu-shares" yaml:"cpu-shares"`
 	Detach          bool        `json:"detach" yaml:"detach"`
 	RawDevice       []string    `json:"device" yaml:"device"`
-	RawDns          []string    `json:"dns" yaml:"dns"`
-	RawDnsSearch    []string    `json:"dns-search" yaml:"dns-search"`
+	RawDNS          []string    `json:"dns" yaml:"dns"`
+	RawDNSSearch    []string    `json:"dns-search" yaml:"dns-search"`
 	RawEntrypoint   string      `json:"entrypoint" yaml:"entrypoint"`
 	RawEnv          interface{} `json:"env" yaml:"env"`
 	RawEnvFile      []string    `json:"env-file" yaml:"env-file"`
@@ -225,10 +225,9 @@ func (c *container) Name() string {
 
 func (c *container) ActualName() string {
 	if c.Unique() {
-		return c.prefixedName() + "-" + cfg.UniqueId()
-	} else {
-		return c.prefixedName()
+		return c.prefixedName() + "-" + cfg.UniqueID()
 	}
+	return c.prefixedName()
 }
 
 func (c *container) Image() string {
@@ -296,18 +295,18 @@ func (r RunParameters) Device() []string {
 	return device
 }
 
-func (r RunParameters) Dns() []string {
+func (r RunParameters) DNS() []string {
 	var dns []string
-	for _, rawDns := range r.RawDns {
-		dns = append(dns, os.ExpandEnv(rawDns))
+	for _, rawDNS := range r.RawDNS {
+		dns = append(dns, os.ExpandEnv(rawDNS))
 	}
 	return dns
 }
 
-func (r RunParameters) DnsSearch() []string {
+func (r RunParameters) DNSSearch() []string {
 	var dnsSearch []string
-	for _, rawDnsSearch := range r.RawDnsSearch {
-		dnsSearch = append(dnsSearch, os.ExpandEnv(rawDnsSearch))
+	for _, rawDNSSearch := range r.RawDNSSearch {
+		dnsSearch = append(dnsSearch, os.ExpandEnv(rawDNSSearch))
 	}
 	return dnsSearch
 }
@@ -426,9 +425,8 @@ func (r RunParameters) Net() string {
 	// Default to bridge
 	if len(r.RawNet) == 0 {
 		return "bridge"
-	} else {
-		return os.ExpandEnv(r.RawNet)
 	}
+	return os.ExpandEnv(r.RawNet)
 }
 
 func (r RunParameters) Pid() string {
@@ -521,10 +519,10 @@ func (r RunParameters) Cmd() []string {
 	return cmd
 }
 
-func (c *container) Id() string {
+func (c *container) ID() string {
 	if len(c.id) == 0 && !c.Unique() {
 		// `docker inspect` works for both image and containers, make sure this is a
-		// container payload we get back, otherwise we might end up getting the Id
+		// container payload we get back, otherwise we might end up getting the ID
 		// of the image of the same name.
 		c.id = inspectString(c.ActualName(), "{{if .State}}{{.Id}}{{else}}{{end}}")
 	}
@@ -532,21 +530,21 @@ func (c *container) Id() string {
 }
 
 func (c *container) Exists() bool {
-	return c.Id() != ""
+	return c.ID() != ""
 }
 
 func (c *container) Running() bool {
 	if !c.Exists() {
 		return false
 	}
-	return inspectBool(c.Id(), "{{.State.Running}}")
+	return inspectBool(c.ID(), "{{.State.Running}}")
 }
 
 func (c *container) Paused() bool {
 	if !c.Exists() {
 		return false
 	}
-	return inspectBool(c.Id(), "{{.State.Paused}}")
+	return inspectBool(c.ID(), "{{.State.Paused}}")
 }
 
 func (c *container) ImageExists() bool {
@@ -560,11 +558,11 @@ func (c *container) Status() []string {
 		return []string{c.prefixedName(), c.Image(), "-", "-", "-", "-", "-"}
 	}
 	fields := []string{c.ActualName(), c.Image(), "-", "-", "-", "-", "-"}
-	output := inspectString(c.Id(), "{{.Id}}+++{{.Image}}+++{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}+++{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}+++{{.State.Running}}")
+	output := inspectString(c.ID(), "{{.Id}}+++{{.Image}}+++{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}+++{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}+++{{.State.Running}}")
 	if output != "" {
 		copy(fields[2:], strings.Split(output, "+++"))
 		// We asked for the image id the container was created from
-		fields[3] = strconv.FormatBool(imageIdFromTag(fields[1]) == fields[3])
+		fields[3] = strconv.FormatBool(imageIDFromTag(fields[1]) == fields[3])
 	}
 	return fields
 }
@@ -657,32 +655,32 @@ func (c *container) createArgs(cmds []string, excluded []string, configPath stri
 	if len(c.RunParams().Cidfile()) > 0 {
 		args = append(args, "--cidfile", c.RunParams().Cidfile())
 	}
-	// CpuPeriod
-	if c.RunParams().CpuPeriod > 0 {
-		args = append(args, "--cpu-period", strconv.Itoa(c.RunParams().CpuPeriod))
+	// CPUPeriod
+	if c.RunParams().CPUPeriod > 0 {
+		args = append(args, "--cpu-period", strconv.Itoa(c.RunParams().CPUPeriod))
 	}
-	// CpuQuota
-	if c.RunParams().CpuQuota > 0 {
-		args = append(args, "--cpu-quota", strconv.Itoa(c.RunParams().CpuQuota))
+	// CPUQuota
+	if c.RunParams().CPUQuota > 0 {
+		args = append(args, "--cpu-quota", strconv.Itoa(c.RunParams().CPUQuota))
 	}
 	// CPU set
-	if c.RunParams().Cpuset > 0 {
-		args = append(args, "--cpuset", strconv.Itoa(c.RunParams().Cpuset))
+	if c.RunParams().CPUset > 0 {
+		args = append(args, "--cpuset", strconv.Itoa(c.RunParams().CPUset))
 	}
 	// CPU shares
-	if c.RunParams().CpuShares > 0 {
-		args = append(args, "--cpu-shares", strconv.Itoa(c.RunParams().CpuShares))
+	if c.RunParams().CPUShares > 0 {
+		args = append(args, "--cpu-shares", strconv.Itoa(c.RunParams().CPUShares))
 	}
 	// Device
 	for _, device := range c.RunParams().Device() {
 		args = append(args, "--device", device)
 	}
-	// Dns
-	for _, dns := range c.RunParams().Dns() {
+	// DNS
+	for _, dns := range c.RunParams().DNS() {
 		args = append(args, "--dns", dns)
 	}
-	// Dns Search
-	for _, dnsSearch := range c.RunParams().DnsSearch() {
+	// DNS Search
+	for _, dnsSearch := range c.RunParams().DNSSearch() {
 		args = append(args, "--dns-search", dnsSearch)
 	}
 	// Entrypoint
@@ -999,12 +997,11 @@ func (c *container) Logs(follow bool, since string, tail string) (stdout, stderr
 		// always include timestamps for ordering, we'll just strip
 		// them if the user doesn't want to see them
 		args = append(args, "-t")
-		args = append(args, c.Id())
+		args = append(args, c.ID())
 		_, stdout, stderr := executeCommandBackground("docker", args)
 		return stdout, stderr
-	} else {
-		return nil, nil
 	}
+	return nil, nil
 }
 
 // Push container
@@ -1051,7 +1048,7 @@ func (c *container) prefixedName() string {
 }
 
 // Return the image id of a tag, or an empty string if it doesn't exist
-func imageIdFromTag(tag string) string {
+func imageIDFromTag(tag string) string {
 	args := []string{"inspect", "--format={{.Id}}", tag}
 	output, err := commandOutput("docker", args)
 	if err != nil {
