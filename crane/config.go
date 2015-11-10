@@ -232,8 +232,8 @@ func (c *config) initialize() {
 }
 
 func (c *config) validate() {
-	for name, container := range c.containerMap {
-		if len(container.Image()) == 0 {
+	for name, container := range c.RawContainerMap {
+		if len(container.RawImage) == 0 {
 			panic(StatusError{fmt.Errorf("No image specified for `%s`", name), 64})
 		}
 	}

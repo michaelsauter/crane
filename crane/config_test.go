@@ -222,20 +222,19 @@ func TestInitializeAmbiguousHooks(t *testing.T) {
 }
 
 func TestValidate(t *testing.T) {
-	containerMap := NewStubbedContainerMap(true,
-		&container{RawName: "a", RawImage: "ubuntu"},
-		&container{RawName: "b", RawImage: "ubuntu"},
-	)
-	cfg = &config{tag: ""}
-	c := &config{containerMap: containerMap}
+	rawContainerMap := map[string]*container{
+		"a": &container{RawName: "a", RawImage: "ubuntu"},
+		"b": &container{RawName: "b", RawImage: "ubuntu"},
+	}
+	c := &config{RawContainerMap: rawContainerMap}
 	assert.NotPanics(t, func() {
 		c.validate()
 	})
-	containerMap = NewStubbedContainerMap(true,
-		&container{RawName: "a", RawImage: "ubuntu"},
-		&container{RawName: "b"},
-	)
-	c = &config{containerMap: containerMap}
+	rawContainerMap = map[string]*container{
+		"a": &container{RawName: "a", RawImage: "ubuntu"},
+		"b": &container{RawName: "b"},
+	}
+	c = &config{RawContainerMap: rawContainerMap}
 	assert.Panics(t, func() {
 		c.validate()
 	})
