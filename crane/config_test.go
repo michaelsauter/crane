@@ -221,7 +221,7 @@ func TestInitializeAmbiguousHooks(t *testing.T) {
 	})
 }
 
-func TestDependencyGraph(t *testing.T) {
+func TestDependencyMap(t *testing.T) {
 	containerMap := NewStubbedContainerMap(true,
 		&container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},
 		&container{RawName: "b", RawRun: RunParameters{RawLink: []string{"c:c"}}},
@@ -229,14 +229,14 @@ func TestDependencyGraph(t *testing.T) {
 	)
 	c := &config{containerMap: containerMap}
 
-	dependencyGraph := c.DependencyGraph([]string{})
-	assert.Len(t, dependencyGraph, 3)
-	// make sure a new graph is returned each time
-	dependencyGraph.resolve("a") // mutate the previous graph
-	assert.Len(t, c.DependencyGraph([]string{}), 3)
+	dependencyMap := c.DependencyMap([]string{})
+	assert.Len(t, dependencyMap, 3)
+	// make sure a new map is returned each time
+	delete(dependencyMap, "a")
+	assert.Len(t, c.DependencyMap([]string{}), 3)
 
-	dependencyGraph = c.DependencyGraph([]string{"b"})
-	assert.Len(t, dependencyGraph, 2)
+	dependencyMap = c.DependencyMap([]string{"b"})
+	assert.Len(t, dependencyMap, 2)
 }
 
 func TestContainersForReference(t *testing.T) {

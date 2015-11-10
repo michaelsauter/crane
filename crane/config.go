@@ -16,7 +16,7 @@ import (
 )
 
 type Config interface {
-	DependencyGraph(excluded []string) DependencyGraph
+	DependencyMap(excluded []string) map[string]*Dependencies
 	ContainersForReference(reference string) (result []string)
 	Path() string
 	UniqueID() string
@@ -223,16 +223,15 @@ func (c *config) initialize() {
 	}
 }
 
-// DependencyGraph returns the dependency graph, which is
-// a map describing the dependencies between the containers.
-func (c *config) DependencyGraph(excluded []string) DependencyGraph {
-	dependencyGraph := make(DependencyGraph)
+// DependencyMap returns a map of containers to their dependencies.
+func (c *config) DependencyMap(excluded []string) map[string]*Dependencies {
+	dependencyMap := make(map[string]*Dependencies)
 	for _, container := range c.containerMap {
 		if !includes(excluded, container.Name()) {
-			dependencyGraph[container.Name()] = container.Dependencies()
+			dependencyMap[container.Name()] = container.Dependencies()
 		}
 	}
-	return dependencyGraph
+	return dependencyMap
 }
 
 // ContainersForReference receives a reference and determines which

@@ -14,7 +14,7 @@ type UnitOfWork struct {
 	requireStarted []string
 }
 
-func NewUnitOfWork(graph DependencyGraph, targeted []string) (uow *UnitOfWork, err error) {
+func NewUnitOfWork(dependencyMap map[string]*Dependencies, targeted []string) (uow *UnitOfWork, err error) {
 
 	uow = &UnitOfWork{
 		targeted:       targeted,
@@ -28,7 +28,7 @@ func NewUnitOfWork(graph DependencyGraph, targeted []string) (uow *UnitOfWork, e
 		c := uow.containers
 		initialLenContainers := len(c)
 		for _, name := range c {
-			dependencies := graph[name]
+			dependencies := dependencyMap[name]
 			if dependencies == nil {
 				err = fmt.Errorf("Container %s referenced, but not defined.", name)
 				return
@@ -49,10 +49,13 @@ func NewUnitOfWork(graph DependencyGraph, targeted []string) (uow *UnitOfWork, e
 	for {
 		initialLenOrdered := len(uow.order)
 		for _, name := range uow.containers {
-			if dependencies, ok := graph[name]; ok {
+			if dependencies, ok := dependencyMap[name]; ok {
 				if dependencies.satisfied() {
 					uow.order = append(uow.order, name)
-					graph.resolve(name)
+					delete(dependencyMap, name)
+					for _, dependencies := range dependencyMap {
+						dependencies.remove(name)
+					}
 				}
 			}
 		}
