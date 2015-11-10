@@ -226,6 +226,7 @@ func TestValidate(t *testing.T) {
 		&container{RawName: "a", RawImage: "ubuntu"},
 		&container{RawName: "b", RawImage: "ubuntu"},
 	)
+	cfg = &config{tag: ""}
 	c := &config{containerMap: containerMap}
 	assert.NotPanics(t, func() {
 		c.validate()

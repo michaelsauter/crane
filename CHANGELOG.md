@@ -16,9 +16,27 @@
 
 * Fix broken `stats` and `logs` commands if a prefix was given.
 
+* Add `--tag` global flag, which overrides image tag part temporarily.
+  A typical use of `--tag` flag is to synchronize image tags with the tag of
+  VCSs. In order to be accessible from build hooks, Crane sets a value of
+  `--tag` to the `CRANE_TAG` environment variable. You can also set a default
+  value of `--tag` by the `CRANE_TAG` environment variable.
+  _@t-suwa_
+
+  Example:
+  If you specify a `--tag rc-2`, you will get these results:
+
+  |original image name|overridden image name|
+  |-------------------|---------------------|
+  |nginx              |nginx:rc-2           |
+  |nginx:1.9          |nginx:rc-2           |
+  |repo/nginx         |repo/nginx:rc-2      |
+  |host:5000/nginx    |host:5000/nginx:rc-2 |
+
 * [Internal] Introduce new `ContainerInfo` interface which is a subset of
   `Container`. At the same time, clean up the `Container` interface to include
   only the externally used methods.
+
 
 ## 2.1.0 (2015-10-15)
 
@@ -40,9 +58,11 @@
 
 * Fix broken `net` flag
 
+
 ## 2.0.1 (2015-09-16)
 
 * Fixes messed up output for `crane status` using Docker 1.8.
+
 
 ## 2.0.0 (2015-09-15)
 

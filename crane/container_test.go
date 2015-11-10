@@ -73,6 +73,36 @@ func TestImplicitLinkAliases(t *testing.T) {
 	assert.Equal(t, expected, c.Dependencies())
 }
 
+func TestImage(t *testing.T) {
+	containers := []*container{
+		&container{RawName: "full-spec", RawImage: "test/image-a:1.0"},
+		&container{RawName: "without-repo", RawImage: "image-b:latest"},
+		&container{RawName: "without-tag", RawImage: "test/image-c"},
+		&container{RawName: "image-only", RawImage: "image-d"},
+		&container{RawName: "private-registry", RawImage: "localhost:5000/foo/image-e:2.0"},
+		&container{RawName: "digest", RawImage: "localhost:5000/foo/image-f@sha256:xxx"},
+	}
+	containerMap := make(map[string]*container)
+	for _, container := range containers {
+		containerMap[container.Name()] = container
+	}
+	cfg = &config{
+		tag: "rc-1",
+	}
+
+	assert.Equal(t, "test/image-a:rc-1", containerMap["full-spec"].Image())
+
+	assert.Equal(t, "image-b:rc-1", containerMap["without-repo"].Image())
+
+	assert.Equal(t, "test/image-c:rc-1", containerMap["without-tag"].Image())
+
+	assert.Equal(t, "image-d:rc-1", containerMap["image-only"].Image())
+
+	assert.Equal(t, "localhost:5000/foo/image-e:rc-1", containerMap["private-registry"].Image())
+
+	assert.NotEqual(t, "localhost:5000/foo/image-f@sha256:rc-1", containerMap["digest"].Image())
+}
+
 func TestVolume(t *testing.T) {
 	var c *container
 	// Absolute path

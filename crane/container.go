@@ -235,7 +235,19 @@ func (c *container) ActualName() string {
 }
 
 func (c *container) Image() string {
-	return os.ExpandEnv(c.RawImage)
+	image := os.ExpandEnv(c.RawImage)
+
+	// Return if no global tag given or image is a digest
+	if len(cfg.Tag()) == 0 || strings.Contains(image, "@") {
+		return image
+	}
+
+	// Replace image tag with global tag
+	startOfTag := strings.LastIndex(image, ":")
+	if startOfTag != -1 {
+		image = image[:startOfTag]
+	}
+	return image + ":" + cfg.Tag()
 }
 
 func (c *container) Unique() bool {
@@ -537,9 +549,11 @@ func (c *container) Status() [][]string {
 	} else {
 		for _, name := range existingInstances {
 			fields := []string{name, c.Image(), "-", "-", "-", "-", "-"}
-			output := inspectString(name, "{{.Id}}+++{{.Image}}+++{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}+++{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}+++{{.State.Running}}")
+			// When using a `--tag` global flag, c.Image() may not represent an actual image tag.
+			// Instead we should get an image tag by inspecting "Config.Image".
+			output := inspectString(name, "{{.Config.Image}}+++{{.Id}}+++{{.Image}}+++{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}+++{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}+++{{.State.Running}}")
 			if output != "" {
-				copy(fields[2:], strings.Split(output, "+++"))
+				copy(fields[1:], strings.Split(output, "+++"))
 				// We asked for the image id the container was created from
 				fields[3] = strconv.FormatBool(imageIDFromTag(fields[1]) == fields[3])
 			}
