@@ -151,6 +151,7 @@ func NewConfig(location string, prefix string) Config {
 	}
 	config = readConfig(configFile)
 	config.initialize()
+	config.validate()
 	config.path = path.Dir(configFile)
 	config.prefix = prefix
 	milliseconds := time.Now().UnixNano() / 1000000
@@ -220,6 +221,14 @@ func (c *config) initialize() {
 			container.hooks.CopyFrom(hooks)
 		}
 		c.containerMap[name] = container
+	}
+}
+
+func (c *config) validate() {
+	for name, container := range c.containerMap {
+		if len(container.Image()) == 0 {
+			panic(StatusError{fmt.Errorf("No image specified for `%s`", name), 64})
+		}
 	}
 }
 

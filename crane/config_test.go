@@ -221,6 +221,25 @@ func TestInitializeAmbiguousHooks(t *testing.T) {
 	})
 }
 
+func TestValidate(t *testing.T) {
+	containerMap := NewStubbedContainerMap(true,
+		&container{RawName: "a", RawImage: "ubuntu"},
+		&container{RawName: "b", RawImage: "ubuntu"},
+	)
+	c := &config{containerMap: containerMap}
+	assert.NotPanics(t, func() {
+		c.validate()
+	})
+	containerMap = NewStubbedContainerMap(true,
+		&container{RawName: "a", RawImage: "ubuntu"},
+		&container{RawName: "b"},
+	)
+	c = &config{containerMap: containerMap}
+	assert.Panics(t, func() {
+		c.validate()
+	})
+}
+
 func TestDependencyMap(t *testing.T) {
 	containerMap := NewStubbedContainerMap(true,
 		&container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},
