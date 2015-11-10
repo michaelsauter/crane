@@ -18,17 +18,17 @@ type Container interface {
 	Exists() bool
 	InstancesOfStatus(status string) []string
 	Status() [][]string
-	Lift(cmds []string, nocache bool, excluded []string, configPath string)
+	Lift(cmds []string, nocache bool, excluded []string)
 	Provision(nocache bool)
 	PullImage()
-	Create(cmds []string, excluded []string, configPath string)
-	Run(cmds []string, excluded []string, configPath string)
-	Start(excluded []string, configPath string)
+	Create(cmds []string, excluded []string)
+	Run(cmds []string, excluded []string)
+	Start(excluded []string)
 	Kill()
 	Stop()
 	Pause()
 	Unpause()
-	Exec(cmds []string, configPath string)
+	Exec(cmds []string)
 	Rm(force bool)
 	Logs(follow bool, since string, tail string) (sources []logSource)
 	Push()
@@ -464,13 +464,13 @@ func (r RunParameters) Uts() string {
 	return os.ExpandEnv(r.RawUts)
 }
 
-func (r RunParameters) Volume(configPath string) []string {
+func (r RunParameters) Volume() []string {
 	var volumes []string
 	for _, rawVolume := range r.RawVolume {
 		volume := os.ExpandEnv(rawVolume)
 		paths := strings.Split(volume, ":")
 		if !path.IsAbs(paths[0]) {
-			paths[0] = configPath + "/" + paths[0]
+			paths[0] = cfg.Path() + "/" + paths[0]
 		}
 		volumes = append(volumes, strings.Join(paths, ":"))
 	}
@@ -549,9 +549,9 @@ func (c *container) Status() [][]string {
 	return rows
 }
 
-func (c *container) Lift(cmds []string, nocache bool, excluded []string, configPath string) {
+func (c *container) Lift(cmds []string, nocache bool, excluded []string) {
 	c.Provision(nocache)
-	c.Run(cmds, excluded, configPath)
+	c.Run(cmds, excluded)
 }
 
 func (c *container) Provision(nocache bool) {
@@ -563,18 +563,18 @@ func (c *container) Provision(nocache bool) {
 }
 
 // Create container
-func (c *container) Create(cmds []string, excluded []string, configPath string) {
+func (c *container) Create(cmds []string, excluded []string) {
 	if !c.Unique() {
 		c.Rm(true)
 	}
 	fmt.Printf("Creating container %s ...\n", c.ActualName())
 
-	args := append([]string{"create"}, c.createArgs(cmds, excluded, configPath)...)
+	args := append([]string{"create"}, c.createArgs(cmds, excluded)...)
 	executeCommand("docker", args)
 }
 
 // Run container, or start it if already existing
-func (c *container) Run(cmds []string, excluded []string, configPath string) {
+func (c *container) Run(cmds []string, excluded []string) {
 	if !c.Unique() {
 		c.Rm(true)
 	}
@@ -586,7 +586,7 @@ func (c *container) Run(cmds []string, excluded []string, configPath string) {
 	if c.RunParams().Detach {
 		args = append(args, "--detach")
 	}
-	args = append(args, c.createArgs(cmds, excluded, configPath)...)
+	args = append(args, c.createArgs(cmds, excluded)...)
 	c.executePostStartHook()
 	executeCommand("docker", args)
 }
@@ -611,7 +611,7 @@ func (c *container) executePostStartHook() {
 }
 
 // Returns all the flags to be passed to `docker create`
-func (c *container) createArgs(cmds []string, excluded []string, configPath string) []string {
+func (c *container) createArgs(cmds []string, excluded []string) []string {
 	args := []string{}
 	// AddHost
 	for _, addHost := range c.RunParams().AddHost() {
@@ -797,7 +797,7 @@ func (c *container) createArgs(cmds []string, excluded []string, configPath stri
 		args = append(args, "--uts", c.RunParams().Uts())
 	}
 	// Volumes
-	for _, volume := range c.RunParams().Volume(configPath) {
+	for _, volume := range c.RunParams().Volume() {
 		args = append(args, "--volume", volume)
 	}
 	// VolumesFrom
@@ -827,7 +827,7 @@ func (c *container) createArgs(cmds []string, excluded []string, configPath stri
 }
 
 // Start container
-func (c *container) Start(excluded []string, configPath string) {
+func (c *container) Start(excluded []string) {
 	if !c.Unique() && c.Exists() {
 		if !c.running() {
 			executeHook(c.Hooks().PreStart(), c.ActualName())
@@ -844,7 +844,7 @@ func (c *container) Start(excluded []string, configPath string) {
 			executeCommand("docker", args)
 		}
 	} else {
-		c.Run([]string{}, excluded, configPath)
+		c.Run([]string{}, excluded)
 	}
 }
 
@@ -889,10 +889,10 @@ func (c *container) Unpause() {
 }
 
 // Exec command in container
-func (c *container) Exec(cmds []string, configPath string) {
+func (c *container) Exec(cmds []string) {
 	runningInstances := c.InstancesOfStatus("running")
 	if len(runningInstances) == 0 {
-		c.Start([]string{}, configPath)
+		c.Start([]string{})
 		runningInstances = []string{c.ActualName()}
 	}
 	for _, name := range runningInstances {

@@ -73,9 +73,9 @@ func NewUnitOfWork(graph DependencyGraph, targeted []string) (uow *UnitOfWork, e
 func (uow *UnitOfWork) Run(cmds []string, excluded []string) {
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Run(cmds, excluded, cfg.Path())
+			container.Run(cmds, excluded)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
-			container.Start(excluded, cfg.Path())
+			container.Start(excluded)
 		}
 	}
 }
@@ -83,9 +83,9 @@ func (uow *UnitOfWork) Run(cmds []string, excluded []string) {
 func (uow *UnitOfWork) Lift(cmds []string, excluded []string, noCache bool) {
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Lift(cmds, noCache, excluded, cfg.Path())
+			container.Lift(cmds, noCache, excluded)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
-			container.Start(excluded, cfg.Path())
+			container.Start(excluded)
 		}
 	}
 }
@@ -133,9 +133,9 @@ func (uow *UnitOfWork) Pause() {
 func (uow *UnitOfWork) Start() {
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Start(excluded, cfg.Path())
+			container.Start(excluded)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
-			container.Start(excluded, cfg.Path())
+			container.Start(excluded)
 		}
 	}
 }
@@ -157,9 +157,9 @@ func (uow *UnitOfWork) Kill() {
 func (uow *UnitOfWork) Exec(cmds []string) {
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Exec(cmds, cfg.Path())
+			container.Exec(cmds)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
-			container.Start(excluded, cfg.Path())
+			container.Start(excluded)
 		}
 	}
 }
@@ -175,9 +175,9 @@ func (uow *UnitOfWork) Rm(force bool) {
 func (uow *UnitOfWork) Create(cmds []string, excluded []string) {
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Create(cmds, excluded, cfg.Path())
+			container.Create(cmds, excluded)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
-			container.Start(excluded, cfg.Path())
+			container.Start(excluded)
 		}
 	}
 }
