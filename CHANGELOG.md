@@ -18,9 +18,7 @@
 
 * Add `--tag` global flag, which overrides image tag part temporarily.
   A typical use of `--tag` flag is to synchronize image tags with the tag of
-  VCSs. In order to be accessible from build hooks, Crane sets a value of
-  `--tag` to the `CRANE_TAG` environment variable. You can also set a default
-  value of `--tag` by the `CRANE_TAG` environment variable.
+  VCSs. You can also set the tag via `CRANE_TAG` environment variable.
   _@t-suwa_
 
   Example:
