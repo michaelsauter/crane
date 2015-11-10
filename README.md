@@ -25,10 +25,10 @@ continuous integration.
 
 
 ## Installation
-The latest release (2.1.0) can be installed via:
+The latest release (2.2.0) can be installed via:
 
 ```
-bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/v2.1.0/download.sh`" && sudo mv crane /usr/local/bin/crane
+bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/v2.2.0/download.sh`" && sudo mv crane /usr/local/bin/crane
 ```
 
 Older releases can be found on the
@@ -36,7 +36,7 @@ Older releases can be found on the
 build Crane yourself by using the standard Go toolchain.
 
 Please have a look at the
-[changelog](https://github.com/michaelsauter/crane/blob/v2.1.0/CHANGELOG.md)
+[changelog](https://github.com/michaelsauter/crane/blob/v2.2.0/CHANGELOG.md)
 when upgrading.
 
 Of course, you will need to have Docker (>= 1.6) installed.
@@ -331,8 +331,8 @@ in parallel, e.g. for CI builds. Container prefixes can also be supplied by the
 
 ### Override image tag
 By using a the `--tag` flag, it is possible to globally overrides image tags. If
-you specify `--tag 2.0.0-rc2`, an image name `repo/app:1.0` is treated as
-`repo/app:2.0.0-rc2`. The `CRANE_TAG` environment variable can also be used to
+you specify `--tag 2.2.0-rc2`, an image name `repo/app:1.0` is treated as
+`repo/app:2.2.0-rc2`. The `CRANE_TAG` environment variable can also be used to
 set the global tag.
 
 

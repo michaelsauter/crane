@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.2.0 (2015-11-10)
 
 * Add new `generate` command, which passes the targeted portion of the
   configuration through a given template to produce some output.
