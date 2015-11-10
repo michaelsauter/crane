@@ -5,6 +5,10 @@
 * Add new `generate` command, which passes the targeted portion of the
   configuration through a given template to produce some output.
 
+* Remove `graph` command. The same output can be achieved with the new
+  `generate` command specifying this
+  [DOT template](https://github.com/michaelsauter/crane-templates/dot.tmpl).
+
 * Unique containers can now be addressed by Crane later on, e.g. given a
   unique container `foo`, `crane kill foo`  will kill all instances of `foo`.
   All other commands that did not work with unique containers previously, e.g.

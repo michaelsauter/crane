@@ -80,7 +80,6 @@ Following are a list of supported commands and possible options:
 | provision   | pull/build       | Calls Docker's `pull` if no Dockerfile is specified. Otherwise it builds the image, optionally with disabled cache by passing `--no-cache`. |
 | lift        | pull/build + run | Provisions and runs containers in one go. Use `--no-cache` to disable build cache. |
 | status      | -                | Displays information similar to `docker ps` for the given target. |
-| graph       | -                | Dumps the relations between containers as a dependency graph, using the DOT format. |
 | generate    | -                | Passes the targeted portion of the config through given `--template` and outputs the result to STDOUT or given `--output` file. |
 
 You can get more information about what's happening behind the scenes for all commands by using `--verbose`. Most options have a short version as well, e.g. `lift -n`. The CLI provides help for every command, e.g. `crane help run`.

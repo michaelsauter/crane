@@ -44,12 +44,6 @@ var (
 		"Displays the version of Crane.",
 	)
 
-	graphCommand = app.Command(
-		"graph",
-		"Dumps the dependency graph as a DOT file.",
-	)
-	graphTargetArg = graphCommand.Arg("target", "Target of command").String()
-
 	statsCommand = app.Command(
 		"stats",
 		"Displays statistics about containers.",
@@ -235,11 +229,6 @@ func handleCmd() {
 
 	case versionCommand.FullCommand():
 		fmt.Println("v2.1.0")
-
-	case graphCommand.FullCommand():
-		commandAction(*graphTargetArg, func(uow *UnitOfWork) {
-			cfg.DependencyGraph(excluded).DOT(os.Stdout, uow.Targeted().Reversed())
-		}, false)
 
 	case statsCommand.FullCommand():
 		commandAction(*statsTargetArg, func(uow *UnitOfWork) {

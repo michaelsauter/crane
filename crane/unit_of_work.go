@@ -259,7 +259,7 @@ func (uow *UnitOfWork) TargetedInfo() []ContainerInfo {
 	c := []ContainerInfo{}
 	for _, name := range uow.order {
 		if includes(uow.targeted, name) {
-			c = append(c, cfg.ContainerInfo(name))
+			c = append([]ContainerInfo{cfg.ContainerInfo(name)}, c...)
 		}
 	}
 	return c
