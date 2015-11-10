@@ -219,7 +219,7 @@ func excludedContainers(flag string) []string {
 	return []string{}
 }
 
-func handleCmd() {
+func runCli() {
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 
 	case liftCommand.FullCommand():

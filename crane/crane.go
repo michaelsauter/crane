@@ -62,7 +62,7 @@ func RealMain() {
 		handleRecoveredError(recover())
 	}()
 	checkDockerClient()
-	handleCmd()
+	runCli()
 }
 
 // Ensure there is a docker binary in the path,
