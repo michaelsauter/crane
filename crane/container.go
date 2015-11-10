@@ -967,13 +967,9 @@ func (c *container) Logs(follow bool, since string, tail string) (sources []logS
 
 // Push container
 func (c *container) Push() {
-	if len(c.Image()) > 0 {
-		fmt.Printf("Pushing image %s ...\n", c.Image())
-		args := []string{"push", c.Image()}
-		executeCommand("docker", args)
-	} else {
-		printNoticef("Skipping %s as it does not have an image name.\n", c.ActualName())
-	}
+	fmt.Printf("Pushing image %s ...\n", c.Image())
+	args := []string{"push", c.Image()}
+	executeCommand("docker", args)
 }
 
 func (c *container) Hooks() Hooks {
