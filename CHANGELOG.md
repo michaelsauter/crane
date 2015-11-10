@@ -7,7 +7,7 @@
 
 * Remove `graph` command. The same output can be achieved with the new
   `generate` command specifying this
-  [DOT template](https://github.com/michaelsauter/crane-templates/dot.tmpl).
+  [DOT template](https://raw.githubusercontent.com/michaelsauter/crane-templates/7171e8b1ef6c80666ed2da8bdcbc8849aaef2d2a/dot.tmpl).
 
 * Unique containers can now be addressed by Crane later on, e.g. given a
   unique container `foo`, `crane kill foo`  will kill all instances of `foo`.
