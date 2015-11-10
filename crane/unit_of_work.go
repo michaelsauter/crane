@@ -93,14 +93,14 @@ func (uow *UnitOfWork) Lift(cmds []string, excluded []string, noCache bool) {
 func (uow *UnitOfWork) Stats() {
 	args := []string{"stats"}
 	for _, container := range uow.Targeted() {
-		if container.Running() {
-			args = append(args, container.Name())
+		for _, name := range container.InstancesOfStatus("running") {
+			args = append(args, name)
 		}
 	}
 	if len(args) > 1 {
 		executeCommand("docker", args)
 	} else {
-		printErrorf("None of the targeted container is running.\n")
+		printNoticef("None of the targeted container is running.\n")
 	}
 }
 
@@ -225,7 +225,7 @@ func (uow *UnitOfWork) Generate(templateFile string, output string) {
 
 	if strings.Contains(output, "%s") {
 		for _, container := range uow.TargetedInfo() {
-			executeTemplate(fmt.Sprintf(output, container.Name()), container)
+			executeTemplate(fmt.Sprintf(output, container.PrefixedName()), container)
 		}
 	} else {
 		tmplInfo := struct {

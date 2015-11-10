@@ -15,11 +15,9 @@ import (
 
 type Container interface {
 	ContainerInfo
-	ImageExists() bool
 	Exists() bool
-	Running() bool
-	Paused() bool
-	Status() []string
+	InstancesOfStatus(status string) []string
+	Status() [][]string
 	Lift(cmds []string, nocache bool, excluded []string, configPath string)
 	Provision(nocache bool)
 	PullImage()
@@ -32,12 +30,13 @@ type Container interface {
 	Unpause()
 	Exec(cmds []string, configPath string)
 	Rm(force bool)
-	Logs(follow bool, since string, tail string) (stdout, stderr io.Reader)
+	Logs(follow bool, since string, tail string) (sources []logSource)
 	Push()
 }
 
 type ContainerInfo interface {
 	Name() string
+	PrefixedName() string
 	ActualName() string
 	Image() string
 	ImageWithTag() string
@@ -140,6 +139,12 @@ type OptBool struct {
 	Value   bool
 }
 
+type logSource struct {
+	Stdout io.Reader
+	Stderr io.Reader
+	Name   string
+}
+
 func (o *OptBool) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err := unmarshal(&o.Value); err != nil {
 		return err
@@ -225,9 +230,9 @@ func (c *container) Name() string {
 
 func (c *container) ActualName() string {
 	if c.Unique() {
-		return c.prefixedName() + "-" + cfg.UniqueID()
+		return c.PrefixedName() + "-unique-" + cfg.UniqueID()
 	}
-	return c.prefixedName()
+	return c.PrefixedName()
 }
 
 func (c *container) Image() string {
@@ -533,38 +538,25 @@ func (c *container) Exists() bool {
 	return c.ID() != ""
 }
 
-func (c *container) Running() bool {
-	if !c.Exists() {
-		return false
+func (c *container) Status() [][]string {
+	rows := [][]string{}
+	existingInstances := c.InstancesOfStatus("existing")
+	if len(existingInstances) == 0 {
+		fields := []string{c.ActualName(), c.Image(), "-", "-", "-", "-", "-"}
+		rows = append(rows, fields)
+	} else {
+		for _, name := range existingInstances {
+			fields := []string{name, c.Image(), "-", "-", "-", "-", "-"}
+			output := inspectString(name, "{{.Id}}+++{{.Image}}+++{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}+++{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}+++{{.State.Running}}")
+			if output != "" {
+				copy(fields[2:], strings.Split(output, "+++"))
+				// We asked for the image id the container was created from
+				fields[3] = strconv.FormatBool(imageIDFromTag(fields[1]) == fields[3])
+			}
+			rows = append(rows, fields)
+		}
 	}
-	return inspectBool(c.ID(), "{{.State.Running}}")
-}
-
-func (c *container) Paused() bool {
-	if !c.Exists() {
-		return false
-	}
-	return inspectBool(c.ID(), "{{.State.Paused}}")
-}
-
-func (c *container) ImageExists() bool {
-	_, err := commandOutput("docker", []string{"inspect", c.ImageWithTag()})
-	return err == nil
-}
-
-func (c *container) Status() []string {
-	if c.Unique() {
-		fmt.Printf("Cannot show status of uniquely named container(s) %s.\n", c.prefixedName())
-		return []string{c.prefixedName(), c.Image(), "-", "-", "-", "-", "-"}
-	}
-	fields := []string{c.ActualName(), c.Image(), "-", "-", "-", "-", "-"}
-	output := inspectString(c.ID(), "{{.Id}}+++{{.Image}}+++{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}+++{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}+++{{.State.Running}}")
-	if output != "" {
-		copy(fields[2:], strings.Split(output, "+++"))
-		// We asked for the image id the container was created from
-		fields[3] = strconv.FormatBool(imageIDFromTag(fields[1]) == fields[3])
-	}
-	return fields
+	return rows
 }
 
 func (c *container) Lift(cmds []string, nocache bool, excluded []string, configPath string) {
@@ -585,7 +577,7 @@ func (c *container) Create(cmds []string, excluded []string, configPath string) 
 	if !c.Unique() {
 		c.Rm(true)
 	}
-	fmt.Printf("Creating container %s ... ", c.ActualName())
+	fmt.Printf("Creating container %s ...\n", c.ActualName())
 
 	args := append([]string{"create"}, c.createArgs(cmds, excluded, configPath)...)
 	executeCommand("docker", args)
@@ -597,7 +589,7 @@ func (c *container) Run(cmds []string, excluded []string, configPath string) {
 		c.Rm(true)
 	}
 	executeHook(c.Hooks().PreStart(), c.ActualName())
-	fmt.Printf("Running container %s ... ", c.ActualName())
+	fmt.Printf("Running container %s ...\n", c.ActualName())
 
 	args := []string{"run"}
 	// Detach
@@ -846,10 +838,10 @@ func (c *container) createArgs(cmds []string, excluded []string, configPath stri
 
 // Start container
 func (c *container) Start(excluded []string, configPath string) {
-	if c.Exists() && !c.Unique() {
-		if !c.Running() {
+	if !c.Unique() && c.Exists() {
+		if !c.running() {
 			executeHook(c.Hooks().PreStart(), c.ActualName())
-			fmt.Printf("Starting container %s ... ", c.ActualName())
+			fmt.Printf("Starting container %s ...\n", c.ActualName())
 			args := []string{"start"}
 			if c.StartParams().Attach {
 				args = append(args, "--attach")
@@ -868,122 +860,97 @@ func (c *container) Start(excluded []string, configPath string) {
 
 // Kill container
 func (c *container) Kill() {
-	if c.Unique() {
-		fmt.Printf("Cannot kill uniquely named container(s) %s.\n", c.prefixedName())
-		return
-	}
-	if c.Running() {
-		executeHook(c.Hooks().PreStop(), c.ActualName())
-		fmt.Printf("Killing container %s ... ", c.ActualName())
-		args := []string{"kill", c.ActualName()}
+	for _, name := range c.InstancesOfStatus("running") {
+		executeHook(c.Hooks().PreStop(), name)
+		fmt.Printf("Killing container %s ...\n", name)
+		args := []string{"kill", name}
 		executeCommand("docker", args)
-		executeHook(c.Hooks().PostStop(), c.ActualName())
+		executeHook(c.Hooks().PostStop(), name)
 	}
 }
 
 // Stop container
 func (c *container) Stop() {
-	if c.Unique() {
-		fmt.Printf("Cannot stop uniquely named container(s) %s.\n", c.prefixedName())
-		return
-	}
-	if c.Running() {
-		executeHook(c.Hooks().PreStop(), c.ActualName())
-		fmt.Printf("Stopping container %s ... ", c.ActualName())
-		args := []string{"stop", c.ActualName()}
+	for _, name := range c.InstancesOfStatus("running") {
+		executeHook(c.Hooks().PreStop(), name)
+		fmt.Printf("Stopping container %s ...\n", name)
+		args := []string{"stop", name}
 		executeCommand("docker", args)
-		executeHook(c.Hooks().PostStop(), c.ActualName())
+		executeHook(c.Hooks().PostStop(), name)
 	}
 }
 
 // Pause container
 func (c *container) Pause() {
-	if c.Unique() {
-		fmt.Printf("Cannot pause uniquely named container(s) %s.\n", c.prefixedName())
-		return
-	}
-	if c.Running() {
-		if c.Paused() {
-			printNoticef("Container %s is already paused.\n", c.ActualName())
-		} else {
-			fmt.Printf("Pausing container %s ... ", c.ActualName())
-			args := []string{"pause", c.ActualName()}
-			executeCommand("docker", args)
-		}
-	} else {
-		printNoticef("Container %s is not running.\n", c.ActualName())
+	for _, name := range c.InstancesOfStatus("running") {
+		fmt.Printf("Pausing container %s ...\n", name)
+		args := []string{"pause", name}
+		executeCommand("docker", args)
 	}
 }
 
 // Unpause container
 func (c *container) Unpause() {
-	if c.Unique() {
-		fmt.Printf("Cannot unpause uniquely named container(s) %s.\n", c.prefixedName())
-		return
-	}
-	if c.Paused() {
-		fmt.Printf("Unpausing container %s ... ", c.ActualName())
-		args := []string{"unpause", c.ActualName()}
+	for _, name := range c.InstancesOfStatus("paused") {
+		fmt.Printf("Unpausing container %s ...\n", name)
+		args := []string{"unpause", name}
 		executeCommand("docker", args)
 	}
 }
 
 // Exec command in container
 func (c *container) Exec(cmds []string, configPath string) {
-	if !c.Running() {
+	runningInstances := c.InstancesOfStatus("running")
+	if len(runningInstances) == 0 {
 		c.Start([]string{}, configPath)
+		runningInstances = []string{c.ActualName()}
 	}
-	args := []string{"exec"}
-	if c.ExecParams().Interactive {
-		args = append(args, "--interactive")
+	for _, name := range runningInstances {
+		args := []string{"exec"}
+		if c.ExecParams().Interactive {
+			args = append(args, "--interactive")
+		}
+		if c.ExecParams().Tty {
+			args = append(args, "--tty")
+		}
+		args = append(args, name)
+		args = append(args, cmds...)
+		executeCommand("docker", args)
 	}
-	if c.ExecParams().Tty {
-		args = append(args, "--tty")
-	}
-	args = append(args, c.ActualName())
-	args = append(args, cmds...)
-	executeCommand("docker", args)
 }
 
 // Remove container
 func (c *container) Rm(force bool) {
-	if c.Unique() {
-		fmt.Printf("Cannot remove uniquely named container(s) %s.\n", c.prefixedName())
-		return
-	}
-	if c.Exists() {
-		containerIsRunning := c.Running()
+	runningInstances := c.InstancesOfStatus("running")
+	for _, name := range c.InstancesOfStatus("existing") {
+		containerIsRunning := includes(runningInstances, name)
 		if !force && containerIsRunning {
-			printErrorf("Container %s is running and cannot be removed. Use --force to remove anyway.\n", c.ActualName())
-		} else {
-			args := []string{"rm"}
-			if force && containerIsRunning {
-				executeHook(c.Hooks().PreStop(), c.ActualName())
-				args = append(args, "--force")
-			}
-			if c.RmParams().Volumes {
-				fmt.Printf("Removing container %s and its volumes ... ", c.ActualName())
-				args = append(args, "--volumes")
-			} else {
-				fmt.Printf("Removing container %s ... ", c.ActualName())
-			}
-			args = append(args, c.ActualName())
-			executeCommand("docker", args)
-			if force && containerIsRunning {
-				executeHook(c.Hooks().PostStop(), c.ActualName())
-			}
-			c.id = ""
+			fmt.Printf("Cannot remove running container %s, use --force to remove anyway.\n", name)
+			break
 		}
+		args := []string{"rm"}
+		if force && containerIsRunning {
+			executeHook(c.Hooks().PreStop(), name)
+			args = append(args, "--force")
+		}
+		if c.RmParams().Volumes {
+			fmt.Printf("Removing container %s and its volumes ...\n", name)
+			args = append(args, "--volumes")
+		} else {
+			fmt.Printf("Removing container %s ...\n", name)
+		}
+		args = append(args, name)
+		executeCommand("docker", args)
+		if force && containerIsRunning {
+			executeHook(c.Hooks().PostStop(), name)
+		}
+		c.id = ""
 	}
 }
 
 // Dump container logs
-func (c *container) Logs(follow bool, since string, tail string) (stdout, stderr io.Reader) {
-	if c.Unique() {
-		fmt.Printf("Cannot show logs of uniquely named container(s) %s.\n", c.prefixedName())
-		return
-	}
-	if c.Exists() {
+func (c *container) Logs(follow bool, since string, tail string) (sources []logSource) {
+	for _, name := range c.InstancesOfStatus("existing") {
 		args := []string{"logs"}
 		if follow {
 			args = append(args, "-f")
@@ -997,17 +964,21 @@ func (c *container) Logs(follow bool, since string, tail string) (stdout, stderr
 		// always include timestamps for ordering, we'll just strip
 		// them if the user doesn't want to see them
 		args = append(args, "-t")
-		args = append(args, c.ID())
+		args = append(args, name)
 		_, stdout, stderr := executeCommandBackground("docker", args)
-		return stdout, stderr
+		sources = append(sources, logSource{
+			Stdout: stdout,
+			Stderr: stderr,
+			Name:   name,
+		})
 	}
-	return nil, nil
+	return
 }
 
 // Push container
 func (c *container) Push() {
 	if len(c.Image()) > 0 {
-		fmt.Printf("Pushing image %s ... ", c.Image())
+		fmt.Printf("Pushing image %s ...\n", c.Image())
 		args := []string{"push", c.Image()}
 		executeCommand("docker", args)
 	} else {
@@ -1021,15 +992,66 @@ func (c *container) Hooks() Hooks {
 
 // Pull image for container
 func (c *container) PullImage() {
-	fmt.Printf("Pulling image %s ... ", c.Image())
+	fmt.Printf("Pulling image %s ...\n", c.Image())
 	args := []string{"pull", c.Image()}
 	executeCommand("docker", args)
+}
+
+func (c *container) PrefixedName() string {
+	return cfg.Prefix() + c.Name()
+}
+
+func (c *container) InstancesOfStatus(status string) []string {
+	if c.Unique() {
+		args := []string{
+			"ps",
+			"--quiet",
+			"--format='{{.Names}}'",
+			"--filter='name=" + c.PrefixedName() + "-unique-'",
+		}
+		if status == "running" {
+			args = append(args, "--filter='status=running'")
+		} else if status == "paused" {
+			args = append(args, "--filter='status=paused'")
+		} else if status == "existing" {
+			args = append(args, "--all")
+		}
+		output, err := commandOutput("docker", args)
+		if err != nil {
+			return []string{}
+		} else {
+			return strings.Split(output, "\n")
+		}
+	} else {
+		if status == "running" && c.running() {
+			return []string{c.ActualName()}
+		} else if status == "paused" && c.paused() {
+			return []string{c.ActualName()}
+		} else if status == "existing" && c.Exists() {
+			return []string{c.ActualName()}
+		}
+	}
+	return []string{}
+}
+
+func (c *container) running() bool {
+	if !c.Exists() {
+		return false
+	}
+	return inspectBool(c.ID(), "{{.State.Running}}")
+}
+
+func (c *container) paused() bool {
+	if !c.Exists() {
+		return false
+	}
+	return inspectBool(c.ID(), "{{.State.Paused}}")
 }
 
 // Build image for container
 func (c *container) buildImage(nocache bool) {
 	executeHook(c.Hooks().PreBuild(), c.ActualName())
-	fmt.Printf("Building image %s ... ", c.Image())
+	fmt.Printf("Building image %s ...\n", c.Image())
 	args := []string{"build"}
 	if nocache {
 		args = append(args, "--no-cache")
@@ -1041,10 +1063,6 @@ func (c *container) buildImage(nocache bool) {
 	args = append(args, c.BuildParams().Context())
 	executeCommand("docker", args)
 	executeHook(c.Hooks().PostBuild(), c.ActualName())
-}
-
-func (c *container) prefixedName() string {
-	return cfg.Prefix() + c.Name()
 }
 
 // Return the image id of a tag, or an empty string if it doesn't exist

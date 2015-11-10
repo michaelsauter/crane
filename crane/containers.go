@@ -43,24 +43,28 @@ func (containers Containers) Logs(follow bool, timestamps bool, tail string, col
 			})
 		}
 	}
-	for i, container := range containers {
+	counter := 0
+	for _, container := range containers {
 		var (
-			stdout, stderr = container.Logs(follow, since, tail)
-			stdoutColor    *ansi.Color
-			stderrColor    *ansi.Color
+			logs        = container.Logs(follow, since, tail)
+			stdoutColor *ansi.Color
+			stderrColor *ansi.Color
 		)
-		if colorize {
-			// red has a negative/error connotation, so skip it
-			ansiAttribute := ansi.Attribute(int(ansi.FgGreen) + i%int(ansi.FgWhite-ansi.FgGreen))
-			stdoutColor = ansi.New(ansiAttribute)
-			// To synchronize their output, we need to multiplex stdout & stderr
-			// onto the same stream. Unfortunately, that means that the user won't
-			// be able to pipe them separately, so we use bold as a distinguishing
-			// characteristic.
-			stderrColor = ansi.New(ansiAttribute).Add(ansi.Bold)
+		for _, log := range logs {
+			if colorize {
+				// red has a negative/error connotation, so skip it
+				ansiAttribute := ansi.Attribute(int(ansi.FgGreen) + counter%int(ansi.FgWhite-ansi.FgGreen))
+				stdoutColor = ansi.New(ansiAttribute)
+				// To synchronize their output, we need to multiplex stdout & stderr
+				// onto the same stream. Unfortunately, that means that the user won't
+				// be able to pipe them separately, so we use bold as a distinguishing
+				// characteristic.
+				stderrColor = ansi.New(ansiAttribute).Add(ansi.Bold)
+			}
+			appendSources(log.Stdout, stdoutColor, log.Name, "|")
+			appendSources(log.Stderr, stderrColor, log.Name, "*")
+			counter = counter + 1
 		}
-		appendSources(stdout, stdoutColor, container.Name(), "|")
-		appendSources(stderr, stderrColor, container.Name(), "*")
 	}
 	if len(sources) > 0 {
 		aggregatedReader := multiplexio.NewReader(multiplexio.Options{}, sources...)
@@ -74,11 +78,13 @@ func (containers Containers) Status(notrunc bool) {
 	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
 	fmt.Fprintln(w, "NAME\tIMAGE\tID\tUP TO DATE\tIP\tPORTS\tRUNNING")
 	for _, container := range containers {
-		fields := container.Status()
-		if !notrunc {
-			fields[2] = truncateID(fields[2])
+		rows := container.Status()
+		for _, fields := range rows {
+			if !notrunc {
+				fields[2] = truncateID(fields[2])
+			}
+			fmt.Fprintf(w, "%s\n", strings.Join(fields, "\t"))
 		}
-		fmt.Fprintf(w, "%s\n", strings.Join(fields, "\t"))
 	}
 	w.Flush()
 }
@@ -86,7 +92,7 @@ func (containers Containers) Status(notrunc bool) {
 // Return the length of the longest container name.
 func (containers Containers) maxNameLength() (maxPrefixLength int) {
 	for _, container := range containers {
-		prefixLength := len(container.Name())
+		prefixLength := len(container.ActualName())
 		if prefixLength > maxPrefixLength {
 			maxPrefixLength = prefixLength
 		}
