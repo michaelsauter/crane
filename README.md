@@ -332,10 +332,10 @@ in parallel, e.g. for CI builds. Container prefixes can also be supplied by the
 ### Unique names
 If `unique` is set to true, Crane will add a timestamp to the container name
 (e.g. `foo` will become `foo-unique-1447155694523`), making it possible to have
-multiple containers based on the same Crane config. Since those containers
-cannot be addressed by Crane later on (e.g. they cannot be stopped and removed),
-consider setting `rm` to `true` as well. This feature is experimental, which
-means it can be changed or even removed in every minor version update.
+multiple containers based on the same Crane config. Consider setting `rm` to
+`true` at the same time to avoid lots of exited containers. This feature is
+experimental, which means it can be changed or even removed in every minor
+version update.
 
 
 ### Generate command

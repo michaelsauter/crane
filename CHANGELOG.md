@@ -2,8 +2,19 @@
 
 ## Unreleased
 
-* Add new `generate` command, which passes the targeted porition of the
-  configuration to a given template to produce some output.
+* Add new `generate` command, which passes the targeted portion of the
+  configuration through a given template to produce some output.
+
+* Unique containers can now be addressed by Crane later on, e.g. given a
+  unique container `foo`, `crane kill foo`  will kill all instances of `foo`.
+  All other commands that did not work with unique containers previously, e.g.
+  `status` or `logs` will take unique containers into account now as well.
+
+* Fix broken `stats` and `logs` commands if a prefix was given.
+
+* [Internal] Introduce new `ContainerInfo` interface which is a subset of
+  `Container`. At the same time, clean up the `Container` interface to include
+  only the externally used methods.
 
 ## 2.1.0 (2015-10-15)
 
