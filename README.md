@@ -343,7 +343,9 @@ are written (one per container), substituting `%s` with the name of the
 container. For each container, an object of type
 [ContainerInfo](https://godoc.org/github.com/michaelsauter/crane/crane#ContainerInfo)
 is passed to the template. If one file is generated for all targeted containers,
-a list of containers is located under the key `Containers`.
+a list of containers is located under the key `Containers`.  This feature is
+experimental, which means it can be changed or even removed in every minor
+version update.
 
 Example templates can be found at
 [crane-templates](https://github.com/michaelsauter/crane-templates).
