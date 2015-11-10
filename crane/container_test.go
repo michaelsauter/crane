@@ -8,28 +8,6 @@ import (
 	"testing"
 )
 
-func TestImageWithTag(t *testing.T) {
-	var c *container
-	// No tag
-	c = &container{
-		RawImage: "ubuntu",
-		RawRun:   RunParameters{},
-	}
-	assert.Equal(t, "ubuntu:latest", c.ImageWithTag())
-	// Given tag
-	c = &container{
-		RawImage: "ubuntu:14.04",
-		RawRun:   RunParameters{},
-	}
-	assert.Equal(t, "ubuntu:14.04", c.ImageWithTag())
-	// With port in registry part
-	c = &container{
-		RawImage: "private.registry.com:5000/ubuntu",
-		RawRun:   RunParameters{},
-	}
-	assert.Equal(t, "ubuntu:latest", c.ImageWithTag())
-}
-
 func TestDependencies(t *testing.T) {
 	c := &container{
 		RawRun: RunParameters{

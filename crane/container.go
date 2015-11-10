@@ -39,7 +39,6 @@ type ContainerInfo interface {
 	PrefixedName() string
 	ActualName() string
 	Image() string
-	ImageWithTag() string
 	ID() string
 	Dependencies() *Dependencies
 	Unique() bool
@@ -241,15 +240,6 @@ func (c *container) Image() string {
 
 func (c *container) Unique() bool {
 	return c.RawUnique
-}
-
-func (c *container) ImageWithTag() string {
-	imageParts := strings.Split(c.Image(), "/")
-	lastImagePart := imageParts[len(imageParts)-1]
-	if !strings.Contains(lastImagePart, ":") {
-		return lastImagePart + ":latest"
-	}
-	return lastImagePart
 }
 
 func (b BuildParameters) Context() string {
