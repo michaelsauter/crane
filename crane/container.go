@@ -4,60 +4,70 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/flynn/go-shlex"
 	"io"
 	"os"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/flynn/go-shlex"
 )
 
 type Container interface {
-	Name() string
-	ActualName() string
-	BuildContext() string
-	Image() string
-	ImageWithTag() string
-	Id() string
-	Dependencies(excluded []string) *Dependencies
+	ContainerInfo
 	Exists() bool
-	Running() bool
-	Unique() bool
-	Paused() bool
-	ImageExists() bool
-	Status() []string
-	Lift(cmds []string, nocache bool, excluded []string, configPath string)
+	InstancesOfStatus(status string) []string
+	Status() [][]string
+	Lift(cmds []string, nocache bool, excluded []string)
 	Provision(nocache bool)
 	PullImage()
-	Create(cmds []string, excluded []string, configPath string)
-	Run(cmds []string, excluded []string, configPath string)
-	Start(excluded []string, configPath string)
+	Create(cmds []string, excluded []string)
+	Run(cmds []string, excluded []string)
+	Start(excluded []string)
 	Kill()
 	Stop()
 	Pause()
 	Unpause()
-	Exec(cmds []string, configPath string)
+	Exec(cmds []string)
 	Rm(force bool)
-	Logs(follow bool, since string, tail string) (stdout, stderr io.Reader)
+	Logs(follow bool, since string, tail string) (sources []logSource)
 	Push()
+}
+
+type ContainerInfo interface {
+	Name() string
+	PrefixedName() string
+	ActualName() string
+	Image() string
+	ID() string
+	Dependencies() *Dependencies
+	Unique() bool
+	BuildParams() BuildParameters
+	RunParams() RunParameters
+	RmParams() RmParameters
+	StartParams() StartParameters
+	ExecParams() ExecParameters
 	Hooks() Hooks
 }
 
 type container struct {
-	id            string
-	RawName       string
-	RawUnique     bool            `json:"unique" yaml:"unique"`
-	RawImage      string          `json:"image" yaml:"image"`
-	BuildParams   BuildParameters `json:"build" yaml:"build"`
-	RunParams     RunParameters   `json:"run" yaml:"run"`
-	RmParams      RmParameters    `json:"rm" yaml:"rm"`
-	StartParams   StartParameters `json:"start" yaml:"start"`
-	ExecParams    ExecParameters  `json:"exec" yaml:"exec"`
-	hooks         hooks
+	id        string
+	RawName   string
+	RawUnique bool            `json:"unique" yaml:"unique"`
+	RawImage  string          `json:"image" yaml:"image"`
+	RawBuild  BuildParameters `json:"build" yaml:"build"`
+	RawRun    RunParameters   `json:"run" yaml:"run"`
+	RawRm     RmParameters    `json:"rm" yaml:"rm"`
+	RawStart  StartParameters `json:"start" yaml:"start"`
+	RawExec   ExecParameters  `json:"exec" yaml:"exec"`
+	hooks     hooks
 }
 
 type BuildParameters struct {
-	RawContext string      `json:"context" yaml:"context"`
+	RawContext string   `json:"context" yaml:"context"`
+	RawFile    string   `json:"file" yaml:"file"`
+	Tags       []string `json:"tags" yaml:"tags"`
 }
 
 type RunParameters struct {
@@ -66,14 +76,15 @@ type RunParameters struct {
 	RawCapAdd       []string    `json:"cap-add" yaml:"cap-add"`
 	RawCapDrop      []string    `json:"cap-drop" yaml:"cap-drop"`
 	RawCgroupParent string      `json:"cgroup-parent" yaml:"cgroup-parent"`
-	CpuPeriod       int         `json:"cpu-period" yaml:"cpu-period"`
-	CpuQuota        int         `json:"cpu-quota" yaml:"cpu-quota"`
+	CPUPeriod       int         `json:"cpu-period" yaml:"cpu-period"`
+	CPUQuota        int         `json:"cpu-quota" yaml:"cpu-quota"`
 	RawCidfile      string      `json:"cidfile" yaml:"cidfile"`
-	Cpuset          int         `json:"cpuset" yaml:"cpuset"`
-	CpuShares       int         `json:"cpu-shares" yaml:"cpu-shares"`
+	CPUset          int         `json:"cpuset" yaml:"cpuset"`
+	CPUShares       int         `json:"cpu-shares" yaml:"cpu-shares"`
 	Detach          bool        `json:"detach" yaml:"detach"`
 	RawDevice       []string    `json:"device" yaml:"device"`
-	RawDns          []string    `json:"dns" yaml:"dns"`
+	RawDNS          []string    `json:"dns" yaml:"dns"`
+	RawDNSSearch    []string    `json:"dns-search" yaml:"dns-search"`
 	RawEntrypoint   string      `json:"entrypoint" yaml:"entrypoint"`
 	RawEnv          interface{} `json:"env" yaml:"env"`
 	RawEnvFile      []string    `json:"env-file" yaml:"env-file"`
@@ -129,6 +140,12 @@ type OptBool struct {
 	Value   bool
 }
 
+type logSource struct {
+	Stdout io.Reader
+	Stderr io.Reader
+	Name   string
+}
+
 func (o *OptBool) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err := unmarshal(&o.Value); err != nil {
 		return err
@@ -145,16 +162,16 @@ func (o *OptBool) UnmarshalJSON(b []byte) (err error) {
 	return
 }
 
-func (o *OptBool) Truthy() bool {
+func (o OptBool) Truthy() bool {
 	return !o.Defined || o.Value
 }
 
-func (o *OptBool) Falsy() bool {
+func (o OptBool) Falsy() bool {
 	return o.Defined && !o.Value
 }
 
 func (c *container) netContainer() (name string) {
-	if netParts := strings.Split(c.RunParams.Net(), ":"); len(netParts) == 2 && netParts[0] == "container" {
+	if netParts := strings.Split(c.RunParams().Net(), ":"); len(netParts) == 2 && netParts[0] == "container" {
 		// We'll just assume here that the reference is a name, and not an id, even
 		// though docker supports it, since we have no bullet-proof way to tell:
 		// heuristics to detect whether it's an id could bring false positives, and
@@ -164,16 +181,36 @@ func (c *container) netContainer() (name string) {
 	return
 }
 
-func (c *container) Dependencies(excluded []string) *Dependencies {
+func (c *container) BuildParams() BuildParameters {
+	return c.RawBuild
+}
+
+func (c *container) RunParams() RunParameters {
+	return c.RawRun
+}
+
+func (c *container) RmParams() RmParameters {
+	return c.RawRm
+}
+
+func (c *container) StartParams() StartParameters {
+	return c.RawStart
+}
+
+func (c *container) ExecParams() ExecParameters {
+	return c.RawExec
+}
+
+func (c *container) Dependencies() *Dependencies {
 	dependencies := &Dependencies{}
-	for _, link := range c.RunParams.Link() {
+	for _, link := range c.RunParams().Link() {
 		linkName := strings.Split(link, ":")[0]
 		if !includes(excluded, linkName) && !dependencies.includes(linkName) {
 			dependencies.All = append(dependencies.All, linkName)
 			dependencies.Link = append(dependencies.Link, linkName)
 		}
 	}
-	for _, volumesFrom := range c.RunParams.VolumesFrom() {
+	for _, volumesFrom := range c.RunParams().VolumesFrom() {
 		volumesFromName := strings.Split(volumesFrom, ":")[0]
 		if !includes(excluded, volumesFromName) && !dependencies.includes(volumesFromName) {
 			dependencies.All = append(dependencies.All, volumesFromName)
@@ -194,34 +231,44 @@ func (c *container) Name() string {
 
 func (c *container) ActualName() string {
 	if c.Unique() {
-		return c.prefixedName() + "-" + cfg.UniqueId()
-	} else {
-		return c.prefixedName()
+		return c.PrefixedName() + "-unique-" + cfg.UniqueID()
 	}
-}
-
-func (c *container) BuildContext() string {
-	return os.ExpandEnv(c.BuildParams.RawContext)
+	return c.PrefixedName()
 }
 
 func (c *container) Image() string {
-	return os.ExpandEnv(c.RawImage)
+	image := os.ExpandEnv(c.RawImage)
+
+	// Return if no global tag given or image is a digest
+	if len(cfg.Tag()) == 0 || strings.Contains(image, "@") {
+		return image
+	}
+
+	// Replace image tag with global tag
+	startOfTag := strings.LastIndex(image, ":")
+	if startOfTag != -1 {
+		image = image[:startOfTag]
+	}
+	return image + ":" + cfg.Tag()
 }
 
 func (c *container) Unique() bool {
 	return c.RawUnique
 }
 
-func (c *container) ImageWithTag() string {
-	imageParts := strings.Split(c.Image(), "/")
-	lastImagePart := imageParts[len(imageParts)-1]
-	if !strings.Contains(lastImagePart, ":") {
-		return lastImagePart + ":latest"
-	}
-	return lastImagePart
+func (c *container) ImageWithoutTag() string {
+	return strings.Split(c.Image(), ":")[0]
 }
 
-func (r *RunParameters) AddHost() []string {
+func (b BuildParameters) Context() string {
+	return os.ExpandEnv(b.RawContext)
+}
+
+func (b BuildParameters) File() string {
+	return os.ExpandEnv(b.RawFile)
+}
+
+func (r RunParameters) AddHost() []string {
 	var addHost []string
 	for _, rawAddHost := range r.RawAddHost {
 		addHost = append(addHost, os.ExpandEnv(rawAddHost))
@@ -229,7 +276,7 @@ func (r *RunParameters) AddHost() []string {
 	return addHost
 }
 
-func (r *RunParameters) CapAdd() []string {
+func (r RunParameters) CapAdd() []string {
 	var capAdd []string
 	for _, rawCapAdd := range r.RawCapAdd {
 		capAdd = append(capAdd, os.ExpandEnv(rawCapAdd))
@@ -237,7 +284,7 @@ func (r *RunParameters) CapAdd() []string {
 	return capAdd
 }
 
-func (r *RunParameters) CapDrop() []string {
+func (r RunParameters) CapDrop() []string {
 	var capDrop []string
 	for _, rawCapDrop := range r.RawCapDrop {
 		capDrop = append(capDrop, os.ExpandEnv(rawCapDrop))
@@ -245,15 +292,15 @@ func (r *RunParameters) CapDrop() []string {
 	return capDrop
 }
 
-func (r *RunParameters) CgroupParent() string {
+func (r RunParameters) CgroupParent() string {
 	return os.ExpandEnv(r.RawCgroupParent)
 }
 
-func (r *RunParameters) Cidfile() string {
+func (r RunParameters) Cidfile() string {
 	return os.ExpandEnv(r.RawCidfile)
 }
 
-func (r *RunParameters) Device() []string {
+func (r RunParameters) Device() []string {
 	var device []string
 	for _, rawDevice := range r.RawDevice {
 		device = append(device, os.ExpandEnv(rawDevice))
@@ -261,19 +308,27 @@ func (r *RunParameters) Device() []string {
 	return device
 }
 
-func (r *RunParameters) Dns() []string {
+func (r RunParameters) DNS() []string {
 	var dns []string
-	for _, rawDns := range r.RawDns {
-		dns = append(dns, os.ExpandEnv(rawDns))
+	for _, rawDNS := range r.RawDNS {
+		dns = append(dns, os.ExpandEnv(rawDNS))
 	}
 	return dns
 }
 
-func (r *RunParameters) Entrypoint() string {
+func (r RunParameters) DNSSearch() []string {
+	var dnsSearch []string
+	for _, rawDNSSearch := range r.RawDNSSearch {
+		dnsSearch = append(dnsSearch, os.ExpandEnv(rawDNSSearch))
+	}
+	return dnsSearch
+}
+
+func (r RunParameters) Entrypoint() string {
 	return os.ExpandEnv(r.RawEntrypoint)
 }
 
-func (r *RunParameters) Env() []string {
+func (r RunParameters) Env() []string {
 	var env []string
 	if r.RawEnv != nil {
 		switch rawEnv := r.RawEnv.(type) {
@@ -292,7 +347,7 @@ func (r *RunParameters) Env() []string {
 	return env
 }
 
-func (r *RunParameters) EnvFile() []string {
+func (r RunParameters) EnvFile() []string {
 	var envFile []string
 	for _, rawEnvFile := range r.RawEnvFile {
 		envFile = append(envFile, os.ExpandEnv(rawEnvFile))
@@ -300,7 +355,7 @@ func (r *RunParameters) EnvFile() []string {
 	return envFile
 }
 
-func (r *RunParameters) Expose() []string {
+func (r RunParameters) Expose() []string {
 	var expose []string
 	for _, rawExpose := range r.RawExpose {
 		expose = append(expose, os.ExpandEnv(rawExpose))
@@ -308,11 +363,11 @@ func (r *RunParameters) Expose() []string {
 	return expose
 }
 
-func (r *RunParameters) Hostname() string {
+func (r RunParameters) Hostname() string {
 	return os.ExpandEnv(r.RawHostname)
 }
 
-func (r *RunParameters) Label() []string {
+func (r RunParameters) Label() []string {
 	var label []string
 	if r.RawLabel != nil {
 		switch rawLabel := r.RawLabel.(type) {
@@ -331,7 +386,7 @@ func (r *RunParameters) Label() []string {
 	return label
 }
 
-func (r *RunParameters) LabelFile() []string {
+func (r RunParameters) LabelFile() []string {
 	var labelFile []string
 	for _, rawLabelFile := range r.RawLabelFile {
 		labelFile = append(labelFile, os.ExpandEnv(rawLabelFile))
@@ -339,7 +394,7 @@ func (r *RunParameters) LabelFile() []string {
 	return labelFile
 }
 
-func (r *RunParameters) Link() []string {
+func (r RunParameters) Link() []string {
 	var link []string
 	for _, rawLink := range r.RawLink {
 		link = append(link, os.ExpandEnv(rawLink))
@@ -347,11 +402,11 @@ func (r *RunParameters) Link() []string {
 	return link
 }
 
-func (r *RunParameters) LogDriver() string {
+func (r RunParameters) LogDriver() string {
 	return os.ExpandEnv(r.RawLogDriver)
 }
 
-func (r *RunParameters) LogOpt() []string {
+func (r RunParameters) LogOpt() []string {
 	var opt []string
 	for _, rawOpt := range r.RawLogOpt {
 		opt = append(opt, os.ExpandEnv(rawOpt))
@@ -359,7 +414,7 @@ func (r *RunParameters) LogOpt() []string {
 	return opt
 }
 
-func (r *RunParameters) LxcConf() []string {
+func (r RunParameters) LxcConf() []string {
 	var lxcConf []string
 	for _, rawLxcConf := range r.RawLxcConf {
 		lxcConf = append(lxcConf, os.ExpandEnv(rawLxcConf))
@@ -367,32 +422,31 @@ func (r *RunParameters) LxcConf() []string {
 	return lxcConf
 }
 
-func (r *RunParameters) MacAddress() string {
+func (r RunParameters) MacAddress() string {
 	return os.ExpandEnv(r.RawMacAddress)
 }
 
-func (r *RunParameters) Memory() string {
+func (r RunParameters) Memory() string {
 	return os.ExpandEnv(r.RawMemory)
 }
 
-func (r *RunParameters) MemorySwap() string {
+func (r RunParameters) MemorySwap() string {
 	return os.ExpandEnv(r.RawMemorySwap)
 }
 
-func (r *RunParameters) Net() string {
+func (r RunParameters) Net() string {
 	// Default to bridge
 	if len(r.RawNet) == 0 {
 		return "bridge"
-	} else {
-		return os.ExpandEnv(r.RawNet)
 	}
+	return os.ExpandEnv(r.RawNet)
 }
 
-func (r *RunParameters) Pid() string {
+func (r RunParameters) Pid() string {
 	return os.ExpandEnv(r.RawPid)
 }
 
-func (r *RunParameters) Publish() []string {
+func (r RunParameters) Publish() []string {
 	var publish []string
 	for _, rawPublish := range r.RawPublish {
 		publish = append(publish, os.ExpandEnv(rawPublish))
@@ -400,11 +454,11 @@ func (r *RunParameters) Publish() []string {
 	return publish
 }
 
-func (r *RunParameters) Restart() string {
+func (r RunParameters) Restart() string {
 	return os.ExpandEnv(r.RawRestart)
 }
 
-func (r *RunParameters) SecurityOpt() []string {
+func (r RunParameters) SecurityOpt() []string {
 	var securityOpt []string
 	for _, rawSecurityOpt := range r.RawSecurityOpt {
 		securityOpt = append(securityOpt, os.ExpandEnv(rawSecurityOpt))
@@ -412,7 +466,7 @@ func (r *RunParameters) SecurityOpt() []string {
 	return securityOpt
 }
 
-func (r *RunParameters) Ulimit() []string {
+func (r RunParameters) Ulimit() []string {
 	var ulimit []string
 	for _, rawUlimit := range r.RawUlimit {
 		ulimit = append(ulimit, os.ExpandEnv(rawUlimit))
@@ -420,28 +474,28 @@ func (r *RunParameters) Ulimit() []string {
 	return ulimit
 }
 
-func (r *RunParameters) User() string {
+func (r RunParameters) User() string {
 	return os.ExpandEnv(r.RawUser)
 }
 
-func (r *RunParameters) Uts() string {
+func (r RunParameters) Uts() string {
 	return os.ExpandEnv(r.RawUts)
 }
 
-func (r *RunParameters) Volume(configPath string) []string {
+func (r RunParameters) Volume() []string {
 	var volumes []string
 	for _, rawVolume := range r.RawVolume {
 		volume := os.ExpandEnv(rawVolume)
 		paths := strings.Split(volume, ":")
 		if !path.IsAbs(paths[0]) {
-			paths[0] = configPath + "/" + paths[0]
+			paths[0] = cfg.Path() + "/" + paths[0]
 		}
 		volumes = append(volumes, strings.Join(paths, ":"))
 	}
 	return volumes
 }
 
-func (r *RunParameters) VolumesFrom() []string {
+func (r RunParameters) VolumesFrom() []string {
 	var volumesFrom []string
 	for _, rawVolumesFrom := range r.RawVolumesFrom {
 		volumesFrom = append(volumesFrom, os.ExpandEnv(rawVolumesFrom))
@@ -449,11 +503,11 @@ func (r *RunParameters) VolumesFrom() []string {
 	return volumesFrom
 }
 
-func (r *RunParameters) Workdir() string {
+func (r RunParameters) Workdir() string {
 	return os.ExpandEnv(r.RawWorkdir)
 }
 
-func (r *RunParameters) Cmd() []string {
+func (r RunParameters) Cmd() []string {
 	var cmd []string
 	if r.RawCmd != nil {
 		switch rawCmd := r.RawCmd.(type) {
@@ -478,10 +532,10 @@ func (r *RunParameters) Cmd() []string {
 	return cmd
 }
 
-func (c *container) Id() string {
+func (c *container) ID() string {
 	if len(c.id) == 0 && !c.Unique() {
 		// `docker inspect` works for both image and containers, make sure this is a
-		// container payload we get back, otherwise we might end up getting the Id
+		// container payload we get back, otherwise we might end up getting the ID
 		// of the image of the same name.
 		c.id = inspectString(c.ActualName(), "{{if .State}}{{.Id}}{{else}}{{end}}")
 	}
@@ -489,50 +543,39 @@ func (c *container) Id() string {
 }
 
 func (c *container) Exists() bool {
-	return c.Id() != ""
+	return c.ID() != ""
 }
 
-func (c *container) Running() bool {
-	if !c.Exists() {
-		return false
+func (c *container) Status() [][]string {
+	rows := [][]string{}
+	existingInstances := c.InstancesOfStatus("existing")
+	if len(existingInstances) == 0 {
+		fields := []string{c.ActualName(), c.Image(), "-", "-", "-", "-", "-"}
+		rows = append(rows, fields)
+	} else {
+		for _, name := range existingInstances {
+			fields := []string{name, c.Image(), "-", "-", "-", "-", "-"}
+			// When using a `--tag` global flag, c.Image() may not represent an actual image tag.
+			// Instead we should get an image tag by inspecting "Config.Image".
+			output := inspectString(name, "{{.Config.Image}}+++{{.Id}}+++{{.Image}}+++{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}+++{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}+++{{.State.Running}}")
+			if output != "" {
+				copy(fields[1:], strings.Split(output, "+++"))
+				// We asked for the image id the container was created from
+				fields[3] = strconv.FormatBool(imageIDFromTag(fields[1]) == fields[3])
+			}
+			rows = append(rows, fields)
+		}
 	}
-	return inspectBool(c.Id(), "{{.State.Running}}")
+	return rows
 }
 
-func (c *container) Paused() bool {
-	if !c.Exists() {
-		return false
-	}
-	return inspectBool(c.Id(), "{{.State.Paused}}")
-}
-
-func (c *container) ImageExists() bool {
-	_, err := commandOutput("docker", []string{"inspect", c.ImageWithTag()})
-	return err == nil
-}
-
-func (c *container) Status() []string {
-	if c.Unique() {
-		fmt.Printf("Cannot show status of uniquely named container(s) %s.\n", c.prefixedName())
-		return []string{c.prefixedName(), c.Image(), "-", "-", "-", "-", "-"}
-	}
-	fields := []string{c.ActualName(), c.Image(), "-", "-", "-", "-", "-"}
-	output := inspectString(c.Id(), "{{.Id}}\t{{.Image}}\t{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}\t{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}\t{{.State.Running}}")
-	if output != "" {
-		copy(fields[2:], strings.Split(output, "\t"))
-		// We asked for the image id the container was created from
-		fields[3] = strconv.FormatBool(imageIdFromTag(fields[1]) == fields[3])
-	}
-	return fields
-}
-
-func (c *container) Lift(cmds []string, nocache bool, excluded []string, configPath string) {
+func (c *container) Lift(cmds []string, nocache bool, excluded []string) {
 	c.Provision(nocache)
-	c.Run(cmds, excluded, configPath)
+	c.Run(cmds, excluded)
 }
 
 func (c *container) Provision(nocache bool) {
-	if len(c.BuildContext()) > 0 {
+	if len(c.BuildParams().Context()) > 0 {
 		c.buildImage(nocache)
 	} else {
 		c.PullImage()
@@ -540,30 +583,30 @@ func (c *container) Provision(nocache bool) {
 }
 
 // Create container
-func (c *container) Create(cmds []string, excluded []string, configPath string) {
+func (c *container) Create(cmds []string, excluded []string) {
 	if !c.Unique() {
 		c.Rm(true)
 	}
-	fmt.Printf("Creating container %s ... ", c.ActualName())
+	fmt.Printf("Creating container %s ...\n", c.ActualName())
 
-	args := append([]string{"create"}, c.createArgs(cmds, excluded, configPath)...)
+	args := append([]string{"create"}, c.createArgs(cmds, excluded)...)
 	executeCommand("docker", args)
 }
 
 // Run container, or start it if already existing
-func (c *container) Run(cmds []string, excluded []string, configPath string) {
+func (c *container) Run(cmds []string, excluded []string) {
 	if !c.Unique() {
 		c.Rm(true)
 	}
 	executeHook(c.Hooks().PreStart(), c.ActualName())
-	fmt.Printf("Running container %s ... ", c.ActualName())
+	fmt.Printf("Running container %s ...\n", c.ActualName())
 
 	args := []string{"run"}
 	// Detach
-	if c.RunParams.Detach {
+	if c.RunParams().Detach {
 		args = append(args, "--detach")
 	}
-	args = append(args, c.createArgs(cmds, excluded, configPath)...)
+	args = append(args, c.createArgs(cmds, excluded)...)
 	c.executePostStartHook()
 	executeCommand("docker", args)
 }
@@ -588,90 +631,94 @@ func (c *container) executePostStartHook() {
 }
 
 // Returns all the flags to be passed to `docker create`
-func (c *container) createArgs(cmds []string, excluded []string, configPath string) []string {
+func (c *container) createArgs(cmds []string, excluded []string) []string {
 	args := []string{}
 	// AddHost
-	for _, addHost := range c.RunParams.AddHost() {
+	for _, addHost := range c.RunParams().AddHost() {
 		args = append(args, "--add-host", addHost)
 	}
 	// BlkioWeight
-	if c.RunParams.BlkioWeight > 0 {
-		args = append(args, "--blkio-weight", strconv.Itoa(c.RunParams.BlkioWeight))
+	if c.RunParams().BlkioWeight > 0 {
+		args = append(args, "--blkio-weight", strconv.Itoa(c.RunParams().BlkioWeight))
 	}
 	// CapAdd
-	for _, capAdd := range c.RunParams.CapAdd() {
+	for _, capAdd := range c.RunParams().CapAdd() {
 		args = append(args, "--cap-add", capAdd)
 	}
 	// CapDrop
-	for _, capDrop := range c.RunParams.CapDrop() {
+	for _, capDrop := range c.RunParams().CapDrop() {
 		args = append(args, "--cap-drop", capDrop)
 	}
 	// CgroupParent
-	if len(c.RunParams.CgroupParent()) > 0 {
-		args = append(args, "--cgroup-parent", c.RunParams.CgroupParent())
+	if len(c.RunParams().CgroupParent()) > 0 {
+		args = append(args, "--cgroup-parent", c.RunParams().CgroupParent())
 	}
 	// Cidfile
-	if len(c.RunParams.Cidfile()) > 0 {
-		args = append(args, "--cidfile", c.RunParams.Cidfile())
+	if len(c.RunParams().Cidfile()) > 0 {
+		args = append(args, "--cidfile", c.RunParams().Cidfile())
 	}
-	// CpuPeriod
-	if c.RunParams.CpuPeriod > 0 {
-		args = append(args, "--cpu-period", strconv.Itoa(c.RunParams.CpuPeriod))
+	// CPUPeriod
+	if c.RunParams().CPUPeriod > 0 {
+		args = append(args, "--cpu-period", strconv.Itoa(c.RunParams().CPUPeriod))
 	}
-	// CpuQuota
-	if c.RunParams.CpuQuota > 0 {
-		args = append(args, "--cpu-quota", strconv.Itoa(c.RunParams.CpuQuota))
+	// CPUQuota
+	if c.RunParams().CPUQuota > 0 {
+		args = append(args, "--cpu-quota", strconv.Itoa(c.RunParams().CPUQuota))
 	}
 	// CPU set
-	if c.RunParams.Cpuset > 0 {
-		args = append(args, "--cpuset", strconv.Itoa(c.RunParams.Cpuset))
+	if c.RunParams().CPUset > 0 {
+		args = append(args, "--cpuset", strconv.Itoa(c.RunParams().CPUset))
 	}
 	// CPU shares
-	if c.RunParams.CpuShares > 0 {
-		args = append(args, "--cpu-shares", strconv.Itoa(c.RunParams.CpuShares))
+	if c.RunParams().CPUShares > 0 {
+		args = append(args, "--cpu-shares", strconv.Itoa(c.RunParams().CPUShares))
 	}
 	// Device
-	for _, device := range c.RunParams.Device() {
+	for _, device := range c.RunParams().Device() {
 		args = append(args, "--device", device)
 	}
-	// Dns
-	for _, dns := range c.RunParams.Dns() {
+	// DNS
+	for _, dns := range c.RunParams().DNS() {
 		args = append(args, "--dns", dns)
 	}
+	// DNS Search
+	for _, dnsSearch := range c.RunParams().DNSSearch() {
+		args = append(args, "--dns-search", dnsSearch)
+	}
 	// Entrypoint
-	if len(c.RunParams.Entrypoint()) > 0 {
-		args = append(args, "--entrypoint", c.RunParams.Entrypoint())
+	if len(c.RunParams().Entrypoint()) > 0 {
+		args = append(args, "--entrypoint", c.RunParams().Entrypoint())
 	}
 	// Env
-	for _, env := range c.RunParams.Env() {
+	for _, env := range c.RunParams().Env() {
 		args = append(args, "--env", env)
 	}
 	// Env file
-	for _, envFile := range c.RunParams.EnvFile() {
+	for _, envFile := range c.RunParams().EnvFile() {
 		args = append(args, "--env-file", envFile)
 	}
 	// Expose
-	for _, expose := range c.RunParams.Expose() {
+	for _, expose := range c.RunParams().Expose() {
 		args = append(args, "--expose", expose)
 	}
 	// Host
-	if len(c.RunParams.Hostname()) > 0 {
-		args = append(args, "--hostname", c.RunParams.Hostname())
+	if len(c.RunParams().Hostname()) > 0 {
+		args = append(args, "--hostname", c.RunParams().Hostname())
 	}
 	// Interactive
-	if c.RunParams.Interactive {
+	if c.RunParams().Interactive {
 		args = append(args, "--interactive")
 	}
 	// Label
-	for _, label := range c.RunParams.Label() {
+	for _, label := range c.RunParams().Label() {
 		args = append(args, "--label", label)
 	}
 	// LabelFile
-	for _, labelFile := range c.RunParams.LabelFile() {
+	for _, labelFile := range c.RunParams().LabelFile() {
 		args = append(args, "--label-file", labelFile)
 	}
 	// Link
-	for _, link := range c.RunParams.Link() {
+	for _, link := range c.RunParams().Link() {
 		linkParts := strings.Split(link, ":")
 		linkName := linkParts[0]
 		if !includes(excluded, linkName) {
@@ -680,97 +727,101 @@ func (c *container) createArgs(cmds []string, excluded []string, configPath stri
 		}
 	}
 	// LogDriver
-	if len(c.RunParams.LogDriver()) > 0 {
-		args = append(args, "--log-driver", c.RunParams.LogDriver())
+	if len(c.RunParams().LogDriver()) > 0 {
+		args = append(args, "--log-driver", c.RunParams().LogDriver())
 	}
 	// LogOpt
-	for _, opt := range c.RunParams.LogOpt() {
+	for _, opt := range c.RunParams().LogOpt() {
 		args = append(args, "--log-opt", opt)
 	}
 	// LxcConf
-	for _, lxcConf := range c.RunParams.LxcConf() {
+	for _, lxcConf := range c.RunParams().LxcConf() {
 		args = append(args, "--lxc-conf", lxcConf)
 	}
 	// Mac address
-	if len(c.RunParams.MacAddress()) > 0 {
-		args = append(args, "--mac-address", c.RunParams.MacAddress())
+	if len(c.RunParams().MacAddress()) > 0 {
+		args = append(args, "--mac-address", c.RunParams().MacAddress())
 	}
 	// Memory
-	if len(c.RunParams.Memory()) > 0 {
-		args = append(args, "--memory", c.RunParams.Memory())
+	if len(c.RunParams().Memory()) > 0 {
+		args = append(args, "--memory", c.RunParams().Memory())
 	}
 	// MemorySwap
-	if len(c.RunParams.MemorySwap()) > 0 {
-		args = append(args, "--memory-swap", c.RunParams.MemorySwap())
+	if len(c.RunParams().MemorySwap()) > 0 {
+		args = append(args, "--memory-swap", c.RunParams().MemorySwap())
 	}
 	// Net
-	if c.RunParams.Net() != "bridge" {
-		if !includes(excluded, c.netContainer()) {
-			args = append(args, "--net", cfg.Container(c.RunParams.Net()).ActualName())
+	if c.RunParams().Net() != "bridge" {
+		if len(c.netContainer()) > 0 {
+			if !includes(excluded, c.netContainer()) {
+				args = append(args, "--net", cfg.Container(c.netContainer()).ActualName())
+			}
+		} else {
+			args = append(args, "--net", c.RunParams().Net())
 		}
 	}
 	// OomKillDisable
-	if c.RunParams.OomKillDisable {
+	if c.RunParams().OomKillDisable {
 		args = append(args, "--oom-kill-disable")
 	}
 	// PID
-	if len(c.RunParams.Pid()) > 0 {
-		args = append(args, "--pid", c.RunParams.Pid())
+	if len(c.RunParams().Pid()) > 0 {
+		args = append(args, "--pid", c.RunParams().Pid())
 	}
 	// Privileged
-	if c.RunParams.Privileged {
+	if c.RunParams().Privileged {
 		args = append(args, "--privileged")
 	}
 	// Publish
-	for _, port := range c.RunParams.Publish() {
+	for _, port := range c.RunParams().Publish() {
 		args = append(args, "--publish", port)
 	}
 	// PublishAll
-	if c.RunParams.PublishAll {
+	if c.RunParams().PublishAll {
 		args = append(args, "--publish-all")
 	}
 	// ReadOnly
-	if c.RunParams.ReadOnly {
+	if c.RunParams().ReadOnly {
 		args = append(args, "--read-only")
 	}
 	// Restart
-	if len(c.RunParams.Restart()) > 0 {
-		args = append(args, "--restart", c.RunParams.Restart())
+	if len(c.RunParams().Restart()) > 0 {
+		args = append(args, "--restart", c.RunParams().Restart())
 	}
 	// Rm
-	if c.RunParams.Rm {
+	if c.RunParams().Rm {
 		args = append(args, "--rm")
 	}
 	// SecurityOpt
-	for _, securityOpt := range c.RunParams.SecurityOpt() {
+	for _, securityOpt := range c.RunParams().SecurityOpt() {
 		args = append(args, "--security-opt", securityOpt)
 	}
 	// SigProxy
-	if c.RunParams.SigProxy.Falsy() {
+	if c.RunParams().SigProxy.Falsy() {
 		args = append(args, "--sig-proxy=false")
 	}
 	// Tty
-	if c.RunParams.Tty {
+	if c.RunParams().Tty {
 		args = append(args, "--tty")
 	}
 	// Ulimit
-	for _, ulimit := range c.RunParams.Ulimit() {
+	for _, ulimit := range c.RunParams().Ulimit() {
 		args = append(args, "--ulimit", ulimit)
 	}
 	// User
-	if len(c.RunParams.User()) > 0 {
-		args = append(args, "--user", c.RunParams.User())
+	if len(c.RunParams().User()) > 0 {
+		args = append(args, "--user", c.RunParams().User())
 	}
 	// Uts
-	if len(c.RunParams.Uts()) > 0 {
-		args = append(args, "--uts", c.RunParams.Uts())
+	if len(c.RunParams().Uts()) > 0 {
+		args = append(args, "--uts", c.RunParams().Uts())
 	}
 	// Volumes
-	for _, volume := range c.RunParams.Volume(configPath) {
+	for _, volume := range c.RunParams().Volume() {
 		args = append(args, "--volume", volume)
 	}
 	// VolumesFrom
-	for _, volumesFrom := range c.RunParams.VolumesFrom() {
+	for _, volumesFrom := range c.RunParams().VolumesFrom() {
 		volumesFromParts := strings.Split(volumesFrom, ":")
 		volumesFromName := volumesFromParts[0]
 		if !includes(excluded, volumesFromName) {
@@ -779,8 +830,8 @@ func (c *container) createArgs(cmds []string, excluded []string, configPath stri
 		}
 	}
 	// Workdir
-	if len(c.RunParams.Workdir()) > 0 {
-		args = append(args, "--workdir", c.RunParams.Workdir())
+	if len(c.RunParams().Workdir()) > 0 {
+		args = append(args, "--workdir", c.RunParams().Workdir())
 	}
 	// Name
 	args = append(args, "--name", c.ActualName())
@@ -790,22 +841,22 @@ func (c *container) createArgs(cmds []string, excluded []string, configPath stri
 	if len(cmds) > 0 {
 		args = append(args, cmds...)
 	} else {
-		args = append(args, c.RunParams.Cmd()...)
+		args = append(args, c.RunParams().Cmd()...)
 	}
 	return args
 }
 
 // Start container
-func (c *container) Start(excluded []string, configPath string) {
-	if c.Exists() && !c.Unique() {
-		if !c.Running() {
+func (c *container) Start(excluded []string) {
+	if !c.Unique() && c.Exists() {
+		if !c.running() {
 			executeHook(c.Hooks().PreStart(), c.ActualName())
-			fmt.Printf("Starting container %s ... ", c.ActualName())
+			fmt.Printf("Starting container %s ...\n", c.ActualName())
 			args := []string{"start"}
-			if c.StartParams.Attach {
+			if c.StartParams().Attach {
 				args = append(args, "--attach")
 			}
-			if c.StartParams.Interactive {
+			if c.StartParams().Interactive {
 				args = append(args, "--interactive")
 			}
 			args = append(args, c.ActualName())
@@ -813,128 +864,103 @@ func (c *container) Start(excluded []string, configPath string) {
 			executeCommand("docker", args)
 		}
 	} else {
-		c.Run([]string{}, excluded, configPath)
+		c.Run([]string{}, excluded)
 	}
 }
 
 // Kill container
 func (c *container) Kill() {
-	if c.Unique() {
-		fmt.Printf("Cannot kill uniquely named container(s) %s.\n", c.prefixedName())
-		return
-	}
-	if c.Running() {
-		executeHook(c.Hooks().PreStop(), c.ActualName())
-		fmt.Printf("Killing container %s ... ", c.ActualName())
-		args := []string{"kill", c.ActualName()}
+	for _, name := range c.InstancesOfStatus("running") {
+		executeHook(c.Hooks().PreStop(), name)
+		fmt.Printf("Killing container %s ...\n", name)
+		args := []string{"kill", name}
 		executeCommand("docker", args)
-		executeHook(c.Hooks().PostStop(), c.ActualName())
+		executeHook(c.Hooks().PostStop(), name)
 	}
 }
 
 // Stop container
 func (c *container) Stop() {
-	if c.Unique() {
-		fmt.Printf("Cannot stop uniquely named container(s) %s.\n", c.prefixedName())
-		return
-	}
-	if c.Running() {
-		executeHook(c.Hooks().PreStop(), c.ActualName())
-		fmt.Printf("Stopping container %s ... ", c.ActualName())
-		args := []string{"stop", c.ActualName()}
+	for _, name := range c.InstancesOfStatus("running") {
+		executeHook(c.Hooks().PreStop(), name)
+		fmt.Printf("Stopping container %s ...\n", name)
+		args := []string{"stop", name}
 		executeCommand("docker", args)
-		executeHook(c.Hooks().PostStop(), c.ActualName())
+		executeHook(c.Hooks().PostStop(), name)
 	}
 }
 
 // Pause container
 func (c *container) Pause() {
-	if c.Unique() {
-		fmt.Printf("Cannot pause uniquely named container(s) %s.\n", c.prefixedName())
-		return
-	}
-	if c.Running() {
-		if c.Paused() {
-			printNoticef("Container %s is already paused.\n", c.ActualName())
-		} else {
-			fmt.Printf("Pausing container %s ... ", c.ActualName())
-			args := []string{"pause", c.ActualName()}
-			executeCommand("docker", args)
-		}
-	} else {
-		printNoticef("Container %s is not running.\n", c.ActualName())
+	for _, name := range c.InstancesOfStatus("running") {
+		fmt.Printf("Pausing container %s ...\n", name)
+		args := []string{"pause", name}
+		executeCommand("docker", args)
 	}
 }
 
 // Unpause container
 func (c *container) Unpause() {
-	if c.Unique() {
-		fmt.Printf("Cannot unpause uniquely named container(s) %s.\n", c.prefixedName())
-		return
-	}
-	if c.Paused() {
-		fmt.Printf("Unpausing container %s ... ", c.ActualName())
-		args := []string{"unpause", c.ActualName()}
+	for _, name := range c.InstancesOfStatus("paused") {
+		fmt.Printf("Unpausing container %s ...\n", name)
+		args := []string{"unpause", name}
 		executeCommand("docker", args)
 	}
 }
 
 // Exec command in container
-func (c *container) Exec(cmds []string, configPath string) {
-	if !c.Running() {
-		c.Start([]string{}, configPath)
+func (c *container) Exec(cmds []string) {
+	runningInstances := c.InstancesOfStatus("running")
+	if len(runningInstances) == 0 {
+		c.Start([]string{})
+		runningInstances = []string{c.ActualName()}
 	}
-	args := []string{"exec"}
-	if c.ExecParams.Interactive {
-		args = append(args, "--interactive")
+	for _, name := range runningInstances {
+		args := []string{"exec"}
+		if c.ExecParams().Interactive {
+			args = append(args, "--interactive")
+		}
+		if c.ExecParams().Tty {
+			args = append(args, "--tty")
+		}
+		args = append(args, name)
+		args = append(args, cmds...)
+		executeCommand("docker", args)
 	}
-	if c.ExecParams.Tty {
-		args = append(args, "--tty")
-	}
-	args = append(args, c.ActualName())
-	args = append(args, cmds...)
-	executeCommand("docker", args)
 }
 
 // Remove container
 func (c *container) Rm(force bool) {
-	if c.Unique() {
-		fmt.Printf("Cannot remove uniquely named container(s) %s.\n", c.prefixedName())
-		return
-	}
-	if c.Exists() {
-		containerIsRunning := c.Running()
+	runningInstances := c.InstancesOfStatus("running")
+	for _, name := range c.InstancesOfStatus("existing") {
+		containerIsRunning := includes(runningInstances, name)
 		if !force && containerIsRunning {
-			printErrorf("Container %s is running and cannot be removed. Use --force to remove anyway.\n", c.ActualName())
-		} else {
-			args := []string{"rm"}
-			if force && containerIsRunning {
-				executeHook(c.Hooks().PreStop(), c.ActualName())
-				args = append(args, "--force")
-			}
-			if c.RmParams.Volumes {
-				fmt.Printf("Removing container %s and its volumes ... ", c.ActualName())
-				args = append(args, "--volumes")
-			} else {
-				fmt.Printf("Removing container %s ... ", c.ActualName())
-			}
-			args = append(args, c.ActualName())
-			executeCommand("docker", args)
-			if force && containerIsRunning {
-				executeHook(c.Hooks().PostStop(), c.ActualName())
-			}
-			c.id = ""
+			fmt.Printf("Cannot remove running container %s, use --force to remove anyway.\n", name)
+			break
 		}
+		args := []string{"rm"}
+		if force && containerIsRunning {
+			executeHook(c.Hooks().PreStop(), name)
+			args = append(args, "--force")
+		}
+		if c.RmParams().Volumes {
+			fmt.Printf("Removing container %s and its volumes ...\n", name)
+			args = append(args, "--volumes")
+		} else {
+			fmt.Printf("Removing container %s ...\n", name)
+		}
+		args = append(args, name)
+		executeCommand("docker", args)
+		if force && containerIsRunning {
+			executeHook(c.Hooks().PostStop(), name)
+		}
+		c.id = ""
 	}
 }
 
 // Dump container logs
-func (c *container) Logs(follow bool, since string, tail string) (stdout, stderr io.Reader) {
-	if c.Unique() {
-		fmt.Printf("Cannot show logs of uniquely named container(s) %s.\n", c.prefixedName())
-		return
-	}
-	if c.Exists() {
+func (c *container) Logs(follow bool, since string, tail string) (sources []logSource) {
+	for _, name := range c.InstancesOfStatus("existing") {
 		args := []string{"logs"}
 		if follow {
 			args = append(args, "-f")
@@ -948,23 +974,22 @@ func (c *container) Logs(follow bool, since string, tail string) (stdout, stderr
 		// always include timestamps for ordering, we'll just strip
 		// them if the user doesn't want to see them
 		args = append(args, "-t")
-		args = append(args, c.Id())
+		args = append(args, name)
 		_, stdout, stderr := executeCommandBackground("docker", args)
-		return stdout, stderr
-	} else {
-		return nil, nil
+		sources = append(sources, logSource{
+			Stdout: stdout,
+			Stderr: stderr,
+			Name:   name,
+		})
 	}
+	return
 }
 
 // Push container
 func (c *container) Push() {
-	if len(c.Image()) > 0 {
-		fmt.Printf("Pushing image %s ... ", c.Image())
-		args := []string{"push", c.Image()}
-		executeCommand("docker", args)
-	} else {
-		printNoticef("Skipping %s as it does not have an image name.\n", c.ActualName())
-	}
+	fmt.Printf("Pushing image %s ...\n", c.Image())
+	args := []string{"push", c.Image()}
+	executeCommand("docker", args)
 }
 
 func (c *container) Hooks() Hooks {
@@ -973,30 +998,86 @@ func (c *container) Hooks() Hooks {
 
 // Pull image for container
 func (c *container) PullImage() {
-	fmt.Printf("Pulling image %s ... ", c.Image())
+	fmt.Printf("Pulling image %s ...\n", c.Image())
 	args := []string{"pull", c.Image()}
 	executeCommand("docker", args)
+}
+
+func (c *container) PrefixedName() string {
+	return cfg.Prefix() + c.Name()
+}
+
+func (c *container) InstancesOfStatus(status string) []string {
+	if c.Unique() {
+		args := []string{
+			"ps",
+			"--quiet",
+			"--format='{{.Names}}'",
+			"--filter='name=" + c.PrefixedName() + "-unique-'",
+		}
+		if status == "running" {
+			args = append(args, "--filter='status=running'")
+		} else if status == "paused" {
+			args = append(args, "--filter='status=paused'")
+		} else if status == "existing" {
+			args = append(args, "--all")
+		}
+		output, err := commandOutput("docker", args)
+		if err != nil {
+			return []string{}
+		} else {
+			return strings.Split(output, "\n")
+		}
+	} else {
+		if status == "running" && c.running() {
+			return []string{c.ActualName()}
+		} else if status == "paused" && c.paused() {
+			return []string{c.ActualName()}
+		} else if status == "existing" && c.Exists() {
+			return []string{c.ActualName()}
+		}
+	}
+	return []string{}
+}
+
+func (c *container) running() bool {
+	if !c.Exists() {
+		return false
+	}
+	return inspectBool(c.ID(), "{{.State.Running}}")
+}
+
+func (c *container) paused() bool {
+	if !c.Exists() {
+		return false
+	}
+	return inspectBool(c.ID(), "{{.State.Paused}}")
 }
 
 // Build image for container
 func (c *container) buildImage(nocache bool) {
 	executeHook(c.Hooks().PreBuild(), c.ActualName())
-	fmt.Printf("Building image %s ... ", c.Image())
+	fmt.Printf("Building image %s ...\n", c.Image())
 	args := []string{"build"}
 	if nocache {
 		args = append(args, "--no-cache")
 	}
-	args = append(args, "--rm", "--tag="+c.Image(), c.BuildContext())
+	args = append(args, "--rm", "--tag="+c.Image())
+	if len(c.BuildParams().File()) > 0 {
+		args = append(args, "--file="+filepath.FromSlash(c.BuildParams().Context()+"/"+c.BuildParams().File()))
+	}
+	args = append(args, c.BuildParams().Context())
 	executeCommand("docker", args)
 	executeHook(c.Hooks().PostBuild(), c.ActualName())
-}
 
-func (c *container) prefixedName() string {
-	return cfg.Prefix() + c.Name()
+	for _, t := range c.BuildParams().Tags {
+		tag := c.ImageWithoutTag() + ":" + os.ExpandEnv(t)
+		executeCommand("docker", []string{"tag", "--force", c.Image(), tag})
+	}
 }
 
 // Return the image id of a tag, or an empty string if it doesn't exist
-func imageIdFromTag(tag string) string {
+func imageIDFromTag(tag string) string {
 	args := []string{"inspect", "--format={{.Id}}", tag}
 	output, err := commandOutput("docker", args)
 	if err != nil {

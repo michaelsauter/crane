@@ -96,7 +96,7 @@ func TestUnmarshal(t *testing.T) {
 `)
 	actual = unmarshal(json, ".json")
 	assert.Len(t, actual.RawContainerMap, 1)
-	assert.Len(t, actual.RawContainerMap["apache"].RunParams.Link(), 2)
+	assert.Len(t, actual.RawContainerMap["apache"].RunParams().Link(), 2)
 	assert.Len(t, actual.RawGroups, 1)
 	assert.Len(t, actual.RawHooksMap, 2)
 	assert.NotEmpty(t, actual.RawHooksMap["default"].RawPreStart)
@@ -124,7 +124,7 @@ hooks:
 `)
 	actual = unmarshal(yaml, ".yml")
 	assert.Len(t, actual.RawContainerMap, 1)
-	assert.Len(t, actual.RawContainerMap["apache"].RunParams.Link(), 2)
+	assert.Len(t, actual.RawContainerMap["apache"].RunParams().Link(), 2)
 	assert.Len(t, actual.RawGroups, 1)
 	assert.Len(t, actual.RawHooksMap, 2)
 	assert.NotEmpty(t, actual.RawHooksMap["default"].RawPreStart)
@@ -221,22 +221,41 @@ func TestInitializeAmbiguousHooks(t *testing.T) {
 	})
 }
 
-func TestDependencyGraph(t *testing.T) {
+func TestValidate(t *testing.T) {
+	rawContainerMap := map[string]*container{
+		"a": &container{RawName: "a", RawImage: "ubuntu"},
+		"b": &container{RawName: "b", RawImage: "ubuntu"},
+	}
+	c := &config{RawContainerMap: rawContainerMap}
+	assert.NotPanics(t, func() {
+		c.validate()
+	})
+	rawContainerMap = map[string]*container{
+		"a": &container{RawName: "a", RawImage: "ubuntu"},
+		"b": &container{RawName: "b"},
+	}
+	c = &config{RawContainerMap: rawContainerMap}
+	assert.Panics(t, func() {
+		c.validate()
+	})
+}
+
+func TestDependencyMap(t *testing.T) {
 	containerMap := NewStubbedContainerMap(true,
-		&container{RawName: "a", RunParams: RunParameters{RawLink: []string{"b:b"}}},
-		&container{RawName: "b", RunParams: RunParameters{RawLink: []string{"c:c"}}},
+		&container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},
+		&container{RawName: "b", RawRun: RunParameters{RawLink: []string{"c:c"}}},
 		&container{RawName: "c"},
 	)
 	c := &config{containerMap: containerMap}
 
-	dependencyGraph := c.DependencyGraph([]string{})
-	assert.Len(t, dependencyGraph, 3)
-	// make sure a new graph is returned each time
-	dependencyGraph.resolve("a") // mutate the previous graph
-	assert.Len(t, c.DependencyGraph([]string{}), 3)
+	dependencyMap := c.DependencyMap([]string{})
+	assert.Len(t, dependencyMap, 3)
+	// make sure a new map is returned each time
+	delete(dependencyMap, "a")
+	assert.Len(t, c.DependencyMap([]string{}), 3)
 
-	dependencyGraph = c.DependencyGraph([]string{"b"})
-	assert.Len(t, dependencyGraph, 2)
+	dependencyMap = c.DependencyMap([]string{"b"})
+	assert.Len(t, dependencyMap, 2)
 }
 
 func TestContainersForReference(t *testing.T) {

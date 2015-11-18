@@ -8,12 +8,27 @@ configuration (JSON or YAML) which describes how to obtain images and how to run
 containers. Crane is ideally suited for setting up a development environment or
 continuous integration.
 
+* [Installation](#installation)
+* [Usage](#usage)
+* [Configuration](#configuration)
+* [Example](#example)
+* [Advanced Usage](#advanced-usage)
+  * [Groups and Targeting](#groups-and-targeting)
+  * [Extending the target](#extending-the-target)
+  * [Excluding containers](#excluding-containers)
+  * [Hooks](#hooks)
+  * [Container Prefixes](#container-prefixes)
+  * [Override image tag](#override-image-tag)
+  * [Unique Names](#unique-names)
+  * [Generate command](#generate-command)
+  * [YAML advanced usage](#yaml-advanced-usage)
+
 
 ## Installation
-The latest release (2.0.0) can be installed via:
+The latest release (2.2.0) can be installed via:
 
 ```
-bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/v2.0.0/download.sh`" && sudo mv crane /usr/local/bin/crane
+bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/v2.2.0/download.sh`" && sudo mv crane /usr/local/bin/crane
 ```
 
 Older releases can be found on the
@@ -21,8 +36,8 @@ Older releases can be found on the
 build Crane yourself by using the standard Go toolchain.
 
 Please have a look at the
-[changelog](https://github.com/michaelsauter/crane/v2.0.0/CHANGELOG.md) when
-upgrading.
+[changelog](https://github.com/michaelsauter/crane/blob/v2.2.0/CHANGELOG.md)
+when upgrading.
 
 Of course, you will need to have Docker (>= 1.6) installed.
 
@@ -66,7 +81,7 @@ Following are a list of supported commands and possible options:
 | provision   | pull/build       | Calls Docker's `pull` if no Dockerfile is specified. Otherwise it builds the image, optionally with disabled cache by passing `--no-cache`. |
 | lift        | pull/build + run | Provisions and runs containers in one go. Use `--no-cache` to disable build cache. |
 | status      | -                | Displays information similar to `docker ps` for the given target. |
-| graph       | -                | Dumps the relations between containers as a dependency graph, using the DOT format. |
+| generate    | -                | Passes the targeted portion of the config through given `--template` and outputs the result to STDOUT or given `--output` file. |
 
 You can get more information about what's happening behind the scenes for all commands by using `--verbose`. Most options have a short version as well, e.g. `lift -n`. The CLI provides help for every command, e.g. `crane help run`.
 
@@ -91,6 +106,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `detach` (boolean) `sudo docker attach <container name>` will work as normal.
 	* `device` (array) Add host devices.
 	* `dns` (array)
+	* `dns-search` (array)
 	* `entrypoint` (string)
 	* `env` (array/mapping) Can be declared as a string array with `"key[=value]"` items or a string-to-string mapping where each `key: value` will be translated to the corresponding `"key=value"` string.
 	* `env-file` (array)
@@ -130,7 +146,9 @@ The map of containers consists of the name of the container mapped to the contai
 	* `attach` (boolean)
 	* `interactive` (boolean)
 * `build` (object, optional): Parameters mapped to Docker's `build`.
-	* `context` (string)
+	* `context` (string) The path to the build context.
+	* `file` (string) Equivalent to --file specification.
+	* `tags` (array) Additional tags to apply when the container's image is built.
 * `exec` (object, optional): Parameters mapped to Docker's `exec`.
   * `interactive` (boolean)
   * `tty` (boolean)
@@ -141,43 +159,42 @@ See the [Docker documentation](http://docs.docker.com/reference/commandline/cli/
 
 
 ## Example
-A typical `crane.yaml` looks like this:
+Taken from a basic
+[Sinatra blog app](https://github.com/michaelsauter/sinatra-crane-env), a
+typical `crane.yaml` looks like this:
 
 ```
 containers:
-	apache:
-		image: some-apache-image:latest
-		run:
-			volumes-from: ["app"]
-			publish: ["80:80"]
-			link: ["mysql:db", "memcached:cache"]
-			detach: true
-	app:
-		build:
-			context: app
-		image: michaelsauter/app
-		run:
-			volume: ["app/www:/srv/www:rw"]
-			detach: true
-	mysql:
-		image: mysql
-		run:
-			env: ["MYSQL_ROOT_PASSWORD=mysecretpassword"]
-			detach: true
-	memcached:
-		image: tutum/memcached
-		run:
-			detach: true
+  blog:
+    build:
+      context: image
+    image: michaelsauter/sinatra-example
+    run:
+      publish: ["9292:9292"]
+      volume: ["blog:/blog"]
+      link: ["postgres:db"]
+      env:
+        - "POSTGRESQL_DB=default"
+        - "POSTGRESQL_USER=default"
+        - "POSTGRESQL_PASS=default"
+      tty: true
+      interactive: true
+      cmd: "start-blog"
+  postgres:
+    image: d11wtq/postgres
+    run:
+      detach: true
 ```
 
-All specified Docker containers can then be created and started in the correct
+The specified Docker containers can then be created and started in the correct
 order with:
 
 ```
-crane lift
+crane lift blog
 ```
 
-If you want to use JSON instead of YAML, here's what a simple configuration looks like:
+If you want to use JSON instead of YAML, here's what a simple configuration
+looks like:
 
 ```
 {
@@ -230,18 +247,28 @@ in this example. If `default` were not specified, then `crane lift` would start
 
 ### Extending the target
 
-It is also possible to cascade the target to related containers. There are 2 different "dynamic" groups, `affected` and `dependencies` (both have a short version `a` and `d`). In our example configuration above, when targeting the `mysql` container, the `apache` container would be considered to be "affected". When targeting the `apache` container, the `mysql` container would be considered as a "dependency". Therefore `crane run mysql+affected` will recreate both `apache` and `mysql`. Similarly, `crane run apache+dependencies` will recreate `apache`, `app`, `mysql` and `memcached`. It is possible to combine `affected` and `dependencies`.
+It is also possible to extend the target to related containers. There are 2
+different "dynamic" groups, `affected` and `dependencies` (both have a short
+version `a` and `d`). In our example configuration above, when targeting the
+`postgres` container, the `blog` container would be considered to be "affected".
+When targeting the `blog` container, the `postgres` container would be
+considered as a "dependency". Therefore `crane run postgres+affected` will
+recreate both `postgres` and `blog`. Similarly, `crane run blog+dependencies`
+will recreate `blog` and `postgres`. It is possible to combine `affected` and
+`dependencies`.
 
 
 ### Excluding containers
 
 If you want to exclude a container or a whole group from a Crane command, you
-can specify this with `--exclude <target>` (or via `CRANE_EXCLUDE`).
+can specify this with `--exclude <target>` (or via `CRANE_EXCLUDE`). This
+feature is experimental, which means it can be changed or even removed in every
+minor version update.
 
 
 ### Hooks
 
-In order to run certain commands before or after key lifecycle events of containers, hooks can declared in the configuration. They are run synchronously on the host where Crane is installed, outside containers, via an `exec` call. They may interrupt the flow by returning a non-zero status. If shell features more advanced than basic variable expansion is required, you should explicitly spawn a shell to run the command in (`sh -c 'ls *'`).
+In order to run certain commands before or after key lifecycle events of containers, hooks can be declared in the configuration. They are run synchronously on the host where Crane is installed, outside containers, via an `exec` call. They may interrupt the flow by returning a non-zero status. If shell features more advanced than basic variable expansion is required, you should explicitly spawn a shell to run the command in (`sh -c 'ls *'`).
 
 Hooks are declared at the top level of the configuration, under the `hooks` key. See YAML example below:
 
@@ -303,8 +330,38 @@ in parallel, e.g. for CI builds. Container prefixes can also be supplied by the
 `CRANE_PREFIX` environment variable.
 
 
+### Override image tag
+By using a the `--tag` flag, it is possible to globally overrides image tags. If
+you specify `--tag 2.2.0-rc2`, an image name `repo/app:1.0` is treated as
+`repo/app:2.2.0-rc2`. The `CRANE_TAG` environment variable can also be used to
+set the global tag.
+
+
 ### Unique names
-If `unique` is set to true, Crane will add a timestamp to the container name, making it possible to have multiple containers based on the same Crane config. Since those containers can not be addressed by Crane later on (e.g. they cannot be stopped and removed), consider setting `rm` to `true` as well. This feature is experimental, which means it can be changed or even removed in every minor version update.
+If `unique` is set to true, Crane will add a timestamp to the container name
+(e.g. `foo` will become `foo-unique-1447155694523`), making it possible to have
+multiple containers based on the same Crane config. Consider setting `rm` to
+`true` at the same time to avoid lots of exited containers. This feature is
+experimental, which means it can be changed or even removed in every minor
+version update.
+
+
+### Generate command
+The `generate` command can transform (part of) the configuration based on a
+given template, making it easy to re-use the configuation with other tools.
+`--template` is a required flag, which should point to a Go template. By
+default, the output is printed to STDOUT. It can also be written to a file using
+the `--output` flag. If the given filename contains `%s`, then multiple files
+are written (one per container), substituting `%s` with the name of the
+container. For each container, an object of type
+[ContainerInfo](https://godoc.org/github.com/michaelsauter/crane/crane#ContainerInfo)
+is passed to the template. If one file is generated for all targeted containers,
+a list of containers is located under the key `Containers`.  This feature is
+experimental, which means it can be changed or even removed in every minor
+version update.
+
+Example templates can be found at
+[crane-templates](https://github.com/michaelsauter/crane-templates).
 
 
 ### YAML advanced usage
@@ -325,12 +382,6 @@ containers:
 ```
 
 As a summary, `&anchor` declares the anchor property, `*alias` is the alias indicator to simply copy the mapping it references, and `<<: *merge` includes all the mapping but let you override some keys.
-
-
-## Some Crane-backed sample environments
-* [Silex + Nginx/php-fpm + MySQL](https://github.com/michaelsauter/silex-crane-env)
-* [Symfony2 + Apache + MySQL](https://github.com/michaelsauter/symfony2-crane-env)
-* [Sinatra + PostgreSQL](https://github.com/michaelsauter/sinatra-crane-env)
 
 
 ## Copyright & Licensing

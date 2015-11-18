@@ -1,6 +1,68 @@
 # Changelog
 
-## 2.0.0 (unreleased)
+## 2.2.0 (2015-11-10)
+
+* Add new `generate` command, which passes the targeted portion of the
+  configuration through a given template to produce some output.
+
+* Remove `graph` command. The same output can be achieved with the new
+  `generate` command specifying this
+  [DOT template](https://raw.githubusercontent.com/michaelsauter/crane-templates/7171e8b1ef6c80666ed2da8bdcbc8849aaef2d2a/dot.tmpl).
+
+* Unique containers can now be addressed by Crane later on, e.g. given a
+  unique container `foo`, `crane kill foo`  will kill all instances of `foo`.
+  All other commands that did not work with unique containers previously, e.g.
+  `status` or `logs` will take unique containers into account now as well.
+
+* Fix broken `stats` and `logs` commands if a prefix was given.
+
+* Add `--tag` global flag, which overrides image tag part temporarily.
+  A typical use of `--tag` flag is to synchronize image tags with the tag of
+  VCSs. You can also set the tag via `CRANE_TAG` environment variable.
+  _@t-suwa_
+
+  Example:
+  If you specify a `--tag rc-2`, you will get these results:
+
+  |original image name|overridden image name|
+  |-------------------|---------------------|
+  |nginx              |nginx:rc-2           |
+  |nginx:1.9          |nginx:rc-2           |
+  |repo/nginx         |repo/nginx:rc-2      |
+  |host:5000/nginx    |host:5000/nginx:rc-2 |
+
+* [Internal] Introduce new `ContainerInfo` interface which is a subset of
+  `Container`. At the same time, clean up the `Container` interface to include
+  only the externally used methods.
+
+
+## 2.1.0 (2015-10-15)
+
+* Add new `file` key to the `build` map. Equivalent of `docker build --file=<file>`
+
+  Example:
+  ```
+  containers:
+    foo:
+      image: foo
+      build:
+        context: "."
+        file: other_dockerfile.dkr
+  ```
+  _@dreamcat4_
+
+* Add support for `--dns-search` flag
+  _@scornelissen85_
+
+* Fix broken `net` flag
+
+
+## 2.0.1 (2015-09-16)
+
+* Fixes messed up output for `crane status` using Docker 1.8.
+
+
+## 2.0.0 (2015-09-15)
 
 * `start` behaves like `run` did in 1.x, `run` and `lift` behave like their
   `--recreate` counterparts in 1.x. The flag `--recreate` was removed

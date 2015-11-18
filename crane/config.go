@@ -16,13 +16,15 @@ import (
 )
 
 type Config interface {
-	DependencyGraph(excluded []string) DependencyGraph
+	DependencyMap(excluded []string) map[string]*Dependencies
 	ContainersForReference(reference string) (result []string)
 	Path() string
-	UniqueId() string
+	UniqueID() string
 	Prefix() string
+	Tag() string
 	ContainerMap() ContainerMap
 	Container(name string) Container
+	ContainerInfo(name string) ContainerInfo
 }
 
 type config struct {
@@ -33,7 +35,8 @@ type config struct {
 	groups          map[string][]string
 	path            string
 	prefix          string
-	uniqueId        string
+	tag             string
+	uniqueID        string
 }
 
 // ContainerMap maps the container name
@@ -47,9 +50,8 @@ type ContainerMap map[string]Container
 func configFilenames(location string) []string {
 	if len(location) > 0 {
 		return []string{location}
-	} else {
-		return []string{"crane.json", "crane.yaml", "crane.yml"}
 	}
+	return []string{"crane.json", "crane.yaml", "crane.yml"}
 }
 
 // findConfig returns the filename of the
@@ -143,7 +145,7 @@ func unmarshal(data []byte, ext string) *config {
 // location.
 // Containers will be ordered so that they can be
 // brought up and down with Docker.
-func NewConfig(location string, prefix string) Config {
+func NewConfig(location string, prefix string, tag string) Config {
 	var config *config
 	configFile := findConfig(location)
 	if isVerbose() {
@@ -151,10 +153,12 @@ func NewConfig(location string, prefix string) Config {
 	}
 	config = readConfig(configFile)
 	config.initialize()
+	config.validate()
 	config.path = path.Dir(configFile)
 	config.prefix = prefix
+	config.tag = tag
 	milliseconds := time.Now().UnixNano() / 1000000
-	config.uniqueId = strconv.FormatInt(milliseconds, 10)
+	config.uniqueID = strconv.FormatInt(milliseconds, 10)
 	return config
 }
 
@@ -163,12 +167,16 @@ func (c *config) Path() string {
 	return c.path
 }
 
-func (c *config) UniqueId() string {
-	return c.uniqueId
+func (c *config) UniqueID() string {
+	return c.uniqueID
 }
 
 func (c *config) Prefix() string {
 	return c.prefix
+}
+
+func (c *config) Tag() string {
+	return c.tag
 }
 
 func (c *config) ContainerMap() ContainerMap {
@@ -177,6 +185,10 @@ func (c *config) ContainerMap() ContainerMap {
 
 func (c *config) Container(name string) Container {
 	return c.containerMap[name]
+}
+
+func (c *config) ContainerInfo(name string) ContainerInfo {
+	return c.Container(name)
 }
 
 // Load configuration into the internal structs from the raw, parsed ones
@@ -219,16 +231,23 @@ func (c *config) initialize() {
 	}
 }
 
-// DependencyGraph returns the dependency graph, which is
-// a map describing the dependencies between the containers.
-func (c *config) DependencyGraph(excluded []string) DependencyGraph {
-	dependencyGraph := make(DependencyGraph)
-	for _, container := range c.containerMap {
-		if !includes(excluded, container.Name()) {
-			dependencyGraph[container.Name()] = container.Dependencies(excluded)
+func (c *config) validate() {
+	for name, container := range c.RawContainerMap {
+		if len(container.RawImage) == 0 {
+			panic(StatusError{fmt.Errorf("No image specified for `%s`", name), 64})
 		}
 	}
-	return dependencyGraph
+}
+
+// DependencyMap returns a map of containers to their dependencies.
+func (c *config) DependencyMap(excluded []string) map[string]*Dependencies {
+	dependencyMap := make(map[string]*Dependencies)
+	for _, container := range c.containerMap {
+		if !includes(excluded, container.Name()) {
+			dependencyMap[container.Name()] = container.Dependencies()
+		}
+	}
+	return dependencyMap
 }
 
 // ContainersForReference receives a reference and determines which
@@ -249,7 +268,7 @@ func (c *config) ContainersForReference(reference string) (result []string) {
 			containers = defaultGroup
 		} else {
 			// Otherwise, return all containers
-			for name, _ := range c.containerMap {
+			for name := range c.containerMap {
 				containers = append(containers, name)
 			}
 		}
@@ -265,7 +284,7 @@ func (c *config) ContainersForReference(reference string) (result []string) {
 		}
 		if len(containers) == 0 {
 			// The reference might just be one container
-			for name, _ := range c.containerMap {
+			for name := range c.containerMap {
 				if name == reference {
 					containers = append(containers, reference)
 					break
@@ -280,7 +299,7 @@ func (c *config) ContainersForReference(reference string) (result []string) {
 	// ensure all container references exist
 	for _, container := range containers {
 		containerDeclared := false
-		for name, _ := range c.containerMap {
+		for name := range c.containerMap {
 			if container == name {
 				containerDeclared = true
 				break

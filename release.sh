@@ -13,8 +13,8 @@ echo "Running tests..."
 go test ./...
 
 echo "Update version..."
-sed -i.bak 's/fmt\.Println("v[0-9]\{1,2\}\.[0-9]\{1,2\}\.[0-9]\{1,2\}")/fmt.Println("v'$version'")/' crane/cmd.go
-rm crane/cmd.go.bak
+sed -i.bak 's/fmt\.Println("v[0-9]\{1,2\}\.[0-9]\{1,2\}\.[0-9]\{1,2\}")/fmt.Println("v'$version'")/' crane/cli.go
+rm crane/cli.go.bak
 sed -i.bak 's/VERSION="[0-9]\{1,2\}\.[0-9]\{1,2\}\.[0-9]\{1,2\}"/VERSION="'$version'"/' download.sh
 rm download.sh.bak
 sed -i.bak 's/[0-9]\{1,2\}\.[0-9]\{1,2\}\.[0-9]\{1,2\}/'$version'/' README.md
@@ -22,7 +22,7 @@ rm README.md.bak
 
 echo "Mark version as released in changelog..."
 today=$(date +'%Y-%m-%d')
-sed -i.bak 's/\(unreleased\)/'$today'/' CHANGELOG.md
+sed -i.bak 's/Unreleased/'$version' ('$today')/' CHANGELOG.md
 rm CHANGELOG.md.bak
 
 echo "Update contributors..."
@@ -32,7 +32,7 @@ echo "Build binary..."
 gox -osarch="darwin/amd64" -osarch="linux/amd64" -osarch="linux/386" -osarch="windows/amd64"
 
 echo "Update repository..."
-git add crane/cmd.go download.sh README.md CHANGELOG.md CONTRIBUTORS
+git add crane/cli.go download.sh README.md CHANGELOG.md CONTRIBUTORS
 git commit -m "Bump version to ${version}"
 git tag --sign --message="v$version" "v$version"
 

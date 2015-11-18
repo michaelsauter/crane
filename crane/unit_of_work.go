@@ -2,6 +2,9 @@ package crane
 
 import (
 	"fmt"
+	"os"
+	"strings"
+	"text/template"
 )
 
 type UnitOfWork struct {
@@ -11,7 +14,7 @@ type UnitOfWork struct {
 	requireStarted []string
 }
 
-func NewUnitOfWork(graph DependencyGraph, targeted []string) (uow *UnitOfWork, err error) {
+func NewUnitOfWork(dependencyMap map[string]*Dependencies, targeted []string) (uow *UnitOfWork, err error) {
 
 	uow = &UnitOfWork{
 		targeted:       targeted,
@@ -25,7 +28,7 @@ func NewUnitOfWork(graph DependencyGraph, targeted []string) (uow *UnitOfWork, e
 		c := uow.containers
 		initialLenContainers := len(c)
 		for _, name := range c {
-			dependencies := graph[name]
+			dependencies := dependencyMap[name]
 			if dependencies == nil {
 				err = fmt.Errorf("Container %s referenced, but not defined.", name)
 				return
@@ -46,10 +49,13 @@ func NewUnitOfWork(graph DependencyGraph, targeted []string) (uow *UnitOfWork, e
 	for {
 		initialLenOrdered := len(uow.order)
 		for _, name := range uow.containers {
-			if dependencies, ok := graph[name]; ok {
+			if dependencies, ok := dependencyMap[name]; ok {
 				if dependencies.satisfied() {
 					uow.order = append(uow.order, name)
-					graph.resolve(name)
+					delete(dependencyMap, name)
+					for _, dependencies := range dependencyMap {
+						dependencies.remove(name)
+					}
 				}
 			}
 		}
@@ -70,9 +76,9 @@ func NewUnitOfWork(graph DependencyGraph, targeted []string) (uow *UnitOfWork, e
 func (uow *UnitOfWork) Run(cmds []string, excluded []string) {
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Run(cmds, excluded, cfg.Path())
+			container.Run(cmds, excluded)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
-			container.Start(excluded, cfg.Path())
+			container.Start(excluded)
 		}
 	}
 }
@@ -80,9 +86,9 @@ func (uow *UnitOfWork) Run(cmds []string, excluded []string) {
 func (uow *UnitOfWork) Lift(cmds []string, excluded []string, noCache bool) {
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Lift(cmds, noCache, excluded, cfg.Path())
+			container.Lift(cmds, noCache, excluded)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
-			container.Start(excluded, cfg.Path())
+			container.Start(excluded)
 		}
 	}
 }
@@ -90,14 +96,14 @@ func (uow *UnitOfWork) Lift(cmds []string, excluded []string, noCache bool) {
 func (uow *UnitOfWork) Stats() {
 	args := []string{"stats"}
 	for _, container := range uow.Targeted() {
-		if container.Running() {
-			args = append(args, container.Name())
+		for _, name := range container.InstancesOfStatus("running") {
+			args = append(args, name)
 		}
 	}
 	if len(args) > 1 {
 		executeCommand("docker", args)
 	} else {
-		printErrorf("None of the targeted container is running.\n")
+		printNoticef("None of the targeted container is running.\n")
 	}
 }
 
@@ -130,9 +136,9 @@ func (uow *UnitOfWork) Pause() {
 func (uow *UnitOfWork) Start() {
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Start(excluded, cfg.Path())
+			container.Start(excluded)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
-			container.Start(excluded, cfg.Path())
+			container.Start(excluded)
 		}
 	}
 }
@@ -154,9 +160,9 @@ func (uow *UnitOfWork) Kill() {
 func (uow *UnitOfWork) Exec(cmds []string) {
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Exec(cmds, cfg.Path())
+			container.Exec(cmds)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
-			container.Start(excluded, cfg.Path())
+			container.Start(excluded)
 		}
 	}
 }
@@ -172,9 +178,9 @@ func (uow *UnitOfWork) Rm(force bool) {
 func (uow *UnitOfWork) Create(cmds []string, excluded []string) {
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Create(cmds, excluded, cfg.Path())
+			container.Create(cmds, excluded)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
-			container.Start(excluded, cfg.Path())
+			container.Start(excluded)
 		}
 	}
 }
@@ -187,7 +193,7 @@ func (uow *UnitOfWork) Provision(noCache bool) {
 // Pull containers.
 func (uow *UnitOfWork) PullImage() {
 	for _, container := range uow.Targeted() {
-		if len(container.BuildContext()) == 0 {
+		if len(container.BuildParams().Context()) == 0 {
 			container.PullImage()
 		}
 	}
@@ -196,6 +202,42 @@ func (uow *UnitOfWork) PullImage() {
 // Log containers.
 func (uow *UnitOfWork) Logs(follow bool, timestamps bool, tail string, colorize bool, since string) {
 	uow.Targeted().Logs(follow, timestamps, tail, colorize, since)
+}
+
+// Generate files.
+func (uow *UnitOfWork) Generate(templateFile string, output string) {
+	templateFileParts := strings.Split(templateFile, "/")
+	templateName := templateFileParts[len(templateFileParts)-1]
+
+	tmpl, err := template.New(templateName).ParseFiles(templateFile)
+	if err != nil {
+		printErrorf("ERROR: %s\n", err)
+		return
+	}
+
+	executeTemplate := func(outputFile string, templateInfo interface{}) {
+		writer := os.Stdout
+		if len(outputFile) > 0 {
+			writer, _ = os.Create(outputFile)
+		}
+		err = tmpl.Execute(writer, templateInfo)
+		if err != nil {
+			printErrorf("ERROR: %s\n", err)
+		}
+	}
+
+	if strings.Contains(output, "%s") {
+		for _, container := range uow.TargetedInfo() {
+			executeTemplate(fmt.Sprintf(output, container.PrefixedName()), container)
+		}
+	} else {
+		tmplInfo := struct {
+			Containers []ContainerInfo
+		}{
+			Containers: uow.TargetedInfo(),
+		}
+		executeTemplate(output, tmplInfo)
+	}
 }
 
 func (uow *UnitOfWork) Containers() Containers {
@@ -211,6 +253,16 @@ func (uow *UnitOfWork) Targeted() Containers {
 	for _, name := range uow.order {
 		if includes(uow.targeted, name) {
 			c = append(c, cfg.Container(name))
+		}
+	}
+	return c
+}
+
+func (uow *UnitOfWork) TargetedInfo() []ContainerInfo {
+	c := []ContainerInfo{}
+	for _, name := range uow.order {
+		if includes(uow.targeted, name) {
+			c = append([]ContainerInfo{cfg.ContainerInfo(name)}, c...)
 		}
 	}
 	return c

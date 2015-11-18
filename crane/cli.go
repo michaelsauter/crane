@@ -27,6 +27,10 @@ var (
 		"exclude",
 		"Exclude group or container",
 	).Short('e').OverrideDefaultFromEnvar("CRANE_EXCLUDE").String()
+	tagFlag = app.Flag(
+		"tag",
+		"Override image tags.",
+	).OverrideDefaultFromEnvar("CRANE_TAG").String()
 
 	liftCommand = app.Command(
 		"lift",
@@ -43,12 +47,6 @@ var (
 		"version",
 		"Displays the version of Crane.",
 	)
-
-	graphCommand = app.Command(
-		"graph",
-		"Dumps the dependency graph as a DOT file.",
-	)
-	graphTargetArg = graphCommand.Arg("target", "Target of command").String()
 
 	statsCommand = app.Command(
 		"stats",
@@ -174,6 +172,20 @@ var (
 		"Show logs since timestamp (Docker >= 1.7).",
 	).String()
 	logsTargetArg = logsCommand.Arg("target", "Target of command").String()
+
+	generateCommand = app.Command(
+		"generate",
+		"Generate files by passing the config to a given template.",
+	)
+	templateFlag = generateCommand.Flag(
+		"template",
+		"Template to use.",
+	).Short('t').String()
+	outputFlag = generateCommand.Flag(
+		"output",
+		"The file(s) to write the output to.",
+	).Short('o').String()
+	generateTargetArg = generateCommand.Arg("target", "Target of command").String()
 )
 
 func isVerbose() bool {
@@ -182,14 +194,14 @@ func isVerbose() bool {
 
 func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork), mightStartRelated bool) {
 
-	cfg = NewConfig(*configFlag, *prefixFlag)
+	cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
 	excluded = excludedContainers(*excludeFlag)
-	dependencyGraph := cfg.DependencyGraph(excluded)
-	target, err := NewTarget(dependencyGraph, targetFlag, excluded)
+	dependencyMap := cfg.DependencyMap(excluded)
+	target, err := NewTarget(dependencyMap, targetFlag, excluded)
 	if err != nil {
 		panic(StatusError{err, 78})
 	}
-	unitOfWork, err := NewUnitOfWork(dependencyGraph, target.all())
+	unitOfWork, err := NewUnitOfWork(dependencyMap, target.all())
 	if err != nil {
 		panic(StatusError{err, 78})
 	}
@@ -199,19 +211,19 @@ func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork), migh
 		if mightStartRelated && len(unitOfWork.Associated()) > 0 {
 			printInfof("\nIf needed, also starts: %s", strings.Join(unitOfWork.Associated(), ", "))
 		}
-		fmt.Println("\n")
+		fmt.Printf("\n\n")
 	}
 	wrapped(unitOfWork)
 }
 
 func excludedContainers(flag string) []string {
-	if len(flag) > 0  {
+	if len(flag) > 0 {
 		return cfg.ContainersForReference(flag)
 	}
 	return []string{}
 }
 
-func handleCmd() {
+func runCli() {
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 
 	case liftCommand.FullCommand():
@@ -220,12 +232,7 @@ func handleCmd() {
 		}, true)
 
 	case versionCommand.FullCommand():
-		fmt.Println("v2.0.0-rc1")
-
-	case graphCommand.FullCommand():
-		commandAction(*graphTargetArg, func(uow *UnitOfWork) {
-			cfg.DependencyGraph(excluded).DOT(os.Stdout, uow.Targeted().Reversed())
-		}, false)
+		fmt.Println("v2.2.0")
 
 	case statsCommand.FullCommand():
 		commandAction(*statsTargetArg, func(uow *UnitOfWork) {
@@ -300,6 +307,15 @@ func handleCmd() {
 	case logsCommand.FullCommand():
 		commandAction(*logsTargetArg, func(uow *UnitOfWork) {
 			uow.Logs(*followFlag, *timestampsFlag, *tailFlag, *colorizeFlag, *sinceFlag)
+		}, false)
+
+	case generateCommand.FullCommand():
+		if len(*templateFlag) == 0 {
+			printErrorf("ERROR: No template specified. The flag `--template` is required.\n")
+			return
+		}
+		commandAction(*generateTargetArg, func(uow *UnitOfWork) {
+			uow.Generate(*templateFlag, *outputFlag)
 		}, false)
 	}
 }

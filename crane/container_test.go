@@ -8,31 +8,9 @@ import (
 	"testing"
 )
 
-func TestImageWithTag(t *testing.T) {
-	var c *container
-	// No tag
-	c = &container{
-		RawImage:  "ubuntu",
-		RunParams: RunParameters{},
-	}
-	assert.Equal(t, "ubuntu:latest", c.ImageWithTag())
-	// Given tag
-	c = &container{
-		RawImage:  "ubuntu:14.04",
-		RunParams: RunParameters{},
-	}
-	assert.Equal(t, "ubuntu:14.04", c.ImageWithTag())
-	// With port in registry part
-	c = &container{
-		RawImage:  "private.registry.com:5000/ubuntu",
-		RunParams: RunParameters{},
-	}
-	assert.Equal(t, "ubuntu:latest", c.ImageWithTag())
-}
-
 func TestDependencies(t *testing.T) {
 	c := &container{
-		RunParams: RunParameters{
+		RawRun: RunParameters{
 			RawNet:         "container:n",
 			RawLink:        []string{"a:b", "b:d"},
 			RawVolumesFrom: []string{"c"},
@@ -44,14 +22,14 @@ func TestDependencies(t *testing.T) {
 		VolumesFrom: []string{"c"},
 		Net:         "n",
 	}
-	assert.Equal(t, expected, c.Dependencies([]string{}))
+	assert.Equal(t, expected, c.Dependencies())
 
 	c = &container{}
 	expected = &Dependencies{}
-	assert.Equal(t, expected, c.Dependencies([]string{}))
+	assert.Equal(t, expected, c.Dependencies())
 
 	c = &container{
-		RunParams: RunParameters{
+		RawRun: RunParameters{
 			RawNet:         "container:n",
 			RawLink:        []string{"a:b", "b:d"},
 			RawVolumesFrom: []string{"c"},
@@ -63,65 +41,100 @@ func TestDependencies(t *testing.T) {
 		VolumesFrom: []string{"c"},
 		Net:         "n",
 	}
-	assert.Equal(t, expected, c.Dependencies([]string{"b"}))
+	excluded = []string{"b"}
+	assert.Equal(t, expected, c.Dependencies())
+	excluded = []string{}
 }
 
 func TestVolumesFromSuffixes(t *testing.T) {
-	c := &container{RunParams: RunParameters{RawVolumesFrom: []string{"a:rw", "b:ro"}}}
+	c := &container{RawRun: RunParameters{RawVolumesFrom: []string{"a:rw", "b:ro"}}}
 	expected := &Dependencies{
 		All:         []string{"a", "b"},
 		VolumesFrom: []string{"a", "b"},
 	}
-	assert.Equal(t, expected, c.Dependencies([]string{}))
+	assert.Equal(t, expected, c.Dependencies())
 }
 
 func TestMultipleLinkAliases(t *testing.T) {
-	c := &container{RunParams: RunParameters{RawLink: []string{"a:b", "a:c"}}}
+	c := &container{RawRun: RunParameters{RawLink: []string{"a:b", "a:c"}}}
 	expected := &Dependencies{
 		All:  []string{"a"},
 		Link: []string{"a"},
 	}
-	assert.Equal(t, expected, c.Dependencies([]string{}))
+	assert.Equal(t, expected, c.Dependencies())
 }
 
 func TestImplicitLinkAliases(t *testing.T) {
-	c := &container{RunParams: RunParameters{RawLink: []string{"a"}}}
+	c := &container{RawRun: RunParameters{RawLink: []string{"a"}}}
 	expected := &Dependencies{
 		All:  []string{"a"},
 		Link: []string{"a"},
 	}
-	assert.Equal(t, expected, c.Dependencies([]string{}))
+	assert.Equal(t, expected, c.Dependencies())
+}
+
+func TestImage(t *testing.T) {
+	containers := []*container{
+		&container{RawName: "full-spec", RawImage: "test/image-a:1.0"},
+		&container{RawName: "without-repo", RawImage: "image-b:latest"},
+		&container{RawName: "without-tag", RawImage: "test/image-c"},
+		&container{RawName: "image-only", RawImage: "image-d"},
+		&container{RawName: "private-registry", RawImage: "localhost:5000/foo/image-e:2.0"},
+		&container{RawName: "digest", RawImage: "localhost:5000/foo/image-f@sha256:xxx"},
+	}
+	containerMap := make(map[string]*container)
+	for _, container := range containers {
+		containerMap[container.Name()] = container
+	}
+	cfg = &config{
+		tag: "rc-1",
+	}
+
+	assert.Equal(t, "test/image-a:rc-1", containerMap["full-spec"].Image())
+
+	assert.Equal(t, "image-b:rc-1", containerMap["without-repo"].Image())
+
+	assert.Equal(t, "test/image-c:rc-1", containerMap["without-tag"].Image())
+
+	assert.Equal(t, "image-d:rc-1", containerMap["image-only"].Image())
+
+	assert.Equal(t, "localhost:5000/foo/image-e:rc-1", containerMap["private-registry"].Image())
+
+	assert.NotEqual(t, "localhost:5000/foo/image-f@sha256:rc-1", containerMap["digest"].Image())
 }
 
 func TestVolume(t *testing.T) {
 	var c *container
 	// Absolute path
-	c = &container{RunParams: RunParameters{RawVolume: []string{"/a:b"}}}
-	assert.Equal(t, "/a:b", c.RunParams.Volume("foo")[0])
+	c = &container{RawRun: RunParameters{RawVolume: []string{"/a:b"}}}
+	cfg = &config{path: "foo"}
+	assert.Equal(t, "/a:b", c.RunParams().Volume()[0])
 	// Relative path
-	c = &container{RunParams: RunParameters{RawVolume: []string{"a:b"}}}
+	c = &container{RawRun: RunParameters{RawVolume: []string{"a:b"}}}
 	dir, _ := os.Getwd()
-	assert.Equal(t, dir+"/a:b", c.RunParams.Volume(dir)[0])
+	cfg = &config{path: dir}
+	assert.Equal(t, dir+"/a:b", c.RunParams().Volume()[0])
 	// Environment variable
-	c = &container{RunParams: RunParameters{RawVolume: []string{"$HOME/a:b"}}}
+	c = &container{RawRun: RunParameters{RawVolume: []string{"$HOME/a:b"}}}
 	os.Clearenv()
 	os.Setenv("HOME", "/home")
-	assert.Equal(t, os.Getenv("HOME")+"/a:b", c.RunParams.Volume("foo")[0])
+	cfg = &config{path: "foo"}
+	assert.Equal(t, os.Getenv("HOME")+"/a:b", c.RunParams().Volume()[0])
 	// Container-only path
-	c = &container{RunParams: RunParameters{RawVolume: []string{"/b"}}}
-	assert.Equal(t, "/b", c.RunParams.Volume("foo")[0])
+	c = &container{RawRun: RunParameters{RawVolume: []string{"/b"}}}
+	assert.Equal(t, "/b", c.RunParams().Volume()[0])
 }
 
 func TestNet(t *testing.T) {
 	var c *container
 	// Empty defaults to "bridge"
-	c = &container{RunParams: RunParameters{}}
-	assert.Equal(t, "bridge", c.RunParams.Net())
+	c = &container{RawRun: RunParameters{}}
+	assert.Equal(t, "bridge", c.RunParams().Net())
 	// Environment variable
 	os.Clearenv()
 	os.Setenv("NET", "container")
-	c = &container{RunParams: RunParameters{RawNet: "$NET"}}
-	assert.Equal(t, "container", c.RunParams.Net())
+	c = &container{RawRun: RunParameters{RawNet: "$NET"}}
+	assert.Equal(t, "container", c.RunParams().Net())
 }
 
 func TestCmd(t *testing.T) {
@@ -129,17 +142,17 @@ func TestCmd(t *testing.T) {
 	// String
 	os.Clearenv()
 	os.Setenv("CMD", "true")
-	c = &container{RunParams: RunParameters{RawCmd: "$CMD"}}
-	assert.Equal(t, []string{"true"}, c.RunParams.Cmd())
+	c = &container{RawRun: RunParameters{RawCmd: "$CMD"}}
+	assert.Equal(t, []string{"true"}, c.RunParams().Cmd())
 	// String with multiple parts
-	c = &container{RunParams: RunParameters{RawCmd: "bundle exec rails s -p 3000"}}
-	assert.Equal(t, []string{"bundle", "exec", "rails", "s", "-p", "3000"}, c.RunParams.Cmd())
+	c = &container{RawRun: RunParameters{RawCmd: "bundle exec rails s -p 3000"}}
+	assert.Equal(t, []string{"bundle", "exec", "rails", "s", "-p", "3000"}, c.RunParams().Cmd())
 	// Array
 	os.Clearenv()
 	os.Setenv("CMD", "1")
-	c = &container{RunParams: RunParameters{RawCmd: []interface{}{"echo", "$CMD"}}}
-	if len(c.RunParams.Cmd()) != 2 || c.RunParams.Cmd()[0] != "echo" || c.RunParams.Cmd()[1] != "1" {
-		t.Errorf("Command should have been true, got %v", c.RunParams.Cmd())
+	c = &container{RawRun: RunParameters{RawCmd: []interface{}{"echo", "$CMD"}}}
+	if len(c.RunParams().Cmd()) != 2 || c.RunParams().Cmd()[0] != "echo" || c.RunParams().Cmd()[1] != "1" {
+		t.Errorf("Command should have been true, got %v", c.RunParams().Cmd())
 	}
 }
 

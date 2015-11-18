@@ -7,12 +7,12 @@ import (
 
 func TestNewTarget(t *testing.T) {
 	containerMap := NewStubbedContainerMap(true,
-		&container{RawName: "a", RunParams: RunParameters{RawLink: []string{"b:b"}}},
-		&container{RawName: "b", RunParams: RunParameters{RawLink: []string{"c:c"}}},
+		&container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},
+		&container{RawName: "b", RawRun: RunParameters{RawLink: []string{"c:c"}}},
 		&container{RawName: "c"},
 	)
 	cfg = &config{containerMap: containerMap}
-	dependencyGraph := cfg.DependencyGraph([]string{})
+	dependencyMap := cfg.DependencyMap([]string{})
 
 	examples := []struct {
 		target   string
@@ -77,23 +77,23 @@ func TestNewTarget(t *testing.T) {
 	}
 
 	for _, example := range examples {
-		target, _ := NewTarget(dependencyGraph, example.target, []string{})
+		target, _ := NewTarget(dependencyMap, example.target, []string{})
 		assert.Equal(t, example.expected, target)
 	}
 }
 
 func TestDeduplicationAll(t *testing.T) {
 	containerMap := NewStubbedContainerMap(true,
-		&container{RawName: "a", RunParams: RunParameters{RawLink: []string{"b:b"}}},
-		&container{RawName: "b", RunParams: RunParameters{RawLink: []string{"c:c"}}},
+		&container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},
+		&container{RawName: "b", RawRun: RunParameters{RawLink: []string{"c:c"}}},
 		&container{RawName: "c"},
 	)
 	groups := map[string][]string{
 		"ab": []string{"a", "b", "a"},
 	}
 	cfg = &config{containerMap: containerMap, groups: groups}
-	dependencyGraph := cfg.DependencyGraph([]string{})
+	dependencyMap := cfg.DependencyMap([]string{})
 
-	target, _ := NewTarget(dependencyGraph, "ab+dependencies+affected", []string{})
+	target, _ := NewTarget(dependencyMap, "ab+dependencies+affected", []string{})
 	assert.Equal(t, []string{"a", "b", "c"}, target.all())
 }

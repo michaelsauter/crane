@@ -18,7 +18,7 @@ type Target struct {
 // dynamic targets "dependencies" and/or "affected"
 // are included in the targetFlag.
 // Additionally, the target is sorted alphabetically.
-func NewTarget(graph DependencyGraph, targetFlag string, excluded []string) (target Target, err error) {
+func NewTarget(dependencyMap map[string]*Dependencies, targetFlag string, excluded []string) (target Target, err error) {
 
 	targetParts := strings.Split(targetFlag, "+")
 	targetName := targetParts[0]
@@ -60,12 +60,12 @@ func NewTarget(graph DependencyGraph, targetFlag string, excluded []string) (tar
 			cascadingSeeds = append(cascadingSeeds, name)
 		}
 
-		// Cascade until the graph has been fully traversed
+		// Cascade until the dependency map has been fully traversed
 		// according to the cascading flags.
 		for len(cascadingSeeds) > 0 {
 			nextCascadingSeeds := []string{}
 			for _, seed := range cascadingSeeds {
-				if dependencies, ok := graph[seed]; ok {
+				if dependencies, ok := dependencyMap[seed]; ok {
 					// Queue direct dependencies if we haven't already considered them
 					for _, name := range dependencies.All {
 						if _, alreadyIncluded := includedSet[name]; !alreadyIncluded {
@@ -78,7 +78,7 @@ func NewTarget(graph DependencyGraph, targetFlag string, excluded []string) (tar
 			cascadingSeeds = nextCascadingSeeds
 		}
 
-		for name, _ := range includedSet {
+		for name := range includedSet {
 			if !includes(target.initial, name) {
 				target.dependencies = append(target.dependencies, name)
 			}
@@ -99,7 +99,7 @@ func NewTarget(graph DependencyGraph, targetFlag string, excluded []string) (tar
 		for len(cascadingSeeds) > 0 {
 			nextCascadingSeeds := []string{}
 			for _, seed := range cascadingSeeds {
-				for name, dependencies := range graph {
+				for name, dependencies := range dependencyMap {
 					if _, alreadyIncluded := includedSet[name]; !alreadyIncluded {
 						if dependencies.includes(seed) {
 							includedSet[name] = true
@@ -111,7 +111,7 @@ func NewTarget(graph DependencyGraph, targetFlag string, excluded []string) (tar
 			cascadingSeeds = nextCascadingSeeds
 		}
 
-		for name, _ := range includedSet {
+		for name := range includedSet {
 			if !includes(target.initial, name) {
 				target.affected = append(target.affected, name)
 			}

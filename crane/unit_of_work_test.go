@@ -8,13 +8,13 @@ import (
 func TestNewUnitOfWork(t *testing.T) {
 
 	examples := []struct {
-		graph    DependencyGraph
-		targeted []string
-		expected *UnitOfWork
-		err      bool
+		dependencyMap map[string]*Dependencies
+		targeted      []string
+		expected      *UnitOfWork
+		err           bool
 	}{
 		{ // resolvable map -> works
-			graph: DependencyGraph{
+			dependencyMap: map[string]*Dependencies{
 				"b": &Dependencies{All: []string{"c"}},
 				"a": &Dependencies{All: []string{"b"}},
 				"c": &Dependencies{All: []string{}},
@@ -29,7 +29,7 @@ func TestNewUnitOfWork(t *testing.T) {
 			err: false,
 		},
 		{ // cyclic map -> fails
-			graph: DependencyGraph{
+			dependencyMap: map[string]*Dependencies{
 				"b": &Dependencies{All: []string{"c"}},
 				"a": &Dependencies{All: []string{"b"}},
 				"c": &Dependencies{All: []string{"a"}},
@@ -38,14 +38,14 @@ func TestNewUnitOfWork(t *testing.T) {
 			err:      true,
 		},
 		{ // incomplete map -> fails
-			graph: DependencyGraph{
+			dependencyMap: map[string]*Dependencies{
 				"a": &Dependencies{All: []string{"b"}},
 			},
 			targeted: []string{"a"},
 			err:      true,
 		},
 		{ // partial target -> works
-			graph: DependencyGraph{
+			dependencyMap: map[string]*Dependencies{
 				"b": &Dependencies{All: []string{"c"}, Link: []string{"c"}},
 				"a": &Dependencies{All: []string{"b"}},
 				"c": &Dependencies{All: []string{}},
@@ -62,7 +62,7 @@ func TestNewUnitOfWork(t *testing.T) {
 	}
 
 	for _, example := range examples {
-		uow, err := NewUnitOfWork(example.graph, example.targeted)
+		uow, err := NewUnitOfWork(example.dependencyMap, example.targeted)
 		if example.err {
 			assert.Error(t, err)
 		} else {
