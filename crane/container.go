@@ -504,13 +504,23 @@ func (r RunParameters) Volume() []string {
 	var volumes []string
 	for _, rawVolume := range r.RawVolume {
 		volume := os.ExpandEnv(rawVolume)
-		paths := strings.Split(volume, ":")
-		if !path.IsAbs(paths[0]) {
-			paths[0] = cfg.Path() + "/" + paths[0]
+		parts := strings.Split(volume, ":")
+		if !includes(cfg.VolumeNames(), parts[0]) && !path.IsAbs(parts[0]) {
+			parts[0] = cfg.Path() + "/" + parts[0]
 		}
-		volumes = append(volumes, strings.Join(paths, ":"))
+		volumes = append(volumes, strings.Join(parts, ":"))
 	}
 	return volumes
+}
+
+func (r RunParameters) VolumeSources() []string {
+	volumes := r.Volume()
+	var volumeSources []string
+	for _, volume := range volumes {
+		parts := strings.Split(volume, ":")
+		volumeSources = append(volumeSources, parts[0])
+	}
+	return volumeSources
 }
 
 func (r RunParameters) VolumesFrom() []string {

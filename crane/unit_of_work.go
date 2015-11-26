@@ -74,6 +74,7 @@ func NewUnitOfWork(dependencyMap map[string]*Dependencies, targeted []string) (u
 }
 
 func (uow *UnitOfWork) Run(cmds []string, excluded []string) {
+	uow.prepareRequirements()
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
 			container.Run(cmds, excluded)
@@ -84,6 +85,7 @@ func (uow *UnitOfWork) Run(cmds []string, excluded []string) {
 }
 
 func (uow *UnitOfWork) Lift(cmds []string, excluded []string, noCache bool) {
+	uow.prepareRequirements()
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
 			container.Lift(cmds, noCache, excluded)
@@ -134,6 +136,7 @@ func (uow *UnitOfWork) Pause() {
 
 // Start containers.
 func (uow *UnitOfWork) Start() {
+	uow.prepareRequirements()
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
 			container.Start(excluded)
@@ -176,6 +179,7 @@ func (uow *UnitOfWork) Rm(force bool) {
 
 // Create containers.
 func (uow *UnitOfWork) Create(cmds []string, excluded []string) {
+	uow.prepareRequirements()
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
 			container.Create(cmds, excluded)
@@ -287,5 +291,51 @@ func (uow *UnitOfWork) ensureInContainers(name string) {
 func (uow *UnitOfWork) ensureInRequireStarted(name string) {
 	if !includes(uow.requireStarted, name) {
 		uow.requireStarted = append(uow.requireStarted, name)
+	}
+}
+
+func (uow *UnitOfWork) prepareRequirements() {
+	uow.prepareNetworks()
+	uow.prepareVolumes()
+}
+
+func (uow *UnitOfWork) requiredNetworks() []Network {
+	required := []Network{}
+	networks := cfg.NetworkNames()
+	for _, container := range uow.Containers() {
+		net := container.RunParams().Net()
+		if includes(networks, net) {
+			required = append(required, cfg.Network(net))
+		}
+	}
+	return required
+}
+
+func (uow *UnitOfWork) requiredVolumes() []Volume {
+	required := []Volume{}
+	volumes := cfg.VolumeNames()
+	for _, container := range uow.Containers() {
+		for _, volumeSource := range container.RunParams().VolumeSources() {
+			if includes(volumes, volumeSource) {
+				required = append(required, cfg.Volume(volumeSource))
+			}
+		}
+	}
+	return required
+}
+
+func (uow *UnitOfWork) prepareNetworks() {
+	for _, n := range uow.requiredNetworks() {
+		if !n.Exists() {
+			n.Create()
+		}
+	}
+}
+
+func (uow *UnitOfWork) prepareVolumes() {
+	for _, v := range uow.requiredVolumes() {
+		if !v.Exists() {
+			v.Create()
+		}
 	}
 }

@@ -343,3 +343,77 @@ func TestContainersForReferenceDeduplication(t *testing.T) {
 	containers := c.ContainersForReference("foo")
 	assert.Equal(t, []string{"a", "b"}, containers)
 }
+
+func TestNetworkNames(t *testing.T) {
+	var networks []string
+	var networkMap map[string]Network
+	var c Config
+
+	networkMap = map[string]Network{}
+	c = &config{networkMap: networkMap}
+	networks = c.NetworkNames()
+	assert.Equal(t, []string{}, networks)
+
+	networkMap = map[string]Network{
+		"foo": &network{},
+		"bar": &network{},
+	}
+	c = &config{networkMap: networkMap}
+	networks = c.NetworkNames()
+	assert.Equal(t, []string{"bar", "foo"}, networks)
+}
+
+func TestVolumeNames(t *testing.T) {
+	var volumes []string
+	var volumeMap map[string]Volume
+	var c Config
+
+	volumeMap = map[string]Volume{}
+	c = &config{volumeMap: volumeMap}
+	volumes = c.VolumeNames()
+	assert.Equal(t, []string{}, volumes)
+
+	volumeMap = map[string]Volume{
+		"foo": &network{},
+		"bar": &network{},
+	}
+	c = &config{volumeMap: volumeMap}
+	volumes = c.VolumeNames()
+	assert.Equal(t, []string{"bar", "foo"}, volumes)
+}
+
+func TestConfigNetwork(t *testing.T) {
+	var networkMap map[string]*network
+	var c *config
+
+	networkMap = map[string]*network{}
+	c = &config{RawNetworks: networkMap}
+	c.setNetworkMap()
+	assert.Equal(t, nil, c.Network("foo"))
+
+	networkMap = map[string]*network{
+		"foo": &network{},
+		"bar": &network{},
+	}
+	c = &config{RawNetworks: networkMap}
+	c.setNetworkMap()
+	assert.Equal(t, "bar", c.Network("bar").Name())
+}
+
+func TestConfigVolume(t *testing.T) {
+	var rawVolumes map[string]*volume
+	var c *config
+
+	rawVolumes = map[string]*volume{}
+	c = &config{RawVolumes: rawVolumes}
+	c.setVolumeMap()
+	assert.Equal(t, nil, c.Volume("foo"))
+
+	rawVolumes = map[string]*volume{
+		"foo": &volume{},
+		"bar": &volume{},
+	}
+	c = &config{RawVolumes: rawVolumes}
+	c.setVolumeMap()
+	assert.Equal(t, "bar", c.Volume("bar").Name())
+}
