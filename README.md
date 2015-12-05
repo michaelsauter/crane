@@ -111,6 +111,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `env` (array/mapping) Can be declared as a string array with `"key[=value]"` items or a string-to-string mapping where each `key: value` will be translated to the corresponding `"key=value"` string.
 	* `env-file` (array)
 	* `expose` (array) Ports to expose to linked containers.
+	* `group-add` (array) Need Docker >= 1.8
 	* `hostname` (string)
 	* `interactive` (boolean)
 	* `label` (array/mapping) Can be declared as a string array with `"key[=value]"` items or a string-to-string mapping where each `key: value` will be translated to the corresponding `"key=value"` string.

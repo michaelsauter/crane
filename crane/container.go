@@ -87,6 +87,7 @@ type RunParameters struct {
 	RawEnv           interface{} `json:"env" yaml:"env"`
 	RawEnvFile       []string    `json:"env-file" yaml:"env-file"`
 	RawExpose        []string    `json:"expose" yaml:"expose"`
+	RawGroupAdd      []string    `json:"group-add" yaml:"group-add"`
 	RawHostname      string      `json:"hostname" yaml:"hostname"`
 	Interactive      bool        `json:"interactive" yaml:"interactive"`
 	RawLabel         interface{} `json:"label" yaml:"label"`
@@ -356,6 +357,14 @@ func (r RunParameters) Expose() []string {
 		expose = append(expose, os.ExpandEnv(rawExpose))
 	}
 	return expose
+}
+
+func (r RunParameters) GroupAdd() []string {
+	var groupAdd []string
+	for _, rawGroupAdd := range r.RawGroupAdd {
+		groupAdd = append(groupAdd, os.ExpandEnv(rawGroupAdd))
+	}
+	return groupAdd
 }
 
 func (r RunParameters) Hostname() string {
@@ -695,6 +704,10 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	// Expose
 	for _, expose := range c.RunParams().Expose() {
 		args = append(args, "--expose", expose)
+	}
+	// GroupAdd
+	for _, groupAdd := range c.RunParams().GroupAdd() {
+		args = append(args, "--group-add", groupAdd)
 	}
 	// Host
 	if len(c.RunParams().Hostname()) > 0 {
