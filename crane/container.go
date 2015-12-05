@@ -69,59 +69,60 @@ type BuildParameters struct {
 }
 
 type RunParameters struct {
-	RawAddHost       []string    `json:"add-host" yaml:"add-host"`
-	BlkioWeight      int         `json:"blkio-weight" yaml:"blkio-weight"`
-	RawCapAdd        []string    `json:"cap-add" yaml:"cap-add"`
-	RawCapDrop       []string    `json:"cap-drop" yaml:"cap-drop"`
-	RawCgroupParent  string      `json:"cgroup-parent" yaml:"cgroup-parent"`
-	CPUPeriod        int         `json:"cpu-period" yaml:"cpu-period"`
-	CPUQuota         int         `json:"cpu-quota" yaml:"cpu-quota"`
-	RawCidfile       string      `json:"cidfile" yaml:"cidfile"`
-	CPUset           int         `json:"cpuset" yaml:"cpuset"`
-	CPUShares        int         `json:"cpu-shares" yaml:"cpu-shares"`
-	Detach           bool        `json:"detach" yaml:"detach"`
-	RawDevice        []string    `json:"device" yaml:"device"`
-	RawDNS           []string    `json:"dns" yaml:"dns"`
-	RawDNSOpt        []string    `json:"dns-opt" yaml:"dns-opt"`
-	RawDNSSearch     []string    `json:"dns-search" yaml:"dns-search"`
-	RawEntrypoint    string      `json:"entrypoint" yaml:"entrypoint"`
-	RawEnv           interface{} `json:"env" yaml:"env"`
-	RawEnvFile       []string    `json:"env-file" yaml:"env-file"`
-	RawExpose        []string    `json:"expose" yaml:"expose"`
-	RawGroupAdd      []string    `json:"group-add" yaml:"group-add"`
-	RawHostname      string      `json:"hostname" yaml:"hostname"`
-	Interactive      bool        `json:"interactive" yaml:"interactive"`
-	RawKernelMemory  string      `json:"kernel-memory" yaml:"kernel-memory"`
-	RawLabel         interface{} `json:"label" yaml:"label"`
-	RawLabelFile     []string    `json:"label-file" yaml:"label-file"`
-	RawLink          []string    `json:"link" yaml:"link"`
-	RawLogDriver     string      `json:"log-driver" yaml:"log-driver"`
-	RawLogOpt        []string    `json:"log-opt" yaml:"log-opt"`
-	RawLxcConf       []string    `json:"lxc-conf" yaml:"lxc-conf"`
-	RawMacAddress    string      `json:"mac-address" yaml:"mac-address"`
-	RawMemory        string      `json:"memory" yaml:"memory"`
-	RawMemorySwap    string      `json:"memory-swap" yaml:"memory-swap"`
-	MemorySwappiness int         `json:"memory-swappiness" yaml:"memory-swappiness"`
-	RawNet           string      `json:"net" yaml:"net"`
-	OomKillDisable   bool        `json:"oom-kill-disable" yaml:"oom-kill-disable"`
-	RawPid           string      `json:"pid" yaml:"pid"`
-	Privileged       bool        `json:"privileged" yaml:"privileged"`
-	RawPublish       []string    `json:"publish" yaml:"publish"`
-	PublishAll       bool        `json:"publish-all" yaml:"publish-all"`
-	ReadOnly         bool        `json:"read-only" yaml:"read-only"`
-	RawRestart       string      `json:"restart" yaml:"restart"`
-	Rm               bool        `json:"rm" yaml:"rm"`
-	RawSecurityOpt   []string    `json:"security-opt" yaml:"security-opt"`
-	SigProxy         OptBool     `json:"sig-proxy" yaml:"sig-proxy"`
-	RawStopSignal    string      `json:"stop-signal" yaml:"stop-signal"`
-	Tty              bool        `json:"tty" yaml:"tty"`
-	RawUlimit        []string    `json:"ulimit" yaml:"ulimit"`
-	RawUser          string      `json:"user" yaml:"user"`
-	RawUts           string      `json:"uts" yaml:"uts"`
-	RawVolume        []string    `json:"volume" yaml:"volume"`
-	RawVolumesFrom   []string    `json:"volumes-from" yaml:"volumes-from"`
-	RawWorkdir       string      `json:"workdir" yaml:"workdir"`
-	RawCmd           interface{} `json:"cmd" yaml:"cmd"`
+	RawAddHost           []string    `json:"add-host" yaml:"add-host"`
+	BlkioWeight          int         `json:"blkio-weight" yaml:"blkio-weight"`
+	RawCapAdd            []string    `json:"cap-add" yaml:"cap-add"`
+	RawCapDrop           []string    `json:"cap-drop" yaml:"cap-drop"`
+	RawCgroupParent      string      `json:"cgroup-parent" yaml:"cgroup-parent"`
+	CPUPeriod            int         `json:"cpu-period" yaml:"cpu-period"`
+	CPUQuota             int         `json:"cpu-quota" yaml:"cpu-quota"`
+	RawCidfile           string      `json:"cidfile" yaml:"cidfile"`
+	CPUset               int         `json:"cpuset" yaml:"cpuset"`
+	CPUShares            int         `json:"cpu-shares" yaml:"cpu-shares"`
+	Detach               bool        `json:"detach" yaml:"detach"`
+	RawDevice            []string    `json:"device" yaml:"device"`
+	RawDNS               []string    `json:"dns" yaml:"dns"`
+	RawDNSOpt            []string    `json:"dns-opt" yaml:"dns-opt"`
+	RawDNSSearch         []string    `json:"dns-search" yaml:"dns-search"`
+	RawEntrypoint        string      `json:"entrypoint" yaml:"entrypoint"`
+	RawEnv               interface{} `json:"env" yaml:"env"`
+	RawEnvFile           []string    `json:"env-file" yaml:"env-file"`
+	RawExpose            []string    `json:"expose" yaml:"expose"`
+	RawGroupAdd          []string    `json:"group-add" yaml:"group-add"`
+	RawHostname          string      `json:"hostname" yaml:"hostname"`
+	Interactive          bool        `json:"interactive" yaml:"interactive"`
+	RawKernelMemory      string      `json:"kernel-memory" yaml:"kernel-memory"`
+	RawLabel             interface{} `json:"label" yaml:"label"`
+	RawLabelFile         []string    `json:"label-file" yaml:"label-file"`
+	RawLink              []string    `json:"link" yaml:"link"`
+	RawLogDriver         string      `json:"log-driver" yaml:"log-driver"`
+	RawLogOpt            []string    `json:"log-opt" yaml:"log-opt"`
+	RawLxcConf           []string    `json:"lxc-conf" yaml:"lxc-conf"`
+	RawMacAddress        string      `json:"mac-address" yaml:"mac-address"`
+	RawMemory            string      `json:"memory" yaml:"memory"`
+	RawMemoryReservation string      `json:"memory-reservation" yaml:"memory-reservation"`
+	RawMemorySwap        string      `json:"memory-swap" yaml:"memory-swap"`
+	MemorySwappiness     int         `json:"memory-swappiness" yaml:"memory-swappiness"`
+	RawNet               string      `json:"net" yaml:"net"`
+	OomKillDisable       bool        `json:"oom-kill-disable" yaml:"oom-kill-disable"`
+	RawPid               string      `json:"pid" yaml:"pid"`
+	Privileged           bool        `json:"privileged" yaml:"privileged"`
+	RawPublish           []string    `json:"publish" yaml:"publish"`
+	PublishAll           bool        `json:"publish-all" yaml:"publish-all"`
+	ReadOnly             bool        `json:"read-only" yaml:"read-only"`
+	RawRestart           string      `json:"restart" yaml:"restart"`
+	Rm                   bool        `json:"rm" yaml:"rm"`
+	RawSecurityOpt       []string    `json:"security-opt" yaml:"security-opt"`
+	SigProxy             OptBool     `json:"sig-proxy" yaml:"sig-proxy"`
+	RawStopSignal        string      `json:"stop-signal" yaml:"stop-signal"`
+	Tty                  bool        `json:"tty" yaml:"tty"`
+	RawUlimit            []string    `json:"ulimit" yaml:"ulimit"`
+	RawUser              string      `json:"user" yaml:"user"`
+	RawUts               string      `json:"uts" yaml:"uts"`
+	RawVolume            []string    `json:"volume" yaml:"volume"`
+	RawVolumesFrom       []string    `json:"volumes-from" yaml:"volumes-from"`
+	RawWorkdir           string      `json:"workdir" yaml:"workdir"`
+	RawCmd               interface{} `json:"cmd" yaml:"cmd"`
 }
 
 type RmParameters struct {
@@ -447,6 +448,10 @@ func (r RunParameters) MacAddress() string {
 
 func (r RunParameters) Memory() string {
 	return os.ExpandEnv(r.RawMemory)
+}
+
+func (r RunParameters) MemoryReservation() string {
+	return os.ExpandEnv(r.RawMemoryReservation)
 }
 
 func (r RunParameters) MemorySwap() string {
@@ -781,6 +786,10 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	// Memory
 	if len(c.RunParams().Memory()) > 0 {
 		args = append(args, "--memory", c.RunParams().Memory())
+	}
+	// MemoryReservation
+	if len(c.RunParams().MemoryReservation()) > 0 {
+		args = append(args, "--memory-reservation", c.RunParams().MemoryReservation())
 	}
 	// MemorySwap
 	if len(c.RunParams().MemorySwap()) > 0 {

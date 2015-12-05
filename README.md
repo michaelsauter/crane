@@ -124,6 +124,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `lxc-conf` (array)
 	* `mac-address` (string)
 	* `memory` (string)
+	* `memory-reservation` (string) Need Docker >= 1.9
 	* `memory-swap` (string)
 	* `memory-swappiness` (int) Need Docker >= 1.8
 	* `net` (string) The `container:id` syntax is not supported, use `container:name` if you want to reuse another container network stack.
