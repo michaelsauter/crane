@@ -90,6 +90,7 @@ type RunParameters struct {
 	RawGroupAdd      []string    `json:"group-add" yaml:"group-add"`
 	RawHostname      string      `json:"hostname" yaml:"hostname"`
 	Interactive      bool        `json:"interactive" yaml:"interactive"`
+	RawKernelMemory  string      `json:"kernel-memory" yaml:"kernel-memory"`
 	RawLabel         interface{} `json:"label" yaml:"label"`
 	RawLabelFile     []string    `json:"label-file" yaml:"label-file"`
 	RawLink          []string    `json:"link" yaml:"link"`
@@ -369,6 +370,10 @@ func (r RunParameters) GroupAdd() []string {
 
 func (r RunParameters) Hostname() string {
 	return os.ExpandEnv(r.RawHostname)
+}
+
+func (r RunParameters) KernelMemory() string {
+	return os.ExpandEnv(r.RawKernelMemory)
 }
 
 func (r RunParameters) Label() []string {
@@ -716,6 +721,10 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	// Interactive
 	if c.RunParams().Interactive {
 		args = append(args, "--interactive")
+	}
+	// KernelMemory
+	if len(c.RunParams().KernelMemory()) > 0 {
+		args = append(args, "--kernel-memory", c.RunParams().KernelMemory())
 	}
 	// Label
 	for _, label := range c.RunParams().Label() {
