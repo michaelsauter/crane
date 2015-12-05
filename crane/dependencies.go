@@ -10,6 +10,7 @@ type Dependencies struct {
 	Link        []string
 	VolumesFrom []string
 	Net         string
+	IPC         string
 }
 
 // includes checks whether the given needle is
@@ -26,7 +27,7 @@ func (d *Dependencies) includes(needle string) bool {
 // requireStarted checks whether the given needle needs
 // to be running in order to be satisfied.
 func (d *Dependencies) requireStarted(needle string) bool {
-	if needle == d.Net {
+	if needle == d.Net || needle == d.IPC {
 		return true
 	}
 	for _, name := range d.Link {

@@ -91,6 +91,7 @@ type RunParameters struct {
 	RawGroupAdd          []string    `json:"group-add" yaml:"group-add"`
 	RawHostname          string      `json:"hostname" yaml:"hostname"`
 	Interactive          bool        `json:"interactive" yaml:"interactive"`
+	RawIPC               string      `json:"ipc" yaml:"ipc"`
 	RawKernelMemory      string      `json:"kernel-memory" yaml:"kernel-memory"`
 	RawLabel             interface{} `json:"label" yaml:"label"`
 	RawLabelFile         []string    `json:"label-file" yaml:"label-file"`
@@ -174,17 +175,6 @@ func (o OptBool) Falsy() bool {
 	return o.Defined && !o.Value
 }
 
-func (c *container) netContainer() (name string) {
-	if netParts := strings.Split(c.RunParams().Net(), ":"); len(netParts) == 2 && netParts[0] == "container" {
-		// We'll just assume here that the reference is a name, and not an id, even
-		// though docker supports it, since we have no bullet-proof way to tell:
-		// heuristics to detect whether it's an id could bring false positives, and
-		// a lookup in the list of container names could bring false negatives
-		name = netParts[1]
-	}
-	return
-}
-
 func (c *container) BuildParams() BuildParameters {
 	return c.RawBuild
 }
@@ -221,9 +211,14 @@ func (c *container) Dependencies() *Dependencies {
 			dependencies.VolumesFrom = append(dependencies.VolumesFrom, volumesFromName)
 		}
 	}
-	if dependencies.Net = c.netContainer(); dependencies.Net != "" {
+	if dependencies.Net = containerReference(c.RunParams().Net()); dependencies.Net != "" {
 		if !includes(excluded, dependencies.Net) && !dependencies.includes(dependencies.Net) {
 			dependencies.All = append(dependencies.All, dependencies.Net)
+		}
+	}
+	if dependencies.IPC = containerReference(c.RunParams().IPC()); dependencies.IPC != "" {
+		if !includes(excluded, dependencies.IPC) && !dependencies.includes(dependencies.IPC) {
+			dependencies.All = append(dependencies.All, dependencies.IPC)
 		}
 	}
 	return dependencies
@@ -381,6 +376,10 @@ func (r RunParameters) GroupAdd() []string {
 
 func (r RunParameters) Hostname() string {
 	return os.ExpandEnv(r.RawHostname)
+}
+
+func (r RunParameters) IPC() string {
+	return os.ExpandEnv(r.RawIPC)
 }
 
 func (r RunParameters) KernelMemory() string {
@@ -746,6 +745,17 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	if c.RunParams().Interactive {
 		args = append(args, "--interactive")
 	}
+	// IPC
+	if len(c.RunParams().IPC()) > 0 {
+		ipcContainer := containerReference(c.RunParams().IPC())
+		if len(ipcContainer) > 0 {
+			if !includes(excluded, ipcContainer) {
+				args = append(args, "--ipc", "container:"+cfg.Container(ipcContainer).ActualName())
+			}
+		} else {
+			args = append(args, "--ipc", c.RunParams().IPC())
+		}
+	}
 	// KernelMemory
 	if len(c.RunParams().KernelMemory()) > 0 {
 		args = append(args, "--kernel-memory", c.RunParams().KernelMemory())
@@ -801,9 +811,10 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	}
 	// Net
 	if c.RunParams().Net() != "bridge" {
-		if len(c.netContainer()) > 0 {
-			if !includes(excluded, c.netContainer()) {
-				args = append(args, "--net", cfg.Container(c.netContainer()).ActualName())
+		netContainer := containerReference(c.RunParams().Net())
+		if len(netContainer) > 0 {
+			if !includes(excluded, netContainer) {
+				args = append(args, "--net", "container:"+cfg.Container(netContainer).ActualName())
 			}
 		} else {
 			args = append(args, "--net", c.RunParams().Net())
@@ -1132,6 +1143,18 @@ func imageIDFromTag(tag string) string {
 		return ""
 	}
 	return string(output)
+}
+
+// If the reference follows the `container:foo` pattern, return "foo"; otherwise, return an empty string
+func containerReference(reference string) (name string) {
+	if parts := strings.Split(reference, ":"); len(parts) == 2 && parts[0] == "container" {
+		// We'll just assume here that the reference is a name, and not an id, even
+		// though docker supports it, since we have no bullet-proof way to tell:
+		// heuristics to detect whether it's an id could bring false positives, and
+		// a lookup in the list of container names could bring false negatives
+		name = parts[1]
+	}
+	return
 }
 
 // Attempt to parse the value referenced by the go template
