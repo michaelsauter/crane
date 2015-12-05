@@ -133,6 +133,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `publish-all` (boolean)
 	* `read-only` (boolean)
 	* `restart` (string) Restart policy.
+	* `stop-signal` (string)  Need Docker >= 1.9
 	* `sig-proxy` (boolean) `true` by default
 	* `rm` (boolean)
 	* `tty` (boolean)

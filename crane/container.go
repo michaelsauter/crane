@@ -112,6 +112,7 @@ type RunParameters struct {
 	Rm               bool        `json:"rm" yaml:"rm"`
 	RawSecurityOpt   []string    `json:"security-opt" yaml:"security-opt"`
 	SigProxy         OptBool     `json:"sig-proxy" yaml:"sig-proxy"`
+	RawStopSignal    string      `json:"stop-signal" yaml:"stop-signal"`
 	Tty              bool        `json:"tty" yaml:"tty"`
 	RawUlimit        []string    `json:"ulimit" yaml:"ulimit"`
 	RawUser          string      `json:"user" yaml:"user"`
@@ -475,6 +476,10 @@ func (r RunParameters) SecurityOpt() []string {
 	return securityOpt
 }
 
+func (r RunParameters) StopSignal() string {
+	return os.ExpandEnv(r.RawStopSignal)
+}
+
 func (r RunParameters) Ulimit() []string {
 	var ulimit []string
 	for _, rawUlimit := range r.RawUlimit {
@@ -820,6 +825,10 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	// SigProxy
 	if c.RunParams().SigProxy.Falsy() {
 		args = append(args, "--sig-proxy=false")
+	}
+	// StopSignal
+	if len(c.RunParams().StopSignal()) > 0 {
+		args = append(args, "--stop-signal", c.RunParams().StopSignal())
 	}
 	// Tty
 	if c.RunParams().Tty {
