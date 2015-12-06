@@ -94,7 +94,7 @@
   if you wanted to make sure both `web` and `database` are recreated, you can
   use the target `web` and extend it with `dependencies` like so:
   `crane run web+dependencies`. `affected` works the other way around, so if
-  you want to recreate `database` and all contaienrs that depend on it,
+  you want to recreate `database` and all containers that depend on it,
   execute `crane run database+affected`. You may also use the shortcuts `d` and
   `a`.
 
