@@ -133,7 +133,7 @@ func (uow *UnitOfWork) Pause() {
 }
 
 // Start containers.
-func (uow *UnitOfWork) Start() {
+func (uow *UnitOfWork) Start(excluded []string) {
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
 			container.Start(excluded)
@@ -157,7 +157,7 @@ func (uow *UnitOfWork) Kill() {
 	}
 }
 
-func (uow *UnitOfWork) Exec(cmds []string) {
+func (uow *UnitOfWork) Exec(cmds []string, excluded []string) {
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
 			container.Exec(cmds)

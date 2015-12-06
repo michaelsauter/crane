@@ -244,7 +244,7 @@ func (c *config) DependencyMap(excluded []string) map[string]*Dependencies {
 	dependencyMap := make(map[string]*Dependencies)
 	for _, container := range c.containerMap {
 		if !includes(excluded, container.Name()) {
-			dependencyMap[container.Name()] = container.Dependencies()
+			dependencyMap[container.Name()] = container.Dependencies(excluded)
 		}
 	}
 	return dependencyMap

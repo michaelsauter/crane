@@ -40,7 +40,7 @@ type ContainerInfo interface {
 	ActualName() string
 	Image() string
 	ID() string
-	Dependencies() *Dependencies
+	Dependencies(excluded []string) *Dependencies
 	Unique() bool
 	BuildParams() BuildParameters
 	RunParams() RunParameters
@@ -195,7 +195,7 @@ func (c *container) ExecParams() ExecParameters {
 	return c.RawExec
 }
 
-func (c *container) Dependencies() *Dependencies {
+func (c *container) Dependencies(excluded []string) *Dependencies {
 	dependencies := &Dependencies{}
 	for _, link := range c.RunParams().Link() {
 		linkName := strings.Split(link, ":")[0]
