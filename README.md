@@ -106,13 +106,17 @@ The map of containers consists of the name of the container mapped to the contai
 	* `detach` (boolean) `sudo docker attach <container name>` will work as normal.
 	* `device` (array) Add host devices.
 	* `dns` (array)
+	* `dns-opt` (array) Need Docker >= 1.9
 	* `dns-search` (array)
 	* `entrypoint` (string)
 	* `env` (array/mapping) Can be declared as a string array with `"key[=value]"` items or a string-to-string mapping where each `key: value` will be translated to the corresponding `"key=value"` string.
 	* `env-file` (array)
 	* `expose` (array) Ports to expose to linked containers.
+	* `group-add` (array) Need Docker >= 1.8
 	* `hostname` (string)
 	* `interactive` (boolean)
+	* `ipc` (string) The `container:id` syntax is not supported, use `container:name` if you want to reuse another container IPC.
+	* `kernel-memory` (string) Need Docker >= 1.9
 	* `label` (array/mapping) Can be declared as a string array with `"key[=value]"` items or a string-to-string mapping where each `key: value` will be translated to the corresponding `"key=value"` string.
 	* `label-file` (array)
 	* `link` (array) Link containers.
@@ -121,7 +125,9 @@ The map of containers consists of the name of the container mapped to the contai
 	* `lxc-conf` (array)
 	* `mac-address` (string)
 	* `memory` (string)
+	* `memory-reservation` (string) Need Docker >= 1.9
 	* `memory-swap` (string)
+	* `memory-swappiness` (int) Need Docker >= 1.8
 	* `net` (string) The `container:id` syntax is not supported, use `container:name` if you want to reuse another container network stack.
 	* `oom-kill-disable` (bool) Need Docker >= 1.7
 	* `pid` (string)
@@ -130,6 +136,8 @@ The map of containers consists of the name of the container mapped to the contai
 	* `publish-all` (boolean)
 	* `read-only` (boolean)
 	* `restart` (string) Restart policy.
+	* `security-opt` (array)
+	* `stop-signal` (string)  Need Docker >= 1.9
 	* `sig-proxy` (boolean) `true` by default
 	* `rm` (boolean)
 	* `tty` (boolean)

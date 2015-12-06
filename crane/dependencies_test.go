@@ -7,14 +7,16 @@ import (
 
 func TestIncludes(t *testing.T) {
 	dependencies := Dependencies{
-		All:         []string{"link", "volumesFrom", "net"},
+		All:         []string{"link", "volumesFrom", "net", "ipc"},
 		Link:        []string{"link"},
 		VolumesFrom: []string{"volumesFrom"},
 		Net:         "net",
+		IPC:         "ipc",
 	}
 	assert.True(t, dependencies.includes("link"))
 	assert.True(t, dependencies.includes("volumesFrom"))
 	assert.True(t, dependencies.includes("net"))
+	assert.True(t, dependencies.includes("ipc"))
 	assert.False(t, dependencies.includes("non-existent"))
 }
 

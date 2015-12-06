@@ -69,54 +69,61 @@ type BuildParameters struct {
 }
 
 type RunParameters struct {
-	RawAddHost      []string    `json:"add-host" yaml:"add-host"`
-	BlkioWeight     int         `json:"blkio-weight" yaml:"blkio-weight"`
-	RawCapAdd       []string    `json:"cap-add" yaml:"cap-add"`
-	RawCapDrop      []string    `json:"cap-drop" yaml:"cap-drop"`
-	RawCgroupParent string      `json:"cgroup-parent" yaml:"cgroup-parent"`
-	CPUPeriod       int         `json:"cpu-period" yaml:"cpu-period"`
-	CPUQuota        int         `json:"cpu-quota" yaml:"cpu-quota"`
-	RawCidfile      string      `json:"cidfile" yaml:"cidfile"`
-	CPUset          int         `json:"cpuset" yaml:"cpuset"`
-	CPUShares       int         `json:"cpu-shares" yaml:"cpu-shares"`
-	Detach          bool        `json:"detach" yaml:"detach"`
-	RawDevice       []string    `json:"device" yaml:"device"`
-	RawDNS          []string    `json:"dns" yaml:"dns"`
-	RawDNSSearch    []string    `json:"dns-search" yaml:"dns-search"`
-	RawEntrypoint   string      `json:"entrypoint" yaml:"entrypoint"`
-	RawEnv          interface{} `json:"env" yaml:"env"`
-	RawEnvFile      []string    `json:"env-file" yaml:"env-file"`
-	RawExpose       []string    `json:"expose" yaml:"expose"`
-	RawHostname     string      `json:"hostname" yaml:"hostname"`
-	Interactive     bool        `json:"interactive" yaml:"interactive"`
-	RawLabel        interface{} `json:"label" yaml:"label"`
-	RawLabelFile    []string    `json:"label-file" yaml:"label-file"`
-	RawLink         []string    `json:"link" yaml:"link"`
-	RawLogDriver    string      `json:"log-driver" yaml:"log-driver"`
-	RawLogOpt       []string    `json:"log-opt" yaml:"log-opt"`
-	RawLxcConf      []string    `json:"lxc-conf" yaml:"lxc-conf"`
-	RawMacAddress   string      `json:"mac-address" yaml:"mac-address"`
-	RawMemory       string      `json:"memory" yaml:"memory"`
-	RawMemorySwap   string      `json:"memory-swap" yaml:"memory-swap"`
-	RawNet          string      `json:"net" yaml:"net"`
-	OomKillDisable  bool        `json:"oom-kill-disable" yaml:"oom-kill-disable"`
-	RawPid          string      `json:"pid" yaml:"pid"`
-	Privileged      bool        `json:"privileged" yaml:"privileged"`
-	RawPublish      []string    `json:"publish" yaml:"publish"`
-	PublishAll      bool        `json:"publish-all" yaml:"publish-all"`
-	ReadOnly        bool        `json:"read-only" yaml:"read-only"`
-	RawRestart      string      `json:"restart" yaml:"restart"`
-	Rm              bool        `json:"rm" yaml:"rm"`
-	RawSecurityOpt  []string    `json:"security-opt" yaml:"security-opt"`
-	SigProxy        OptBool     `json:"sig-proxy" yaml:"sig-proxy"`
-	Tty             bool        `json:"tty" yaml:"tty"`
-	RawUlimit       []string    `json:"ulimit" yaml:"ulimit"`
-	RawUser         string      `json:"user" yaml:"user"`
-	RawUts          string      `json:"uts" yaml:"uts"`
-	RawVolume       []string    `json:"volume" yaml:"volume"`
-	RawVolumesFrom  []string    `json:"volumes-from" yaml:"volumes-from"`
-	RawWorkdir      string      `json:"workdir" yaml:"workdir"`
-	RawCmd          interface{} `json:"cmd" yaml:"cmd"`
+	RawAddHost           []string    `json:"add-host" yaml:"add-host"`
+	BlkioWeight          int         `json:"blkio-weight" yaml:"blkio-weight"`
+	RawCapAdd            []string    `json:"cap-add" yaml:"cap-add"`
+	RawCapDrop           []string    `json:"cap-drop" yaml:"cap-drop"`
+	RawCgroupParent      string      `json:"cgroup-parent" yaml:"cgroup-parent"`
+	CPUPeriod            int         `json:"cpu-period" yaml:"cpu-period"`
+	CPUQuota             int         `json:"cpu-quota" yaml:"cpu-quota"`
+	RawCidfile           string      `json:"cidfile" yaml:"cidfile"`
+	CPUset               int         `json:"cpuset" yaml:"cpuset"`
+	CPUShares            int         `json:"cpu-shares" yaml:"cpu-shares"`
+	Detach               bool        `json:"detach" yaml:"detach"`
+	RawDevice            []string    `json:"device" yaml:"device"`
+	RawDNS               []string    `json:"dns" yaml:"dns"`
+	RawDNSOpt            []string    `json:"dns-opt" yaml:"dns-opt"`
+	RawDNSSearch         []string    `json:"dns-search" yaml:"dns-search"`
+	RawEntrypoint        string      `json:"entrypoint" yaml:"entrypoint"`
+	RawEnv               interface{} `json:"env" yaml:"env"`
+	RawEnvFile           []string    `json:"env-file" yaml:"env-file"`
+	RawExpose            []string    `json:"expose" yaml:"expose"`
+	RawGroupAdd          []string    `json:"group-add" yaml:"group-add"`
+	RawHostname          string      `json:"hostname" yaml:"hostname"`
+	Interactive          bool        `json:"interactive" yaml:"interactive"`
+	RawIPC               string      `json:"ipc" yaml:"ipc"`
+	RawKernelMemory      string      `json:"kernel-memory" yaml:"kernel-memory"`
+	RawLabel             interface{} `json:"label" yaml:"label"`
+	RawLabelFile         []string    `json:"label-file" yaml:"label-file"`
+	RawLink              []string    `json:"link" yaml:"link"`
+	RawLogDriver         string      `json:"log-driver" yaml:"log-driver"`
+	RawLogOpt            []string    `json:"log-opt" yaml:"log-opt"`
+	RawLxcConf           []string    `json:"lxc-conf" yaml:"lxc-conf"`
+	RawMacAddress        string      `json:"mac-address" yaml:"mac-address"`
+	RawMemory            string      `json:"memory" yaml:"memory"`
+	RawMemoryReservation string      `json:"memory-reservation" yaml:"memory-reservation"`
+	RawMemorySwap        string      `json:"memory-swap" yaml:"memory-swap"`
+	MemorySwappiness     int         `json:"memory-swappiness" yaml:"memory-swappiness"`
+	RawNet               string      `json:"net" yaml:"net"`
+	OomKillDisable       bool        `json:"oom-kill-disable" yaml:"oom-kill-disable"`
+	RawPid               string      `json:"pid" yaml:"pid"`
+	Privileged           bool        `json:"privileged" yaml:"privileged"`
+	RawPublish           []string    `json:"publish" yaml:"publish"`
+	PublishAll           bool        `json:"publish-all" yaml:"publish-all"`
+	ReadOnly             bool        `json:"read-only" yaml:"read-only"`
+	RawRestart           string      `json:"restart" yaml:"restart"`
+	Rm                   bool        `json:"rm" yaml:"rm"`
+	RawSecurityOpt       []string    `json:"security-opt" yaml:"security-opt"`
+	SigProxy             OptBool     `json:"sig-proxy" yaml:"sig-proxy"`
+	RawStopSignal        string      `json:"stop-signal" yaml:"stop-signal"`
+	Tty                  bool        `json:"tty" yaml:"tty"`
+	RawUlimit            []string    `json:"ulimit" yaml:"ulimit"`
+	RawUser              string      `json:"user" yaml:"user"`
+	RawUts               string      `json:"uts" yaml:"uts"`
+	RawVolume            []string    `json:"volume" yaml:"volume"`
+	RawVolumesFrom       []string    `json:"volumes-from" yaml:"volumes-from"`
+	RawWorkdir           string      `json:"workdir" yaml:"workdir"`
+	RawCmd               interface{} `json:"cmd" yaml:"cmd"`
 }
 
 type RmParameters struct {
@@ -168,17 +175,6 @@ func (o OptBool) Falsy() bool {
 	return o.Defined && !o.Value
 }
 
-func (c *container) netContainer() (name string) {
-	if netParts := strings.Split(c.RunParams().Net(), ":"); len(netParts) == 2 && netParts[0] == "container" {
-		// We'll just assume here that the reference is a name, and not an id, even
-		// though docker supports it, since we have no bullet-proof way to tell:
-		// heuristics to detect whether it's an id could bring false positives, and
-		// a lookup in the list of container names could bring false negatives
-		name = netParts[1]
-	}
-	return
-}
-
 func (c *container) BuildParams() BuildParameters {
 	return c.RawBuild
 }
@@ -215,9 +211,14 @@ func (c *container) Dependencies() *Dependencies {
 			dependencies.VolumesFrom = append(dependencies.VolumesFrom, volumesFromName)
 		}
 	}
-	if dependencies.Net = c.netContainer(); dependencies.Net != "" {
+	if dependencies.Net = containerReference(c.RunParams().Net()); dependencies.Net != "" {
 		if !includes(excluded, dependencies.Net) && !dependencies.includes(dependencies.Net) {
 			dependencies.All = append(dependencies.All, dependencies.Net)
+		}
+	}
+	if dependencies.IPC = containerReference(c.RunParams().IPC()); dependencies.IPC != "" {
+		if !includes(excluded, dependencies.IPC) && !dependencies.includes(dependencies.IPC) {
+			dependencies.All = append(dependencies.All, dependencies.IPC)
 		}
 	}
 	return dependencies
@@ -310,6 +311,14 @@ func (r RunParameters) DNS() []string {
 	return dns
 }
 
+func (r RunParameters) DNSOpt() []string {
+	var dnsOpt []string
+	for _, rawDNSOpt := range r.RawDNSOpt {
+		dnsOpt = append(dnsOpt, os.ExpandEnv(rawDNSOpt))
+	}
+	return dnsOpt
+}
+
 func (r RunParameters) DNSSearch() []string {
 	var dnsSearch []string
 	for _, rawDNSSearch := range r.RawDNSSearch {
@@ -357,8 +366,24 @@ func (r RunParameters) Expose() []string {
 	return expose
 }
 
+func (r RunParameters) GroupAdd() []string {
+	var groupAdd []string
+	for _, rawGroupAdd := range r.RawGroupAdd {
+		groupAdd = append(groupAdd, os.ExpandEnv(rawGroupAdd))
+	}
+	return groupAdd
+}
+
 func (r RunParameters) Hostname() string {
 	return os.ExpandEnv(r.RawHostname)
+}
+
+func (r RunParameters) IPC() string {
+	return os.ExpandEnv(r.RawIPC)
+}
+
+func (r RunParameters) KernelMemory() string {
+	return os.ExpandEnv(r.RawKernelMemory)
 }
 
 func (r RunParameters) Label() []string {
@@ -424,6 +449,10 @@ func (r RunParameters) Memory() string {
 	return os.ExpandEnv(r.RawMemory)
 }
 
+func (r RunParameters) MemoryReservation() string {
+	return os.ExpandEnv(r.RawMemoryReservation)
+}
+
 func (r RunParameters) MemorySwap() string {
 	return os.ExpandEnv(r.RawMemorySwap)
 }
@@ -458,6 +487,10 @@ func (r RunParameters) SecurityOpt() []string {
 		securityOpt = append(securityOpt, os.ExpandEnv(rawSecurityOpt))
 	}
 	return securityOpt
+}
+
+func (r RunParameters) StopSignal() string {
+	return os.ExpandEnv(r.RawStopSignal)
 }
 
 func (r RunParameters) Ulimit() []string {
@@ -675,6 +708,11 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	for _, dns := range c.RunParams().DNS() {
 		args = append(args, "--dns", dns)
 	}
+
+	// DNSOpt
+	for _, dnsOpt := range c.RunParams().DNSOpt() {
+		args = append(args, "--dns-opt", dnsOpt)
+	}
 	// DNS Search
 	for _, dnsSearch := range c.RunParams().DNSSearch() {
 		args = append(args, "--dns-search", dnsSearch)
@@ -695,6 +733,10 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	for _, expose := range c.RunParams().Expose() {
 		args = append(args, "--expose", expose)
 	}
+	// GroupAdd
+	for _, groupAdd := range c.RunParams().GroupAdd() {
+		args = append(args, "--group-add", groupAdd)
+	}
 	// Host
 	if len(c.RunParams().Hostname()) > 0 {
 		args = append(args, "--hostname", c.RunParams().Hostname())
@@ -702,6 +744,21 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	// Interactive
 	if c.RunParams().Interactive {
 		args = append(args, "--interactive")
+	}
+	// IPC
+	if len(c.RunParams().IPC()) > 0 {
+		ipcContainer := containerReference(c.RunParams().IPC())
+		if len(ipcContainer) > 0 {
+			if !includes(excluded, ipcContainer) {
+				args = append(args, "--ipc", "container:"+cfg.Container(ipcContainer).ActualName())
+			}
+		} else {
+			args = append(args, "--ipc", c.RunParams().IPC())
+		}
+	}
+	// KernelMemory
+	if len(c.RunParams().KernelMemory()) > 0 {
+		args = append(args, "--kernel-memory", c.RunParams().KernelMemory())
 	}
 	// Label
 	for _, label := range c.RunParams().Label() {
@@ -740,15 +797,24 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	if len(c.RunParams().Memory()) > 0 {
 		args = append(args, "--memory", c.RunParams().Memory())
 	}
+	// MemoryReservation
+	if len(c.RunParams().MemoryReservation()) > 0 {
+		args = append(args, "--memory-reservation", c.RunParams().MemoryReservation())
+	}
 	// MemorySwap
 	if len(c.RunParams().MemorySwap()) > 0 {
 		args = append(args, "--memory-swap", c.RunParams().MemorySwap())
 	}
+	// MemorySwappiness
+	if c.RunParams().MemorySwappiness > -1 {
+		args = append(args, "--memory-swappiness", strconv.Itoa(c.RunParams().MemorySwappiness))
+	}
 	// Net
 	if c.RunParams().Net() != "bridge" {
-		if len(c.netContainer()) > 0 {
-			if !includes(excluded, c.netContainer()) {
-				args = append(args, "--net", cfg.Container(c.netContainer()).ActualName())
+		netContainer := containerReference(c.RunParams().Net())
+		if len(netContainer) > 0 {
+			if !includes(excluded, netContainer) {
+				args = append(args, "--net", "container:"+cfg.Container(netContainer).ActualName())
 			}
 		} else {
 			args = append(args, "--net", c.RunParams().Net())
@@ -793,6 +859,10 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	// SigProxy
 	if c.RunParams().SigProxy.Falsy() {
 		args = append(args, "--sig-proxy=false")
+	}
+	// StopSignal
+	if len(c.RunParams().StopSignal()) > 0 {
+		args = append(args, "--stop-signal", c.RunParams().StopSignal())
 	}
 	// Tty
 	if c.RunParams().Tty {
@@ -1073,6 +1143,18 @@ func imageIDFromTag(tag string) string {
 		return ""
 	}
 	return string(output)
+}
+
+// If the reference follows the `container:foo` pattern, return "foo"; otherwise, return an empty string
+func containerReference(reference string) (name string) {
+	if parts := strings.Split(reference, ":"); len(parts) == 2 && parts[0] == "container" {
+		// We'll just assume here that the reference is a name, and not an id, even
+		// though docker supports it, since we have no bullet-proof way to tell:
+		// heuristics to detect whether it's an id could bring false positives, and
+		// a lookup in the list of container names could bring false negatives
+		name = parts[1]
+	}
+	return
 }
 
 // Attempt to parse the value referenced by the go template
