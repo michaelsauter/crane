@@ -82,6 +82,43 @@ func TestNewTarget(t *testing.T) {
 	}
 }
 
+func TestNewTargetNonExisting(t *testing.T) {
+	containerMap := NewStubbedContainerMap(false,
+		&container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},
+		&container{RawName: "b"},
+	)
+
+	cfg = &config{containerMap: containerMap}
+	dependencyMap := cfg.DependencyMap([]string{})
+
+	examples := []struct {
+		target   string
+		expected Target
+	}{
+		{
+			target: "a+dependencies",
+			expected: Target{
+				initial:      []string{"a"},
+				dependencies: []string{"b"},
+				affected:     []string{},
+			},
+		},
+		{
+			target: "b+affected",
+			expected: Target{
+				initial:      []string{"b"},
+				dependencies: []string{},
+				affected:     []string{},
+			},
+		},
+	}
+
+	for _, example := range examples {
+		target, _ := NewTarget(dependencyMap, example.target, []string{})
+		assert.Equal(t, example.expected, target)
+	}
+}
+
 func TestDeduplicationAll(t *testing.T) {
 	containerMap := NewStubbedContainerMap(true,
 		&container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},

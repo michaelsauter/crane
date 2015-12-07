@@ -100,7 +100,7 @@ func NewTarget(dependencyMap map[string]*Dependencies, targetFlag string, exclud
 			nextCascadingSeeds := []string{}
 			for _, seed := range cascadingSeeds {
 				for name, dependencies := range dependencyMap {
-					if _, alreadyIncluded := includedSet[name]; !alreadyIncluded {
+					if _, alreadyIncluded := includedSet[name]; !alreadyIncluded && cfg.Container(name).Exists() {
 						if dependencies.includes(seed) {
 							includedSet[name] = true
 							nextCascadingSeeds = append(nextCascadingSeeds, name)

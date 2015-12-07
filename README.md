@@ -257,12 +257,12 @@ in this example. If `default` were not specified, then `crane lift` would start
 It is also possible to extend the target to related containers. There are 2
 different "dynamic" groups, `affected` and `dependencies` (both have a short
 version `a` and `d`). In our example configuration above, when targeting the
-`postgres` container, the `blog` container would be considered to be "affected".
-When targeting the `blog` container, the `postgres` container would be
-considered as a "dependency". Therefore `crane run postgres+affected` will
-recreate both `postgres` and `blog`. Similarly, `crane run blog+dependencies`
-will recreate `blog` and `postgres`. It is possible to combine `affected` and
-`dependencies`.
+`postgres` container, if it had been started earlier, the `blog` container
+would be considered to be "affected". When targeting the `blog` container,
+the `postgres` container would be considered as a "dependency". Therefore
+`crane run postgres+affected` will recreate both `postgres` and `blog`.
+Similarly, `crane run blog+dependencies` will recreate `blog` and `postgres`.
+It is possible to combine `affected` and `dependencies`.
 
 
 ### Excluding containers
