@@ -261,7 +261,7 @@ func runCli() {
 
 	case startCommand.FullCommand():
 		commandAction(*startTargetArg, func(uow *UnitOfWork) {
-			uow.Start()
+			uow.Start(excluded)
 		}, true)
 
 	case stopCommand.FullCommand():
@@ -276,7 +276,7 @@ func runCli() {
 
 	case execCommand.FullCommand():
 		commandAction(*execTargetArg, func(uow *UnitOfWork) {
-			uow.Exec(*execCmdArg)
+			uow.Exec(*execCmdArg, excluded)
 		}, false)
 
 	case rmCommand.FullCommand():
