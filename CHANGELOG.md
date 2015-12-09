@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+* When calculating affected containers, only existing ones are taken into
+  account now
+  _@bjaglin_
+
+* Add flags `--ipc`, `--memory-reservation`, `--dns-opt`, `--stop-signal`,
+  `--kernel-memory`, `--group-add`, `--memory-swappiness`
+  _@bjaglin_
+
+* Fix removing containers when one or more of the targets is marked as unique
+  but no container exists for it
+  _@michaelsauter_
+
 ## 2.2.0 (2015-11-10)
 
 * Add new `generate` command, which passes the targeted portion of the
