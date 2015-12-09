@@ -339,8 +339,8 @@ in parallel, e.g. for CI builds. Container prefixes can also be supplied by the
 
 ### Override image tag
 By using a the `--tag` flag, it is possible to globally overrides image tags. If
-you specify `--tag 2.3.0-rc2`, an image name `repo/app:1.0` is treated as
-`repo/app:2.3.0-rc2`. The `CRANE_TAG` environment variable can also be used to
+you specify `--tag 2.0-rc2`, an image name `repo/app:1.0` is treated as
+`repo/app:2.0-rc2`. The `CRANE_TAG` environment variable can also be used to
 set the global tag.
 
 
