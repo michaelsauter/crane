@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.3.0 (2015-12-09)
 
 * When calculating affected containers, only existing ones are taken into
   account now
