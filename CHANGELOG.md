@@ -10,6 +10,9 @@
   `--kernel-memory`, `--group-add`, `--memory-swappiness`
   _@bjaglin_
 
+* Fix regression in `--net=container:foo`
+  _@bjaglin_
+
 * Fix removing containers when one or more of the targets is marked as unique
   but no container exists for it
   _@michaelsauter_
