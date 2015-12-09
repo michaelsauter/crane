@@ -1087,7 +1087,7 @@ func (c *container) InstancesOfStatus(status string) []string {
 			args = append(args, "--all")
 		}
 		output, err := commandOutput("docker", args)
-		if err != nil {
+		if err != nil || len(output) == 0 {
 			return []string{}
 		} else {
 			return strings.Split(output, "\n")
