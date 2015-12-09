@@ -103,7 +103,6 @@ type RunParameters struct {
 	RawMemory            string      `json:"memory" yaml:"memory"`
 	RawMemoryReservation string      `json:"memory-reservation" yaml:"memory-reservation"`
 	RawMemorySwap        string      `json:"memory-swap" yaml:"memory-swap"`
-	MemorySwappiness     int         `json:"memory-swappiness" yaml:"memory-swappiness"`
 	RawNet               string      `json:"net" yaml:"net"`
 	OomKillDisable       bool        `json:"oom-kill-disable" yaml:"oom-kill-disable"`
 	RawPid               string      `json:"pid" yaml:"pid"`
@@ -804,10 +803,6 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	// MemorySwap
 	if len(c.RunParams().MemorySwap()) > 0 {
 		args = append(args, "--memory-swap", c.RunParams().MemorySwap())
-	}
-	// MemorySwappiness
-	if c.RunParams().MemorySwappiness > -1 {
-		args = append(args, "--memory-swappiness", strconv.Itoa(c.RunParams().MemorySwappiness))
 	}
 	// Net
 	if c.RunParams().Net() != "bridge" {
