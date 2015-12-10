@@ -103,7 +103,7 @@ type RunParameters struct {
 	RawMemory            string      `json:"memory" yaml:"memory"`
 	RawMemoryReservation string      `json:"memory-reservation" yaml:"memory-reservation"`
 	RawMemorySwap        string      `json:"memory-swap" yaml:"memory-swap"`
-	MemorySwappiness     int         `json:"memory-swappiness" yaml:"memory-swappiness"`
+	MemorySwappiness     OptInt      `json:"memory-swappiness" yaml:"memory-swappiness"`
 	RawNet               string      `json:"net" yaml:"net"`
 	OomKillDisable       bool        `json:"oom-kill-disable" yaml:"oom-kill-disable"`
 	RawPid               string      `json:"pid" yaml:"pid"`
@@ -140,6 +140,11 @@ type ExecParameters struct {
 	Tty         bool `json:"tty" yaml:"tty"`
 }
 
+type OptInt struct {
+	Defined bool
+	Value   int
+}
+
 type OptBool struct {
 	Defined bool
 	Value   bool
@@ -149,6 +154,22 @@ type logSource struct {
 	Stdout io.Reader
 	Stderr io.Reader
 	Name   string
+}
+
+func (o *OptInt) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	if err := unmarshal(&o.Value); err != nil {
+		return err
+	}
+	o.Defined = true
+	return nil
+}
+
+func (o *OptInt) UnmarshalJSON(b []byte) (err error) {
+	if err := json.Unmarshal(b, &o.Value); err != nil {
+		return err
+	}
+	o.Defined = true
+	return
 }
 
 func (o *OptBool) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -806,8 +827,8 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 		args = append(args, "--memory-swap", c.RunParams().MemorySwap())
 	}
 	// MemorySwappiness
-	if c.RunParams().MemorySwappiness > -1 {
-		args = append(args, "--memory-swappiness", strconv.Itoa(c.RunParams().MemorySwappiness))
+	if c.RunParams().MemorySwappiness.Defined {
+		args = append(args, "--memory-swappiness", strconv.Itoa(c.RunParams().MemorySwappiness.Value))
 	}
 	// Net
 	if c.RunParams().Net() != "bridge" {

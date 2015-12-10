@@ -156,6 +156,38 @@ func TestCmd(t *testing.T) {
 	}
 }
 
+type OptIntWrapper struct {
+	OptInt OptInt `json:"OptInt" yaml:"OptInt"`
+}
+
+func TestOptIntJSON(t *testing.T) {
+	wrapper := OptIntWrapper{}
+	json.Unmarshal([]byte("{\"OptInt\": 1}"), &wrapper)
+	assert.Equal(t, OptInt{Defined: true, Value: 1}, wrapper.OptInt)
+
+	wrapper = OptIntWrapper{}
+	json.Unmarshal([]byte("{}"), &wrapper)
+	assert.False(t, wrapper.OptInt.Defined)
+
+	wrapper = OptIntWrapper{}
+	err := json.Unmarshal([]byte("{\"OptInt\": \"notanumber\"}"), &wrapper)
+	assert.Error(t, err)
+}
+
+func TestOptIntYAML(t *testing.T) {
+	wrapper := OptIntWrapper{}
+	yaml.Unmarshal([]byte("OptInt: 1"), &wrapper)
+	assert.Equal(t, OptInt{Defined: true, Value: 1}, wrapper.OptInt)
+
+	wrapper = OptIntWrapper{}
+	yaml.Unmarshal([]byte(""), &wrapper)
+	assert.False(t, wrapper.OptInt.Defined)
+
+	wrapper = OptIntWrapper{}
+	err := yaml.Unmarshal([]byte("OptInt: notanumber"), &wrapper)
+	assert.Error(t, err)
+}
+
 type OptBoolWrapper struct {
 	OptBool OptBool `json:"OptBool" yaml:"OptBool"`
 }
