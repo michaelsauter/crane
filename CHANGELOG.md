@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.3.1 (2015-12-12)
 
 * Fix compatibility with engine < 1.8.0 and wrongly-forced option
   memory-swappinness on engine >= 1.8.0
