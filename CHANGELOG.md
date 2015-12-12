@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+* Fix compatibility with engine < 1.8.0 and wrongly-forced option
+  memory-swappinness on engine >= 1.8.0
+  _@bjaglin_
+
 ## 2.3.0 (2015-12-09)
 
 * When calculating affected containers, only existing ones are taken into
