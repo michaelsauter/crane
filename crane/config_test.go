@@ -73,6 +73,16 @@ func TestUnmarshal(t *testing.T) {
             "run": {
                 "volumes-from": ["crane_app"],
                 "publish": ["80:80"],
+                "env": {
+                    "foo": 1234,
+                    "4567": "bar",
+                    "true": false
+                },
+                "label": [
+                    "foo=1234",
+                    "4567=bar",
+                    "true=false"
+                ],
                 "link": ["crane_mysql:db", "crane_memcached:cache"],
                 "detach": true
             }
@@ -96,6 +106,8 @@ func TestUnmarshal(t *testing.T) {
 `)
 	actual = unmarshal(json, ".json")
 	assert.Len(t, actual.RawContainerMap, 1)
+	assert.Len(t, actual.RawContainerMap["apache"].RunParams().Env(), 3)
+	assert.Len(t, actual.RawContainerMap["apache"].RunParams().Label(), 3)
 	assert.Len(t, actual.RawContainerMap["apache"].RunParams().Link(), 2)
 	assert.Len(t, actual.RawGroups, 1)
 	assert.Len(t, actual.RawHooksMap, 2)
@@ -110,6 +122,14 @@ func TestUnmarshal(t *testing.T) {
     run:
       volumes-from: ["crane_app"]
       publish: ["80:80"]
+      env:
+        foo: 1234
+        4567: bar
+        true: false
+      label:
+        - foo=1234
+        - 4567=bar
+        - true=false
       link: ["crane_mysql:db", "crane_memcached:cache"]
       detach: true
 groups:
@@ -124,6 +144,8 @@ hooks:
 `)
 	actual = unmarshal(yaml, ".yml")
 	assert.Len(t, actual.RawContainerMap, 1)
+	assert.Len(t, actual.RawContainerMap["apache"].RunParams().Env(), 3)
+	assert.Len(t, actual.RawContainerMap["apache"].RunParams().Label(), 3)
 	assert.Len(t, actual.RawContainerMap["apache"].RunParams().Link(), 2)
 	assert.Len(t, actual.RawGroups, 1)
 	assert.Len(t, actual.RawHooksMap, 2)
