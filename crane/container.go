@@ -353,22 +353,7 @@ func (r RunParameters) Entrypoint() string {
 }
 
 func (r RunParameters) Env() []string {
-	var env []string
-	if r.RawEnv != nil {
-		switch rawEnv := r.RawEnv.(type) {
-		case []interface{}:
-			for _, v := range rawEnv {
-				env = append(env, os.ExpandEnv(v.(string)))
-			}
-		case map[interface{}]interface{}:
-			for k, v := range rawEnv {
-				env = append(env, os.ExpandEnv(k.(string))+"="+os.ExpandEnv(v.(string)))
-			}
-		default:
-			printErrorf("env is of unknown type!")
-		}
-	}
-	return env
+	return sliceOrMap2ExpandedSlice(r.RawEnv)
 }
 
 func (r RunParameters) EnvFile() []string {
@@ -408,22 +393,7 @@ func (r RunParameters) KernelMemory() string {
 }
 
 func (r RunParameters) Label() []string {
-	var label []string
-	if r.RawLabel != nil {
-		switch rawLabel := r.RawLabel.(type) {
-		case []interface{}:
-			for _, v := range rawLabel {
-				label = append(label, os.ExpandEnv(v.(string)))
-			}
-		case map[interface{}]interface{}:
-			for k, v := range rawLabel {
-				label = append(label, os.ExpandEnv(k.(string))+"="+os.ExpandEnv(v.(string)))
-			}
-		default:
-			printErrorf("label is of unknown type!")
-		}
-	}
-	return label
+	return sliceOrMap2ExpandedSlice(r.RawLabel)
 }
 
 func (r RunParameters) LabelFile() []string {
@@ -570,11 +540,11 @@ func (r RunParameters) Cmd() []string {
 		case []interface{}:
 			cmds := make([]string, len(rawCmd))
 			for i, v := range rawCmd {
-				cmds[i] = os.ExpandEnv(v.(string))
+				cmds[i] = os.ExpandEnv(fmt.Sprintf("%v", v))
 			}
 			cmd = append(cmd, cmds...)
 		default:
-			printErrorf("cmd is of unknown type!")
+			panic(StatusError{fmt.Errorf("unknown type: %v", rawCmd), 65})
 		}
 	}
 	return cmd
@@ -1176,6 +1146,30 @@ func containerReference(reference string) (name string) {
 		name = parts[1]
 	}
 	return
+}
+
+// Transform an unmarshalled payload (YAML or JSON) of type slice or map to an slice of env-expanded "K=V" strings
+func sliceOrMap2ExpandedSlice(value interface{}) []string {
+	var result []string
+	if value != nil {
+		switch concreteValue := value.(type) {
+		case []interface{}: // YAML or JSON
+			for _, v := range concreteValue {
+				result = append(result, os.ExpandEnv(fmt.Sprintf("%v", v)))
+			}
+		case map[interface{}]interface{}: // YAML
+			for k, v := range concreteValue {
+				result = append(result, os.ExpandEnv(fmt.Sprintf("%v", k))+"="+os.ExpandEnv(fmt.Sprintf("%v", v)))
+			}
+		case map[string]interface{}: // JSON
+			for k, v := range concreteValue {
+				result = append(result, os.ExpandEnv(k)+"="+os.ExpandEnv(fmt.Sprintf("%v", v)))
+			}
+		default:
+			panic(StatusError{fmt.Errorf("unknown type: %v", value), 65})
+		}
+	}
+	return result
 }
 
 // Attempt to parse the value referenced by the go template
