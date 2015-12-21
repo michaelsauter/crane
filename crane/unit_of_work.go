@@ -302,6 +302,9 @@ func (uow *UnitOfWork) prepareRequirements() {
 func (uow *UnitOfWork) requiredNetworks() []Network {
 	required := []Network{}
 	networks := cfg.NetworkNames()
+	if len(networks) == 0 {
+		return required
+	}
 	for _, container := range uow.Containers() {
 		net := container.RunParams().Net()
 		if includes(networks, net) {
@@ -314,6 +317,9 @@ func (uow *UnitOfWork) requiredNetworks() []Network {
 func (uow *UnitOfWork) requiredVolumes() []Volume {
 	required := []Volume{}
 	volumes := cfg.VolumeNames()
+	if len(volumes) == 0 {
+		return required
+	}
 	for _, container := range uow.Containers() {
 		for _, volumeSource := range container.RunParams().VolumeSources() {
 			if includes(volumes, volumeSource) {
