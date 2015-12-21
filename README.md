@@ -154,8 +154,9 @@ The map of containers consists of the name of the container mapped to the contai
 	* `attach` (boolean)
 	* `interactive` (boolean)
 * `build` (object, optional): Parameters mapped to Docker's `build`.
-	* `context` (string)
-	* `file` (string)
+	* `context` (string) The path to the build context.
+	* `file` (string) Equivalent to --file specification.
+	* `tags` (array) Additional tags to apply when the container's image is built.
 * `exec` (object, optional): Parameters mapped to Docker's `exec`.
   * `interactive` (boolean)
   * `tty` (boolean)

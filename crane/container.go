@@ -4,13 +4,14 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/flynn/go-shlex"
 	"io"
 	"os"
 	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/flynn/go-shlex"
 )
 
 type Container interface {
@@ -64,8 +65,9 @@ type container struct {
 }
 
 type BuildParameters struct {
-	RawContext string `json:"context" yaml:"context"`
-	RawFile    string `json:"file" yaml:"file"`
+	RawContext string   `json:"context" yaml:"context"`
+	RawFile    string   `json:"file" yaml:"file"`
+	Tags       []string `json:"tags" yaml:"tags"`
 }
 
 type RunParameters struct {
@@ -274,6 +276,10 @@ func (c *container) Image() string {
 
 func (c *container) Unique() bool {
 	return c.RawUnique
+}
+
+func (c *container) ImageWithoutTag() string {
+	return strings.Split(c.Image(), ":")[0]
 }
 
 func (b BuildParameters) Context() string {
@@ -1124,6 +1130,11 @@ func (c *container) buildImage(nocache bool) {
 	args = append(args, c.BuildParams().Context())
 	executeCommand("docker", args)
 	executeHook(c.Hooks().PostBuild(), c.ActualName())
+
+	for _, t := range c.BuildParams().Tags {
+		tag := c.ImageWithoutTag() + ":" + os.ExpandEnv(t)
+		executeCommand("docker", []string{"tag", "--force", c.Image(), tag})
+	}
 }
 
 // Return the image id of a tag, or an empty string if it doesn't exist
