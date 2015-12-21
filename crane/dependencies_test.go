@@ -7,12 +7,14 @@ import (
 
 func TestIncludes(t *testing.T) {
 	dependencies := Dependencies{
-		All:         []string{"link", "volumesFrom", "net", "ipc"},
+		All:         []string{"required", "link", "volumesFrom", "net", "ipc"},
+		Requires:    []string{"required"},
 		Link:        []string{"link"},
 		VolumesFrom: []string{"volumesFrom"},
 		Net:         "net",
 		IPC:         "ipc",
 	}
+	assert.True(t, dependencies.includes("required"))
 	assert.True(t, dependencies.includes("link"))
 	assert.True(t, dependencies.includes("volumesFrom"))
 	assert.True(t, dependencies.includes("net"))

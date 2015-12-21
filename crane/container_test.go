@@ -10,6 +10,7 @@ import (
 
 func TestDependencies(t *testing.T) {
 	c := &container{
+		RawRequires: []string{"foo", "bar"},
 		RawRun: RunParameters{
 			RawNet:         "container:n",
 			RawLink:        []string{"a:b", "b:d"},
@@ -17,7 +18,8 @@ func TestDependencies(t *testing.T) {
 		},
 	}
 	expected := &Dependencies{
-		All:         []string{"a", "b", "c", "n"},
+		All:         []string{"foo", "bar", "a", "b", "c", "n"},
+		Requires:    []string{"foo", "bar"},
 		Link:        []string{"a", "b"},
 		VolumesFrom: []string{"c"},
 		Net:         "n",
@@ -28,7 +30,9 @@ func TestDependencies(t *testing.T) {
 	expected = &Dependencies{}
 	assert.Equal(t, expected, c.Dependencies())
 
+	// with excluded containers
 	c = &container{
+		RawRequires: []string{"foo", "bar"},
 		RawRun: RunParameters{
 			RawNet:         "container:n",
 			RawLink:        []string{"a:b", "b:d"},
@@ -36,12 +40,13 @@ func TestDependencies(t *testing.T) {
 		},
 	}
 	expected = &Dependencies{
-		All:         []string{"a", "c", "n"},
+		All:         []string{"foo", "a", "c", "n"},
+		Requires:    []string{"foo"},
 		Link:        []string{"a"},
 		VolumesFrom: []string{"c"},
 		Net:         "n",
 	}
-	excluded = []string{"b"}
+	excluded = []string{"b", "bar"}
 	assert.Equal(t, expected, c.Dependencies())
 	excluded = []string{}
 }

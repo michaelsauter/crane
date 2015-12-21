@@ -51,16 +51,17 @@ type ContainerInfo interface {
 }
 
 type container struct {
-	id        string
-	RawName   string
-	RawUnique bool            `json:"unique" yaml:"unique"`
-	RawImage  string          `json:"image" yaml:"image"`
-	RawBuild  BuildParameters `json:"build" yaml:"build"`
-	RawRun    RunParameters   `json:"run" yaml:"run"`
-	RawRm     RmParameters    `json:"rm" yaml:"rm"`
-	RawStart  StartParameters `json:"start" yaml:"start"`
-	RawExec   ExecParameters  `json:"exec" yaml:"exec"`
-	hooks     hooks
+	id          string
+	RawName     string
+	RawUnique   bool            `json:"unique" yaml:"unique"`
+	RawImage    string          `json:"image" yaml:"image"`
+	RawRequires []string        `json:"requires" yaml:"requires"`
+	RawBuild    BuildParameters `json:"build" yaml:"build"`
+	RawRun      RunParameters   `json:"run" yaml:"run"`
+	RawRm       RmParameters    `json:"rm" yaml:"rm"`
+	RawStart    StartParameters `json:"start" yaml:"start"`
+	RawExec     ExecParameters  `json:"exec" yaml:"exec"`
+	hooks       hooks
 }
 
 type BuildParameters struct {
@@ -218,6 +219,12 @@ func (c *container) ExecParams() ExecParameters {
 
 func (c *container) Dependencies() *Dependencies {
 	dependencies := &Dependencies{}
+	for _, required := range c.Requires() {
+		if !includes(excluded, required) && !dependencies.includes(required) {
+			dependencies.All = append(dependencies.All, required)
+			dependencies.Requires = append(dependencies.Requires, required)
+		}
+	}
 	for _, link := range c.RunParams().Link() {
 		linkName := strings.Split(link, ":")[0]
 		if !includes(excluded, linkName) && !dependencies.includes(linkName) {
@@ -274,6 +281,14 @@ func (c *container) Image() string {
 
 func (c *container) Unique() bool {
 	return c.RawUnique
+}
+
+func (c *container) Requires() []string {
+	var requires []string
+	for _, rawRequired := range c.RawRequires {
+		requires = append(requires, os.ExpandEnv(rawRequired))
+	}
+	return requires
 }
 
 func (b BuildParameters) Context() string {
