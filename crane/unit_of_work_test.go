@@ -80,7 +80,7 @@ func TestRequiredNetworks(t *testing.T) {
 	// no networks
 	cfg = &config{networkMap: networkMap}
 	uow = &UnitOfWork{}
-	assert.Equal(t, []Network{}, uow.requiredNetworks())
+	assert.Equal(t, []string{}, uow.RequiredNetworks())
 
 	// some networks
 	containerMap := NewStubbedContainerMap(true,
@@ -104,11 +104,7 @@ func TestRequiredNetworks(t *testing.T) {
 	}
 	cfg = &config{containerMap: containerMap, networkMap: networkMap}
 	uow = &UnitOfWork{order: []string{"a", "b"}}
-	requiredNetworks := []string{}
-	for _, network := range uow.requiredNetworks() {
-		requiredNetworks = append(requiredNetworks, network.Name())
-	}
-	assert.Equal(t, []string{"foo", "bar"}, requiredNetworks)
+	assert.Equal(t, []string{"foo", "bar"}, uow.RequiredNetworks())
 }
 
 func TestRequiredVolumes(t *testing.T) {
@@ -118,7 +114,7 @@ func TestRequiredVolumes(t *testing.T) {
 	// no volumes
 	cfg = &config{volumeMap: volumeMap}
 	uow = &UnitOfWork{}
-	assert.Equal(t, []Volume{}, uow.requiredVolumes())
+	assert.Equal(t, []string{}, uow.RequiredVolumes())
 
 	// some volumes
 	containerMap := NewStubbedContainerMap(true,
@@ -142,9 +138,5 @@ func TestRequiredVolumes(t *testing.T) {
 	}
 	cfg = &config{containerMap: containerMap, volumeMap: volumeMap}
 	uow = &UnitOfWork{order: []string{"a", "b"}}
-	requiredVolumes := []string{}
-	for _, network := range uow.requiredVolumes() {
-		requiredVolumes = append(requiredVolumes, network.Name())
-	}
-	assert.Equal(t, []string{"foo", "bar"}, requiredVolumes)
+	assert.Equal(t, []string{"foo", "bar"}, uow.RequiredVolumes())
 }

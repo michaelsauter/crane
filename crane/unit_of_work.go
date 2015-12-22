@@ -282,6 +282,37 @@ func (uow *UnitOfWork) Associated() []string {
 	return c
 }
 
+func (uow *UnitOfWork) RequiredNetworks() []string {
+	required := []string{}
+	networks := cfg.NetworkNames()
+	if len(networks) == 0 {
+		return required
+	}
+	for _, container := range uow.Containers() {
+		net := container.RunParams().Net()
+		if includes(networks, net) {
+			required = append(required, net)
+		}
+	}
+	return required
+}
+
+func (uow *UnitOfWork) RequiredVolumes() []string {
+	required := []string{}
+	volumes := cfg.VolumeNames()
+	if len(volumes) == 0 {
+		return required
+	}
+	for _, container := range uow.Containers() {
+		for _, volumeSource := range container.RunParams().VolumeSources() {
+			if includes(volumes, volumeSource) {
+				required = append(required, volumeSource)
+			}
+		}
+	}
+	return required
+}
+
 func (uow *UnitOfWork) ensureInContainers(name string) {
 	if !includes(uow.containers, name) {
 		uow.containers = append(uow.containers, name)
@@ -299,49 +330,20 @@ func (uow *UnitOfWork) prepareRequirements() {
 	uow.prepareVolumes()
 }
 
-func (uow *UnitOfWork) requiredNetworks() []Network {
-	required := []Network{}
-	networks := cfg.NetworkNames()
-	if len(networks) == 0 {
-		return required
-	}
-	for _, container := range uow.Containers() {
-		net := container.RunParams().Net()
-		if includes(networks, net) {
-			required = append(required, cfg.Network(net))
-		}
-	}
-	return required
-}
-
-func (uow *UnitOfWork) requiredVolumes() []Volume {
-	required := []Volume{}
-	volumes := cfg.VolumeNames()
-	if len(volumes) == 0 {
-		return required
-	}
-	for _, container := range uow.Containers() {
-		for _, volumeSource := range container.RunParams().VolumeSources() {
-			if includes(volumes, volumeSource) {
-				required = append(required, cfg.Volume(volumeSource))
-			}
-		}
-	}
-	return required
-}
-
 func (uow *UnitOfWork) prepareNetworks() {
-	for _, n := range uow.requiredNetworks() {
-		if !n.Exists() {
-			n.Create()
+	for _, n := range uow.RequiredNetworks() {
+		net := cfg.Network(n)
+		if !net.Exists() {
+			net.Create()
 		}
 	}
 }
 
 func (uow *UnitOfWork) prepareVolumes() {
-	for _, v := range uow.requiredVolumes() {
-		if !v.Exists() {
-			v.Create()
+	for _, v := range uow.RequiredVolumes() {
+		vol := cfg.Volume(v)
+		if !vol.Exists() {
+			vol.Create()
 		}
 	}
 }
