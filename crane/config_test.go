@@ -101,6 +101,12 @@ func TestUnmarshal(t *testing.T) {
             "pre-start": "echo start...",
             "post-start": "echo start done!\n"
         }
+    },
+    "networks": {
+        "foo": {}
+    },
+    "volumes": {
+        "bar": {}
     }
 }
 `)
@@ -111,6 +117,8 @@ func TestUnmarshal(t *testing.T) {
 	assert.Len(t, actual.RawContainers["apache"].RunParams().Link(), 2)
 	assert.Len(t, actual.RawGroups, 1)
 	assert.Len(t, actual.RawHooks, 2)
+	assert.Len(t, actual.RawNetworks, 1)
+	assert.Len(t, actual.RawVolumes, 1)
 	assert.NotEmpty(t, actual.RawHooks["default"].RawPreStart)
 	assert.NotEmpty(t, actual.RawHooks["default"].RawPostStart)
 
@@ -140,7 +148,11 @@ hooks:
     post-stop: echo apache container stopped!\n
   default:
     pre-start: echo start...
-    post-start: echo start done!\n
+    post-start: echo start done!
+networks:
+  foo: {}
+volumes:
+  bar: {}
 `)
 	actual = unmarshal(yaml, ".yml")
 	assert.Len(t, actual.RawContainers, 1)
@@ -149,6 +161,8 @@ hooks:
 	assert.Len(t, actual.RawContainers["apache"].RunParams().Link(), 2)
 	assert.Len(t, actual.RawGroups, 1)
 	assert.Len(t, actual.RawHooks, 2)
+	assert.Len(t, actual.RawNetworks, 1)
+	assert.Len(t, actual.RawVolumes, 1)
 	assert.NotEmpty(t, actual.RawHooks["default"].RawPreStart)
 	assert.NotEmpty(t, actual.RawHooks["default"].RawPostStart)
 }
@@ -182,6 +196,20 @@ func TestUnmarshalInvalidYAML(t *testing.T) {
 	assert.Panics(t, func() {
 		unmarshal(yaml, ".yml")
 	})
+}
+
+func TestUnmarshalEmptyNetworkOrVolume(t *testing.T) {
+	yaml := []byte(
+		`networks:
+  foo:
+volumes:
+  bar:
+`)
+	config := unmarshal(yaml, ".yml")
+	config.setNetworkMap()
+	config.setVolumeMap()
+	assert.Equal(t, "foo", config.networkMap["foo"].Name())
+	assert.Equal(t, "bar", config.volumeMap["bar"].Name())
 }
 
 func TestInitialize(t *testing.T) {

@@ -275,17 +275,23 @@ func (c *config) initialize() {
 
 func (c *config) setNetworkMap() {
 	c.networkMap = make(map[string]Network)
-	for rawName, network := range c.RawNetworks {
-		network.RawName = rawName
-		c.networkMap[network.Name()] = network
+	for rawName, net := range c.RawNetworks {
+		if net == nil {
+			net = &network{}
+		}
+		net.RawName = rawName
+		c.networkMap[net.Name()] = net
 	}
 }
 
 func (c *config) setVolumeMap() {
 	c.volumeMap = make(map[string]Volume)
-	for rawName, volume := range c.RawVolumes {
-		volume.RawName = rawName
-		c.volumeMap[volume.Name()] = volume
+	for rawName, vol := range c.RawVolumes {
+		if vol == nil {
+			vol = &volume{}
+		}
+		vol.RawName = rawName
+		c.volumeMap[vol.Name()] = vol
 	}
 }
 
