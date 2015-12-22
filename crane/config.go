@@ -33,19 +33,19 @@ type Config interface {
 }
 
 type config struct {
-	RawContainerMap map[string]*container `json:"containers" yaml:"containers"`
-	RawGroups       map[string][]string   `json:"groups" yaml:"groups"`
-	RawHooksMap     map[string]hooks      `json:"hooks" yaml:"hooks"`
-	RawNetworks     map[string]*network   `json:"networks" yaml:"networks"`
-	RawVolumes      map[string]*volume    `json:"volumes" yaml:"volumes"`
-	containerMap    ContainerMap
-	networkMap      NetworkMap
-	volumeMap       VolumeMap
-	groups          map[string][]string
-	path            string
-	prefix          string
-	tag             string
-	uniqueID        string
+	RawContainers map[string]*container `json:"containers" yaml:"containers"`
+	RawGroups     map[string][]string   `json:"groups" yaml:"groups"`
+	RawHooks      map[string]hooks      `json:"hooks" yaml:"hooks"`
+	RawNetworks   map[string]*network   `json:"networks" yaml:"networks"`
+	RawVolumes    map[string]*volume    `json:"volumes" yaml:"volumes"`
+	containerMap  ContainerMap
+	networkMap    NetworkMap
+	volumeMap     VolumeMap
+	groups        map[string][]string
+	path          string
+	prefix        string
+	tag           string
+	uniqueID      string
 }
 
 // ContainerMap maps the container name
@@ -234,13 +234,13 @@ func (c *config) Volume(name string) Volume {
 func (c *config) initialize() {
 	// Local container map to query by expanded name
 	containerMap := make(map[string]*container)
-	for rawName, container := range c.RawContainerMap {
+	for rawName, container := range c.RawContainers {
 		container.RawName = rawName
 		containerMap[container.Name()] = container
 	}
 	// Local hooks map to query by expanded name
 	hooksMap := make(map[string]hooks)
-	for hooksRawName, hooks := range c.RawHooksMap {
+	for hooksRawName, hooks := range c.RawHooks {
 		hooksMap[os.ExpandEnv(hooksRawName)] = hooks
 	}
 	// Groups
@@ -290,7 +290,7 @@ func (c *config) setVolumeMap() {
 }
 
 func (c *config) validate() {
-	for name, container := range c.RawContainerMap {
+	for name, container := range c.RawContainers {
 		if len(container.RawImage) == 0 {
 			panic(StatusError{fmt.Errorf("No image specified for `%s`", name), 64})
 		}

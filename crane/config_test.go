@@ -105,14 +105,14 @@ func TestUnmarshal(t *testing.T) {
 }
 `)
 	actual = unmarshal(json, ".json")
-	assert.Len(t, actual.RawContainerMap, 1)
-	assert.Len(t, actual.RawContainerMap["apache"].RunParams().Env(), 3)
-	assert.Len(t, actual.RawContainerMap["apache"].RunParams().Label(), 3)
-	assert.Len(t, actual.RawContainerMap["apache"].RunParams().Link(), 2)
+	assert.Len(t, actual.RawContainers, 1)
+	assert.Len(t, actual.RawContainers["apache"].RunParams().Env(), 3)
+	assert.Len(t, actual.RawContainers["apache"].RunParams().Label(), 3)
+	assert.Len(t, actual.RawContainers["apache"].RunParams().Link(), 2)
 	assert.Len(t, actual.RawGroups, 1)
-	assert.Len(t, actual.RawHooksMap, 2)
-	assert.NotEmpty(t, actual.RawHooksMap["default"].RawPreStart)
-	assert.NotEmpty(t, actual.RawHooksMap["default"].RawPostStart)
+	assert.Len(t, actual.RawHooks, 2)
+	assert.NotEmpty(t, actual.RawHooks["default"].RawPreStart)
+	assert.NotEmpty(t, actual.RawHooks["default"].RawPostStart)
 
 	yaml := []byte(
 		`containers:
@@ -143,14 +143,14 @@ hooks:
     post-start: echo start done!\n
 `)
 	actual = unmarshal(yaml, ".yml")
-	assert.Len(t, actual.RawContainerMap, 1)
-	assert.Len(t, actual.RawContainerMap["apache"].RunParams().Env(), 3)
-	assert.Len(t, actual.RawContainerMap["apache"].RunParams().Label(), 3)
-	assert.Len(t, actual.RawContainerMap["apache"].RunParams().Link(), 2)
+	assert.Len(t, actual.RawContainers, 1)
+	assert.Len(t, actual.RawContainers["apache"].RunParams().Env(), 3)
+	assert.Len(t, actual.RawContainers["apache"].RunParams().Label(), 3)
+	assert.Len(t, actual.RawContainers["apache"].RunParams().Link(), 2)
 	assert.Len(t, actual.RawGroups, 1)
-	assert.Len(t, actual.RawHooksMap, 2)
-	assert.NotEmpty(t, actual.RawHooksMap["default"].RawPreStart)
-	assert.NotEmpty(t, actual.RawHooksMap["default"].RawPostStart)
+	assert.Len(t, actual.RawHooks, 2)
+	assert.NotEmpty(t, actual.RawHooks["default"].RawPreStart)
+	assert.NotEmpty(t, actual.RawHooks["default"].RawPostStart)
 }
 
 func TestUnmarshalInvalidJSON(t *testing.T) {
@@ -206,9 +206,9 @@ func TestInitialize(t *testing.T) {
 		},
 	}
 	c := &config{
-		RawContainerMap: rawContainerMap,
-		RawGroups:       rawGroups,
-		RawHooksMap:     rawHooksMap,
+		RawContainers: rawContainerMap,
+		RawGroups:     rawGroups,
+		RawHooks:      rawHooksMap,
 	}
 	c.initialize()
 	assert.Equal(t, "a", c.containerMap["a"].Name())
@@ -234,9 +234,9 @@ func TestInitializeAmbiguousHooks(t *testing.T) {
 		"group2": hooks{RawPreStart: "group2-pre-start"},
 	}
 	c := &config{
-		RawContainerMap: rawContainerMap,
-		RawGroups:       rawGroups,
-		RawHooksMap:     rawHooksMap,
+		RawContainers: rawContainerMap,
+		RawGroups:     rawGroups,
+		RawHooks:      rawHooksMap,
 	}
 	assert.Panics(t, func() {
 		c.initialize()
@@ -248,7 +248,7 @@ func TestValidate(t *testing.T) {
 		"a": &container{RawName: "a", RawImage: "ubuntu"},
 		"b": &container{RawName: "b", RawImage: "ubuntu"},
 	}
-	c := &config{RawContainerMap: rawContainerMap}
+	c := &config{RawContainers: rawContainerMap}
 	assert.NotPanics(t, func() {
 		c.validate()
 	})
@@ -256,7 +256,7 @@ func TestValidate(t *testing.T) {
 		"a": &container{RawName: "a", RawImage: "ubuntu"},
 		"b": &container{RawName: "b"},
 	}
-	c = &config{RawContainerMap: rawContainerMap}
+	c = &config{RawContainers: rawContainerMap}
 	assert.Panics(t, func() {
 		c.validate()
 	})
