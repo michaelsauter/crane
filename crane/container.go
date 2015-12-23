@@ -471,6 +471,24 @@ func (r RunParameters) Net() string {
 	return os.ExpandEnv(r.RawNet)
 }
 
+func (r RunParameters) ActualNet() string {
+	netParam := r.Net()
+	if netParam == "bridge" {
+		return "bridge"
+	}
+	netContainer := containerReference(netParam)
+	if len(netContainer) > 0 {
+		if !includes(excluded, netContainer) {
+			return "container:" + cfg.Container(netContainer).ActualName()
+		}
+	} else {
+		if includes(cfg.NetworkNames(), netParam) {
+			return cfg.Network(netParam).ActualName()
+		}
+	}
+	return netParam
+}
+
 func (r RunParameters) Pid() string {
 	return os.ExpandEnv(r.RawPid)
 }
@@ -536,6 +554,18 @@ func (r RunParameters) VolumeSources() []string {
 		volumeSources = append(volumeSources, parts[0])
 	}
 	return volumeSources
+}
+
+func (r RunParameters) ActualVolume() []string {
+	vols := []string{}
+	for _, volume := range r.Volume() {
+		parts := strings.Split(volume, ":")
+		if includes(cfg.VolumeNames(), parts[0]) {
+			parts[0] = cfg.Volume(parts[0]).ActualName()
+		}
+		vols = append(vols, strings.Join(parts, ":"))
+	}
+	return vols
 }
 
 func (r RunParameters) VolumesFrom() []string {
@@ -826,15 +856,9 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 		args = append(args, "--memory-swappiness", strconv.Itoa(c.RunParams().MemorySwappiness.Value))
 	}
 	// Net
-	if c.RunParams().Net() != "bridge" {
-		netContainer := containerReference(c.RunParams().Net())
-		if len(netContainer) > 0 {
-			if !includes(excluded, netContainer) {
-				args = append(args, "--net", "container:"+cfg.Container(netContainer).ActualName())
-			}
-		} else {
-			args = append(args, "--net", c.RunParams().Net())
-		}
+	netParam := c.RunParams().ActualNet()
+	if netParam != "bridge" {
+		args = append(args, "--net", netParam)
 	}
 	// OomKillDisable
 	if c.RunParams().OomKillDisable {
@@ -897,7 +921,7 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 		args = append(args, "--uts", c.RunParams().Uts())
 	}
 	// Volumes
-	for _, volume := range c.RunParams().Volume() {
+	for _, volume := range c.RunParams().ActualVolume() {
 		args = append(args, "--volume", volume)
 	}
 	// VolumesFrom

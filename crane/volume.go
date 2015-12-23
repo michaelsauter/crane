@@ -7,6 +7,7 @@ import (
 
 type Volume interface {
 	Name() string
+	ActualName() string
 	Create()
 	Exists() bool
 }
@@ -19,15 +20,19 @@ func (v *volume) Name() string {
 	return os.ExpandEnv(v.RawName)
 }
 
-func (v *volume) Create() {
-	fmt.Printf("Creating volume %s ...\n", v.Name())
+func (v *volume) ActualName() string {
+	return cfg.Prefix() + v.Name()
+}
 
-	args := []string{"volume", "create", "--name", v.Name()}
+func (v *volume) Create() {
+	fmt.Printf("Creating volume %s ...\n", v.ActualName())
+
+	args := []string{"volume", "create", "--name", v.ActualName()}
 	executeCommand("docker", args)
 }
 
 func (v *volume) Exists() bool {
-	args := []string{"volume", "inspect", v.Name()}
+	args := []string{"volume", "inspect", v.ActualName()}
 	_, err := commandOutput("docker", args)
 	return err == nil
 }

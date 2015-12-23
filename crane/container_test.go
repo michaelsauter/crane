@@ -134,6 +134,18 @@ func TestVolume(t *testing.T) {
 	assert.Equal(t, "a:/b", c.RunParams().Volume()[0])
 }
 
+func TestActualVolume(t *testing.T) {
+	var c *container
+	// Simple case
+	c = &container{RawRun: RunParameters{RawVolume: []string{"/a:/b"}}}
+	cfg = &config{path: "foo"}
+	assert.Equal(t, "/a:/b", c.RunParams().ActualVolume()[0])
+	// With prefix Docker volume
+	c = &container{RawRun: RunParameters{RawVolume: []string{"a:/b"}}}
+	cfg = &config{prefix: "foo_", volumeMap: map[string]Volume{"a": &volume{RawName: "a"}}}
+	assert.Equal(t, "foo_a:/b", c.RunParams().ActualVolume()[0])
+}
+
 func TestNet(t *testing.T) {
 	var c *container
 	// Empty defaults to "bridge"
@@ -144,6 +156,31 @@ func TestNet(t *testing.T) {
 	os.Setenv("NET", "container")
 	c = &container{RawRun: RunParameters{RawNet: "$NET"}}
 	assert.Equal(t, "container", c.RunParams().Net())
+}
+
+func TestActualNet(t *testing.T) {
+	var c *container
+	// Empty defaults to "bridge"
+	c = &container{RawRun: RunParameters{}}
+	assert.Equal(t, "bridge", c.RunParams().ActualNet())
+	// Container
+	c = &container{RawName: "foo", RawRun: RunParameters{RawNet: "container:foo"}}
+	cfg = &config{containerMap: map[string]Container{"foo": c}}
+	assert.Equal(t, "container:foo", c.RunParams().ActualNet())
+	// Network
+	c = &container{RawName: "foo", RawRun: RunParameters{RawNet: "bar"}}
+	cfg = &config{
+		containerMap: map[string]Container{"foo": c},
+		networkMap:   map[string]Network{"bar": &network{RawName: "bar"}},
+	}
+	assert.Equal(t, "bar", c.RunParams().ActualNet())
+	// Network with prefix
+	cfg = &config{
+		prefix:       "qux_",
+		containerMap: map[string]Container{"foo": c},
+		networkMap:   map[string]Network{"bar": &network{RawName: "bar"}},
+	}
+	assert.Equal(t, "qux_bar", c.RunParams().ActualNet())
 }
 
 func TestCmd(t *testing.T) {
