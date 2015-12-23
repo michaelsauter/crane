@@ -16,6 +16,8 @@ continuous integration.
   * [Groups and Targeting](#groups-and-targeting)
   * [Extending the target](#extending-the-target)
   * [Excluding containers](#excluding-containers)
+  * [Networking](#networking)
+  * [Volumes](#volumes)
   * [Hooks](#hooks)
   * [Container Prefixes](#container-prefixes)
   * [Override image tag](#override-image-tag)
@@ -92,6 +94,7 @@ The map of containers consists of the name of the container mapped to the contai
 
 * `image` (string, required): Name of the image to build/pull
 * `unique` (boolean, optional) `true` assigns a unique name to the container (experimental)
+* `requires` (array) Container dependencies (experimental)
 * `run` (object, optional): Parameters mapped to Docker's `run` & `create`.
 	* `add-host` (array) Add custom host-to-IP mappings.
 	* `blkio-weight` (integer) Need Docker >= 1.7
@@ -271,6 +274,49 @@ If you want to exclude a container or a whole group from a Crane command, you
 can specify this with `--exclude <target>` (or via `CRANE_EXCLUDE`). This
 feature is experimental, which means it can be changed or even removed in every
 minor version update.
+
+
+### Networking
+Docker networks are support via the top-level config `networks`, which does not
+take additional parameters at this stage. As links cannot be used at the same
+time, container dependencies can be expressed via `requires`. Networks are
+automatically created by Crane when necessary, and never cleaned up. When a
+[prefix](#container-prefixes) is used, it is also applied to the network.
+
+```
+containers:
+  foo:
+    requires: ["bar"]
+    run:
+      net: qux
+  bar:
+    run:
+      net: qux
+networks:
+  qux:
+```
+
+This feature is experimental, which means it can be changed or even removed in
+every minor version update.
+
+
+### Volumes
+Docker volumes are support via the top-level config `volumes`, which does not
+take additional parameters at this stage. Volumes are automatically created by
+Crane when necessary, and never cleaned up. When a [prefix](#container-prefixes)
+is used, it is also applied to the volume.
+
+```
+containers:
+  foo:
+    run:
+      volume: ["bar:/path"]
+volumes:
+  bar:
+```
+
+This feature is experimental, which means it can be changed or even removed in
+every minor version update.
 
 
 ### Hooks
