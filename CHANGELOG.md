@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+* Add support for Docker networks
+  They can be configured via a top-level `networks` setting, and used from
+  containers via e.g. `net: foo`.
+  _@michaelsauter_
+
+* Add non-Docker dependency management
+  Containers learned a new top-level `requires` setting, which works exactly
+  like links (minus the alias support) and can be used to reach dependent
+  containers when relying on Docker networks.
+  _@michaelsauter_
+
+* Add support for Docker volumes
+  They can be configured via a top-level `volumes` setting, and used from
+  containers via e.g. `volume: ["foo:/path"]`.
+  _@michaelsauter_
+
 ## 2.3.1 (2015-12-12)
 
 * Fix compatibility with engine < 1.8.0 and wrongly-forced option
