@@ -271,9 +271,16 @@ It is possible to combine `affected` and `dependencies`.
 ### Excluding containers
 
 If you want to exclude a container or a whole group from a Crane command, you
-can specify this with `--exclude <target>` (or via `CRANE_EXCLUDE`). This
-feature is experimental, which means it can be changed or even removed in every
-minor version update.
+can specify this with `--exclude <reference>` (or via `CRANE_EXCLUDE`). The
+flag can be repeated to exclude several containers or groups (use a multi-line
+environment variable value to pass several references via `CRANE_EXCLUDE`).
+
+Excluded containers' declaration _and_ references in the configuration file
+will be completely ignored, so their dependencies will also be excluded
+(unless they are also required by other non-excluded containers).
+
+This feature is experimental, which means it can be changed or even removed
+in every minor version update.
 
 
 ### Networking
