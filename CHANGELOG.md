@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Gracefully ignore excluded containers in IPC/net dependencies
+  _@bjaglin_
+
 * Support several references for exclusion
   `--exclude` can now be repeated on the CLI, and several values can be passed
   via `CRANE_EXCLUDE` using newline as a value separator.
