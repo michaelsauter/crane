@@ -12,21 +12,20 @@ var cfg Config
 var excluded []string
 
 var (
-	app          = kingpin.New("crane", "Lift containers with ease")
-	interspersed = app.Interspersed(false)
-	verboseFlag  = app.Flag("verbose", "Enable verbose output.").Short('v').Bool()
-	configFlag   = app.Flag(
+	app         = kingpin.New("crane", "Lift containers with ease").Interspersed(false).DefaultEnvars()
+	verboseFlag = app.Flag("verbose", "Enable verbose output.").Short('v').Bool()
+	configFlag  = app.Flag(
 		"config",
 		"Location of config file.",
-	).Short('c').OverrideDefaultFromEnvar("CRANE_CONFIG").PlaceHolder("~/crane.yaml").String()
+	).Short('c').PlaceHolder("~/crane.yaml").String()
 	prefixFlag = app.Flag(
 		"prefix",
 		"Container prefix.",
-	).Short('p').OverrideDefaultFromEnvar("CRANE_PREFIX").String()
+	).Short('p').String()
 	excludeFlag = app.Flag(
 		"exclude",
 		"Exclude group or container. Can be repeated.",
-	).Short('e').OverrideDefaultFromEnvar("CRANE_EXCLUDE").PlaceHolder("container|group").Strings()
+	).Short('e').PlaceHolder("container|group").Strings()
 	tagFlag = app.Flag(
 		"tag",
 		"Override image tags.",
