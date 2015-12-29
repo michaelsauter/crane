@@ -1,9 +1,5 @@
 package crane
 
-import (
-	"os"
-)
-
 type Hooks interface {
 	PreBuild() string
 	PostBuild() string
@@ -26,27 +22,27 @@ type hooks struct {
 }
 
 func (h *hooks) PreBuild() string {
-	return os.ExpandEnv(h.RawPreBuild)
+	return expandEnv(h.RawPreBuild)
 }
 
 func (h *hooks) PostBuild() string {
-	return os.ExpandEnv(h.RawPostBuild)
+	return expandEnv(h.RawPostBuild)
 }
 
 func (h *hooks) PreStart() string {
-	return os.ExpandEnv(h.RawPreStart)
+	return expandEnv(h.RawPreStart)
 }
 
 func (h *hooks) PostStart() string {
-	return os.ExpandEnv(h.RawPostStart)
+	return expandEnv(h.RawPostStart)
 }
 
 func (h *hooks) PreStop() string {
-	return os.ExpandEnv(h.RawPreStop)
+	return expandEnv(h.RawPreStop)
 }
 
 func (h *hooks) PostStop() string {
-	return os.ExpandEnv(h.RawPostStop)
+	return expandEnv(h.RawPostStop)
 }
 
 // Merge another set of hooks into the existing object. Existing

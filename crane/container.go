@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/flynn/go-shlex"
 	"io"
-	"os"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -253,7 +252,7 @@ func (c *container) Dependencies() *Dependencies {
 }
 
 func (c *container) Name() string {
-	return os.ExpandEnv(c.RawName)
+	return expandEnv(c.RawName)
 }
 
 func (c *container) ActualName() string {
@@ -264,7 +263,7 @@ func (c *container) ActualName() string {
 }
 
 func (c *container) Image() string {
-	image := os.ExpandEnv(c.RawImage)
+	image := expandEnv(c.RawImage)
 
 	// Return if no global tag given or image is a digest
 	if len(cfg.Tag()) == 0 || strings.Contains(image, "@") {
@@ -286,23 +285,23 @@ func (c *container) Unique() bool {
 func (c *container) Requires() []string {
 	var requires []string
 	for _, rawRequired := range c.RawRequires {
-		requires = append(requires, os.ExpandEnv(rawRequired))
+		requires = append(requires, expandEnv(rawRequired))
 	}
 	return requires
 }
 
 func (b BuildParameters) Context() string {
-	return os.ExpandEnv(b.RawContext)
+	return expandEnv(b.RawContext)
 }
 
 func (b BuildParameters) File() string {
-	return os.ExpandEnv(b.RawFile)
+	return expandEnv(b.RawFile)
 }
 
 func (r RunParameters) AddHost() []string {
 	var addHost []string
 	for _, rawAddHost := range r.RawAddHost {
-		addHost = append(addHost, os.ExpandEnv(rawAddHost))
+		addHost = append(addHost, expandEnv(rawAddHost))
 	}
 	return addHost
 }
@@ -310,7 +309,7 @@ func (r RunParameters) AddHost() []string {
 func (r RunParameters) CapAdd() []string {
 	var capAdd []string
 	for _, rawCapAdd := range r.RawCapAdd {
-		capAdd = append(capAdd, os.ExpandEnv(rawCapAdd))
+		capAdd = append(capAdd, expandEnv(rawCapAdd))
 	}
 	return capAdd
 }
@@ -318,23 +317,23 @@ func (r RunParameters) CapAdd() []string {
 func (r RunParameters) CapDrop() []string {
 	var capDrop []string
 	for _, rawCapDrop := range r.RawCapDrop {
-		capDrop = append(capDrop, os.ExpandEnv(rawCapDrop))
+		capDrop = append(capDrop, expandEnv(rawCapDrop))
 	}
 	return capDrop
 }
 
 func (r RunParameters) CgroupParent() string {
-	return os.ExpandEnv(r.RawCgroupParent)
+	return expandEnv(r.RawCgroupParent)
 }
 
 func (r RunParameters) Cidfile() string {
-	return os.ExpandEnv(r.RawCidfile)
+	return expandEnv(r.RawCidfile)
 }
 
 func (r RunParameters) Device() []string {
 	var device []string
 	for _, rawDevice := range r.RawDevice {
-		device = append(device, os.ExpandEnv(rawDevice))
+		device = append(device, expandEnv(rawDevice))
 	}
 	return device
 }
@@ -342,7 +341,7 @@ func (r RunParameters) Device() []string {
 func (r RunParameters) DNS() []string {
 	var dns []string
 	for _, rawDNS := range r.RawDNS {
-		dns = append(dns, os.ExpandEnv(rawDNS))
+		dns = append(dns, expandEnv(rawDNS))
 	}
 	return dns
 }
@@ -350,7 +349,7 @@ func (r RunParameters) DNS() []string {
 func (r RunParameters) DNSOpt() []string {
 	var dnsOpt []string
 	for _, rawDNSOpt := range r.RawDNSOpt {
-		dnsOpt = append(dnsOpt, os.ExpandEnv(rawDNSOpt))
+		dnsOpt = append(dnsOpt, expandEnv(rawDNSOpt))
 	}
 	return dnsOpt
 }
@@ -358,13 +357,13 @@ func (r RunParameters) DNSOpt() []string {
 func (r RunParameters) DNSSearch() []string {
 	var dnsSearch []string
 	for _, rawDNSSearch := range r.RawDNSSearch {
-		dnsSearch = append(dnsSearch, os.ExpandEnv(rawDNSSearch))
+		dnsSearch = append(dnsSearch, expandEnv(rawDNSSearch))
 	}
 	return dnsSearch
 }
 
 func (r RunParameters) Entrypoint() string {
-	return os.ExpandEnv(r.RawEntrypoint)
+	return expandEnv(r.RawEntrypoint)
 }
 
 func (r RunParameters) Env() []string {
@@ -374,7 +373,7 @@ func (r RunParameters) Env() []string {
 func (r RunParameters) EnvFile() []string {
 	var envFile []string
 	for _, rawEnvFile := range r.RawEnvFile {
-		envFile = append(envFile, os.ExpandEnv(rawEnvFile))
+		envFile = append(envFile, expandEnv(rawEnvFile))
 	}
 	return envFile
 }
@@ -382,7 +381,7 @@ func (r RunParameters) EnvFile() []string {
 func (r RunParameters) Expose() []string {
 	var expose []string
 	for _, rawExpose := range r.RawExpose {
-		expose = append(expose, os.ExpandEnv(rawExpose))
+		expose = append(expose, expandEnv(rawExpose))
 	}
 	return expose
 }
@@ -390,21 +389,21 @@ func (r RunParameters) Expose() []string {
 func (r RunParameters) GroupAdd() []string {
 	var groupAdd []string
 	for _, rawGroupAdd := range r.RawGroupAdd {
-		groupAdd = append(groupAdd, os.ExpandEnv(rawGroupAdd))
+		groupAdd = append(groupAdd, expandEnv(rawGroupAdd))
 	}
 	return groupAdd
 }
 
 func (r RunParameters) Hostname() string {
-	return os.ExpandEnv(r.RawHostname)
+	return expandEnv(r.RawHostname)
 }
 
 func (r RunParameters) IPC() string {
-	return os.ExpandEnv(r.RawIPC)
+	return expandEnv(r.RawIPC)
 }
 
 func (r RunParameters) KernelMemory() string {
-	return os.ExpandEnv(r.RawKernelMemory)
+	return expandEnv(r.RawKernelMemory)
 }
 
 func (r RunParameters) Label() []string {
@@ -414,7 +413,7 @@ func (r RunParameters) Label() []string {
 func (r RunParameters) LabelFile() []string {
 	var labelFile []string
 	for _, rawLabelFile := range r.RawLabelFile {
-		labelFile = append(labelFile, os.ExpandEnv(rawLabelFile))
+		labelFile = append(labelFile, expandEnv(rawLabelFile))
 	}
 	return labelFile
 }
@@ -422,19 +421,19 @@ func (r RunParameters) LabelFile() []string {
 func (r RunParameters) Link() []string {
 	var link []string
 	for _, rawLink := range r.RawLink {
-		link = append(link, os.ExpandEnv(rawLink))
+		link = append(link, expandEnv(rawLink))
 	}
 	return link
 }
 
 func (r RunParameters) LogDriver() string {
-	return os.ExpandEnv(r.RawLogDriver)
+	return expandEnv(r.RawLogDriver)
 }
 
 func (r RunParameters) LogOpt() []string {
 	var opt []string
 	for _, rawOpt := range r.RawLogOpt {
-		opt = append(opt, os.ExpandEnv(rawOpt))
+		opt = append(opt, expandEnv(rawOpt))
 	}
 	return opt
 }
@@ -442,25 +441,25 @@ func (r RunParameters) LogOpt() []string {
 func (r RunParameters) LxcConf() []string {
 	var lxcConf []string
 	for _, rawLxcConf := range r.RawLxcConf {
-		lxcConf = append(lxcConf, os.ExpandEnv(rawLxcConf))
+		lxcConf = append(lxcConf, expandEnv(rawLxcConf))
 	}
 	return lxcConf
 }
 
 func (r RunParameters) MacAddress() string {
-	return os.ExpandEnv(r.RawMacAddress)
+	return expandEnv(r.RawMacAddress)
 }
 
 func (r RunParameters) Memory() string {
-	return os.ExpandEnv(r.RawMemory)
+	return expandEnv(r.RawMemory)
 }
 
 func (r RunParameters) MemoryReservation() string {
-	return os.ExpandEnv(r.RawMemoryReservation)
+	return expandEnv(r.RawMemoryReservation)
 }
 
 func (r RunParameters) MemorySwap() string {
-	return os.ExpandEnv(r.RawMemorySwap)
+	return expandEnv(r.RawMemorySwap)
 }
 
 func (r RunParameters) Net() string {
@@ -468,7 +467,7 @@ func (r RunParameters) Net() string {
 	if len(r.RawNet) == 0 {
 		return "bridge"
 	}
-	return os.ExpandEnv(r.RawNet)
+	return expandEnv(r.RawNet)
 }
 
 func (r RunParameters) ActualNet() string {
@@ -490,53 +489,53 @@ func (r RunParameters) ActualNet() string {
 }
 
 func (r RunParameters) Pid() string {
-	return os.ExpandEnv(r.RawPid)
+	return expandEnv(r.RawPid)
 }
 
 func (r RunParameters) Publish() []string {
 	var publish []string
 	for _, rawPublish := range r.RawPublish {
-		publish = append(publish, os.ExpandEnv(rawPublish))
+		publish = append(publish, expandEnv(rawPublish))
 	}
 	return publish
 }
 
 func (r RunParameters) Restart() string {
-	return os.ExpandEnv(r.RawRestart)
+	return expandEnv(r.RawRestart)
 }
 
 func (r RunParameters) SecurityOpt() []string {
 	var securityOpt []string
 	for _, rawSecurityOpt := range r.RawSecurityOpt {
-		securityOpt = append(securityOpt, os.ExpandEnv(rawSecurityOpt))
+		securityOpt = append(securityOpt, expandEnv(rawSecurityOpt))
 	}
 	return securityOpt
 }
 
 func (r RunParameters) StopSignal() string {
-	return os.ExpandEnv(r.RawStopSignal)
+	return expandEnv(r.RawStopSignal)
 }
 
 func (r RunParameters) Ulimit() []string {
 	var ulimit []string
 	for _, rawUlimit := range r.RawUlimit {
-		ulimit = append(ulimit, os.ExpandEnv(rawUlimit))
+		ulimit = append(ulimit, expandEnv(rawUlimit))
 	}
 	return ulimit
 }
 
 func (r RunParameters) User() string {
-	return os.ExpandEnv(r.RawUser)
+	return expandEnv(r.RawUser)
 }
 
 func (r RunParameters) Uts() string {
-	return os.ExpandEnv(r.RawUts)
+	return expandEnv(r.RawUts)
 }
 
 func (r RunParameters) Volume() []string {
 	var volumes []string
 	for _, rawVolume := range r.RawVolume {
-		volume := os.ExpandEnv(rawVolume)
+		volume := expandEnv(rawVolume)
 		parts := strings.Split(volume, ":")
 		if !includes(cfg.VolumeNames(), parts[0]) && !path.IsAbs(parts[0]) {
 			parts[0] = cfg.Path() + "/" + parts[0]
@@ -571,13 +570,13 @@ func (r RunParameters) ActualVolume() []string {
 func (r RunParameters) VolumesFrom() []string {
 	var volumesFrom []string
 	for _, rawVolumesFrom := range r.RawVolumesFrom {
-		volumesFrom = append(volumesFrom, os.ExpandEnv(rawVolumesFrom))
+		volumesFrom = append(volumesFrom, expandEnv(rawVolumesFrom))
 	}
 	return volumesFrom
 }
 
 func (r RunParameters) Workdir() string {
-	return os.ExpandEnv(r.RawWorkdir)
+	return expandEnv(r.RawWorkdir)
 }
 
 func (r RunParameters) Cmd() []string {
@@ -586,7 +585,7 @@ func (r RunParameters) Cmd() []string {
 		switch rawCmd := r.RawCmd.(type) {
 		case string:
 			if len(rawCmd) > 0 {
-				cmds, err := shlex.Split(os.ExpandEnv(rawCmd))
+				cmds, err := shlex.Split(expandEnv(rawCmd))
 				if err != nil {
 					printErrorf("Error when parsing cmd `%v`: %v. Proceeding with %q.", rawCmd, err, cmds)
 				}
@@ -595,7 +594,7 @@ func (r RunParameters) Cmd() []string {
 		case []interface{}:
 			cmds := make([]string, len(rawCmd))
 			for i, v := range rawCmd {
-				cmds[i] = os.ExpandEnv(fmt.Sprintf("%v", v))
+				cmds[i] = expandEnv(fmt.Sprintf("%v", v))
 			}
 			cmd = append(cmd, cmds...)
 		default:
@@ -1204,15 +1203,15 @@ func sliceOrMap2ExpandedSlice(value interface{}) []string {
 		switch concreteValue := value.(type) {
 		case []interface{}: // YAML or JSON
 			for _, v := range concreteValue {
-				result = append(result, os.ExpandEnv(fmt.Sprintf("%v", v)))
+				result = append(result, expandEnv(fmt.Sprintf("%v", v)))
 			}
 		case map[interface{}]interface{}: // YAML
 			for k, v := range concreteValue {
-				result = append(result, os.ExpandEnv(fmt.Sprintf("%v", k))+"="+os.ExpandEnv(fmt.Sprintf("%v", v)))
+				result = append(result, expandEnv(fmt.Sprintf("%v", k))+"="+expandEnv(fmt.Sprintf("%v", v)))
 			}
 		case map[string]interface{}: // JSON
 			for k, v := range concreteValue {
-				result = append(result, os.ExpandEnv(k)+"="+os.ExpandEnv(fmt.Sprintf("%v", v)))
+				result = append(result, expandEnv(k)+"="+expandEnv(fmt.Sprintf("%v", v)))
 			}
 		default:
 			panic(StatusError{fmt.Errorf("unknown type: %v", value), 65})

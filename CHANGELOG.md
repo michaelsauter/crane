@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Add escape sequence for `$` in configuration
+  `$$` now expands to `$` in all string configuration values.
+  _@bjaglin_
+
 * Add support for Docker networks
   They can be configured via a top-level `networks` setting, and used from
   containers via e.g. `net: foo`.

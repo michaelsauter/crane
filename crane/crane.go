@@ -160,6 +160,12 @@ func commandOutput(name string, args []string) (string, error) {
 	return strings.TrimSpace(string(out)), err
 }
 
+// Follow os.ExpandEnv's contract except for `$$` which is transformed to `$`
+func expandEnv(s string) string {
+	os.Setenv("CRANE_DOLLAR", "$")
+	return os.ExpandEnv(strings.Replace(s, "$$", "${CRANE_DOLLAR}", -1))
+}
+
 func includes(haystack []string, needle string) bool {
 	for _, name := range haystack {
 		if name == needle {

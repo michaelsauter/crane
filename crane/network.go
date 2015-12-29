@@ -2,7 +2,6 @@ package crane
 
 import (
 	"fmt"
-	"os"
 )
 
 type Network interface {
@@ -17,7 +16,7 @@ type network struct {
 }
 
 func (n *network) Name() string {
-	return os.ExpandEnv(n.RawName)
+	return expandEnv(n.RawName)
 }
 
 func (n *network) ActualName() string {

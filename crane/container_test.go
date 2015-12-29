@@ -188,18 +188,16 @@ func TestCmd(t *testing.T) {
 	// String
 	os.Clearenv()
 	os.Setenv("CMD", "true")
-	c = &container{RawRun: RunParameters{RawCmd: "$CMD"}}
-	assert.Equal(t, []string{"true"}, c.RunParams().Cmd())
+	c = &container{RawRun: RunParameters{RawCmd: "$$CMD is $CMD"}}
+	assert.Equal(t, []string{"$CMD", "is", "true"}, c.RunParams().Cmd())
 	// String with multiple parts
 	c = &container{RawRun: RunParameters{RawCmd: "bundle exec rails s -p 3000"}}
 	assert.Equal(t, []string{"bundle", "exec", "rails", "s", "-p", "3000"}, c.RunParams().Cmd())
 	// Array
 	os.Clearenv()
 	os.Setenv("CMD", "1")
-	c = &container{RawRun: RunParameters{RawCmd: []interface{}{"echo", "$CMD"}}}
-	if len(c.RunParams().Cmd()) != 2 || c.RunParams().Cmd()[0] != "echo" || c.RunParams().Cmd()[1] != "1" {
-		t.Errorf("Command should have been true, got %v", c.RunParams().Cmd())
-	}
+	c = &container{RawRun: RunParameters{RawCmd: []interface{}{"echo", "$CMD", "$$CMD"}}}
+	assert.Equal(t, []string{"echo", "1", "$CMD"}, c.RunParams().Cmd())
 }
 
 type OptIntWrapper struct {
