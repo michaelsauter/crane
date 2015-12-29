@@ -277,9 +277,9 @@ minor version update.
 
 
 ### Networking
-Docker networks are support via the top-level config `networks`, which does not
-take additional parameters at this stage. As links cannot be used at the same
-time, container dependencies can be expressed via `requires`. Networks are
+Docker networks are supported via the top-level config `networks`, which does
+not take additional parameters at this stage. As links cannot be used at the
+same time, container dependencies can be expressed via `requires`. Networks are
 automatically created by Crane when necessary, and never cleaned up. When a
 [prefix](#container-prefixes) is used, it is also applied to the network.
 
@@ -301,7 +301,7 @@ every minor version update.
 
 
 ### Volumes
-Docker volumes are support via the top-level config `volumes`, which does not
+Docker volumes are supported via the top-level config `volumes`, which does not
 take additional parameters at this stage. Volumes are automatically created by
 Crane when necessary, and never cleaned up. When a [prefix](#container-prefixes)
 is used, it is also applied to the volume.
