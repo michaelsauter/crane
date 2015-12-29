@@ -208,8 +208,19 @@ func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork), migh
 
 	if isVerbose() {
 		printInfof("Command will be applied to: %s", strings.Join(unitOfWork.targeted, ", "))
-		if mightStartRelated && len(unitOfWork.Associated()) > 0 {
-			printInfof("\nIf needed, also starts: %s", strings.Join(unitOfWork.Associated(), ", "))
+		if mightStartRelated {
+			associated := unitOfWork.Associated()
+			if len(associated) > 0 {
+				printInfof("\nIf needed, also starts containers: %s", strings.Join(associated, ", "))
+			}
+			requiredNetworks := unitOfWork.RequiredNetworks()
+			if len(requiredNetworks) > 0 {
+				printInfof("\nIf needed, also creates networks: %s", strings.Join(requiredNetworks, ", "))
+			}
+			requiredVolumes := unitOfWork.RequiredVolumes()
+			if len(requiredVolumes) > 0 {
+				printInfof("\nIf needed, also creates volumes: %s", strings.Join(requiredVolumes, ", "))
+			}
 		}
 		fmt.Printf("\n\n")
 	}

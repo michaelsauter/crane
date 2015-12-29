@@ -72,3 +72,71 @@ func TestNewUnitOfWork(t *testing.T) {
 		}
 	}
 }
+
+func TestRequiredNetworks(t *testing.T) {
+	var uow *UnitOfWork
+	var networkMap map[string]Network
+
+	// no networks
+	cfg = &config{networkMap: networkMap}
+	uow = &UnitOfWork{}
+	assert.Equal(t, []string{}, uow.RequiredNetworks())
+
+	// some networks
+	containerMap := NewStubbedContainerMap(true,
+		&container{
+			RawName: "a",
+			RawRun: RunParameters{
+				RawNet: "foo",
+			},
+		},
+		&container{
+			RawName: "b",
+			RawRun: RunParameters{
+				RawNet: "bar",
+			},
+		},
+	)
+	networkMap = map[string]Network{
+		"foo": &network{RawName: "foo"},
+		"bar": &network{RawName: "bar"},
+		"baz": &network{RawName: "baz"},
+	}
+	cfg = &config{containerMap: containerMap, networkMap: networkMap}
+	uow = &UnitOfWork{order: []string{"a", "b"}}
+	assert.Equal(t, []string{"foo", "bar"}, uow.RequiredNetworks())
+}
+
+func TestRequiredVolumes(t *testing.T) {
+	var uow *UnitOfWork
+	var volumeMap map[string]Volume
+
+	// no volumes
+	cfg = &config{volumeMap: volumeMap}
+	uow = &UnitOfWork{}
+	assert.Equal(t, []string{}, uow.RequiredVolumes())
+
+	// some volumes
+	containerMap := NewStubbedContainerMap(true,
+		&container{
+			RawName: "a",
+			RawRun: RunParameters{
+				RawVolume: []string{"foo:/foo"},
+			},
+		},
+		&container{
+			RawName: "b",
+			RawRun: RunParameters{
+				RawVolume: []string{"bar:/bar"},
+			},
+		},
+	)
+	volumeMap = map[string]Volume{
+		"foo": &volume{RawName: "foo"},
+		"bar": &volume{RawName: "bar"},
+		"baz": &volume{RawName: "baz"},
+	}
+	cfg = &config{containerMap: containerMap, volumeMap: volumeMap}
+	uow = &UnitOfWork{order: []string{"a", "b"}}
+	assert.Equal(t, []string{"foo", "bar"}, uow.RequiredVolumes())
+}

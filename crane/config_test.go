@@ -101,18 +101,26 @@ func TestUnmarshal(t *testing.T) {
             "pre-start": "echo start...",
             "post-start": "echo start done!\n"
         }
+    },
+    "networks": {
+        "foo": {}
+    },
+    "volumes": {
+        "bar": {}
     }
 }
 `)
 	actual = unmarshal(json, ".json")
-	assert.Len(t, actual.RawContainerMap, 1)
-	assert.Len(t, actual.RawContainerMap["apache"].RunParams().Env(), 3)
-	assert.Len(t, actual.RawContainerMap["apache"].RunParams().Label(), 3)
-	assert.Len(t, actual.RawContainerMap["apache"].RunParams().Link(), 2)
+	assert.Len(t, actual.RawContainers, 1)
+	assert.Len(t, actual.RawContainers["apache"].RunParams().Env(), 3)
+	assert.Len(t, actual.RawContainers["apache"].RunParams().Label(), 3)
+	assert.Len(t, actual.RawContainers["apache"].RunParams().Link(), 2)
 	assert.Len(t, actual.RawGroups, 1)
-	assert.Len(t, actual.RawHooksMap, 2)
-	assert.NotEmpty(t, actual.RawHooksMap["default"].RawPreStart)
-	assert.NotEmpty(t, actual.RawHooksMap["default"].RawPostStart)
+	assert.Len(t, actual.RawHooks, 2)
+	assert.Len(t, actual.RawNetworks, 1)
+	assert.Len(t, actual.RawVolumes, 1)
+	assert.NotEmpty(t, actual.RawHooks["default"].RawPreStart)
+	assert.NotEmpty(t, actual.RawHooks["default"].RawPostStart)
 
 	yaml := []byte(
 		`containers:
@@ -140,17 +148,23 @@ hooks:
     post-stop: echo apache container stopped!\n
   default:
     pre-start: echo start...
-    post-start: echo start done!\n
+    post-start: echo start done!
+networks:
+  foo: {}
+volumes:
+  bar: {}
 `)
 	actual = unmarshal(yaml, ".yml")
-	assert.Len(t, actual.RawContainerMap, 1)
-	assert.Len(t, actual.RawContainerMap["apache"].RunParams().Env(), 3)
-	assert.Len(t, actual.RawContainerMap["apache"].RunParams().Label(), 3)
-	assert.Len(t, actual.RawContainerMap["apache"].RunParams().Link(), 2)
+	assert.Len(t, actual.RawContainers, 1)
+	assert.Len(t, actual.RawContainers["apache"].RunParams().Env(), 3)
+	assert.Len(t, actual.RawContainers["apache"].RunParams().Label(), 3)
+	assert.Len(t, actual.RawContainers["apache"].RunParams().Link(), 2)
 	assert.Len(t, actual.RawGroups, 1)
-	assert.Len(t, actual.RawHooksMap, 2)
-	assert.NotEmpty(t, actual.RawHooksMap["default"].RawPreStart)
-	assert.NotEmpty(t, actual.RawHooksMap["default"].RawPostStart)
+	assert.Len(t, actual.RawHooks, 2)
+	assert.Len(t, actual.RawNetworks, 1)
+	assert.Len(t, actual.RawVolumes, 1)
+	assert.NotEmpty(t, actual.RawHooks["default"].RawPreStart)
+	assert.NotEmpty(t, actual.RawHooks["default"].RawPostStart)
 }
 
 func TestUnmarshalInvalidJSON(t *testing.T) {
@@ -184,6 +198,20 @@ func TestUnmarshalInvalidYAML(t *testing.T) {
 	})
 }
 
+func TestUnmarshalEmptyNetworkOrVolume(t *testing.T) {
+	yaml := []byte(
+		`networks:
+  foo:
+volumes:
+  bar:
+`)
+	config := unmarshal(yaml, ".yml")
+	config.setNetworkMap()
+	config.setVolumeMap()
+	assert.Equal(t, "foo", config.networkMap["foo"].Name())
+	assert.Equal(t, "bar", config.volumeMap["bar"].Name())
+}
+
 func TestInitialize(t *testing.T) {
 	// use different, undefined environment variables throughout the config to detect any issue in expansion
 	rawContainerMap := map[string]*container{
@@ -206,9 +234,9 @@ func TestInitialize(t *testing.T) {
 		},
 	}
 	c := &config{
-		RawContainerMap: rawContainerMap,
-		RawGroups:       rawGroups,
-		RawHooksMap:     rawHooksMap,
+		RawContainers: rawContainerMap,
+		RawGroups:     rawGroups,
+		RawHooks:      rawHooksMap,
 	}
 	c.initialize()
 	assert.Equal(t, "a", c.containerMap["a"].Name())
@@ -234,9 +262,9 @@ func TestInitializeAmbiguousHooks(t *testing.T) {
 		"group2": hooks{RawPreStart: "group2-pre-start"},
 	}
 	c := &config{
-		RawContainerMap: rawContainerMap,
-		RawGroups:       rawGroups,
-		RawHooksMap:     rawHooksMap,
+		RawContainers: rawContainerMap,
+		RawGroups:     rawGroups,
+		RawHooks:      rawHooksMap,
 	}
 	assert.Panics(t, func() {
 		c.initialize()
@@ -248,7 +276,7 @@ func TestValidate(t *testing.T) {
 		"a": &container{RawName: "a", RawImage: "ubuntu"},
 		"b": &container{RawName: "b", RawImage: "ubuntu"},
 	}
-	c := &config{RawContainerMap: rawContainerMap}
+	c := &config{RawContainers: rawContainerMap}
 	assert.NotPanics(t, func() {
 		c.validate()
 	})
@@ -256,7 +284,7 @@ func TestValidate(t *testing.T) {
 		"a": &container{RawName: "a", RawImage: "ubuntu"},
 		"b": &container{RawName: "b"},
 	}
-	c = &config{RawContainerMap: rawContainerMap}
+	c = &config{RawContainers: rawContainerMap}
 	assert.Panics(t, func() {
 		c.validate()
 	})
@@ -342,4 +370,78 @@ func TestContainersForReferenceDeduplication(t *testing.T) {
 	c := &config{containerMap: containerMap, groups: groups}
 	containers := c.ContainersForReference("foo")
 	assert.Equal(t, []string{"a", "b"}, containers)
+}
+
+func TestNetworkNames(t *testing.T) {
+	var networks []string
+	var networkMap map[string]Network
+	var c Config
+
+	networkMap = map[string]Network{}
+	c = &config{networkMap: networkMap}
+	networks = c.NetworkNames()
+	assert.Equal(t, []string{}, networks)
+
+	networkMap = map[string]Network{
+		"foo": &network{},
+		"bar": &network{},
+	}
+	c = &config{networkMap: networkMap}
+	networks = c.NetworkNames()
+	assert.Equal(t, []string{"bar", "foo"}, networks)
+}
+
+func TestVolumeNames(t *testing.T) {
+	var volumes []string
+	var volumeMap map[string]Volume
+	var c Config
+
+	volumeMap = map[string]Volume{}
+	c = &config{volumeMap: volumeMap}
+	volumes = c.VolumeNames()
+	assert.Equal(t, []string{}, volumes)
+
+	volumeMap = map[string]Volume{
+		"foo": &network{},
+		"bar": &network{},
+	}
+	c = &config{volumeMap: volumeMap}
+	volumes = c.VolumeNames()
+	assert.Equal(t, []string{"bar", "foo"}, volumes)
+}
+
+func TestConfigNetwork(t *testing.T) {
+	var networkMap map[string]*network
+	var c *config
+
+	networkMap = map[string]*network{}
+	c = &config{RawNetworks: networkMap}
+	c.setNetworkMap()
+	assert.Equal(t, nil, c.Network("foo"))
+
+	networkMap = map[string]*network{
+		"foo": &network{},
+		"bar": &network{},
+	}
+	c = &config{RawNetworks: networkMap}
+	c.setNetworkMap()
+	assert.Equal(t, "bar", c.Network("bar").Name())
+}
+
+func TestConfigVolume(t *testing.T) {
+	var rawVolumes map[string]*volume
+	var c *config
+
+	rawVolumes = map[string]*volume{}
+	c = &config{RawVolumes: rawVolumes}
+	c.setVolumeMap()
+	assert.Equal(t, nil, c.Volume("foo"))
+
+	rawVolumes = map[string]*volume{
+		"foo": &volume{},
+		"bar": &volume{},
+	}
+	c = &config{RawVolumes: rawVolumes}
+	c.setVolumeMap()
+	assert.Equal(t, "bar", c.Volume("bar").Name())
 }

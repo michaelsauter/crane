@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -22,26 +23,38 @@ type Config interface {
 	UniqueID() string
 	Prefix() string
 	Tag() string
+	NetworkNames() []string
+	VolumeNames() []string
+	Network(name string) Network
+	Volume(name string) Volume
 	ContainerMap() ContainerMap
 	Container(name string) Container
 	ContainerInfo(name string) ContainerInfo
 }
 
 type config struct {
-	RawContainerMap map[string]*container `json:"containers" yaml:"containers"`
-	RawGroups       map[string][]string   `json:"groups" yaml:"groups"`
-	RawHooksMap     map[string]hooks      `json:"hooks" yaml:"hooks"`
-	containerMap    ContainerMap
-	groups          map[string][]string
-	path            string
-	prefix          string
-	tag             string
-	uniqueID        string
+	RawContainers map[string]*container `json:"containers" yaml:"containers"`
+	RawGroups     map[string][]string   `json:"groups" yaml:"groups"`
+	RawHooks      map[string]hooks      `json:"hooks" yaml:"hooks"`
+	RawNetworks   map[string]*network   `json:"networks" yaml:"networks"`
+	RawVolumes    map[string]*volume    `json:"volumes" yaml:"volumes"`
+	containerMap  ContainerMap
+	networkMap    NetworkMap
+	volumeMap     VolumeMap
+	groups        map[string][]string
+	path          string
+	prefix        string
+	tag           string
+	uniqueID      string
 }
 
 // ContainerMap maps the container name
 // to its configuration
 type ContainerMap map[string]Container
+
+type NetworkMap map[string]Network
+
+type VolumeMap map[string]Volume
 
 // configFilenames returns a slice of
 // files to read the config from.
@@ -191,17 +204,43 @@ func (c *config) ContainerInfo(name string) ContainerInfo {
 	return c.Container(name)
 }
 
+func (c *config) NetworkNames() []string {
+	networks := []string{}
+	for name, _ := range c.networkMap {
+		networks = append(networks, name)
+	}
+	sort.Strings(networks)
+	return networks
+}
+
+func (c *config) VolumeNames() []string {
+	volumes := []string{}
+	for name, _ := range c.volumeMap {
+		volumes = append(volumes, name)
+	}
+	sort.Strings(volumes)
+	return volumes
+}
+
+func (c *config) Network(name string) Network {
+	return c.networkMap[name]
+}
+
+func (c *config) Volume(name string) Volume {
+	return c.volumeMap[name]
+}
+
 // Load configuration into the internal structs from the raw, parsed ones
 func (c *config) initialize() {
 	// Local container map to query by expanded name
 	containerMap := make(map[string]*container)
-	for rawName, container := range c.RawContainerMap {
+	for rawName, container := range c.RawContainers {
 		container.RawName = rawName
 		containerMap[container.Name()] = container
 	}
 	// Local hooks map to query by expanded name
 	hooksMap := make(map[string]hooks)
-	for hooksRawName, hooks := range c.RawHooksMap {
+	for hooksRawName, hooks := range c.RawHooks {
 		hooksMap[os.ExpandEnv(hooksRawName)] = hooks
 	}
 	// Groups
@@ -229,10 +268,35 @@ func (c *config) initialize() {
 		}
 		c.containerMap[name] = container
 	}
+
+	c.setNetworkMap()
+	c.setVolumeMap()
+}
+
+func (c *config) setNetworkMap() {
+	c.networkMap = make(map[string]Network)
+	for rawName, net := range c.RawNetworks {
+		if net == nil {
+			net = &network{}
+		}
+		net.RawName = rawName
+		c.networkMap[net.Name()] = net
+	}
+}
+
+func (c *config) setVolumeMap() {
+	c.volumeMap = make(map[string]Volume)
+	for rawName, vol := range c.RawVolumes {
+		if vol == nil {
+			vol = &volume{}
+		}
+		vol.RawName = rawName
+		c.volumeMap[vol.Name()] = vol
+	}
 }
 
 func (c *config) validate() {
-	for name, container := range c.RawContainerMap {
+	for name, container := range c.RawContainers {
 		if len(container.RawImage) == 0 {
 			panic(StatusError{fmt.Errorf("No image specified for `%s`", name), 64})
 		}

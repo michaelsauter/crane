@@ -2,11 +2,13 @@ package crane
 
 // Dependencies contains 4 fields:
 // all: contains all dependencies
+// requires: containers that need to be running
 // link: containers linked to
 // volumesFrom: containers that provide volumes
 // net: container the net stack is shared with
 type Dependencies struct {
 	All         []string
+	Requires    []string
 	Link        []string
 	VolumesFrom []string
 	Net         string
@@ -29,6 +31,11 @@ func (d *Dependencies) includes(needle string) bool {
 func (d *Dependencies) requireStarted(needle string) bool {
 	if needle == d.Net || needle == d.IPC {
 		return true
+	}
+	for _, name := range d.Requires {
+		if name == needle {
+			return true
+		}
 	}
 	for _, name := range d.Link {
 		if name == needle {

@@ -51,16 +51,17 @@ type ContainerInfo interface {
 }
 
 type container struct {
-	id        string
-	RawName   string
-	RawUnique bool            `json:"unique" yaml:"unique"`
-	RawImage  string          `json:"image" yaml:"image"`
-	RawBuild  BuildParameters `json:"build" yaml:"build"`
-	RawRun    RunParameters   `json:"run" yaml:"run"`
-	RawRm     RmParameters    `json:"rm" yaml:"rm"`
-	RawStart  StartParameters `json:"start" yaml:"start"`
-	RawExec   ExecParameters  `json:"exec" yaml:"exec"`
-	hooks     hooks
+	id          string
+	RawName     string
+	RawUnique   bool            `json:"unique" yaml:"unique"`
+	RawImage    string          `json:"image" yaml:"image"`
+	RawRequires []string        `json:"requires" yaml:"requires"`
+	RawBuild    BuildParameters `json:"build" yaml:"build"`
+	RawRun      RunParameters   `json:"run" yaml:"run"`
+	RawRm       RmParameters    `json:"rm" yaml:"rm"`
+	RawStart    StartParameters `json:"start" yaml:"start"`
+	RawExec     ExecParameters  `json:"exec" yaml:"exec"`
+	hooks       hooks
 }
 
 type BuildParameters struct {
@@ -218,6 +219,12 @@ func (c *container) ExecParams() ExecParameters {
 
 func (c *container) Dependencies() *Dependencies {
 	dependencies := &Dependencies{}
+	for _, required := range c.Requires() {
+		if !includes(excluded, required) && !dependencies.includes(required) {
+			dependencies.All = append(dependencies.All, required)
+			dependencies.Requires = append(dependencies.Requires, required)
+		}
+	}
 	for _, link := range c.RunParams().Link() {
 		linkName := strings.Split(link, ":")[0]
 		if !includes(excluded, linkName) && !dependencies.includes(linkName) {
@@ -274,6 +281,14 @@ func (c *container) Image() string {
 
 func (c *container) Unique() bool {
 	return c.RawUnique
+}
+
+func (c *container) Requires() []string {
+	var requires []string
+	for _, rawRequired := range c.RawRequires {
+		requires = append(requires, os.ExpandEnv(rawRequired))
+	}
+	return requires
 }
 
 func (b BuildParameters) Context() string {
@@ -456,6 +471,24 @@ func (r RunParameters) Net() string {
 	return os.ExpandEnv(r.RawNet)
 }
 
+func (r RunParameters) ActualNet() string {
+	netParam := r.Net()
+	if netParam == "bridge" {
+		return "bridge"
+	}
+	netContainer := containerReference(netParam)
+	if len(netContainer) > 0 {
+		if !includes(excluded, netContainer) {
+			return "container:" + cfg.Container(netContainer).ActualName()
+		}
+	} else {
+		if includes(cfg.NetworkNames(), netParam) {
+			return cfg.Network(netParam).ActualName()
+		}
+	}
+	return netParam
+}
+
 func (r RunParameters) Pid() string {
 	return os.ExpandEnv(r.RawPid)
 }
@@ -504,13 +537,35 @@ func (r RunParameters) Volume() []string {
 	var volumes []string
 	for _, rawVolume := range r.RawVolume {
 		volume := os.ExpandEnv(rawVolume)
-		paths := strings.Split(volume, ":")
-		if !path.IsAbs(paths[0]) {
-			paths[0] = cfg.Path() + "/" + paths[0]
+		parts := strings.Split(volume, ":")
+		if !includes(cfg.VolumeNames(), parts[0]) && !path.IsAbs(parts[0]) {
+			parts[0] = cfg.Path() + "/" + parts[0]
 		}
-		volumes = append(volumes, strings.Join(paths, ":"))
+		volumes = append(volumes, strings.Join(parts, ":"))
 	}
 	return volumes
+}
+
+func (r RunParameters) VolumeSources() []string {
+	volumes := r.Volume()
+	var volumeSources []string
+	for _, volume := range volumes {
+		parts := strings.Split(volume, ":")
+		volumeSources = append(volumeSources, parts[0])
+	}
+	return volumeSources
+}
+
+func (r RunParameters) ActualVolume() []string {
+	vols := []string{}
+	for _, volume := range r.Volume() {
+		parts := strings.Split(volume, ":")
+		if includes(cfg.VolumeNames(), parts[0]) {
+			parts[0] = cfg.Volume(parts[0]).ActualName()
+		}
+		vols = append(vols, strings.Join(parts, ":"))
+	}
+	return vols
 }
 
 func (r RunParameters) VolumesFrom() []string {
@@ -801,15 +856,9 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 		args = append(args, "--memory-swappiness", strconv.Itoa(c.RunParams().MemorySwappiness.Value))
 	}
 	// Net
-	if c.RunParams().Net() != "bridge" {
-		netContainer := containerReference(c.RunParams().Net())
-		if len(netContainer) > 0 {
-			if !includes(excluded, netContainer) {
-				args = append(args, "--net", "container:"+cfg.Container(netContainer).ActualName())
-			}
-		} else {
-			args = append(args, "--net", c.RunParams().Net())
-		}
+	netParam := c.RunParams().ActualNet()
+	if netParam != "bridge" {
+		args = append(args, "--net", netParam)
 	}
 	// OomKillDisable
 	if c.RunParams().OomKillDisable {
@@ -872,7 +921,7 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 		args = append(args, "--uts", c.RunParams().Uts())
 	}
 	// Volumes
-	for _, volume := range c.RunParams().Volume() {
+	for _, volume := range c.RunParams().ActualVolume() {
 		args = append(args, "--volume", volume)
 	}
 	// VolumesFrom
