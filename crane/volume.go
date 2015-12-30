@@ -2,7 +2,6 @@ package crane
 
 import (
 	"fmt"
-	"os"
 )
 
 type Volume interface {
@@ -17,7 +16,7 @@ type volume struct {
 }
 
 func (v *volume) Name() string {
-	return os.ExpandEnv(v.RawName)
+	return expandEnv(v.RawName)
 }
 
 func (v *volume) ActualName() string {

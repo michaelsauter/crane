@@ -13,6 +13,9 @@
 * Support several references for exclusion
   `--exclude` can now be repeated on the CLI, and several values can be passed
   via `CRANE_EXCLUDE` using newline as a value separator.
+
+* Add escape sequence for `$` in configuration
+  `$$` now expands to `$` in all string configuration values.
   _@bjaglin_
 
 * Add support for Docker networks

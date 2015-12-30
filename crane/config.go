@@ -241,14 +241,14 @@ func (c *config) initialize() {
 	// Local hooks map to query by expanded name
 	hooksMap := make(map[string]hooks)
 	for hooksRawName, hooks := range c.RawHooks {
-		hooksMap[os.ExpandEnv(hooksRawName)] = hooks
+		hooksMap[expandEnv(hooksRawName)] = hooks
 	}
 	// Groups
 	c.groups = make(map[string][]string)
 	for groupRawName, rawNames := range c.RawGroups {
-		groupName := os.ExpandEnv(groupRawName)
+		groupName := expandEnv(groupRawName)
 		for _, rawName := range rawNames {
-			c.groups[groupName] = append(c.groups[groupName], os.ExpandEnv(rawName))
+			c.groups[groupName] = append(c.groups[groupName], expandEnv(rawName))
 		}
 		if hooks, ok := hooksMap[groupName]; ok {
 			// attach group-defined hooks to the group containers
@@ -338,7 +338,7 @@ func (c *config) ContainersForReference(reference string) (result []string) {
 		}
 	} else {
 		// reference given
-		reference = os.ExpandEnv(reference)
+		reference = expandEnv(reference)
 		// Select reference from listed groups
 		for group, groupContainers := range c.groups {
 			if group == reference {
