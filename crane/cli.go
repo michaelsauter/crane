@@ -12,21 +12,20 @@ var cfg Config
 var excluded []string
 
 var (
-	app          = kingpin.New("crane", "Lift containers with ease")
-	interspersed = app.Interspersed(false)
-	verboseFlag  = app.Flag("verbose", "Enable verbose output.").Short('v').Bool()
-	configFlag   = app.Flag(
+	app         = kingpin.New("crane", "Lift containers with ease").Interspersed(false).DefaultEnvars()
+	verboseFlag = app.Flag("verbose", "Enable verbose output.").Short('v').Bool()
+	configFlag  = app.Flag(
 		"config",
 		"Location of config file.",
-	).Short('c').OverrideDefaultFromEnvar("CRANE_CONFIG").PlaceHolder("~/crane.yaml").String()
+	).Short('c').PlaceHolder("~/crane.yaml").String()
 	prefixFlag = app.Flag(
 		"prefix",
 		"Container prefix.",
-	).Short('p').OverrideDefaultFromEnvar("CRANE_PREFIX").String()
+	).Short('p').String()
 	excludeFlag = app.Flag(
 		"exclude",
-		"Exclude group or container",
-	).Short('e').OverrideDefaultFromEnvar("CRANE_EXCLUDE").String()
+		"Exclude group or container. Can be repeated.",
+	).Short('e').PlaceHolder("container|group").Strings()
 	tagFlag = app.Flag(
 		"tag",
 		"Override image tags.",
@@ -227,11 +226,11 @@ func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork), migh
 	wrapped(unitOfWork)
 }
 
-func excludedContainers(flag string) []string {
-	if len(flag) > 0 {
-		return cfg.ContainersForReference(flag)
+func excludedContainers(excludedReference []string) (containers []string) {
+	for _, reference := range excludedReference {
+		containers = append(containers, cfg.ContainersForReference(reference)...)
 	}
-	return []string{}
+	return containers
 }
 
 func runCli() {

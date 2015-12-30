@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+* Allow usage of environment variables for _all_ flags' defaults
+  Default for flag `foo-bar` can be provided via the environment variable
+  `CRANE_FOO_BAR`.
+  _@bjaglin_
+
+* Gracefully ignore excluded containers in IPC/net dependencies
+  _@bjaglin_
+
+* Support several references for exclusion
+  `--exclude` can now be repeated on the CLI, and several values can be passed
+  via `CRANE_EXCLUDE` using newline as a value separator.
+  _@bjaglin_
+
 * Add support for Docker networks
   They can be configured via a top-level `networks` setting, and used from
   containers via e.g. `net: foo`.

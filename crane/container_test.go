@@ -40,13 +40,12 @@ func TestDependencies(t *testing.T) {
 		},
 	}
 	expected = &Dependencies{
-		All:         []string{"foo", "a", "c", "n"},
+		All:         []string{"foo", "a", "c"},
 		Requires:    []string{"foo"},
 		Link:        []string{"a"},
 		VolumesFrom: []string{"c"},
-		Net:         "n",
 	}
-	excluded = []string{"b", "bar"}
+	excluded = []string{"b", "bar", "n"}
 	assert.Equal(t, expected, c.Dependencies())
 	excluded = []string{}
 }

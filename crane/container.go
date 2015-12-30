@@ -239,14 +239,16 @@ func (c *container) Dependencies() *Dependencies {
 			dependencies.VolumesFrom = append(dependencies.VolumesFrom, volumesFromName)
 		}
 	}
-	if dependencies.Net = containerReference(c.RunParams().Net()); dependencies.Net != "" {
-		if !includes(excluded, dependencies.Net) && !dependencies.includes(dependencies.Net) {
-			dependencies.All = append(dependencies.All, dependencies.Net)
+	if net := containerReference(c.RunParams().Net()); net != "" {
+		if !includes(excluded, net) && !dependencies.includes(net) {
+			dependencies.Net = net
+			dependencies.All = append(dependencies.All, net)
 		}
 	}
-	if dependencies.IPC = containerReference(c.RunParams().IPC()); dependencies.IPC != "" {
-		if !includes(excluded, dependencies.IPC) && !dependencies.includes(dependencies.IPC) {
-			dependencies.All = append(dependencies.All, dependencies.IPC)
+	if ipc := containerReference(c.RunParams().IPC()); ipc != "" {
+		if !includes(excluded, ipc) && !dependencies.includes(ipc) {
+			dependencies.IPC = ipc
+			dependencies.All = append(dependencies.All, ipc)
 		}
 	}
 	return dependencies
