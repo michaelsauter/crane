@@ -1,6 +1,5 @@
 github.com/bjaglin/multiplexio 7477705f395a7cc682ae2453b04377e9f4984779
 github.com/fatih/color f19a133fbf02ea4974db468b07328745a8840da7
 github.com/flynn/go-shlex 70644ac2a65dbf1691ce00c209d185163a14edc6
-github.com/spf13/cobra e1e66f7b4e667751cf530ddb6e72b79d6eeb0235
-github.com/spf13/pflag f82776d6cc998e3c026baef7b24409ff49fe5c8d
+github.com/alecthomas/kingpin 153fd4a65a216bd58f5ab9b044c6a8d67c401d78
 gopkg.in/v2/yaml 5d6f7e02b7cdad63b06ab3877915532cd30073b4
