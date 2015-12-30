@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.4.0 (2015-12-30)
 
 * Fix a few minor configuration parsing problems when using maps.
   _@bjaglin_
