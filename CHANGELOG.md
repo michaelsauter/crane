@@ -2,17 +2,21 @@
 
 ## Unreleased
 
+* Fix a few minor configuration parsing problems when using maps.
+  _@bjaglin_
+
 * Allow usage of environment variables for _all_ flags' defaults
   Default for flag `foo-bar` can be provided via the environment variable
   `CRANE_FOO_BAR`.
   _@bjaglin_
 
-* Gracefully ignore excluded containers in IPC/net dependencies
+* Gracefully ignore excluded containers in IPC/net dependencies.
   _@bjaglin_
 
 * Support several references for exclusion
   `--exclude` can now be repeated on the CLI, and several values can be passed
   via `CRANE_EXCLUDE` using newline as a value separator.
+  _@bjaglin_
 
 * Add escape sequence for `$` in configuration
   `$$` now expands to `$` in all string configuration values.
