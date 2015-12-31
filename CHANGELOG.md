@@ -6,6 +6,7 @@
   _@bjaglin_
 
 * Allow usage of environment variables for _all_ flags' defaults
+
   Default for flag `foo-bar` can be provided via the environment variable
   `CRANE_FOO_BAR`.
   _@bjaglin_
@@ -14,26 +15,31 @@
   _@bjaglin_
 
 * Support several references for exclusion
+
   `--exclude` can now be repeated on the CLI, and several values can be passed
   via `CRANE_EXCLUDE` using newline as a value separator.
   _@bjaglin_
 
 * Add escape sequence for `$` in configuration
+
   `$$` now expands to `$` in all string configuration values.
   _@bjaglin_
 
 * Add support for Docker networks
+
   They can be configured via a top-level `networks` setting, and used from
   containers via e.g. `net: foo`.
   _@michaelsauter_
 
 * Add non-Docker dependency management
+
   Containers learned a new top-level `requires` setting, which works exactly
   like links (minus the alias support) and can be used to reach dependent
   containers when relying on Docker networks.
   _@michaelsauter_
 
 * Add support for Docker volumes
+
   They can be configured via a top-level `volumes` setting, and used from
   containers via e.g. `volume: ["foo:/path"]`.
   _@michaelsauter_
