@@ -2,6 +2,7 @@ package crane
 
 import (
 	"fmt"
+	"os"
 )
 
 type Network interface {
@@ -27,7 +28,7 @@ func (n *network) Create() {
 	fmt.Printf("Creating network %s ...\n", n.ActualName())
 
 	args := []string{"network", "create", n.ActualName()}
-	executeCommand("docker", args)
+	executeCommand("docker", args, os.Stdout, os.Stderr)
 }
 
 func (n *network) Exists() bool {

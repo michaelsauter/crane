@@ -1,6 +1,7 @@
 package crane
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/bjaglin/multiplexio"
 	ansi "github.com/fatih/color"
@@ -8,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"text/tabwriter"
 )
 
@@ -22,10 +24,33 @@ func (containers Containers) Reversed() Containers {
 }
 
 // Provision containers.
-func (containers Containers) Provision(nocache bool) {
+func (containers Containers) Provision(nocache bool, parallel int) {
+	var (
+		throttle = make(chan struct{}, parallel)
+		wg       sync.WaitGroup
+	)
 	for _, container := range containers.stripProvisioningDuplicates() {
-		container.Provision(nocache)
+		if parallel > 0 {
+			throttle <- struct{}{}
+		}
+		wg.Add(1)
+		go func(container Container) {
+			var out, err bytes.Buffer
+			defer func() {
+				out.WriteTo(os.Stdout)
+				err.WriteTo(os.Stderr)
+				handleRecoveredError(recover())
+				if parallel > 0 {
+					<-throttle
+				}
+				wg.Done()
+				container.SetCommandsOutput(nil, nil)
+			}()
+			container.SetCommandsOutput(&out, &err)
+			container.Provision(nocache)
+		}(container)
 	}
+	wg.Wait()
 }
 
 // Dump container logs.

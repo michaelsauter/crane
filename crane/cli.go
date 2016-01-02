@@ -39,6 +39,10 @@ var (
 		"no-cache",
 		"Build the image without any cache.",
 	).Short('n').Bool()
+	liftParallelFlag = liftCommand.Flag(
+		"parallel",
+		"Define how many containers are provisioned in parallel.",
+	).Short('l').Default("1").Int()
 	liftTargetArg = liftCommand.Arg("target", "Target of command").String()
 	liftCmdArg    = liftCommand.Arg("cmd", "Command for container").Strings()
 
@@ -138,6 +142,10 @@ var (
 		"no-cache",
 		"Build the image without any cache.",
 	).Short('n').Bool()
+	provisionParallelFlag = provisionCommand.Flag(
+		"parallel",
+		"Define how many containers are provisioned in parallel.",
+	).Short('l').Default("1").Int()
 	provisionTargetArg = provisionCommand.Arg("target", "Target of command").String()
 
 	pullCommand = app.Command(
@@ -238,7 +246,7 @@ func runCli() {
 
 	case liftCommand.FullCommand():
 		commandAction(*liftTargetArg, func(uow *UnitOfWork) {
-			uow.Lift(*liftCmdArg, excluded, *liftNoCacheFlag)
+			uow.Lift(*liftCmdArg, excluded, *liftNoCacheFlag, *liftParallelFlag)
 		}, true)
 
 	case versionCommand.FullCommand():
@@ -306,7 +314,7 @@ func runCli() {
 
 	case provisionCommand.FullCommand():
 		commandAction(*provisionTargetArg, func(uow *UnitOfWork) {
-			uow.Provision(*provisionNoCacheFlag)
+			uow.Provision(*provisionNoCacheFlag, *provisionParallelFlag)
 		}, false)
 
 	case pullCommand.FullCommand():

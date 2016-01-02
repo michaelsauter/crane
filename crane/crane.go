@@ -113,13 +113,13 @@ func executeHook(hook string, containerName string) {
 	case 0:
 		return
 	case 1:
-		executeCommand(cmds[0], []string{})
+		executeCommand(cmds[0], []string{}, os.Stdout, os.Stderr)
 	default:
-		executeCommand(cmds[0], cmds[1:])
+		executeCommand(cmds[0], cmds[1:], os.Stdout, os.Stderr)
 	}
 }
 
-func executeCommand(name string, args []string) {
+func executeCommand(name string, args []string, stdout, stderr io.Writer) {
 	if isVerbose() {
 		printInfof("\n--> %s %s\n", name, strings.Join(args, " "))
 	}
@@ -127,8 +127,8 @@ func executeCommand(name string, args []string) {
 	if cfg != nil {
 		cmd.Dir = cfg.Path()
 	}
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
 	cmd.Stdin = os.Stdin
 	cmd.Run()
 	if !cmd.ProcessState.Success() {
