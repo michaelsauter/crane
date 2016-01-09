@@ -29,6 +29,12 @@ func (containers Containers) Provision(nocache bool, parallel int) {
 		throttle = make(chan struct{}, parallel)
 		wg       sync.WaitGroup
 	)
+	if parallel != 1 {
+		// As we won't dump the result of provisioning until the first
+		// image succeeds, give some early feedback so that the operator
+		// does not feel it's stuck
+		fmt.Println("Provisioning containers ...")
+	}
 	for _, container := range containers.stripProvisioningDuplicates() {
 		if parallel > 0 {
 			throttle <- struct{}{}
@@ -46,7 +52,11 @@ func (containers Containers) Provision(nocache bool, parallel int) {
 				wg.Done()
 				container.SetCommandsOutput(nil, nil)
 			}()
-			container.SetCommandsOutput(&out, &err)
+			if parallel != 1 {
+				// Prevent parallel provisioning output interlacing
+				// by redirecting the outputs to buffers
+				container.SetCommandsOutput(&out, &err)
+			}
 			container.Provision(nocache)
 		}(container)
 	}
