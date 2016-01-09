@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.5.0 (2016-01-09)
 
 * Expose level of concurrency when provisioning
 

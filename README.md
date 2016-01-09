@@ -19,6 +19,7 @@ continuous integration.
   * [Networking](#networking)
   * [Volumes](#volumes)
   * [Hooks](#hooks)
+  * [Parallism](#parallism)
   * [Container Prefixes](#container-prefixes)
   * [Override image tag](#override-image-tag)
   * [Unique Names](#unique-names)
@@ -27,10 +28,10 @@ continuous integration.
 
 
 ## Installation
-The latest release (2.4.0) can be installed via:
+The latest release (2.5.0) can be installed via:
 
 ```
-bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/v2.4.0/download.sh`" && sudo mv crane /usr/local/bin/crane
+bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/v2.5.0/download.sh`" && sudo mv crane /usr/local/bin/crane
 ```
 
 Older releases can be found on the
@@ -38,7 +39,7 @@ Older releases can be found on the
 build Crane yourself by using the standard Go toolchain.
 
 Please have a look at the
-[changelog](https://github.com/michaelsauter/crane/blob/v2.4.0/CHANGELOG.md)
+[changelog](https://github.com/michaelsauter/crane/blob/v2.5.0/CHANGELOG.md)
 when upgrading.
 
 Of course, you will need to have Docker (>= 1.6) installed.
