@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+* Expose level of concurrency when provisioning
+
+  `lift` and `provision` commands can now be sped-up by passing
+  a custom parallelism level via `--parallel`/`-l`.
+  _@bjaglin_
+
 ## 2.4.0 (2015-12-30)
 
 * Fix a few minor configuration parsing problems when using maps.

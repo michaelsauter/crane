@@ -2,6 +2,7 @@ package crane
 
 import (
 	"fmt"
+	"os"
 )
 
 type Volume interface {
@@ -27,7 +28,7 @@ func (v *volume) Create() {
 	fmt.Printf("Creating volume %s ...\n", v.ActualName())
 
 	args := []string{"volume", "create", "--name", v.ActualName()}
-	executeCommand("docker", args)
+	executeCommand("docker", args, os.Stdout, os.Stderr)
 }
 
 func (v *volume) Exists() bool {

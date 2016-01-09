@@ -84,11 +84,12 @@ func (uow *UnitOfWork) Run(cmds []string, excluded []string) {
 	}
 }
 
-func (uow *UnitOfWork) Lift(cmds []string, excluded []string, noCache bool) {
+func (uow *UnitOfWork) Lift(cmds []string, excluded []string, noCache bool, parallel int) {
+	uow.Targeted().Provision(noCache, parallel)
 	uow.prepareRequirements()
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Lift(cmds, noCache, excluded)
+			container.Run(cmds, excluded)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
 			container.Start(excluded)
 		}
@@ -103,7 +104,7 @@ func (uow *UnitOfWork) Stats() {
 		}
 	}
 	if len(args) > 1 {
-		executeCommand("docker", args)
+		executeCommand("docker", args, os.Stdout, os.Stderr)
 	} else {
 		printNoticef("None of the targeted container is running.\n")
 	}
@@ -190,8 +191,8 @@ func (uow *UnitOfWork) Create(cmds []string, excluded []string) {
 }
 
 // Provision containers.
-func (uow *UnitOfWork) Provision(noCache bool) {
-	uow.Targeted().Provision(noCache)
+func (uow *UnitOfWork) Provision(noCache bool, parallel int) {
+	uow.Targeted().Provision(noCache, parallel)
 }
 
 // Pull containers.

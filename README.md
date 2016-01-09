@@ -381,6 +381,15 @@ The following hooks are currently available:
 Every hook will have the name of the container for which this hook runs available as the environment variable `CRANE_HOOKED_CONTAINER`.
 
 
+### Parallism
+By default, Crane executes all commands sequentially. However, you might want
+to increase the level of parallelism for network-heavy operations, in order to
+cut down the overall run time. The `--parallel`/`-l` flag allows you to
+specify the level of parallelism for commands where network can be a
+bottleneck (namely `provision` and `lift`). Passing a value of 0 effectively
+disable throttling, which means that all provisioning will be done in parallel.
+
+
 ### Container Prefixes
 It is possible to prefix containers with a global `--prefix` flag, which is just
 prepended to the container name. Remember that you will have to provide the same

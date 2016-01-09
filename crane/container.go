@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/flynn/go-shlex"
 	"io"
+	"os"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -17,7 +18,6 @@ type Container interface {
 	Exists() bool
 	InstancesOfStatus(status string) []string
 	Status() [][]string
-	Lift(cmds []string, nocache bool, excluded []string)
 	Provision(nocache bool)
 	PullImage()
 	Create(cmds []string, excluded []string)
@@ -31,6 +31,9 @@ type Container interface {
 	Rm(force bool)
 	Logs(follow bool, since string, tail string) (sources []logSource)
 	Push()
+	SetCommandsOutput(stdout, stderr io.Writer)
+	CommandsOut() io.Writer
+	CommandsErr() io.Writer
 }
 
 type ContainerInfo interface {
@@ -61,6 +64,8 @@ type container struct {
 	RawStart    StartParameters `json:"start" yaml:"start"`
 	RawExec     ExecParameters  `json:"exec" yaml:"exec"`
 	hooks       hooks
+	stdout      io.Writer
+	stderr      io.Writer
 }
 
 type BuildParameters struct {
@@ -643,11 +648,6 @@ func (c *container) Status() [][]string {
 	return rows
 }
 
-func (c *container) Lift(cmds []string, nocache bool, excluded []string) {
-	c.Provision(nocache)
-	c.Run(cmds, excluded)
-}
-
 func (c *container) Provision(nocache bool) {
 	if len(c.BuildParams().Context()) > 0 {
 		c.buildImage(nocache)
@@ -661,10 +661,10 @@ func (c *container) Create(cmds []string, excluded []string) {
 	if !c.Unique() {
 		c.Rm(true)
 	}
-	fmt.Printf("Creating container %s ...\n", c.ActualName())
+	fmt.Fprintf(c.CommandsOut(), "Creating container %s ...\n", c.ActualName())
 
 	args := append([]string{"create"}, c.createArgs(cmds, excluded)...)
-	executeCommand("docker", args)
+	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 }
 
 // Run container, or start it if already existing
@@ -673,7 +673,7 @@ func (c *container) Run(cmds []string, excluded []string) {
 		c.Rm(true)
 	}
 	executeHook(c.Hooks().PreStart(), c.ActualName())
-	fmt.Printf("Running container %s ...\n", c.ActualName())
+	fmt.Fprintf(c.CommandsOut(), "Running container %s ...\n", c.ActualName())
 
 	args := []string{"run"}
 	// Detach
@@ -682,7 +682,7 @@ func (c *container) Run(cmds []string, excluded []string) {
 	}
 	args = append(args, c.createArgs(cmds, excluded)...)
 	c.executePostStartHook()
-	executeCommand("docker", args)
+	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 }
 
 func (c *container) executePostStartHook() {
@@ -956,7 +956,7 @@ func (c *container) Start(excluded []string) {
 	if !c.Unique() && c.Exists() {
 		if !c.running() {
 			executeHook(c.Hooks().PreStart(), c.ActualName())
-			fmt.Printf("Starting container %s ...\n", c.ActualName())
+			fmt.Fprintf(c.CommandsOut(), "Starting container %s ...\n", c.ActualName())
 			args := []string{"start"}
 			if c.StartParams().Attach {
 				args = append(args, "--attach")
@@ -966,7 +966,7 @@ func (c *container) Start(excluded []string) {
 			}
 			args = append(args, c.ActualName())
 			c.executePostStartHook()
-			executeCommand("docker", args)
+			executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 		}
 	} else {
 		c.Run([]string{}, excluded)
@@ -977,9 +977,9 @@ func (c *container) Start(excluded []string) {
 func (c *container) Kill() {
 	for _, name := range c.InstancesOfStatus("running") {
 		executeHook(c.Hooks().PreStop(), name)
-		fmt.Printf("Killing container %s ...\n", name)
+		fmt.Fprintf(c.CommandsOut(), "Killing container %s ...\n", name)
 		args := []string{"kill", name}
-		executeCommand("docker", args)
+		executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 		executeHook(c.Hooks().PostStop(), name)
 	}
 }
@@ -988,9 +988,9 @@ func (c *container) Kill() {
 func (c *container) Stop() {
 	for _, name := range c.InstancesOfStatus("running") {
 		executeHook(c.Hooks().PreStop(), name)
-		fmt.Printf("Stopping container %s ...\n", name)
+		fmt.Fprintf(c.CommandsOut(), "Stopping container %s ...\n", name)
 		args := []string{"stop", name}
-		executeCommand("docker", args)
+		executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 		executeHook(c.Hooks().PostStop(), name)
 	}
 }
@@ -998,18 +998,18 @@ func (c *container) Stop() {
 // Pause container
 func (c *container) Pause() {
 	for _, name := range c.InstancesOfStatus("running") {
-		fmt.Printf("Pausing container %s ...\n", name)
+		fmt.Fprintf(c.CommandsOut(), "Pausing container %s ...\n", name)
 		args := []string{"pause", name}
-		executeCommand("docker", args)
+		executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 	}
 }
 
 // Unpause container
 func (c *container) Unpause() {
 	for _, name := range c.InstancesOfStatus("paused") {
-		fmt.Printf("Unpausing container %s ...\n", name)
+		fmt.Fprintf(c.CommandsOut(), "Unpausing container %s ...\n", name)
 		args := []string{"unpause", name}
-		executeCommand("docker", args)
+		executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 	}
 }
 
@@ -1030,7 +1030,7 @@ func (c *container) Exec(cmds []string) {
 		}
 		args = append(args, name)
 		args = append(args, cmds...)
-		executeCommand("docker", args)
+		executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 	}
 }
 
@@ -1040,7 +1040,7 @@ func (c *container) Rm(force bool) {
 	for _, name := range c.InstancesOfStatus("existing") {
 		containerIsRunning := includes(runningInstances, name)
 		if !force && containerIsRunning {
-			fmt.Printf("Cannot remove running container %s, use --force to remove anyway.\n", name)
+			fmt.Fprintf(c.CommandsOut(), "Cannot remove running container %s, use --force to remove anyway.\n", name)
 			break
 		}
 		args := []string{"rm"}
@@ -1049,13 +1049,13 @@ func (c *container) Rm(force bool) {
 			args = append(args, "--force")
 		}
 		if c.RmParams().Volumes {
-			fmt.Printf("Removing container %s and its volumes ...\n", name)
+			fmt.Fprintf(c.CommandsOut(), "Removing container %s and its volumes ...\n", name)
 			args = append(args, "--volumes")
 		} else {
-			fmt.Printf("Removing container %s ...\n", name)
+			fmt.Fprintf(c.CommandsOut(), "Removing container %s ...\n", name)
 		}
 		args = append(args, name)
-		executeCommand("docker", args)
+		executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 		if force && containerIsRunning {
 			executeHook(c.Hooks().PostStop(), name)
 		}
@@ -1092,9 +1092,9 @@ func (c *container) Logs(follow bool, since string, tail string) (sources []logS
 
 // Push container
 func (c *container) Push() {
-	fmt.Printf("Pushing image %s ...\n", c.Image())
+	fmt.Fprintf(c.CommandsOut(), "Pushing image %s ...\n", c.Image())
 	args := []string{"push", c.Image()}
-	executeCommand("docker", args)
+	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 }
 
 func (c *container) Hooks() Hooks {
@@ -1103,9 +1103,9 @@ func (c *container) Hooks() Hooks {
 
 // Pull image for container
 func (c *container) PullImage() {
-	fmt.Printf("Pulling image %s ...\n", c.Image())
+	fmt.Fprintf(c.CommandsOut(), "Pulling image %s ...\n", c.Image())
 	args := []string{"pull", c.Image()}
-	executeCommand("docker", args)
+	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 }
 
 func (c *container) PrefixedName() string {
@@ -1145,6 +1145,25 @@ func (c *container) InstancesOfStatus(status string) []string {
 	return []string{}
 }
 
+func (c *container) SetCommandsOutput(stdout, stderr io.Writer) {
+	c.stdout = stdout
+	c.stderr = stderr
+}
+
+func (c *container) CommandsOut() io.Writer {
+	if c.stdout == nil {
+		return os.Stdout
+	}
+	return c.stdout
+}
+
+func (c *container) CommandsErr() io.Writer {
+	if c.stderr == nil {
+		return os.Stderr
+	}
+	return c.stderr
+}
+
 func (c *container) running() bool {
 	if !c.Exists() {
 		return false
@@ -1162,7 +1181,7 @@ func (c *container) paused() bool {
 // Build image for container
 func (c *container) buildImage(nocache bool) {
 	executeHook(c.Hooks().PreBuild(), c.ActualName())
-	fmt.Printf("Building image %s ...\n", c.Image())
+	fmt.Fprintf(c.CommandsOut(), "Building image %s ...\n", c.Image())
 	args := []string{"build"}
 	if nocache {
 		args = append(args, "--no-cache")
@@ -1172,7 +1191,7 @@ func (c *container) buildImage(nocache bool) {
 		args = append(args, "--file="+filepath.FromSlash(c.BuildParams().Context()+"/"+c.BuildParams().File()))
 	}
 	args = append(args, c.BuildParams().Context())
-	executeCommand("docker", args)
+	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 	executeHook(c.Hooks().PostBuild(), c.ActualName())
 }
 
