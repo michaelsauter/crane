@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type Container interface {
@@ -681,16 +682,22 @@ func (c *container) Run(cmds []string, excluded []string) {
 		args = append(args, "--detach")
 	}
 	args = append(args, c.createArgs(cmds, excluded)...)
-	c.executePostStartHook()
+	wg := c.executePostStartHook()
 	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
+	wg.Wait()
 }
 
-func (c *container) executePostStartHook() {
+func (c *container) executePostStartHook() *sync.WaitGroup {
+
+	var wg sync.WaitGroup
+
 	if len(c.Hooks().PostStart()) > 0 {
+		wg.Add(1)
 		cmd, cmdOut, _ := executeCommandBackground("docker", []string{"events", "--filter", "event=start", "--filter", "container=" + c.ActualName()})
 		go func() {
 			defer func() {
 				handleRecoveredError(recover())
+				wg.Done()
 			}()
 			r := bufio.NewReader(cmdOut)
 			_, _, err := r.ReadLine()
@@ -702,6 +709,8 @@ func (c *container) executePostStartHook() {
 			}
 		}()
 	}
+
+	return &wg
 }
 
 // Returns all the flags to be passed to `docker create`
@@ -965,8 +974,9 @@ func (c *container) Start(excluded []string) {
 				args = append(args, "--interactive")
 			}
 			args = append(args, c.ActualName())
-			c.executePostStartHook()
+			wg := c.executePostStartHook()
 			executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
+			wg.Wait()
 		}
 	} else {
 		c.Run([]string{}, excluded)
