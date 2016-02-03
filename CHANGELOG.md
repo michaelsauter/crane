@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+* Bugfix: Wait for post-start hook to complete. #258
+
+  Otherwise the hook runs in the background and does not block.
+  _@jesper_
+
+* Bugfix: De-duplicate required volumes and networks in verbose output. #253
+
+  _@michaelsauter_
+
+
 ## 2.5.0 (2016-01-09)
 
 * Expose level of concurrency when provisioning
