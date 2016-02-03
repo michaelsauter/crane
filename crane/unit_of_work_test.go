@@ -96,6 +96,12 @@ func TestRequiredNetworks(t *testing.T) {
 				RawNet: "bar",
 			},
 		},
+		&container{
+			RawName: "c",
+			RawRun: RunParameters{
+				RawNet: "bar",
+			},
+		},
 	)
 	networkMap = map[string]Network{
 		"foo": &network{RawName: "foo"},
@@ -103,7 +109,7 @@ func TestRequiredNetworks(t *testing.T) {
 		"baz": &network{RawName: "baz"},
 	}
 	cfg = &config{containerMap: containerMap, networkMap: networkMap}
-	uow = &UnitOfWork{order: []string{"a", "b"}}
+	uow = &UnitOfWork{order: []string{"a", "b", "c"}}
 	assert.Equal(t, []string{"foo", "bar"}, uow.RequiredNetworks())
 }
 
@@ -130,6 +136,12 @@ func TestRequiredVolumes(t *testing.T) {
 				RawVolume: []string{"bar:/bar"},
 			},
 		},
+		&container{
+			RawName: "c",
+			RawRun: RunParameters{
+				RawVolume: []string{"bar:/bar"},
+			},
+		},
 	)
 	volumeMap = map[string]Volume{
 		"foo": &volume{RawName: "foo"},
@@ -137,6 +149,6 @@ func TestRequiredVolumes(t *testing.T) {
 		"baz": &volume{RawName: "baz"},
 	}
 	cfg = &config{containerMap: containerMap, volumeMap: volumeMap}
-	uow = &UnitOfWork{order: []string{"a", "b"}}
+	uow = &UnitOfWork{order: []string{"a", "b", "c"}}
 	assert.Equal(t, []string{"foo", "bar"}, uow.RequiredVolumes())
 }

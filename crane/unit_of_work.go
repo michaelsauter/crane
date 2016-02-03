@@ -291,7 +291,7 @@ func (uow *UnitOfWork) RequiredNetworks() []string {
 	}
 	for _, container := range uow.Containers() {
 		net := container.RunParams().Net()
-		if includes(networks, net) {
+		if includes(networks, net) && !includes(required, net) {
 			required = append(required, net)
 		}
 	}
@@ -306,7 +306,7 @@ func (uow *UnitOfWork) RequiredVolumes() []string {
 	}
 	for _, container := range uow.Containers() {
 		for _, volumeSource := range container.RunParams().VolumeSources() {
-			if includes(volumes, volumeSource) {
+			if includes(volumes, volumeSource) && !includes(required, volumeSource) {
 				required = append(required, volumeSource)
 			}
 		}
