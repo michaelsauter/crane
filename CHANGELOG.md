@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+* Limit the number of Docker calls when cascading commands to affected containers.
+
+  _@bjaglin_
+
 ## 2.5.1 (2016-02-03)
 
 * Bugfix: Wait for post-start hook to complete. #258
