@@ -80,12 +80,12 @@ type BuildParameters struct {
 }
 
 type PushParameters struct {
-	Registry string `json:"registry" yaml:"registry"`
-	Skip     bool   `json:"skip" yaml:"skip"`
+	RawRegistry string `json:"registry" yaml:"registry"`
+	RawSkip     bool   `json:"skip" yaml:"skip"`
 }
 
 type PullParameters struct {
-	Registry string `json:"registry" yaml:"registry"`
+	RawRegistry string `json:"registry" yaml:"registry"`
 }
 
 type RunParameters struct {
@@ -328,12 +328,24 @@ func (b BuildParameters) File() string {
 	return expandEnv(b.RawFile)
 }
 
+func (p PullParameters) Registry() string {
+	return expandEnv(p.RawRegistry)
+}
+
 func (p PullParameters) FullImageName(name string) string {
-	return p.Registry + "/" + name
+	return p.Registry() + "/" + name
+}
+
+func (p PushParameters) Registry() string {
+	return expandEnv(p.RawRegistry)
+}
+
+func (p PushParameters) Skip() bool {
+	return p.RawSkip
 }
 
 func (p PushParameters) FullImageName(name string) string {
-	return p.Registry + "/" + name
+	return p.Registry() + "/" + name
 }
 
 func (r RunParameters) AddHost() []string {
@@ -1144,13 +1156,13 @@ func (c *container) Tag(tag string) {
 // Push container
 func (c *container) Push() {
 	fmt.Fprintf(c.CommandsOut(), "Pushing image %s ...", c.Image())
-	if c.PushParameters().Skip {
+	if c.PushParameters().Skip() {
 		fmt.Fprintf(c.CommandsOut(), " Skipping\n")
 		return
 	}
 	fmt.Fprintf(c.CommandsOut(), "\n")
 	image := c.Image()
-	if len(c.PushParameters().Registry) > 0 {
+	if len(c.PushParameters().Registry()) > 0 {
 		image = c.PushParameters().FullImageName(c.Image())
 		c.Tag(image)
 	}
@@ -1165,7 +1177,7 @@ func (c *container) Hooks() Hooks {
 // Pull image for container
 func (c *container) PullImage() {
 	image := c.Image()
-	if len(c.PullParameters().Registry) > 0 {
+	if len(c.PullParameters().Registry()) > 0 {
 		image = c.PullParameters().FullImageName(c.Image())
 	}
 	fmt.Fprintf(c.CommandsOut(), "Pulling image %s ...\n", image)
