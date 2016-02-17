@@ -48,15 +48,14 @@ func NewTarget(dependencyMap map[string]*Dependencies, targetFlag string, exclud
 		}
 	}
 
-	includedSet := make(map[string]bool)
-	cascadingSeeds := []string{}
-
 	if extendDependencies {
+		var (
+			dependenciesSet = make(map[string]struct{})
+			cascadingSeeds  = []string{}
+		)
 		// start from the explicitly targeted target
-		includedSet = make(map[string]bool)
-		cascadingSeeds = []string{}
 		for _, name := range target.initial {
-			includedSet[name] = true
+			dependenciesSet[name] = struct{}{}
 			cascadingSeeds = append(cascadingSeeds, name)
 		}
 
@@ -68,8 +67,8 @@ func NewTarget(dependencyMap map[string]*Dependencies, targetFlag string, exclud
 				if dependencies, ok := dependencyMap[seed]; ok {
 					// Queue direct dependencies if we haven't already considered them
 					for _, name := range dependencies.All {
-						if _, alreadyIncluded := includedSet[name]; !alreadyIncluded {
-							includedSet[name] = true
+						if _, alreadyIncluded := dependenciesSet[name]; !alreadyIncluded {
+							dependenciesSet[name] = struct{}{}
 							nextCascadingSeeds = append(nextCascadingSeeds, name)
 						}
 					}
@@ -78,7 +77,7 @@ func NewTarget(dependencyMap map[string]*Dependencies, targetFlag string, exclud
 			cascadingSeeds = nextCascadingSeeds
 		}
 
-		for name := range includedSet {
+		for name := range dependenciesSet {
 			if !includes(target.initial, name) {
 				target.dependencies = append(target.dependencies, name)
 			}
@@ -88,11 +87,13 @@ func NewTarget(dependencyMap map[string]*Dependencies, targetFlag string, exclud
 	}
 
 	if extendAffected {
+		var (
+			affected       = make(map[string]bool)
+			cascadingSeeds = []string{}
+		)
 		// start from the explicitly targeted target
-		includedSet = make(map[string]bool)
-		cascadingSeeds = []string{}
 		for _, name := range target.initial {
-			includedSet[name] = true
+			affected[name] = true
 			cascadingSeeds = append(cascadingSeeds, name)
 		}
 
@@ -100,10 +101,14 @@ func NewTarget(dependencyMap map[string]*Dependencies, targetFlag string, exclud
 			nextCascadingSeeds := []string{}
 			for _, seed := range cascadingSeeds {
 				for name, dependencies := range dependencyMap {
-					if _, alreadyIncluded := includedSet[name]; !alreadyIncluded && cfg.Container(name).Exists() {
+					if _, alreadyConsidered := affected[name]; !alreadyConsidered {
 						if dependencies.includes(seed) {
-							includedSet[name] = true
-							nextCascadingSeeds = append(nextCascadingSeeds, name)
+							if cfg.Container(name).Exists() {
+								affected[name] = true
+								nextCascadingSeeds = append(nextCascadingSeeds, name)
+							} else {
+								affected[name] = false
+							}
 						}
 					}
 				}
@@ -111,8 +116,8 @@ func NewTarget(dependencyMap map[string]*Dependencies, targetFlag string, exclud
 			cascadingSeeds = nextCascadingSeeds
 		}
 
-		for name := range includedSet {
-			if !includes(target.initial, name) {
+		for name, included := range affected {
+			if included && !includes(target.initial, name) {
 				target.affected = append(target.affected, name)
 			}
 		}
