@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/flynn/go-shlex"
 	"io"
 	"os"
 	"path"
@@ -12,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/flynn/go-shlex"
 )
 
 type Container interface {
@@ -32,6 +33,7 @@ type Container interface {
 	Rm(force bool)
 	Logs(follow bool, since string, tail string) (sources []logSource)
 	Push()
+	Tag(tagName string)
 	SetCommandsOutput(stdout, stderr io.Writer)
 	CommandsOut() io.Writer
 	CommandsErr() io.Writer
@@ -46,6 +48,8 @@ type ContainerInfo interface {
 	Dependencies() *Dependencies
 	Unique() bool
 	BuildParams() BuildParameters
+	PushParameters() PushParameters
+	PullParameters() PullParameters
 	RunParams() RunParameters
 	RmParams() RmParameters
 	StartParams() StartParameters
@@ -60,6 +64,8 @@ type container struct {
 	RawImage    string          `json:"image" yaml:"image"`
 	RawRequires []string        `json:"requires" yaml:"requires"`
 	RawBuild    BuildParameters `json:"build" yaml:"build"`
+	RawPush     PushParameters  `json:"push" yaml:"push"`
+	RawPull     PullParameters  `json:"pull" yaml:"pull"`
 	RawRun      RunParameters   `json:"run" yaml:"run"`
 	RawRm       RmParameters    `json:"rm" yaml:"rm"`
 	RawStart    StartParameters `json:"start" yaml:"start"`
@@ -73,6 +79,20 @@ type BuildParameters struct {
 	RawContext   string      `json:"context" yaml:"context"`
 	RawFile      string      `json:"file" yaml:"file"`
 	RawBuildArgs interface{} `json:"build-arg" yaml:"build-arg"`
+}
+
+type RegistryAwareParameters struct {
+	RawRegistry     string `json:"registry" yaml:"registry"`
+	RawOverrideUser string `json:"override_user" yaml:"override_user"`
+}
+
+type PushParameters struct {
+	RegistryAwareParameters `yaml:",inline"`
+	RawSkip                 bool `json:"skip" yaml:"skip"`
+}
+
+type PullParameters struct {
+	RegistryAwareParameters `yaml:",inline"`
 }
 
 type RunParameters struct {
@@ -207,6 +227,14 @@ func (c *container) BuildParams() BuildParameters {
 	return c.RawBuild
 }
 
+func (c *container) PushParameters() PushParameters {
+	return c.RawPush
+}
+
+func (c *container) PullParameters() PullParameters {
+	return c.RawPull
+}
+
 func (c *container) RunParams() RunParameters {
 	return c.RawRun
 }
@@ -312,6 +340,49 @@ func (b BuildParameters) File() string {
 
 func (b BuildParameters) BuildArgs() []string {
 	return sliceOrMap2ExpandedSlice(b.RawBuildArgs)
+}
+
+func (r RegistryAwareParameters) Registry() string {
+	return expandEnv(r.RawRegistry)
+}
+
+func (r RegistryAwareParameters) ImageWithRegistry(name string) string {
+	return r.Registry() + "/" + name
+}
+
+func (r RegistryAwareParameters) findUserIndex(nameParts []string) int {
+	maybeRepoIndex := len(nameParts) - 2
+	maybeRepo := nameParts[maybeRepoIndex]
+	if strings.Contains(maybeRepo, ".") {
+		return maybeRepoIndex + 1
+	}
+	return maybeRepoIndex
+}
+
+func (r RegistryAwareParameters) OverrideUser() string {
+	return expandEnv(r.RawOverrideUser)
+}
+
+func (r RegistryAwareParameters) OverrideImageName(image string) string {
+	if strings.Index(image, "/") == -1 {
+		return r.OverrideUser() + "/" + image
+	}
+	nameParts := strings.Split(image, "/")
+	index := r.findUserIndex(nameParts)
+	if index == len(nameParts)-1 {
+		nameParts = append(nameParts, nameParts[index])
+	}
+	nameParts[index] = r.OverrideUser()
+	fmt.Fprintf(os.Stdout, "Using override user %s\n", r.OverrideUser())
+	return strings.Join(nameParts, "/")
+}
+
+func (p PushParameters) Skip() bool {
+	return p.RawSkip
+}
+
+func (p PullParameters) CanBePulled() bool {
+	return len(p.Registry()) > 0 || len(p.OverrideUser()) > 0
 }
 
 func (r RunParameters) AddHost() []string {
@@ -1108,10 +1179,40 @@ func (c *container) Logs(follow bool, since string, tail string) (sources []logS
 	return
 }
 
+func (c *container) imageTag(image string, tag string) {
+	fmt.Fprintf(c.CommandsOut(), "Tagging image %s as %s...\n", image, tag)
+	var args []string
+	if validateDockerClientAbove([]int{1, 10}) {
+		args = []string{"tag", image, tag}
+	} else {
+		args = []string{"tag", "--force", image, tag}
+	}
+	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
+}
+
+// Tag container image
+func (c *container) Tag(tag string) {
+	c.imageTag(c.Image(), tag)
+}
+
 // Push container
 func (c *container) Push() {
-	fmt.Fprintf(c.CommandsOut(), "Pushing image %s ...\n", c.Image())
-	args := []string{"push", c.Image()}
+	fmt.Fprintf(c.CommandsOut(), "Pushing image %s ...", c.Image())
+	if c.PushParameters().Skip() {
+		fmt.Fprintf(c.CommandsOut(), " Skipping\n")
+		return
+	}
+	fmt.Fprintf(c.CommandsOut(), "\n")
+	image := c.Image()
+	if len(c.PushParameters().OverrideUser()) > 0 {
+		image = c.PushParameters().OverrideImageName(image)
+		c.Tag(image)
+	}
+	if len(c.PushParameters().Registry()) > 0 {
+		image = c.PushParameters().ImageWithRegistry(image)
+		c.Tag(image)
+	}
+	args := []string{"push", image}
 	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 }
 
@@ -1121,9 +1222,19 @@ func (c *container) Hooks() Hooks {
 
 // Pull image for container
 func (c *container) PullImage() {
-	fmt.Fprintf(c.CommandsOut(), "Pulling image %s ...\n", c.Image())
-	args := []string{"pull", c.Image()}
+	image := c.Image()
+	if len(c.PullParameters().OverrideUser()) > 0 {
+		image = c.PullParameters().OverrideImageName(image)
+	}
+	if len(c.PullParameters().Registry()) > 0 {
+		image = c.PullParameters().ImageWithRegistry(image)
+	}
+	fmt.Fprintf(c.CommandsOut(), "Pulling image %s ...\n", image)
+	args := []string{"pull", image}
 	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
+	if image != c.Image() {
+		c.imageTag(image, c.Image())
+	}
 }
 
 func (c *container) PrefixedName() string {

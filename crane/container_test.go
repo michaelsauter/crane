@@ -2,10 +2,11 @@ package crane
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
-	"gopkg.in/v2/yaml"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"gopkg.in/v2/yaml"
 )
 
 func TestDependencies(t *testing.T) {
@@ -305,4 +306,24 @@ func TestBuildArgs(t *testing.T) {
 	c = &container{RawBuild: BuildParameters{RawBuildArgs: []interface{}{"key1=value1"}}}
 	cfg = &config{path: "foo"}
 	assert.Equal(t, "key1=value1", c.BuildParams().BuildArgs()[0])
+}
+
+func TestOverrideUserLibrary(t *testing.T) {
+	registryAwareParameters := RegistryAwareParameters{RawOverrideUser: "override"}
+	assert.Equal(t, "override/image", registryAwareParameters.OverrideImageName("image"))
+}
+
+func TestOverrideUserForUser(t *testing.T) {
+	registryAwareParameters := RegistryAwareParameters{RawOverrideUser: "override"}
+	assert.Equal(t, "override/image", registryAwareParameters.OverrideImageName("user/image"))
+}
+
+func TestOverrideUserWithRegistryOnly(t *testing.T) {
+	registryAwareParameters := RegistryAwareParameters{RawOverrideUser: "override"}
+	assert.Equal(t, "registry.company.co/override/image", registryAwareParameters.OverrideImageName("registry.company.co/image"))
+}
+
+func TestOverrideUserWithRegistryAndUser(t *testing.T) {
+	registryAwareParameters := RegistryAwareParameters{RawOverrideUser: "override"}
+	assert.Equal(t, "registry.company.co/override/image", registryAwareParameters.OverrideImageName("registry.company.co/user/image"))
 }
