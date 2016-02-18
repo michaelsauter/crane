@@ -79,13 +79,18 @@ type BuildParameters struct {
 	RawFile    string `json:"file" yaml:"file"`
 }
 
+type RegistryAwareParameters struct {
+	RawRegistry     string `json:"registry" yaml:"registry"`
+	RawOverrideUser string `json:"override_user" yaml:"override_user"`
+}
+
 type PushParameters struct {
-	RawRegistry string `json:"registry" yaml:"registry"`
-	RawSkip     bool   `json:"skip" yaml:"skip"`
+	RegistryAwareParameters
+	RawSkip bool `json:"skip" yaml:"skip"`
 }
 
 type PullParameters struct {
-	RawRegistry string `json:"registry" yaml:"registry"`
+	RegistryAwareParameters
 }
 
 type RunParameters struct {
@@ -328,24 +333,42 @@ func (b BuildParameters) File() string {
 	return expandEnv(b.RawFile)
 }
 
-func (p PullParameters) Registry() string {
-	return expandEnv(p.RawRegistry)
+func (r RegistryAwareParameters) Registry() string {
+	return expandEnv(r.RawRegistry)
 }
 
-func (p PullParameters) FullImageName(name string) string {
-	return p.Registry() + "/" + name
+func (r RegistryAwareParameters) ImageWithRegistry(name string) string {
+	return r.Registry() + "/" + name
 }
 
-func (p PushParameters) Registry() string {
-	return expandEnv(p.RawRegistry)
+func (r RegistryAwareParameters) findUserIndex(nameParts []string) int {
+	maybeRepoIndex := len(nameParts) - 2
+	maybeRepo := nameParts[maybeRepoIndex]
+	if strings.Contains(maybeRepo, ".") {
+		return maybeRepoIndex + 1
+	}
+	return maybeRepoIndex
+}
+
+func (r RegistryAwareParameters) OverrideUser() string {
+	return expandEnv(r.RawOverrideUser)
+}
+
+func (r RegistryAwareParameters) OverrideImageName(image string) string {
+	if strings.Index(image, "/") == -1 {
+		return r.OverrideUser() + "/" + image
+	}
+	nameParts := strings.Split(image, "/")
+	index := r.findUserIndex(nameParts)
+	if index == len(nameParts)-1 {
+		nameParts = append(nameParts, nameParts[index])
+	}
+	nameParts[index] = r.OverrideUser()
+	return strings.Join(nameParts, "/")
 }
 
 func (p PushParameters) Skip() bool {
 	return p.RawSkip
-}
-
-func (p PushParameters) FullImageName(name string) string {
-	return p.Registry() + "/" + name
 }
 
 func (r RunParameters) AddHost() []string {
@@ -1162,8 +1185,12 @@ func (c *container) Push() {
 	}
 	fmt.Fprintf(c.CommandsOut(), "\n")
 	image := c.Image()
+	if len(c.PushParameters().OverrideUser()) > 0 {
+		image = c.PushParameters().OverrideImageName(image)
+		c.Tag(image)
+	}
 	if len(c.PushParameters().Registry()) > 0 {
-		image = c.PushParameters().FullImageName(c.Image())
+		image = c.PushParameters().ImageWithRegistry(image)
 		c.Tag(image)
 	}
 	args := []string{"push", image}
@@ -1177,8 +1204,11 @@ func (c *container) Hooks() Hooks {
 // Pull image for container
 func (c *container) PullImage() {
 	image := c.Image()
+	if len(c.PullParameters().OverrideUser()) > 0 {
+		image = c.PullParameters().OverrideImageName(image)
+	}
 	if len(c.PullParameters().Registry()) > 0 {
-		image = c.PullParameters().FullImageName(c.Image())
+		image = c.PullParameters().ImageWithRegistry(image)
 	}
 	fmt.Fprintf(c.CommandsOut(), "Pulling image %s ...\n", image)
 	args := []string{"pull", c.Image()}

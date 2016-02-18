@@ -1,8 +1,9 @@
 package crane
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestReversed(t *testing.T) {
@@ -31,4 +32,24 @@ func TestProvisioningDuplicates(t *testing.T) {
 	deduplicated := containers.stripProvisioningDuplicates()
 	assert.Len(t, deduplicated, 5)
 	assert.Len(t, containers, 10) // input was not mutated - further operations won't be affected
+}
+
+func TestOverrideUserLibrary(t *testing.T) {
+	registryAwareParameters := RegistryAwareParameters{RawOverrideUser: "override"}
+	assert.Equal(t, "override/image", registryAwareParameters.OverrideImageName("image"))
+}
+
+func TestOverrideUserForUser(t *testing.T) {
+	registryAwareParameters := RegistryAwareParameters{RawOverrideUser: "override"}
+	assert.Equal(t, "override/image", registryAwareParameters.OverrideImageName("user/image"))
+}
+
+func TestOverrideUserWithRegistryOnly(t *testing.T) {
+	registryAwareParameters := RegistryAwareParameters{RawOverrideUser: "override"}
+	assert.Equal(t, "registry.company.co/override/image", registryAwareParameters.OverrideImageName("registry.company.co/image"))
+}
+
+func TestOverrideUserWithRegistryAndUser(t *testing.T) {
+	registryAwareParameters := RegistryAwareParameters{RawOverrideUser: "override"}
+	assert.Equal(t, "registry.company.co/override/image", registryAwareParameters.OverrideImageName("registry.company.co/user/image"))
 }
