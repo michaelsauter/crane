@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.5.2 (2016-02-19)
 
 * Limit the number of Docker calls when cascading commands to affected containers.
 
