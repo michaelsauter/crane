@@ -163,8 +163,10 @@ The map of containers consists of the name of the container mapped to the contai
 * `push` (object, optional): Parameters related to Docker's `push`.
   * `skip` (boolean): prevents pushing image when `push` is called
   * `registry` (string): Docker registry to connect to (will be prefixed to the image name. e.g. `registry.my/user/image`)
+  * `override_user` (string): Override the current image user (e.g. `registry.my/user/image` -> `registry.my/override/image`)
 * `pull` (object, optional): Parameters related to Docker's `pull`.
   * `registry` (string): Docker registry to connect to (will be prefixed to the image name. e.g. `registry.my/user/image`)
+  * `override_user` (string): Override the current image user (e.g. `registry.my/user/image` -> `registry.my/override/image`)
 * `exec` (object, optional): Parameters mapped to Docker's `exec`.
   * `interactive` (boolean)
   * `tty` (boolean)
