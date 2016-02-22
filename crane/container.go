@@ -49,6 +49,7 @@ type ContainerInfo interface {
 	Unique() bool
 	BuildParams() BuildParameters
 	PushParameters() PushParameters
+	PullParameters() PullParameters
 	RunParams() RunParameters
 	RmParams() RmParameters
 	StartParams() StartParameters
