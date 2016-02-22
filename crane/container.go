@@ -85,12 +85,12 @@ type RegistryAwareParameters struct {
 }
 
 type PushParameters struct {
-	RegistryAwareParameters
-	RawSkip bool `json:"skip" yaml:"skip"`
+	RegistryAwareParameters `yaml:",inline"`
+	RawSkip                 bool `json:"skip" yaml:"skip"`
 }
 
 type PullParameters struct {
-	RegistryAwareParameters
+	RegistryAwareParameters `yaml:",inline"`
 }
 
 type RunParameters struct {
@@ -364,6 +364,7 @@ func (r RegistryAwareParameters) OverrideImageName(image string) string {
 		nameParts = append(nameParts, nameParts[index])
 	}
 	nameParts[index] = r.OverrideUser()
+	fmt.Fprintf(os.Stdout, "Using override user %s\n", r.OverrideUser())
 	return strings.Join(nameParts, "/")
 }
 
@@ -1211,7 +1212,7 @@ func (c *container) PullImage() {
 		image = c.PullParameters().ImageWithRegistry(image)
 	}
 	fmt.Fprintf(c.CommandsOut(), "Pulling image %s ...\n", image)
-	args := []string{"pull", c.Image()}
+	args := []string{"pull", image}
 	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 	c.imageTag(image, c.Image())
 }
