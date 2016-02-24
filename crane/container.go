@@ -224,17 +224,20 @@ func (c *container) ExecParams() ExecParameters {
 
 func (c *container) Dependencies() *Dependencies {
 	dependencies := &Dependencies{}
-	for _, required := range c.Requires() {
-		if !includes(excluded, required) && !dependencies.includes(required) {
-			dependencies.All = append(dependencies.All, required)
-			dependencies.Requires = append(dependencies.Requires, required)
+	if len(c.Requires()) > 0 {
+		for _, required := range c.Requires() {
+			if !includes(excluded, required) && !dependencies.includes(required) {
+				dependencies.All = append(dependencies.All, required)
+				dependencies.Requires = append(dependencies.Requires, required)
+			}
 		}
-	}
-	for _, link := range c.RunParams().Link() {
-		linkName := strings.Split(link, ":")[0]
-		if !includes(excluded, linkName) && !dependencies.includes(linkName) {
-			dependencies.All = append(dependencies.All, linkName)
-			dependencies.Link = append(dependencies.Link, linkName)
+	} else {
+		for _, link := range c.RunParams().Link() {
+			linkName := strings.Split(link, ":")[0]
+			if !includes(excluded, linkName) && !dependencies.includes(linkName) {
+				dependencies.All = append(dependencies.All, linkName)
+				dependencies.Link = append(dependencies.Link, linkName)
+			}
 		}
 	}
 	for _, volumesFrom := range c.RunParams().VolumesFrom() {
