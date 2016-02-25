@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.6.0 (2016-02-25)
 
 * Do not require link containers when requires is set. This is a breaking change
   if you defined both `requires` and `run/link`, and relied on Crane resolving
