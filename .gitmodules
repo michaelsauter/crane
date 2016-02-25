@@ -25,3 +25,6 @@
 [submodule "vendor/gopkg.in/v2/yaml"]
 	path = vendor/gopkg.in/v2/yaml
 	url = https://gopkg.in/v2/yaml
+[submodule "vendor/github.com/stretchr/testify"]
+	path = vendor/github.com/stretchr/testify
+	url = https://github.com/stretchr/testify
