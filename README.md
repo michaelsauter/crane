@@ -455,7 +455,7 @@ As a summary, `&anchor` declares the anchor property, `*alias` is the alias indi
 
 
 ## Copyright & Licensing
-Copyright © 2013-2015 Michael Sauter. See the LICENSE file for details.
+Copyright © 2013-2016 Michael Sauter. See the LICENSE file for details.
 
 ---
 
