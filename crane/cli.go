@@ -8,6 +8,9 @@ import (
 	"github.com/alecthomas/kingpin"
 )
 
+// Version for crane
+const Version = "v2.5.1"
+
 var cfg Config
 var excluded []string
 
@@ -250,7 +253,7 @@ func runCli() {
 		}, true)
 
 	case versionCommand.FullCommand():
-		fmt.Println("v2.5.1")
+		fmt.Println(Version)
 
 	case statsCommand.FullCommand():
 		commandAction(*statsTargetArg, func(uow *UnitOfWork) {
