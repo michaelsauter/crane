@@ -15,20 +15,19 @@ func TestDependencies(t *testing.T) {
 	// no dependencies
 	assert.Equal(t, expected, c.Dependencies())
 
-	// requires
+	// network v2 links
 	c = &container{
 		RawRequires: []string{"foo", "bar"},
 		RawRun: RunParameters{
-			RawNet:         "container:n",
+			RawNet:         "network",
 			RawLink:        []string{"a:b", "b:d"},
 			RawVolumesFrom: []string{"c"},
 		},
 	}
 	expected = &Dependencies{
-		All:         []string{"foo", "bar", "c", "n"},
+		All:         []string{"foo", "bar", "c"},
 		Requires:    []string{"foo", "bar"},
 		VolumesFrom: []string{"c"},
-		Net:         "n",
 	}
 	assert.Equal(t, expected, c.Dependencies())
 
