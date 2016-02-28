@@ -373,6 +373,10 @@ func (p PushParameters) Skip() bool {
 	return p.RawSkip
 }
 
+func (p PullParameters) CanBePulled() bool {
+	return len(p.Registry()) > 0 || len(p.OverrideUser()) > 0
+}
+
 func (r RunParameters) AddHost() []string {
 	var addHost []string
 	for _, rawAddHost := range r.RawAddHost {
@@ -1169,7 +1173,12 @@ func (c *container) Logs(follow bool, since string, tail string) (sources []logS
 
 func (c *container) imageTag(image string, tag string) {
 	fmt.Fprintf(c.CommandsOut(), "Tagging image %s as %s...\n", image, tag)
-	args := []string{"tag", "--force", image, tag}
+	var args []string
+	if validateDockerClientAbove([]int{1, 10}) {
+		args = []string{"tag", image, tag}
+	} else {
+		args = []string{"tag", "--force", image, tag}
+	}
 	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 }
 
@@ -1215,7 +1224,9 @@ func (c *container) PullImage() {
 	fmt.Fprintf(c.CommandsOut(), "Pulling image %s ...\n", image)
 	args := []string{"pull", image}
 	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
-	c.imageTag(image, c.Image())
+	if image != c.Image() {
+		c.imageTag(image, c.Image())
+	}
 }
 
 func (c *container) PrefixedName() string {

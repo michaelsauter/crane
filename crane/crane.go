@@ -3,8 +3,6 @@ package crane
 import (
 	"errors"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/flynn/go-shlex"
 	"io"
 	"os"
 	"os/exec"
@@ -12,6 +10,9 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+
+	"github.com/fatih/color"
+	"github.com/flynn/go-shlex"
 )
 
 var printInfof func(format string, a ...interface{})
@@ -55,6 +56,7 @@ func handleRecoveredError(recovered interface{}) {
 }
 
 var requiredDockerVersion = []int{1, 6}
+var actualDockerVersion []int
 
 func RealMain() {
 	// On panic, recover the error, display it and return the given status code if any
@@ -84,6 +86,7 @@ func checkDockerClient() {
 		versions = append(versions, version)
 	}
 
+	fmt.Println(versions)
 	for i, expectedVersion := range requiredDockerVersion {
 		if versions[i] > expectedVersion {
 			break
@@ -92,6 +95,19 @@ func checkDockerClient() {
 			printErrorf("Unsupported client version! Please upgrade to Docker %v or later.\n", intJoin(requiredDockerVersion, "."))
 		}
 	}
+	actualDockerVersion = versions
+}
+
+func validateDockerClientAbove(expectedVersions []int) bool {
+	for i, expectedVersion := range actualDockerVersion {
+		if expectedVersions[i] > expectedVersion {
+			return true
+		}
+		if expectedVersions[i] < expectedVersion {
+			return false
+		}
+	}
+	return true
 }
 
 // Similar to strings.Join() for int slices.
