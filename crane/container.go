@@ -122,6 +122,7 @@ type RunParameters struct {
 	RawRestart           string      `json:"restart" yaml:"restart"`
 	Rm                   bool        `json:"rm" yaml:"rm"`
 	RawSecurityOpt       []string    `json:"security-opt" yaml:"security-opt"`
+	RawShmSize           string      `json:"shm-size" yaml:"shm-size"`
 	SigProxy             OptBool     `json:"sig-proxy" yaml:"sig-proxy"`
 	RawStopSignal        string      `json:"stop-signal" yaml:"stop-signal"`
 	RawTmpfs             []string    `json:"tmpfs" yaml:"tmpfs"`
@@ -538,6 +539,10 @@ func (r RunParameters) SecurityOpt() []string {
 	return securityOpt
 }
 
+func (r RunParameters) ShmSize() string {
+	return expandEnv(r.RawShmSize)
+}
+
 func (r RunParameters) StopSignal() string {
 	return expandEnv(r.RawStopSignal)
 }
@@ -935,6 +940,10 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	// SecurityOpt
 	for _, securityOpt := range c.RunParams().SecurityOpt() {
 		args = append(args, "--security-opt", securityOpt)
+	}
+	// ShmSize
+	if len(c.RunParams().ShmSize()) > 0 {
+		args = append(args, "--shm-size", c.RunParams().ShmSize())
 	}
 	// SigProxy
 	if c.RunParams().SigProxy.Falsy() {

@@ -142,6 +142,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `read-only` (boolean)
 	* `restart` (string) Restart policy.
 	* `security-opt` (array)
+	* `shm-size` (string) Need Docker >= 1.10
 	* `stop-signal` (string)  Need Docker >= 1.9
 	* `sig-proxy` (boolean) `true` by default
 	* `rm` (boolean)
