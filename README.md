@@ -145,6 +145,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `stop-signal` (string)  Need Docker >= 1.9
 	* `sig-proxy` (boolean) `true` by default
 	* `rm` (boolean)
+	* `tmpfs` (array) Need Docker >= 1.10
 	* `tty` (boolean)
 	* `ulimit` (array)
 	* `user` (string)
