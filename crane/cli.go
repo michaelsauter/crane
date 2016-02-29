@@ -9,7 +9,7 @@ import (
 )
 
 // Version for crane
-const Version = "v2.5.1"
+const Version = "v2.5.2-igz"
 
 var cfg Config
 var excluded []string
