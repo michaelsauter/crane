@@ -98,11 +98,11 @@ func checkDockerClient() {
 }
 
 func validateDockerClientAbove(expectedVersions []int) bool {
-	for i, expectedVersion := range actualDockerVersion {
-		if expectedVersions[i] > expectedVersion {
+	for i, expectedVersion := range expectedVersions {
+		if actualDockerVersion[i] > expectedVersion {
 			return true
 		}
-		if expectedVersions[i] < expectedVersion {
+		if actualDockerVersion[i] < expectedVersion {
 			return false
 		}
 	}
