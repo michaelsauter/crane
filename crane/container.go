@@ -224,14 +224,14 @@ func (c *container) ExecParams() ExecParameters {
 
 func (c *container) Dependencies() *Dependencies {
 	dependencies := &Dependencies{}
-	if len(c.Requires()) > 0 {
-		for _, required := range c.Requires() {
-			if !includes(excluded, required) && !dependencies.includes(required) {
-				dependencies.All = append(dependencies.All, required)
-				dependencies.Requires = append(dependencies.Requires, required)
-			}
+	for _, required := range c.Requires() {
+		if !includes(excluded, required) && !dependencies.includes(required) {
+			dependencies.All = append(dependencies.All, required)
+			dependencies.Requires = append(dependencies.Requires, required)
 		}
-	} else {
+	}
+	if c.RunParams().Net() == "bridge" {
+		// links are strict dependencies only on bridge networks
 		for _, link := range c.RunParams().Link() {
 			linkName := strings.Split(link, ":")[0]
 			if !includes(excluded, linkName) && !dependencies.includes(linkName) {

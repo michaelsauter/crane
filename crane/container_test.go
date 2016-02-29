@@ -15,34 +15,45 @@ func TestDependencies(t *testing.T) {
 	// no dependencies
 	assert.Equal(t, expected, c.Dependencies())
 
-	// requires
+	// network v2 links
 	c = &container{
 		RawRequires: []string{"foo", "bar"},
 		RawRun: RunParameters{
-			RawNet:         "container:n",
+			RawNet:         "network",
 			RawLink:        []string{"a:b", "b:d"},
 			RawVolumesFrom: []string{"c"},
 		},
 	}
 	expected = &Dependencies{
-		All:         []string{"foo", "bar", "c", "n"},
+		All:         []string{"foo", "bar", "c"},
 		Requires:    []string{"foo", "bar"},
 		VolumesFrom: []string{"c"},
-		Net:         "n",
 	}
 	assert.Equal(t, expected, c.Dependencies())
 
 	// legacy links
 	c = &container{
 		RawRun: RunParameters{
-			RawNet:         "container:n",
 			RawLink:        []string{"a:b", "b:d"},
 			RawVolumesFrom: []string{"c"},
 		},
 	}
 	expected = &Dependencies{
-		All:         []string{"a", "b", "c", "n"},
+		All:         []string{"a", "b", "c"},
 		Link:        []string{"a", "b"},
+		VolumesFrom: []string{"c"},
+	}
+	assert.Equal(t, expected, c.Dependencies())
+
+	// container network
+	c = &container{
+		RawRun: RunParameters{
+			RawNet:         "container:n",
+			RawVolumesFrom: []string{"c"},
+		},
+	}
+	expected = &Dependencies{
+		All:         []string{"c", "n"},
 		VolumesFrom: []string{"c"},
 		Net:         "n",
 	}
@@ -52,7 +63,6 @@ func TestDependencies(t *testing.T) {
 	c = &container{
 		RawRequires: []string{"foo", "bar"},
 		RawRun: RunParameters{
-			RawNet:         "container:n",
 			RawLink:        []string{"a:b", "b:d"},
 			RawVolumesFrom: []string{"c", "d"},
 		},
@@ -62,9 +72,11 @@ func TestDependencies(t *testing.T) {
 		Requires:    []string{"foo"},
 		VolumesFrom: []string{"c"},
 	}
-	excluded = []string{"n", "d", "bar"}
+	defer func() {
+		excluded = []string{}
+	}()
+	excluded = []string{"a", "b", "d", "bar"}
 	assert.Equal(t, expected, c.Dependencies())
-	excluded = []string{}
 }
 
 func TestVolumesFromSuffixes(t *testing.T) {

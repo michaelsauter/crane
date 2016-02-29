@@ -285,11 +285,7 @@ in every minor version update.
 
 
 ### Networking
-Docker networks are supported via the top-level config `networks`, which does
-not take additional parameters at this stage. As links cannot be used at the
-same time, container dependencies can be expressed via `requires`. Networks are
-automatically created by Crane when necessary, and never cleaned up. When a
-[prefix](#container-prefixes) is used, it is also applied to the network.
+Docker networks are supported via the top-level config `networks`, which does not take additional parameters at this stage. As links are not strict dependencies for containers attached to a user-defined network (but simply aliases), `requires` can be used instead to indicate that a container must be started for another one to be functional. Networks are automatically created by Crane when necessary, and never cleaned up. When a [prefix](#container-prefixes) is used, it is also applied to the network.
 
 ```
 containers:
