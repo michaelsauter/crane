@@ -86,7 +86,6 @@ func checkDockerClient() {
 		versions = append(versions, version)
 	}
 
-	fmt.Println(versions)
 	for i, expectedVersion := range requiredDockerVersion {
 		if versions[i] > expectedVersion {
 			break
