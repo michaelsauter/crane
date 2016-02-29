@@ -258,11 +258,14 @@ func (c *container) Dependencies() *Dependencies {
 			dependencies.Requires = append(dependencies.Requires, required)
 		}
 	}
-	for _, link := range c.RunParams().Link() {
-		linkName := strings.Split(link, ":")[0]
-		if !includes(excluded, linkName) && !dependencies.includes(linkName) {
-			dependencies.All = append(dependencies.All, linkName)
-			dependencies.Link = append(dependencies.Link, linkName)
+	if c.RunParams().Net() == "bridge" {
+		// links are strict dependencies only on bridge networks
+		for _, link := range c.RunParams().Link() {
+			linkName := strings.Split(link, ":")[0]
+			if !includes(excluded, linkName) && !dependencies.includes(linkName) {
+				dependencies.All = append(dependencies.All, linkName)
+				dependencies.Link = append(dependencies.Link, linkName)
+			}
 		}
 	}
 	for _, volumesFrom := range c.RunParams().VolumesFrom() {

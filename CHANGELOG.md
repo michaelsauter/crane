@@ -1,6 +1,22 @@
 # Changelog
 
-## Unreleased
+## 2.6.0 (2016-02-25)
+
+* Do not require link containers when requires is set. This is a breaking change
+  if you defined both `requires` and `run/link`, and relied on Crane resolving
+  the containers defined only in `run/link`. Now, all entries in `run/link` are
+  treated as aliases only, and Crane does not handle them specifically. This
+  allows to have optional dependencies when using Docker 1.9+ networks.
+
+  _@michaelsauter_
+
+* Update dependencies. While this should generally not have any side-effects, it
+  is likely that coloring support was broken on Windows earlier and might be
+  fixed now.
+
+  _@michaelsauter_
+
+## 2.5.2 (2016-02-19)
 
 * Limit the number of Docker calls when cascading commands to affected containers.
 

@@ -10,45 +10,74 @@ import (
 )
 
 func TestDependencies(t *testing.T) {
-	c := &container{
+	c := &container{}
+	expected := &Dependencies{}
+
+	// no dependencies
+	assert.Equal(t, expected, c.Dependencies())
+
+	// network v2 links
+	c = &container{
 		RawRequires: []string{"foo", "bar"},
 		RawRun: RunParameters{
-			RawNet:         "container:n",
+			RawNet:         "network",
 			RawLink:        []string{"a:b", "b:d"},
 			RawVolumesFrom: []string{"c"},
 		},
 	}
-	expected := &Dependencies{
-		All:         []string{"foo", "bar", "a", "b", "c", "n"},
+	expected = &Dependencies{
+		All:         []string{"foo", "bar", "c"},
 		Requires:    []string{"foo", "bar"},
-		Link:        []string{"a", "b"},
 		VolumesFrom: []string{"c"},
-		Net:         "n",
 	}
 	assert.Equal(t, expected, c.Dependencies())
 
-	c = &container{}
-	expected = &Dependencies{}
+	// legacy links
+	c = &container{
+		RawRun: RunParameters{
+			RawLink:        []string{"a:b", "b:d"},
+			RawVolumesFrom: []string{"c"},
+		},
+	}
+	expected = &Dependencies{
+		All:         []string{"a", "b", "c"},
+		Link:        []string{"a", "b"},
+		VolumesFrom: []string{"c"},
+	}
+	assert.Equal(t, expected, c.Dependencies())
+
+	// container network
+	c = &container{
+		RawRun: RunParameters{
+			RawNet:         "container:n",
+			RawVolumesFrom: []string{"c"},
+		},
+	}
+	expected = &Dependencies{
+		All:         []string{"c", "n"},
+		VolumesFrom: []string{"c"},
+		Net:         "n",
+	}
 	assert.Equal(t, expected, c.Dependencies())
 
 	// with excluded containers
 	c = &container{
 		RawRequires: []string{"foo", "bar"},
 		RawRun: RunParameters{
-			RawNet:         "container:n",
 			RawLink:        []string{"a:b", "b:d"},
-			RawVolumesFrom: []string{"c"},
+			RawVolumesFrom: []string{"c", "d"},
 		},
 	}
 	expected = &Dependencies{
-		All:         []string{"foo", "a", "c"},
+		All:         []string{"foo", "c"},
 		Requires:    []string{"foo"},
-		Link:        []string{"a"},
 		VolumesFrom: []string{"c"},
 	}
-	excluded = []string{"b", "bar", "n"}
+	defer func() {
+		excluded = []string{}
+	}()
+	excluded = []string{"a", "b", "d", "bar"}
 	assert.Equal(t, expected, c.Dependencies())
-	excluded = []string{}
 }
 
 func TestVolumesFromSuffixes(t *testing.T) {

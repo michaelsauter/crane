@@ -28,10 +28,10 @@ continuous integration.
 
 
 ## Installation
-The latest release (2.5.1) can be installed via:
+The latest release (2.6.0) can be installed via:
 
 ```
-bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/v2.5.1/download.sh`" && sudo mv crane /usr/local/bin/crane
+bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/v2.6.0/download.sh`" && sudo mv crane /usr/local/bin/crane
 ```
 
 Older releases can be found on the
@@ -39,7 +39,7 @@ Older releases can be found on the
 build Crane yourself by using the standard Go toolchain.
 
 Please have a look at the
-[changelog](https://github.com/michaelsauter/crane/blob/v2.5.1/CHANGELOG.md)
+[changelog](https://github.com/michaelsauter/crane/blob/v2.6.0/CHANGELOG.md)
 when upgrading.
 
 Of course, you will need to have Docker (>= 1.6) installed.
@@ -292,11 +292,7 @@ in every minor version update.
 
 
 ### Networking
-Docker networks are supported via the top-level config `networks`, which does
-not take additional parameters at this stage. As links cannot be used at the
-same time, container dependencies can be expressed via `requires`. Networks are
-automatically created by Crane when necessary, and never cleaned up. When a
-[prefix](#container-prefixes) is used, it is also applied to the network.
+Docker networks are supported via the top-level config `networks`, which does not take additional parameters at this stage. As links are not strict dependencies for containers attached to a user-defined network (but simply aliases), `requires` can be used instead to indicate that a container must be started for another one to be functional. Networks are automatically created by Crane when necessary, and never cleaned up. When a [prefix](#container-prefixes) is used, it is also applied to the network.
 
 ```
 containers:
@@ -462,7 +458,7 @@ As a summary, `&anchor` declares the anchor property, `*alias` is the alias indi
 
 
 ## Copyright & Licensing
-Copyright © 2013-2015 Michael Sauter. See the LICENSE file for details.
+Copyright © 2013-2016 Michael Sauter. See the LICENSE file for details.
 
 ---
 
