@@ -299,3 +299,10 @@ func TestOptBoolYAML(t *testing.T) {
 	err := yaml.Unmarshal([]byte("OptBool: notaboolean"), &wrapper)
 	assert.Error(t, err)
 }
+
+func TestBuildArgs(t *testing.T) {
+	var c *container
+	c = &container{RawBuild: BuildParameters{RawBuildArgs: []interface{}{"key1=value1"}}}
+	cfg = &config{path: "foo"}
+	assert.Equal(t, "key1=value1", c.BuildParams().BuildArgs()[0])
+}
