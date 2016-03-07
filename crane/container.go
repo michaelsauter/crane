@@ -76,8 +76,9 @@ type container struct {
 }
 
 type BuildParameters struct {
-	RawContext string `json:"context" yaml:"context"`
-	RawFile    string `json:"file" yaml:"file"`
+	RawContext   string      `json:"context" yaml:"context"`
+	RawFile      string      `json:"file" yaml:"file"`
+	RawBuildArgs interface{} `json:"build-arg" yaml:"build-arg"`
 }
 
 type RegistryAwareParameters struct {
@@ -378,6 +379,10 @@ func (p PushParameters) Skip() bool {
 
 func (p PullParameters) CanBePulled() bool {
 	return len(p.Registry()) > 0 || len(p.OverrideUser()) > 0
+}
+
+func (b BuildParameters) Args() []string {
+	return sliceOrMap2ExpandedSlice(b.RawBuildArgs)
 }
 
 func (r RunParameters) AddHost() []string {
@@ -1314,6 +1319,10 @@ func (c *container) buildImage(nocache bool) {
 	if len(c.BuildParams().File()) > 0 {
 		args = append(args, "--file="+filepath.FromSlash(c.BuildParams().Context()+"/"+c.BuildParams().File()))
 	}
+	for _, arg := range c.BuildParams().Args() {
+		args = append(args, "--build-arg", arg)
+	}
+
 	args = append(args, c.BuildParams().Context())
 	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 	executeHook(c.Hooks().PostBuild(), c.ActualName())

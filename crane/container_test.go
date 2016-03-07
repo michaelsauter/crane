@@ -320,3 +320,11 @@ func TestOverrideUserWithRegistryAndUser(t *testing.T) {
 	registryAwareParameters := RegistryAwareParameters{RawOverrideUser: "override"}
 	assert.Equal(t, "registry.company.co/override/image", registryAwareParameters.OverrideImageName("registry.company.co/user/image"))
 }
+
+func TestBuildArgs(t *testing.T) {
+	var c *container
+	// Simple case
+	c = &container{RawBuild: BuildParameters{RawBuildArgs: []interface{}{"key1=value1"}}}
+	cfg = &config{path: "foo"}
+	assert.Equal(t, "key1=value1", c.BuildParams().Args()[0])
+}
