@@ -2,10 +2,11 @@ package crane
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
-	"gopkg.in/v2/yaml"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"gopkg.in/v2/yaml"
 )
 
 func TestDependencies(t *testing.T) {
@@ -298,4 +299,12 @@ func TestOptBoolYAML(t *testing.T) {
 	wrapper = OptBoolWrapper{}
 	err := yaml.Unmarshal([]byte("OptBool: notaboolean"), &wrapper)
 	assert.Error(t, err)
+}
+
+func TestBuildArgs(t *testing.T) {
+	var c *container
+	// Simple case
+	c = &container{RawBuild: BuildParameters{RawBuildArgs: []interface{}{"key1=value1"}}}
+	cfg = &config{path: "foo"}
+	assert.Equal(t, "key1=value1", c.BuildParams().Args()[0])
 }
