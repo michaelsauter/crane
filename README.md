@@ -160,6 +160,7 @@ The map of containers consists of the name of the container mapped to the contai
 * `build` (object, optional): Parameters mapped to Docker's `build`.
 	* `context` (string)
 	* `file` (string)
+    * `build-arg` (array) Provide build arguments
 * `push` (object, optional): Parameters related to Docker's `push`.
   * `skip` (boolean): prevents pushing image when `push` is called
   * `registry` (string): Docker registry to connect to (will be prefixed to the image name. e.g. `registry.my/user/image`)
