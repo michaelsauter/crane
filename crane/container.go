@@ -111,6 +111,7 @@ type RunParameters struct {
 	RawMemorySwap        string      `json:"memory-swap" yaml:"memory-swap"`
 	MemorySwappiness     OptInt      `json:"memory-swappiness" yaml:"memory-swappiness"`
 	RawNet               string      `json:"net" yaml:"net"`
+	RawNetAlias          string      `json:"net-alias" yaml:"net-alias"`
 	OomKillDisable       bool        `json:"oom-kill-disable" yaml:"oom-kill-disable"`
 	RawPid               string      `json:"pid" yaml:"pid"`
 	Privileged           bool        `json:"privileged" yaml:"privileged"`
@@ -479,6 +480,10 @@ func (r RunParameters) Net() string {
 		return "bridge"
 	}
 	return expandEnv(r.RawNet)
+}
+
+func (r RunParameters) NetAlias() string {
+	return expandEnv(r.RawNetAlias)
 }
 
 func (r RunParameters) ActualNet() string {
@@ -872,6 +877,10 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	netParam := c.RunParams().ActualNet()
 	if netParam != "bridge" {
 		args = append(args, "--net", netParam)
+	}
+	// NetAlias
+	if len(c.RunParams().NetAlias()) > 0 {
+		args = append(args, "--net-alias", c.RunParams().NetAlias())
 	}
 	// OomKillDisable
 	if c.RunParams().OomKillDisable {
