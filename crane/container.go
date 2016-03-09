@@ -150,13 +150,18 @@ type RmParameters struct {
 }
 
 type StartParameters struct {
-	Attach      bool `json:"attach" yaml:"attach"`
-	Interactive bool `json:"interactive" yaml:"interactive"`
+	Attach        bool   `json:"attach" yaml:"attach"`
+	RawDetachKeys string `json:"detach-keys" yaml:"detach-keys"`
+	Interactive   bool   `json:"interactive" yaml:"interactive"`
 }
 
 type ExecParameters struct {
-	Interactive bool `json:"interactive" yaml:"interactive"`
-	Tty         bool `json:"tty" yaml:"tty"`
+	Detach        bool   `json:"detach" yaml:"detach"`
+	RawDetachKeys string `json:"detach-keys" yaml:"detach-keys"`
+	Interactive   bool   `json:"interactive" yaml:"interactive"`
+	Privileged    bool   `json:"privileged" yaml:"privileged"`
+	Tty           bool   `json:"tty" yaml:"tty"`
+	RawUser       string `json:"user" yaml:"user"`
 }
 
 type OptInt struct {
@@ -708,6 +713,18 @@ func (r RunParameters) Cmd() []string {
 	return cmd
 }
 
+func (s StartParameters) DetachKeys() string {
+	return expandEnv(s.RawDetachKeys)
+}
+
+func (e ExecParameters) DetachKeys() string {
+	return expandEnv(e.RawDetachKeys)
+}
+
+func (e ExecParameters) User() string {
+	return expandEnv(e.RawUser)
+}
+
 func (c *container) ID() string {
 	if len(c.id) == 0 && !c.Unique() {
 		// `docker inspect` works for both image and containers, make sure this is a
@@ -1114,7 +1131,12 @@ func (c *container) Start(excluded []string) {
 			if c.StartParams().Attach {
 				args = append(args, "--attach")
 			}
-			if c.StartParams().Interactive {
+			if len(c.StartParams().DetachKeys()) > 0 {
+				args = append(args, "--detach-keys", c.StartParams().DetachKeys())
+			} else if len(c.RunParams().DetachKeys()) > 0 {
+				args = append(args, "--detach-keys", c.RunParams().DetachKeys())
+			}
+			if c.StartParams().Interactive || c.RunParams().Interactive {
 				args = append(args, "--interactive")
 			}
 			args = append(args, c.ActualName())
@@ -1176,11 +1198,27 @@ func (c *container) Exec(cmds []string) {
 	}
 	for _, name := range runningInstances {
 		args := []string{"exec"}
-		if c.ExecParams().Interactive {
+		if c.ExecParams().Detach || c.RunParams().Detach {
+			args = append(args, "--detach")
+		}
+		if len(c.ExecParams().DetachKeys()) > 0 {
+			args = append(args, "--detach-keys", c.ExecParams().DetachKeys())
+		} else if len(c.RunParams().DetachKeys()) > 0 {
+			args = append(args, "--detach-keys", c.RunParams().DetachKeys())
+		}
+		if c.ExecParams().Privileged || c.RunParams().Privileged {
+			args = append(args, "--privileged")
+		}
+		if c.ExecParams().Interactive || c.RunParams().Interactive {
 			args = append(args, "--interactive")
 		}
-		if c.ExecParams().Tty {
+		if c.ExecParams().Tty || c.RunParams().Tty {
 			args = append(args, "--tty")
+		}
+		if len(c.ExecParams().User()) > 0 {
+			args = append(args, "--user", c.ExecParams().User())
+		} else if len(c.RunParams().User()) > 0 {
+			args = append(args, "--user", c.RunParams().User())
 		}
 		args = append(args, name)
 		args = append(args, cmds...)

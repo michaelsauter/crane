@@ -168,14 +168,19 @@ The map of containers consists of the name of the container mapped to the contai
 	* `volumes` (boolean)
 * `start` (object, optional): Parameters mapped to Docker's `start`.
 	* `attach` (boolean)
+	* `detach-keys` (string) Need Docker >= 1.10
 	* `interactive` (boolean)
 * `build` (object, optional): Parameters mapped to Docker's `build`.
 	* `context` (string)
 	* `file` (string)
   * `build-arg` (array/mapping) Provide build arguments. Need Docker >= 1.9
 * `exec` (object, optional): Parameters mapped to Docker's `exec`.
-  * `interactive` (boolean)
-  * `tty` (boolean)
+	* `detach` (boolean)
+	* `detach-keys` (string) Need Docker >= 1.10
+	* `interactive` (boolean)
+	* `privileged` (boolean) Need Docker >= 1.9
+	* `tty` (boolean)
+	* `user` (string) Need Docker >= 1.7
 
 Note that basic environment variable expansion (`${FOO}`, `$FOO`) is supported throughout the configuration, but advanced shell features such as command substitution (`$(cat foo)`, `` `cat foo` ``) or advanced expansions (`sp{el,il,al}l`, `foo*`, `~/project`, `$((A * B))`, `${PARAMETER#PATTERN}`) are *not* as the Docker CLI is called directly. Use `$$` for escaping a raw `$`.
 
