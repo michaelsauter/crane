@@ -70,8 +70,9 @@ type container struct {
 }
 
 type BuildParameters struct {
-	RawContext string `json:"context" yaml:"context"`
-	RawFile    string `json:"file" yaml:"file"`
+	RawContext   string      `json:"context" yaml:"context"`
+	RawFile      string      `json:"file" yaml:"file"`
+	RawBuildArgs interface{} `json:"build-arg" yaml:"build-arg"`
 }
 
 type RunParameters struct {
@@ -307,6 +308,10 @@ func (b BuildParameters) Context() string {
 
 func (b BuildParameters) File() string {
 	return expandEnv(b.RawFile)
+}
+
+func (b BuildParameters) BuildArgs() []string {
+	return sliceOrMap2ExpandedSlice(b.RawBuildArgs)
 }
 
 func (r RunParameters) AddHost() []string {
@@ -1203,6 +1208,10 @@ func (c *container) buildImage(nocache bool) {
 	if len(c.BuildParams().File()) > 0 {
 		args = append(args, "--file="+filepath.FromSlash(c.BuildParams().Context()+"/"+c.BuildParams().File()))
 	}
+	for _, arg := range c.BuildParams().BuildArgs() {
+		args = append(args, "--build-arg", arg)
+	}
+
 	args = append(args, c.BuildParams().Context())
 	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 	executeHook(c.Hooks().PostBuild(), c.ActualName())

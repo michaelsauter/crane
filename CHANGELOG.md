@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+* Add new `build-arg` key to the `build` map. Equivalent of `docker build --build-arg KEY=VALUE`
+
+  Example:
+  ```
+  containers:
+    foo:
+      image: foo
+      build:
+        context: "."
+        build-arg:
+          - KEY=VALUE
+  ```
+  Requires Docker 1.9+
+
 ## 2.6.0 (2016-02-25)
 
 * Do not require link containers when requires is set. This is a breaking change
