@@ -88,6 +88,7 @@ type RunParameters struct {
 	CPUset               int         `json:"cpuset" yaml:"cpuset"`
 	CPUShares            int         `json:"cpu-shares" yaml:"cpu-shares"`
 	Detach               bool        `json:"detach" yaml:"detach"`
+	RawDetachKeys        string      `json:"detach-keys" yaml:"detach-keys"`
 	RawDevice            []string    `json:"device" yaml:"device"`
 	RawDeviceReadBps     []string    `json:"device-read-bps" yaml:"device-read-bps"`
 	RawDeviceReadIops    []string    `json:"device-read-iops" yaml:"device-read-iops"`
@@ -362,6 +363,10 @@ func (r RunParameters) CgroupParent() string {
 
 func (r RunParameters) Cidfile() string {
 	return expandEnv(r.RawCidfile)
+}
+
+func (r RunParameters) DetachKeys() string {
+	return expandEnv(r.RawDetachKeys)
 }
 
 func (r RunParameters) Device() []string {
@@ -845,6 +850,10 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	// CPU shares
 	if c.RunParams().CPUShares > 0 {
 		args = append(args, "--cpu-shares", strconv.Itoa(c.RunParams().CPUShares))
+	}
+	// DetachKeys
+	if len(c.RunParams().DetachKeys()) > 0 {
+		args = append(args, "--detach-keys", c.RunParams().DetachKeys())
 	}
 	// Device
 	for _, device := range c.RunParams().Device() {
