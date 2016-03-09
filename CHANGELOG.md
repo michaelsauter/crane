@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+* Fallback on flag values on `run` block when values are not defined in `start`
+  or `exec` block.
+
+  _@bjaglin_
+
+* `docker run/exec/start` flags catch-up in Crane configuration.
+
+  _@bjaglin_
+
 * Add new `build-arg` key to the `build` map. Equivalent of `docker build --build-arg KEY=VALUE`
 
   Example:
