@@ -78,6 +78,7 @@ type BuildParameters struct {
 type RunParameters struct {
 	RawAddHost           []string    `json:"add-host" yaml:"add-host"`
 	BlkioWeight          int         `json:"blkio-weight" yaml:"blkio-weight"`
+	RawBlkioWeightDevice []string    `json:"blkio-weight-device" yaml:"blkio-weight-device"`
 	RawCapAdd            []string    `json:"cap-add" yaml:"cap-add"`
 	RawCapDrop           []string    `json:"cap-drop" yaml:"cap-drop"`
 	RawCgroupParent      string      `json:"cgroup-parent" yaml:"cgroup-parent"`
@@ -324,6 +325,14 @@ func (r RunParameters) AddHost() []string {
 		addHost = append(addHost, expandEnv(rawAddHost))
 	}
 	return addHost
+}
+
+func (r RunParameters) BlkioWeightDevice() []string {
+	var blkioWeightDevice []string
+	for _, rawBlkioWeightDevice := range r.RawBlkioWeightDevice {
+		blkioWeightDevice = append(blkioWeightDevice, expandEnv(rawBlkioWeightDevice))
+	}
+	return blkioWeightDevice
 }
 
 func (r RunParameters) CapAdd() []string {
@@ -759,6 +768,10 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	// BlkioWeight
 	if c.RunParams().BlkioWeight > 0 {
 		args = append(args, "--blkio-weight", strconv.Itoa(c.RunParams().BlkioWeight))
+	}
+	// BlkioWeightDevice
+	for _, blkioWeightDevice := range c.RunParams().BlkioWeightDevice() {
+		args = append(args, "--blkio-weight-device", blkioWeightDevice)
 	}
 	// CapAdd
 	for _, capAdd := range c.RunParams().CapAdd() {

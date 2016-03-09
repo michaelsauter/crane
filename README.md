@@ -99,6 +99,7 @@ The map of containers consists of the name of the container mapped to the contai
 * `run` (object, optional): Parameters mapped to Docker's `run` & `create`.
 	* `add-host` (array) Add custom host-to-IP mappings.
 	* `blkio-weight` (integer) Need Docker >= 1.7
+	* `blkio-weight-device` (array) Need Docker >= 1.10
 	* `cap-add` (array) Add Linux capabilities.
 	* `cap-drop` (array) Drop Linux capabilities.
 	* `cgroup-parent` (string)
