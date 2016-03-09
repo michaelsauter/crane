@@ -89,6 +89,10 @@ type RunParameters struct {
 	CPUShares            int         `json:"cpu-shares" yaml:"cpu-shares"`
 	Detach               bool        `json:"detach" yaml:"detach"`
 	RawDevice            []string    `json:"device" yaml:"device"`
+	RawDeviceReadBps     []string    `json:"device-read-bps" yaml:"device-read-bps"`
+	RawDeviceReadIops    []string    `json:"device-read-iops" yaml:"device-read-iops"`
+	RawDeviceWriteBps    []string    `json:"device-write-bps" yaml:"device-write-bps"`
+	RawDeviceWriteIops   []string    `json:"device-rewritead-iops" yaml:"device-write-iops"`
 	RawDNS               []string    `json:"dns" yaml:"dns"`
 	RawDNSOpt            []string    `json:"dns-opt" yaml:"dns-opt"`
 	RawDNSSearch         []string    `json:"dns-search" yaml:"dns-search"`
@@ -365,6 +369,38 @@ func (r RunParameters) Device() []string {
 		device = append(device, expandEnv(rawDevice))
 	}
 	return device
+}
+
+func (r RunParameters) DeviceReadBps() []string {
+	var deviceReadBps []string
+	for _, rawDeviceReadBps := range r.RawDeviceReadBps {
+		deviceReadBps = append(deviceReadBps, expandEnv(rawDeviceReadBps))
+	}
+	return deviceReadBps
+}
+
+func (r RunParameters) DeviceReadIops() []string {
+	var deviceReadIops []string
+	for _, rawDeviceReadIops := range r.RawDeviceReadIops {
+		deviceReadIops = append(deviceReadIops, expandEnv(rawDeviceReadIops))
+	}
+	return deviceReadIops
+}
+
+func (r RunParameters) DeviceWriteBps() []string {
+	var deviceWriteBps []string
+	for _, rawDeviceWriteBps := range r.RawDeviceWriteBps {
+		deviceWriteBps = append(deviceWriteBps, expandEnv(rawDeviceWriteBps))
+	}
+	return deviceWriteBps
+}
+
+func (r RunParameters) DeviceWriteIops() []string {
+	var deviceWriteIops []string
+	for _, rawDeviceWriteIops := range r.RawDeviceWriteIops {
+		deviceWriteIops = append(deviceWriteIops, expandEnv(rawDeviceWriteIops))
+	}
+	return deviceWriteIops
 }
 
 func (r RunParameters) DNS() []string {
@@ -808,6 +844,22 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	// Device
 	for _, device := range c.RunParams().Device() {
 		args = append(args, "--device", device)
+	}
+	// DeviceReadBps
+	for _, deviceReadBps := range c.RunParams().DeviceReadBps() {
+		args = append(args, "--device-read-bps", deviceReadBps)
+	}
+	// DeviceReadIops
+	for _, deviceReadIops := range c.RunParams().DeviceReadIops() {
+		args = append(args, "--device-read-iops", deviceReadIops)
+	}
+	// DeviceWriteBps
+	for _, deviceWriteBps := range c.RunParams().DeviceWriteBps() {
+		args = append(args, "--device-write-bps", deviceWriteBps)
+	}
+	// DeviceWriteIops
+	for _, deviceWriteIops := range c.RunParams().DeviceWriteIops() {
+		args = append(args, "--device-write-iops", deviceWriteIops)
 	}
 	// DNS
 	for _, dns := range c.RunParams().DNS() {

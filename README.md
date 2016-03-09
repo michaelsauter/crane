@@ -110,6 +110,10 @@ The map of containers consists of the name of the container mapped to the contai
 	* `cpu-shares` (integer)
 	* `detach` (boolean) `sudo docker attach <container name>` will work as normal.
 	* `device` (array) Add host devices.
+	* `device-read-bps` (array) Need Docker >= 1.10
+	* `device-read-iops` (array) Need Docker >= 1.10
+	* `device-write-bp` (array) Need Docker >= 1.10
+	* `device-write-iops` (array) Need Docker >= 1.10
 	* `dns` (array)
 	* `dns-opt` (array) Need Docker >= 1.9
 	* `dns-search` (array)
