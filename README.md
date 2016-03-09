@@ -135,6 +135,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `net` (string) The `container:id` syntax is not supported, use `container:name` if you want to reuse another container network stack.
 	* `net-alias` (array) Need Docker >= 1.10
 	* `oom-kill-disable` (bool) Need Docker >= 1.7
+	* `oom-score-adj` (string) Need Docker >= 1.10
 	* `pid` (string)
 	* `privileged` (boolean)
 	* `publish` (array) Map network ports to the container.

@@ -114,6 +114,7 @@ type RunParameters struct {
 	RawNet               string      `json:"net" yaml:"net"`
 	RawNetAlias          []string    `json:"net-alias" yaml:"net-alias"`
 	OomKillDisable       bool        `json:"oom-kill-disable" yaml:"oom-kill-disable"`
+	RawOomScoreAdj       string      `json:"oom-score-adj" yaml:"oom-score-adj"`
 	RawPid               string      `json:"pid" yaml:"pid"`
 	Privileged           bool        `json:"privileged" yaml:"privileged"`
 	RawPublish           []string    `json:"publish" yaml:"publish"`
@@ -515,6 +516,10 @@ func (r RunParameters) NetAlias() []string {
 	return netAlias
 }
 
+func (r RunParameters) OomScoreAdj() string {
+	return expandEnv(r.RawOomScoreAdj)
+}
+
 func (r RunParameters) Pid() string {
 	return expandEnv(r.RawPid)
 }
@@ -908,6 +913,10 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	// OomKillDisable
 	if c.RunParams().OomKillDisable {
 		args = append(args, "--oom-kill-disable")
+	}
+	// OomScoreAdj
+	if len(c.RunParams().OomScoreAdj()) > 0 {
+		args = append(args, "--oom-score-adj", c.RunParams().OomScoreAdj())
 	}
 	// PID
 	if len(c.RunParams().Pid()) > 0 {
