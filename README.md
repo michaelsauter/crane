@@ -125,6 +125,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `hostname` (string)
 	* `interactive` (boolean)
 	* `ipc` (string) The `container:id` syntax is not supported, use `container:name` if you want to reuse another container IPC.
+	* `isolation` (string) Need Docker >= 1.10
 	* `kernel-memory` (string) Need Docker >= 1.9
 	* `label` (array/mapping) Can be declared as a string array with `"key[=value]"` items or a string-to-string mapping where each `key: value` will be translated to the corresponding `"key=value"` string.
 	* `label-file` (array)

@@ -104,6 +104,7 @@ type RunParameters struct {
 	RawHostname          string      `json:"hostname" yaml:"hostname"`
 	Interactive          bool        `json:"interactive" yaml:"interactive"`
 	RawIPC               string      `json:"ipc" yaml:"ipc"`
+	RawIsolation         string      `json:"isolation" yaml:"isolation"`
 	RawKernelMemory      string      `json:"kernel-memory" yaml:"kernel-memory"`
 	RawLabel             interface{} `json:"label" yaml:"label"`
 	RawLabelFile         []string    `json:"label-file" yaml:"label-file"`
@@ -465,6 +466,10 @@ func (r RunParameters) Hostname() string {
 
 func (r RunParameters) IPC() string {
 	return expandEnv(r.RawIPC)
+}
+
+func (r RunParameters) Isolation() string {
+	return expandEnv(r.RawIsolation)
 }
 
 func (r RunParameters) KernelMemory() string {
@@ -912,6 +917,10 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 		} else {
 			args = append(args, "--ipc", c.RunParams().IPC())
 		}
+	}
+	// Isolation
+	if len(c.RunParams().Isolation()) > 0 {
+		args = append(args, "--isolation", c.RunParams().Isolation())
 	}
 	// KernelMemory
 	if len(c.RunParams().KernelMemory()) > 0 {
