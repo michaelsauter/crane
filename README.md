@@ -125,6 +125,8 @@ The map of containers consists of the name of the container mapped to the contai
 	* `group-add` (array) Need Docker >= 1.8
 	* `hostname` (string)
 	* `interactive` (boolean)
+	* `ip` (string) ip address. Need Docker >= 1.10
+	* `ip6` (string) ipv6 address. Need Docker >= 1.10
 	* `ipc` (string) The `container:id` syntax is not supported, use `container:name` if you want to reuse another container IPC.
 	* `isolation` (string) Need Docker >= 1.10
 	* `kernel-memory` (string) Need Docker >= 1.9
