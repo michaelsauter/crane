@@ -160,6 +160,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `user` (string)
 	* `uts` (string) Need Docker >= 1.7
 	* `volume` (array) In contrast to plain Docker, the host path can be relative.
+	* `volume-driver` (string) Need Docker >= 1.10
 	* `volumes-from` (array) Mount volumes from other containers
 	* `workdir` (string)
 	* `cmd` (array/string) Command to append to `docker run` (overwriting `CMD`).

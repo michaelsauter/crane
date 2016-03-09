@@ -139,6 +139,7 @@ type RunParameters struct {
 	RawUser              string      `json:"user" yaml:"user"`
 	RawUts               string      `json:"uts" yaml:"uts"`
 	RawVolume            []string    `json:"volume" yaml:"volume"`
+	RawVolumeDriver      string      `json:"volume-driver" yaml:"volume-driver"`
 	RawVolumesFrom       []string    `json:"volumes-from" yaml:"volumes-from"`
 	RawWorkdir           string      `json:"workdir" yaml:"workdir"`
 	RawCmd               interface{} `json:"cmd" yaml:"cmd"`
@@ -666,6 +667,10 @@ func (r RunParameters) ActualVolume() []string {
 	return vols
 }
 
+func (r RunParameters) VolumeDriver() string {
+	return expandEnv(r.RawVolumeDriver)
+}
+
 func (r RunParameters) VolumesFrom() []string {
 	var volumesFrom []string
 	for _, rawVolumesFrom := range r.RawVolumesFrom {
@@ -1068,6 +1073,10 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	// Volumes
 	for _, volume := range c.RunParams().ActualVolume() {
 		args = append(args, "--volume", volume)
+	}
+	// VolumeDriver
+	if len(c.RunParams().VolumeDriver()) > 0 {
+		args = append(args, "--volume-driver", c.RunParams().VolumeDriver())
 	}
 	// VolumesFrom
 	for _, volumesFrom := range c.RunParams().VolumesFrom() {
