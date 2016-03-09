@@ -98,6 +98,8 @@ type RunParameters struct {
 	RawGroupAdd          []string    `json:"group-add" yaml:"group-add"`
 	RawHostname          string      `json:"hostname" yaml:"hostname"`
 	Interactive          bool        `json:"interactive" yaml:"interactive"`
+	RawIp                string      `json:"ip" yaml:"ip"`
+	RawIp6               string      `json:"ip6" yaml:"ip6"`
 	RawIPC               string      `json:"ipc" yaml:"ipc"`
 	RawKernelMemory      string      `json:"kernel-memory" yaml:"kernel-memory"`
 	RawLabel             interface{} `json:"label" yaml:"label"`
@@ -412,6 +414,14 @@ func (r RunParameters) GroupAdd() []string {
 
 func (r RunParameters) Hostname() string {
 	return expandEnv(r.RawHostname)
+}
+
+func (r RunParameters) Ip() string {
+	return expandEnv(r.RawIp)
+}
+
+func (r RunParameters) Ip6() string {
+	return expandEnv(r.RawIp6)
 }
 
 func (r RunParameters) IPC() string {
@@ -808,6 +818,14 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	// Interactive
 	if c.RunParams().Interactive {
 		args = append(args, "--interactive")
+	}
+	// Ip
+	if len(c.RunParams().Ip()) > 0 {
+		args = append(args, "--ip", c.RunParams().Ip())
+	}
+	// Ip6
+	if len(c.RunParams().Ip6()) > 0 {
+		args = append(args, "--ip6", c.RunParams().Ip6())
 	}
 	// IPC
 	if len(c.RunParams().IPC()) > 0 {
