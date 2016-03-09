@@ -99,6 +99,7 @@ The map of containers consists of the name of the container mapped to the contai
 * `run` (object, optional): Parameters mapped to Docker's `run` & `create`.
 	* `add-host` (array) Add custom host-to-IP mappings.
 	* `blkio-weight` (integer) Need Docker >= 1.7
+	* `blkio-weight-device` (array) Need Docker >= 1.10
 	* `cap-add` (array) Add Linux capabilities.
 	* `cap-drop` (array) Drop Linux capabilities.
 	* `cgroup-parent` (string)
@@ -108,7 +109,12 @@ The map of containers consists of the name of the container mapped to the contai
 	* `cpuset` (integer)
 	* `cpu-shares` (integer)
 	* `detach` (boolean) `sudo docker attach <container name>` will work as normal.
+	* `detach-keys` (string) Need Docker >= 1.10
 	* `device` (array) Add host devices.
+	* `device-read-bps` (array) Need Docker >= 1.10
+	* `device-read-iops` (array) Need Docker >= 1.10
+	* `device-write-bp` (array) Need Docker >= 1.10
+	* `device-write-iops` (array) Need Docker >= 1.10
 	* `dns` (array)
 	* `dns-opt` (array) Need Docker >= 1.9
 	* `dns-search` (array)
@@ -120,6 +126,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `hostname` (string)
 	* `interactive` (boolean)
 	* `ipc` (string) The `container:id` syntax is not supported, use `container:name` if you want to reuse another container IPC.
+	* `isolation` (string) Need Docker >= 1.10
 	* `kernel-memory` (string) Need Docker >= 1.9
 	* `label` (array/mapping) Can be declared as a string array with `"key[=value]"` items or a string-to-string mapping where each `key: value` will be translated to the corresponding `"key=value"` string.
 	* `label-file` (array)
@@ -133,7 +140,9 @@ The map of containers consists of the name of the container mapped to the contai
 	* `memory-swap` (string)
 	* `memory-swappiness` (int) Need Docker >= 1.8
 	* `net` (string) The `container:id` syntax is not supported, use `container:name` if you want to reuse another container network stack.
+	* `net-alias` (array) Need Docker >= 1.10
 	* `oom-kill-disable` (bool) Need Docker >= 1.7
+	* `oom-score-adj` (string) Need Docker >= 1.10
 	* `pid` (string)
 	* `privileged` (boolean)
 	* `publish` (array) Map network ports to the container.
@@ -141,14 +150,17 @@ The map of containers consists of the name of the container mapped to the contai
 	* `read-only` (boolean)
 	* `restart` (string) Restart policy.
 	* `security-opt` (array)
+	* `shm-size` (string) Need Docker >= 1.10
 	* `stop-signal` (string)  Need Docker >= 1.9
 	* `sig-proxy` (boolean) `true` by default
 	* `rm` (boolean)
+	* `tmpfs` (array) Need Docker >= 1.10
 	* `tty` (boolean)
 	* `ulimit` (array)
 	* `user` (string)
 	* `uts` (string) Need Docker >= 1.7
 	* `volume` (array) In contrast to plain Docker, the host path can be relative.
+	* `volume-driver` (string) Need Docker >= 1.10
 	* `volumes-from` (array) Mount volumes from other containers
 	* `workdir` (string)
 	* `cmd` (array/string) Command to append to `docker run` (overwriting `CMD`).
@@ -156,14 +168,19 @@ The map of containers consists of the name of the container mapped to the contai
 	* `volumes` (boolean)
 * `start` (object, optional): Parameters mapped to Docker's `start`.
 	* `attach` (boolean)
+	* `detach-keys` (string) Need Docker >= 1.10
 	* `interactive` (boolean)
 * `build` (object, optional): Parameters mapped to Docker's `build`.
 	* `context` (string)
 	* `file` (string)
   * `build-arg` (array/mapping) Provide build arguments. Need Docker >= 1.9
 * `exec` (object, optional): Parameters mapped to Docker's `exec`.
-  * `interactive` (boolean)
-  * `tty` (boolean)
+	* `detach` (boolean)
+	* `detach-keys` (string) Need Docker >= 1.10
+	* `interactive` (boolean)
+	* `privileged` (boolean) Need Docker >= 1.9
+	* `tty` (boolean)
+	* `user` (string) Need Docker >= 1.7
 
 Note that basic environment variable expansion (`${FOO}`, `$FOO`) is supported throughout the configuration, but advanced shell features such as command substitution (`$(cat foo)`, `` `cat foo` ``) or advanced expansions (`sp{el,il,al}l`, `foo*`, `~/project`, `$((A * B))`, `${PARAMETER#PATTERN}`) are *not* as the Docker CLI is called directly. Use `$$` for escaping a raw `$`.
 

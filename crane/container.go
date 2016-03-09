@@ -78,6 +78,7 @@ type BuildParameters struct {
 type RunParameters struct {
 	RawAddHost           []string    `json:"add-host" yaml:"add-host"`
 	BlkioWeight          int         `json:"blkio-weight" yaml:"blkio-weight"`
+	RawBlkioWeightDevice []string    `json:"blkio-weight-device" yaml:"blkio-weight-device"`
 	RawCapAdd            []string    `json:"cap-add" yaml:"cap-add"`
 	RawCapDrop           []string    `json:"cap-drop" yaml:"cap-drop"`
 	RawCgroupParent      string      `json:"cgroup-parent" yaml:"cgroup-parent"`
@@ -87,7 +88,12 @@ type RunParameters struct {
 	CPUset               int         `json:"cpuset" yaml:"cpuset"`
 	CPUShares            int         `json:"cpu-shares" yaml:"cpu-shares"`
 	Detach               bool        `json:"detach" yaml:"detach"`
+	RawDetachKeys        string      `json:"detach-keys" yaml:"detach-keys"`
 	RawDevice            []string    `json:"device" yaml:"device"`
+	RawDeviceReadBps     []string    `json:"device-read-bps" yaml:"device-read-bps"`
+	RawDeviceReadIops    []string    `json:"device-read-iops" yaml:"device-read-iops"`
+	RawDeviceWriteBps    []string    `json:"device-write-bps" yaml:"device-write-bps"`
+	RawDeviceWriteIops   []string    `json:"device-rewritead-iops" yaml:"device-write-iops"`
 	RawDNS               []string    `json:"dns" yaml:"dns"`
 	RawDNSOpt            []string    `json:"dns-opt" yaml:"dns-opt"`
 	RawDNSSearch         []string    `json:"dns-search" yaml:"dns-search"`
@@ -99,6 +105,7 @@ type RunParameters struct {
 	RawHostname          string      `json:"hostname" yaml:"hostname"`
 	Interactive          bool        `json:"interactive" yaml:"interactive"`
 	RawIPC               string      `json:"ipc" yaml:"ipc"`
+	RawIsolation         string      `json:"isolation" yaml:"isolation"`
 	RawKernelMemory      string      `json:"kernel-memory" yaml:"kernel-memory"`
 	RawLabel             interface{} `json:"label" yaml:"label"`
 	RawLabelFile         []string    `json:"label-file" yaml:"label-file"`
@@ -112,7 +119,9 @@ type RunParameters struct {
 	RawMemorySwap        string      `json:"memory-swap" yaml:"memory-swap"`
 	MemorySwappiness     OptInt      `json:"memory-swappiness" yaml:"memory-swappiness"`
 	RawNet               string      `json:"net" yaml:"net"`
+	RawNetAlias          []string    `json:"net-alias" yaml:"net-alias"`
 	OomKillDisable       bool        `json:"oom-kill-disable" yaml:"oom-kill-disable"`
+	RawOomScoreAdj       string      `json:"oom-score-adj" yaml:"oom-score-adj"`
 	RawPid               string      `json:"pid" yaml:"pid"`
 	Privileged           bool        `json:"privileged" yaml:"privileged"`
 	RawPublish           []string    `json:"publish" yaml:"publish"`
@@ -121,13 +130,16 @@ type RunParameters struct {
 	RawRestart           string      `json:"restart" yaml:"restart"`
 	Rm                   bool        `json:"rm" yaml:"rm"`
 	RawSecurityOpt       []string    `json:"security-opt" yaml:"security-opt"`
+	RawShmSize           string      `json:"shm-size" yaml:"shm-size"`
 	SigProxy             OptBool     `json:"sig-proxy" yaml:"sig-proxy"`
 	RawStopSignal        string      `json:"stop-signal" yaml:"stop-signal"`
+	RawTmpfs             []string    `json:"tmpfs" yaml:"tmpfs"`
 	Tty                  bool        `json:"tty" yaml:"tty"`
 	RawUlimit            []string    `json:"ulimit" yaml:"ulimit"`
 	RawUser              string      `json:"user" yaml:"user"`
 	RawUts               string      `json:"uts" yaml:"uts"`
 	RawVolume            []string    `json:"volume" yaml:"volume"`
+	RawVolumeDriver      string      `json:"volume-driver" yaml:"volume-driver"`
 	RawVolumesFrom       []string    `json:"volumes-from" yaml:"volumes-from"`
 	RawWorkdir           string      `json:"workdir" yaml:"workdir"`
 	RawCmd               interface{} `json:"cmd" yaml:"cmd"`
@@ -138,13 +150,18 @@ type RmParameters struct {
 }
 
 type StartParameters struct {
-	Attach      bool `json:"attach" yaml:"attach"`
-	Interactive bool `json:"interactive" yaml:"interactive"`
+	Attach        bool   `json:"attach" yaml:"attach"`
+	RawDetachKeys string `json:"detach-keys" yaml:"detach-keys"`
+	Interactive   bool   `json:"interactive" yaml:"interactive"`
 }
 
 type ExecParameters struct {
-	Interactive bool `json:"interactive" yaml:"interactive"`
-	Tty         bool `json:"tty" yaml:"tty"`
+	Detach        bool   `json:"detach" yaml:"detach"`
+	RawDetachKeys string `json:"detach-keys" yaml:"detach-keys"`
+	Interactive   bool   `json:"interactive" yaml:"interactive"`
+	Privileged    bool   `json:"privileged" yaml:"privileged"`
+	Tty           bool   `json:"tty" yaml:"tty"`
+	RawUser       string `json:"user" yaml:"user"`
 }
 
 type OptInt struct {
@@ -322,6 +339,14 @@ func (r RunParameters) AddHost() []string {
 	return addHost
 }
 
+func (r RunParameters) BlkioWeightDevice() []string {
+	var blkioWeightDevice []string
+	for _, rawBlkioWeightDevice := range r.RawBlkioWeightDevice {
+		blkioWeightDevice = append(blkioWeightDevice, expandEnv(rawBlkioWeightDevice))
+	}
+	return blkioWeightDevice
+}
+
 func (r RunParameters) CapAdd() []string {
 	var capAdd []string
 	for _, rawCapAdd := range r.RawCapAdd {
@@ -346,12 +371,48 @@ func (r RunParameters) Cidfile() string {
 	return expandEnv(r.RawCidfile)
 }
 
+func (r RunParameters) DetachKeys() string {
+	return expandEnv(r.RawDetachKeys)
+}
+
 func (r RunParameters) Device() []string {
 	var device []string
 	for _, rawDevice := range r.RawDevice {
 		device = append(device, expandEnv(rawDevice))
 	}
 	return device
+}
+
+func (r RunParameters) DeviceReadBps() []string {
+	var deviceReadBps []string
+	for _, rawDeviceReadBps := range r.RawDeviceReadBps {
+		deviceReadBps = append(deviceReadBps, expandEnv(rawDeviceReadBps))
+	}
+	return deviceReadBps
+}
+
+func (r RunParameters) DeviceReadIops() []string {
+	var deviceReadIops []string
+	for _, rawDeviceReadIops := range r.RawDeviceReadIops {
+		deviceReadIops = append(deviceReadIops, expandEnv(rawDeviceReadIops))
+	}
+	return deviceReadIops
+}
+
+func (r RunParameters) DeviceWriteBps() []string {
+	var deviceWriteBps []string
+	for _, rawDeviceWriteBps := range r.RawDeviceWriteBps {
+		deviceWriteBps = append(deviceWriteBps, expandEnv(rawDeviceWriteBps))
+	}
+	return deviceWriteBps
+}
+
+func (r RunParameters) DeviceWriteIops() []string {
+	var deviceWriteIops []string
+	for _, rawDeviceWriteIops := range r.RawDeviceWriteIops {
+		deviceWriteIops = append(deviceWriteIops, expandEnv(rawDeviceWriteIops))
+	}
+	return deviceWriteIops
 }
 
 func (r RunParameters) DNS() []string {
@@ -416,6 +477,10 @@ func (r RunParameters) Hostname() string {
 
 func (r RunParameters) IPC() string {
 	return expandEnv(r.RawIPC)
+}
+
+func (r RunParameters) Isolation() string {
+	return expandEnv(r.RawIsolation)
 }
 
 func (r RunParameters) KernelMemory() string {
@@ -504,6 +569,18 @@ func (r RunParameters) ActualNet() string {
 	return netParam
 }
 
+func (r RunParameters) NetAlias() []string {
+	var netAlias []string
+	for _, rawNetAlias := range r.RawNetAlias {
+		netAlias = append(netAlias, expandEnv(rawNetAlias))
+	}
+	return netAlias
+}
+
+func (r RunParameters) OomScoreAdj() string {
+	return expandEnv(r.RawOomScoreAdj)
+}
+
 func (r RunParameters) Pid() string {
 	return expandEnv(r.RawPid)
 }
@@ -528,8 +605,20 @@ func (r RunParameters) SecurityOpt() []string {
 	return securityOpt
 }
 
+func (r RunParameters) ShmSize() string {
+	return expandEnv(r.RawShmSize)
+}
+
 func (r RunParameters) StopSignal() string {
 	return expandEnv(r.RawStopSignal)
+}
+
+func (r RunParameters) Tmpfs() []string {
+	var tmpfs []string
+	for _, rawTmpfs := range r.RawTmpfs {
+		tmpfs = append(tmpfs, expandEnv(rawTmpfs))
+	}
+	return tmpfs
 }
 
 func (r RunParameters) Ulimit() []string {
@@ -583,6 +672,10 @@ func (r RunParameters) ActualVolume() []string {
 	return vols
 }
 
+func (r RunParameters) VolumeDriver() string {
+	return expandEnv(r.RawVolumeDriver)
+}
+
 func (r RunParameters) VolumesFrom() []string {
 	var volumesFrom []string
 	for _, rawVolumesFrom := range r.RawVolumesFrom {
@@ -618,6 +711,18 @@ func (r RunParameters) Cmd() []string {
 		}
 	}
 	return cmd
+}
+
+func (s StartParameters) DetachKeys() string {
+	return expandEnv(s.RawDetachKeys)
+}
+
+func (e ExecParameters) DetachKeys() string {
+	return expandEnv(e.RawDetachKeys)
+}
+
+func (e ExecParameters) User() string {
+	return expandEnv(e.RawUser)
 }
 
 func (c *container) ID() string {
@@ -732,6 +837,10 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	if c.RunParams().BlkioWeight > 0 {
 		args = append(args, "--blkio-weight", strconv.Itoa(c.RunParams().BlkioWeight))
 	}
+	// BlkioWeightDevice
+	for _, blkioWeightDevice := range c.RunParams().BlkioWeightDevice() {
+		args = append(args, "--blkio-weight-device", blkioWeightDevice)
+	}
 	// CapAdd
 	for _, capAdd := range c.RunParams().CapAdd() {
 		args = append(args, "--cap-add", capAdd)
@@ -764,9 +873,29 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	if c.RunParams().CPUShares > 0 {
 		args = append(args, "--cpu-shares", strconv.Itoa(c.RunParams().CPUShares))
 	}
+	// DetachKeys
+	if len(c.RunParams().DetachKeys()) > 0 {
+		args = append(args, "--detach-keys", c.RunParams().DetachKeys())
+	}
 	// Device
 	for _, device := range c.RunParams().Device() {
 		args = append(args, "--device", device)
+	}
+	// DeviceReadBps
+	for _, deviceReadBps := range c.RunParams().DeviceReadBps() {
+		args = append(args, "--device-read-bps", deviceReadBps)
+	}
+	// DeviceReadIops
+	for _, deviceReadIops := range c.RunParams().DeviceReadIops() {
+		args = append(args, "--device-read-iops", deviceReadIops)
+	}
+	// DeviceWriteBps
+	for _, deviceWriteBps := range c.RunParams().DeviceWriteBps() {
+		args = append(args, "--device-write-bps", deviceWriteBps)
+	}
+	// DeviceWriteIops
+	for _, deviceWriteIops := range c.RunParams().DeviceWriteIops() {
+		args = append(args, "--device-write-iops", deviceWriteIops)
 	}
 	// DNS
 	for _, dns := range c.RunParams().DNS() {
@@ -819,6 +948,10 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 		} else {
 			args = append(args, "--ipc", c.RunParams().IPC())
 		}
+	}
+	// Isolation
+	if len(c.RunParams().Isolation()) > 0 {
+		args = append(args, "--isolation", c.RunParams().Isolation())
 	}
 	// KernelMemory
 	if len(c.RunParams().KernelMemory()) > 0 {
@@ -878,9 +1011,17 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	if netParam != "bridge" {
 		args = append(args, "--net", netParam)
 	}
+	// NetAlias
+	for _, netAlias := range c.RunParams().NetAlias() {
+		args = append(args, "--net-alias", netAlias)
+	}
 	// OomKillDisable
 	if c.RunParams().OomKillDisable {
 		args = append(args, "--oom-kill-disable")
+	}
+	// OomScoreAdj
+	if len(c.RunParams().OomScoreAdj()) > 0 {
+		args = append(args, "--oom-score-adj", c.RunParams().OomScoreAdj())
 	}
 	// PID
 	if len(c.RunParams().Pid()) > 0 {
@@ -914,6 +1055,10 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	for _, securityOpt := range c.RunParams().SecurityOpt() {
 		args = append(args, "--security-opt", securityOpt)
 	}
+	// ShmSize
+	if len(c.RunParams().ShmSize()) > 0 {
+		args = append(args, "--shm-size", c.RunParams().ShmSize())
+	}
 	// SigProxy
 	if c.RunParams().SigProxy.Falsy() {
 		args = append(args, "--sig-proxy=false")
@@ -921,6 +1066,10 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	// StopSignal
 	if len(c.RunParams().StopSignal()) > 0 {
 		args = append(args, "--stop-signal", c.RunParams().StopSignal())
+	}
+	// Tmpfs
+	for _, tmpfs := range c.RunParams().Tmpfs() {
+		args = append(args, "--tmpfs", tmpfs)
 	}
 	// Tty
 	if c.RunParams().Tty {
@@ -941,6 +1090,10 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	// Volumes
 	for _, volume := range c.RunParams().ActualVolume() {
 		args = append(args, "--volume", volume)
+	}
+	// VolumeDriver
+	if len(c.RunParams().VolumeDriver()) > 0 {
+		args = append(args, "--volume-driver", c.RunParams().VolumeDriver())
 	}
 	// VolumesFrom
 	for _, volumesFrom := range c.RunParams().VolumesFrom() {
@@ -978,7 +1131,12 @@ func (c *container) Start(excluded []string) {
 			if c.StartParams().Attach {
 				args = append(args, "--attach")
 			}
-			if c.StartParams().Interactive {
+			if len(c.StartParams().DetachKeys()) > 0 {
+				args = append(args, "--detach-keys", c.StartParams().DetachKeys())
+			} else if len(c.RunParams().DetachKeys()) > 0 {
+				args = append(args, "--detach-keys", c.RunParams().DetachKeys())
+			}
+			if c.StartParams().Interactive || c.RunParams().Interactive {
 				args = append(args, "--interactive")
 			}
 			args = append(args, c.ActualName())
@@ -1040,11 +1198,27 @@ func (c *container) Exec(cmds []string) {
 	}
 	for _, name := range runningInstances {
 		args := []string{"exec"}
-		if c.ExecParams().Interactive {
+		if c.ExecParams().Detach || c.RunParams().Detach {
+			args = append(args, "--detach")
+		}
+		if len(c.ExecParams().DetachKeys()) > 0 {
+			args = append(args, "--detach-keys", c.ExecParams().DetachKeys())
+		} else if len(c.RunParams().DetachKeys()) > 0 {
+			args = append(args, "--detach-keys", c.RunParams().DetachKeys())
+		}
+		if c.ExecParams().Privileged || c.RunParams().Privileged {
+			args = append(args, "--privileged")
+		}
+		if c.ExecParams().Interactive || c.RunParams().Interactive {
 			args = append(args, "--interactive")
 		}
-		if c.ExecParams().Tty {
+		if c.ExecParams().Tty || c.RunParams().Tty {
 			args = append(args, "--tty")
+		}
+		if len(c.ExecParams().User()) > 0 {
+			args = append(args, "--user", c.ExecParams().User())
+		} else if len(c.RunParams().User()) > 0 {
+			args = append(args, "--user", c.RunParams().User())
 		}
 		args = append(args, name)
 		args = append(args, cmds...)
