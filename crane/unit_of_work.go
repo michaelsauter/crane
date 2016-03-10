@@ -99,7 +99,8 @@ func (uow *UnitOfWork) Lift(cmds []string, noCache bool, parallel int) {
 func (uow *UnitOfWork) Stats() {
 	args := []string{"stats"}
 	for _, container := range uow.Targeted() {
-		for _, name := range container.InstancesOfStatus("running") {
+		if container.Running() {
+			name := container.ActualName(false)
 			args = append(args, name)
 		}
 	}
