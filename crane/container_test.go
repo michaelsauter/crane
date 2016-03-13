@@ -9,6 +9,10 @@ import (
 )
 
 func TestDependencies(t *testing.T) {
+	defer func() {
+		allowed = []string{}
+	}()
+
 	c := &container{}
 	expected := &Dependencies{}
 
@@ -16,6 +20,7 @@ func TestDependencies(t *testing.T) {
 	assert.Equal(t, expected, c.Dependencies())
 
 	// network v2 links
+	allowed = []string{"foo", "bar", "c"}
 	c = &container{
 		RawRequires: []string{"foo", "bar"},
 		RawRun: RunParameters{
@@ -32,6 +37,7 @@ func TestDependencies(t *testing.T) {
 	assert.Equal(t, expected, c.Dependencies())
 
 	// legacy links
+	allowed = []string{"a", "b", "c"}
 	c = &container{
 		RawRun: RunParameters{
 			RawLink:        []string{"a:b", "b:d"},
@@ -46,6 +52,7 @@ func TestDependencies(t *testing.T) {
 	assert.Equal(t, expected, c.Dependencies())
 
 	// container network
+	allowed = []string{"c", "n"}
 	c = &container{
 		RawRun: RunParameters{
 			RawNet:         "container:n",
@@ -60,6 +67,7 @@ func TestDependencies(t *testing.T) {
 	assert.Equal(t, expected, c.Dependencies())
 
 	// with excluded containers
+	allowed = []string{"foo", "c"}
 	c = &container{
 		RawRequires: []string{"foo", "bar"},
 		RawRun: RunParameters{
@@ -72,14 +80,14 @@ func TestDependencies(t *testing.T) {
 		Requires:    []string{"foo"},
 		VolumesFrom: []string{"c"},
 	}
-	defer func() {
-		excluded = []string{}
-	}()
-	excluded = []string{"a", "b", "d", "bar"}
 	assert.Equal(t, expected, c.Dependencies())
 }
 
 func TestVolumesFromSuffixes(t *testing.T) {
+	defer func() {
+		allowed = []string{}
+	}()
+	allowed = []string{"a", "b"}
 	c := &container{RawRun: RunParameters{RawVolumesFrom: []string{"a:rw", "b:ro"}}}
 	expected := &Dependencies{
 		All:         []string{"a", "b"},
@@ -89,6 +97,10 @@ func TestVolumesFromSuffixes(t *testing.T) {
 }
 
 func TestMultipleLinkAliases(t *testing.T) {
+	defer func() {
+		allowed = []string{}
+	}()
+	allowed = []string{"a"}
 	c := &container{RawRun: RunParameters{RawLink: []string{"a:b", "a:c"}}}
 	expected := &Dependencies{
 		All:  []string{"a"},
@@ -98,6 +110,10 @@ func TestMultipleLinkAliases(t *testing.T) {
 }
 
 func TestImplicitLinkAliases(t *testing.T) {
+	defer func() {
+		allowed = []string{}
+	}()
+	allowed = []string{"a"}
 	c := &container{RawRun: RunParameters{RawLink: []string{"a"}}}
 	expected := &Dependencies{
 		All:  []string{"a"},

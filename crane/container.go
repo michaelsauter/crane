@@ -21,9 +21,9 @@ type Container interface {
 	Status() [][]string
 	Provision(nocache bool)
 	PullImage()
-	Create(cmds []string, excluded []string)
-	Run(cmds []string, excluded []string)
-	Start(excluded []string)
+	Create(cmds []string)
+	Run(cmds []string)
+	Start()
 	Kill()
 	Stop()
 	Pause()
@@ -245,7 +245,7 @@ func (c *container) ExecParams() ExecParameters {
 func (c *container) Dependencies() *Dependencies {
 	dependencies := &Dependencies{}
 	for _, required := range c.Requires() {
-		if !includes(excluded, required) && !dependencies.includes(required) {
+		if includes(allowed, required) && !dependencies.includes(required) {
 			dependencies.All = append(dependencies.All, required)
 			dependencies.Requires = append(dependencies.Requires, required)
 		}
@@ -254,7 +254,7 @@ func (c *container) Dependencies() *Dependencies {
 		// links are strict dependencies only on bridge networks
 		for _, link := range c.RunParams().Link() {
 			linkName := strings.Split(link, ":")[0]
-			if !includes(excluded, linkName) && !dependencies.includes(linkName) {
+			if includes(allowed, linkName) && !dependencies.includes(linkName) {
 				dependencies.All = append(dependencies.All, linkName)
 				dependencies.Link = append(dependencies.Link, linkName)
 			}
@@ -262,19 +262,19 @@ func (c *container) Dependencies() *Dependencies {
 	}
 	for _, volumesFrom := range c.RunParams().VolumesFrom() {
 		volumesFromName := strings.Split(volumesFrom, ":")[0]
-		if !includes(excluded, volumesFromName) && !dependencies.includes(volumesFromName) {
+		if includes(allowed, volumesFromName) && !dependencies.includes(volumesFromName) {
 			dependencies.All = append(dependencies.All, volumesFromName)
 			dependencies.VolumesFrom = append(dependencies.VolumesFrom, volumesFromName)
 		}
 	}
 	if net := containerReference(c.RunParams().Net()); net != "" {
-		if !includes(excluded, net) && !dependencies.includes(net) {
+		if includes(allowed, net) && !dependencies.includes(net) {
 			dependencies.Net = net
 			dependencies.All = append(dependencies.All, net)
 		}
 	}
 	if ipc := containerReference(c.RunParams().IPC()); ipc != "" {
-		if !includes(excluded, ipc) && !dependencies.includes(ipc) {
+		if includes(allowed, ipc) && !dependencies.includes(ipc) {
 			dependencies.IPC = ipc
 			dependencies.All = append(dependencies.All, ipc)
 		}
@@ -568,7 +568,7 @@ func (r RunParameters) ActualNet() string {
 	}
 	netContainer := containerReference(netParam)
 	if len(netContainer) > 0 {
-		if !includes(excluded, netContainer) {
+		if includes(allowed, netContainer) {
 			return "container:" + cfg.Container(netContainer).ActualName()
 		}
 	} else {
@@ -781,18 +781,18 @@ func (c *container) Provision(nocache bool) {
 }
 
 // Create container
-func (c *container) Create(cmds []string, excluded []string) {
+func (c *container) Create(cmds []string) {
 	if !c.Unique() {
 		c.Rm(true)
 	}
 	fmt.Fprintf(c.CommandsOut(), "Creating container %s ...\n", c.ActualName())
 
-	args := append([]string{"create"}, c.createArgs(cmds, excluded)...)
+	args := append([]string{"create"}, c.createArgs(cmds)...)
 	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 }
 
 // Run container, or start it if already existing
-func (c *container) Run(cmds []string, excluded []string) {
+func (c *container) Run(cmds []string) {
 	if !c.Unique() {
 		c.Rm(true)
 	}
@@ -804,7 +804,7 @@ func (c *container) Run(cmds []string, excluded []string) {
 	if c.RunParams().Detach {
 		args = append(args, "--detach")
 	}
-	args = append(args, c.createArgs(cmds, excluded)...)
+	args = append(args, c.createArgs(cmds)...)
 	wg := c.executePostStartHook()
 	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 	wg.Wait()
@@ -837,7 +837,7 @@ func (c *container) executePostStartHook() *sync.WaitGroup {
 }
 
 // Returns all the flags to be passed to `docker create`
-func (c *container) createArgs(cmds []string, excluded []string) []string {
+func (c *container) createArgs(cmds []string) []string {
 	args := []string{}
 	// AddHost
 	for _, addHost := range c.RunParams().AddHost() {
@@ -960,7 +960,7 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	if len(c.RunParams().IPC()) > 0 {
 		ipcContainer := containerReference(c.RunParams().IPC())
 		if len(ipcContainer) > 0 {
-			if !includes(excluded, ipcContainer) {
+			if includes(allowed, ipcContainer) {
 				args = append(args, "--ipc", "container:"+cfg.Container(ipcContainer).ActualName())
 			}
 		} else {
@@ -987,7 +987,7 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	for _, link := range c.RunParams().Link() {
 		linkParts := strings.Split(link, ":")
 		linkName := linkParts[0]
-		if !includes(excluded, linkName) {
+		if includes(allowed, linkName) {
 			linkParts[0] = cfg.Container(linkName).ActualName()
 			args = append(args, "--link", strings.Join(linkParts, ":"))
 		}
@@ -1117,7 +1117,7 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 	for _, volumesFrom := range c.RunParams().VolumesFrom() {
 		volumesFromParts := strings.Split(volumesFrom, ":")
 		volumesFromName := volumesFromParts[0]
-		if !includes(excluded, volumesFromName) {
+		if includes(allowed, volumesFromName) {
 			volumesFromParts[0] = cfg.Container(volumesFromName).ActualName()
 			args = append(args, "--volumes-from", strings.Join(volumesFromParts, ":"))
 		}
@@ -1140,7 +1140,7 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 }
 
 // Start container
-func (c *container) Start(excluded []string) {
+func (c *container) Start() {
 	if !c.Unique() && c.Exists() {
 		if !c.running() {
 			executeHook(c.Hooks().PreStart(), c.ActualName())
@@ -1161,7 +1161,7 @@ func (c *container) Start(excluded []string) {
 			wg.Wait()
 		}
 	} else {
-		c.Run([]string{}, excluded)
+		c.Run([]string{})
 	}
 }
 
@@ -1209,7 +1209,7 @@ func (c *container) Unpause() {
 func (c *container) Exec(cmds []string) {
 	runningInstances := c.InstancesOfStatus("running")
 	if len(runningInstances) == 0 {
-		c.Start([]string{})
+		c.Start()
 		runningInstances = []string{c.ActualName()}
 	}
 	for _, name := range runningInstances {
