@@ -196,6 +196,47 @@ func TestUnmarshalInvalidYAML(t *testing.T) {
 	assert.Panics(t, func() {
 		unmarshal(yaml, ".yml")
 	})
+
+	yaml = []byte(
+		`containers:
+  apache:
+    image: michaelsauter/apache
+    run:
+      env:
+        - shouldbe: astring
+`)
+	assert.Panics(t, func() {
+		config := unmarshal(yaml, ".yml")
+		config.RawContainers["apache"].RunParams().Env()
+	})
+
+	yaml = []byte(
+		`containers:
+  apache:
+    image: michaelsauter/apache
+    run:
+      env:
+        foo:
+          - shouldbeastring
+`)
+	assert.Panics(t, func() {
+		config := unmarshal(yaml, ".yml")
+		config.RawContainers["apache"].RunParams().Env()
+	})
+
+	yaml = []byte(
+		`containers:
+  apache:
+    image: michaelsauter/apache
+    run:
+      env:
+        foo:
+          should: beastring
+`)
+	assert.Panics(t, func() {
+		config := unmarshal(yaml, ".yml")
+		config.RawContainers["apache"].RunParams().Env()
+	})
 }
 
 func TestUnmarshalEmptyNetworkOrVolume(t *testing.T) {

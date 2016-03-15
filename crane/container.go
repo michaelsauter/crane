@@ -1434,19 +1434,31 @@ func containerReference(reference string) (name string) {
 // Transform an unmarshalled payload (YAML or JSON) of type slice or map to an slice of env-expanded "K=V" strings
 func sliceOrMap2ExpandedSlice(value interface{}) []string {
 	var result []string
+	expandedStringOrPanic := func(v interface{}) string {
+		switch concreteValue := v.(type) {
+		case []interface{}: // YAML or JSON
+			panic(StatusError{fmt.Errorf("unknown type: %v", v), 65})
+		case map[interface{}]interface{}: // YAML
+			panic(StatusError{fmt.Errorf("unknown type: %v", v), 65})
+		case map[string]interface{}: // JSON
+			panic(StatusError{fmt.Errorf("unknown type: %v", v), 65})
+		default:
+			return expandEnv(fmt.Sprintf("%v", concreteValue))
+		}
+	}
 	if value != nil {
 		switch concreteValue := value.(type) {
 		case []interface{}: // YAML or JSON
 			for _, v := range concreteValue {
-				result = append(result, expandEnv(fmt.Sprintf("%v", v)))
+				result = append(result, expandedStringOrPanic(v))
 			}
 		case map[interface{}]interface{}: // YAML
 			for k, v := range concreteValue {
-				result = append(result, expandEnv(fmt.Sprintf("%v", k))+"="+expandEnv(fmt.Sprintf("%v", v)))
+				result = append(result, expandedStringOrPanic(k)+"="+expandedStringOrPanic(v))
 			}
 		case map[string]interface{}: // JSON
 			for k, v := range concreteValue {
-				result = append(result, expandEnv(k)+"="+expandEnv(fmt.Sprintf("%v", v)))
+				result = append(result, expandEnv(k)+"="+expandedStringOrPanic(v))
 			}
 		default:
 			panic(StatusError{fmt.Errorf("unknown type: %v", value), 65})
