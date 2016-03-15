@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Better handling of incorrect syntax for `env` and `label` configuration values
+
+  _@bjaglin_
+
+
 * Fallback on flag values on `run` block when values are not defined in `start`
   or `exec` block.
 
