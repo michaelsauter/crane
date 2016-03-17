@@ -6,12 +6,6 @@
 
   _@bjaglin_
 
-
-* Fallback on flag values on `run` block when values are not defined in `start`
-  or `exec` block.
-
-  _@bjaglin_
-
 * `docker run/exec/start` flags catch-up in Crane configuration.
 
   _@bjaglin_
