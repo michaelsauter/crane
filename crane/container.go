@@ -30,7 +30,7 @@ type Container interface {
 	Unpause()
 	Exec(cmds []string)
 	Rm(force bool)
-	Logs(follow bool, since string, tail string) (sources []logSource)
+	Logs(follow bool, since string, tail string) (sources []LogSource)
 	Push()
 	SetCommandsOutput(stdout, stderr io.Writer)
 	CommandsOut() io.Writer
@@ -176,7 +176,7 @@ type OptBool struct {
 	Value   bool
 }
 
-type logSource struct {
+type LogSource struct {
 	Stdout io.Reader
 	Stderr io.Reader
 	Name   string
@@ -1274,7 +1274,7 @@ func (c *container) Rm(force bool) {
 }
 
 // Dump container logs
-func (c *container) Logs(follow bool, since string, tail string) (sources []logSource) {
+func (c *container) Logs(follow bool, since string, tail string) (sources []LogSource) {
 	for _, name := range c.InstancesOfStatus("existing") {
 		args := []string{"logs"}
 		if follow {
@@ -1291,7 +1291,7 @@ func (c *container) Logs(follow bool, since string, tail string) (sources []logS
 		args = append(args, "-t")
 		args = append(args, name)
 		_, stdout, stderr := executeCommandBackground("docker", args)
-		sources = append(sources, logSource{
+		sources = append(sources, LogSource{
 			Stdout: stdout,
 			Stderr: stderr,
 			Name:   name,
