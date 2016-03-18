@@ -8,7 +8,7 @@ import (
 	"github.com/alecthomas/kingpin"
 )
 
-var cfg Config
+var cfg ConfigCommander
 var excluded []string
 
 var (

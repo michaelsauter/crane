@@ -1,6 +1,6 @@
 package crane
 
-type Hooks interface {
+type HooksCommander interface {
 	PreBuild() string
 	PostBuild() string
 	PreStart() string
@@ -9,7 +9,7 @@ type Hooks interface {
 	PostStop() string
 }
 
-type hooks struct {
+type Hooks struct {
 	RawPreBuild  string `json:"pre-build" yaml:"pre-build"`
 	RawPostBuild string `json:"post-build" yaml:"post-build"`
 	RawPreStart  string `json:"pre-start" yaml:"pre-start"`
@@ -21,27 +21,27 @@ type hooks struct {
 	// using `go generate`
 }
 
-func (h *hooks) PreBuild() string {
+func (h *Hooks) PreBuild() string {
 	return expandEnv(h.RawPreBuild)
 }
 
-func (h *hooks) PostBuild() string {
+func (h *Hooks) PostBuild() string {
 	return expandEnv(h.RawPostBuild)
 }
 
-func (h *hooks) PreStart() string {
+func (h *Hooks) PreStart() string {
 	return expandEnv(h.RawPreStart)
 }
 
-func (h *hooks) PostStart() string {
+func (h *Hooks) PostStart() string {
 	return expandEnv(h.RawPostStart)
 }
 
-func (h *hooks) PreStop() string {
+func (h *Hooks) PreStop() string {
 	return expandEnv(h.RawPreStop)
 }
 
-func (h *hooks) PostStop() string {
+func (h *Hooks) PostStop() string {
 	return expandEnv(h.RawPostStop)
 }
 
@@ -49,7 +49,7 @@ func (h *hooks) PostStop() string {
 // hooks will be overriden if the corresponding hooks from the
 // source struct are defined. Returns true if some content was
 // overiden in the process.
-func (h *hooks) CopyFrom(source hooks) (overriden bool) {
+func (h *Hooks) CopyFrom(source Hooks) (overriden bool) {
 	overrideIfFromNotEmpty := func(from string, to *string) {
 		if from != "" {
 			overriden = overriden || *to != ""

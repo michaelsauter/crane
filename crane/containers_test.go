@@ -7,7 +7,7 @@ import (
 
 func TestReversed(t *testing.T) {
 	var containers Containers
-	containers = []Container{&container{RawName: "a"}, &container{RawName: "b"}}
+	containers = []ContainerCommander{&Container{RawName: "a"}, &Container{RawName: "b"}}
 	reversed := containers.Reversed()
 	assert.Len(t, reversed, 2)
 	assert.Equal(t, "b", reversed[0].Name())
@@ -16,17 +16,17 @@ func TestReversed(t *testing.T) {
 
 func TestProvisioningDuplicates(t *testing.T) {
 	var containers Containers
-	containers = []Container{
-		&container{RawName: "A", RawBuild: BuildParameters{RawContext: "dockerfile1"}, RawImage: "image1"},
-		&container{RawName: "B", RawBuild: BuildParameters{RawContext: "dockerfile1"}, RawImage: "image1"}, //dup of A
-		&container{RawName: "C", RawBuild: BuildParameters{RawContext: "dockerfile1"}, RawImage: "image2"},
-		&container{RawName: "D", RawBuild: BuildParameters{RawContext: "dockerfile1"}, RawImage: "image2"}, //dup of C
-		&container{RawName: "E", RawBuild: BuildParameters{RawContext: "dockerfile2"}, RawImage: "image1"},
-		&container{RawName: "F", RawBuild: BuildParameters{RawContext: "dockerfile2"}, RawImage: "image1"}, //dup of E
-		&container{RawName: "G", RawBuild: BuildParameters{RawContext: "dockerfile1"}},
-		&container{RawName: "H", RawBuild: BuildParameters{RawContext: "dockerfile1"}}, //dup of G
-		&container{RawName: "I", RawImage: "image1"},
-		&container{RawName: "J", RawImage: "image1"}, //dup of I
+	containers = []ContainerCommander{
+		&Container{RawName: "A", RawBuild: BuildParameters{RawContext: "dockerfile1"}, RawImage: "image1"},
+		&Container{RawName: "B", RawBuild: BuildParameters{RawContext: "dockerfile1"}, RawImage: "image1"}, //dup of A
+		&Container{RawName: "C", RawBuild: BuildParameters{RawContext: "dockerfile1"}, RawImage: "image2"},
+		&Container{RawName: "D", RawBuild: BuildParameters{RawContext: "dockerfile1"}, RawImage: "image2"}, //dup of C
+		&Container{RawName: "E", RawBuild: BuildParameters{RawContext: "dockerfile2"}, RawImage: "image1"},
+		&Container{RawName: "F", RawBuild: BuildParameters{RawContext: "dockerfile2"}, RawImage: "image1"}, //dup of E
+		&Container{RawName: "G", RawBuild: BuildParameters{RawContext: "dockerfile1"}},
+		&Container{RawName: "H", RawBuild: BuildParameters{RawContext: "dockerfile1"}}, //dup of G
+		&Container{RawName: "I", RawImage: "image1"},
+		&Container{RawName: "J", RawImage: "image1"}, //dup of I
 	}
 	deduplicated := containers.stripProvisioningDuplicates()
 	assert.Len(t, deduplicated, 5)

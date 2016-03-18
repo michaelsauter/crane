@@ -7,11 +7,11 @@ import (
 
 func TestNewTarget(t *testing.T) {
 	containerMap := NewStubbedContainerMap(true,
-		&container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},
-		&container{RawName: "b", RawRun: RunParameters{RawLink: []string{"c:c"}}},
-		&container{RawName: "c"},
+		&Container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},
+		&Container{RawName: "b", RawRun: RunParameters{RawLink: []string{"c:c"}}},
+		&Container{RawName: "c"},
 	)
-	cfg = &config{containerMap: containerMap}
+	cfg = &Config{containerMap: containerMap}
 	dependencyMap := cfg.DependencyMap([]string{})
 
 	examples := []struct {
@@ -84,11 +84,11 @@ func TestNewTarget(t *testing.T) {
 
 func TestNewTargetNonExisting(t *testing.T) {
 	containerMap := NewStubbedContainerMap(false,
-		&container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},
-		&container{RawName: "b"},
+		&Container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},
+		&Container{RawName: "b"},
 	)
 
-	cfg = &config{containerMap: containerMap}
+	cfg = &Config{containerMap: containerMap}
 	dependencyMap := cfg.DependencyMap([]string{})
 
 	examples := []struct {
@@ -121,14 +121,14 @@ func TestNewTargetNonExisting(t *testing.T) {
 
 func TestDeduplicationAll(t *testing.T) {
 	containerMap := NewStubbedContainerMap(true,
-		&container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},
-		&container{RawName: "b", RawRun: RunParameters{RawLink: []string{"c:c"}}},
-		&container{RawName: "c"},
+		&Container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},
+		&Container{RawName: "b", RawRun: RunParameters{RawLink: []string{"c:c"}}},
+		&Container{RawName: "c"},
 	)
 	groups := map[string][]string{
 		"ab": []string{"a", "b", "a"},
 	}
-	cfg = &config{containerMap: containerMap, groups: groups}
+	cfg = &Config{containerMap: containerMap, groups: groups}
 	dependencyMap := cfg.DependencyMap([]string{})
 
 	target, _ := NewTarget(dependencyMap, "ab+dependencies+affected", []string{})

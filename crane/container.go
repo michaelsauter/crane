@@ -14,7 +14,7 @@ import (
 	"sync"
 )
 
-type Container interface {
+type ContainerCommander interface {
 	ContainerInfo
 	Exists() bool
 	InstancesOfStatus(status string) []string
@@ -50,10 +50,10 @@ type ContainerInfo interface {
 	RmParams() RmParameters
 	StartParams() StartParameters
 	ExecParams() ExecParameters
-	Hooks() Hooks
+	Hooks() HooksCommander
 }
 
-type container struct {
+type Container struct {
 	id          string
 	RawName     string
 	RawUnique   bool            `json:"unique" yaml:"unique"`
@@ -64,7 +64,7 @@ type container struct {
 	RawRm       RmParameters    `json:"rm" yaml:"rm"`
 	RawStart    StartParameters `json:"start" yaml:"start"`
 	RawExec     ExecParameters  `json:"exec" yaml:"exec"`
-	hooks       hooks
+	hooks       Hooks
 	stdout      io.Writer
 	stderr      io.Writer
 }
@@ -222,27 +222,27 @@ func (o OptBool) Falsy() bool {
 	return o.Defined && !o.Value
 }
 
-func (c *container) BuildParams() BuildParameters {
+func (c *Container) BuildParams() BuildParameters {
 	return c.RawBuild
 }
 
-func (c *container) RunParams() RunParameters {
+func (c *Container) RunParams() RunParameters {
 	return c.RawRun
 }
 
-func (c *container) RmParams() RmParameters {
+func (c *Container) RmParams() RmParameters {
 	return c.RawRm
 }
 
-func (c *container) StartParams() StartParameters {
+func (c *Container) StartParams() StartParameters {
 	return c.RawStart
 }
 
-func (c *container) ExecParams() ExecParameters {
+func (c *Container) ExecParams() ExecParameters {
 	return c.RawExec
 }
 
-func (c *container) Dependencies() *Dependencies {
+func (c *Container) Dependencies() *Dependencies {
 	dependencies := &Dependencies{}
 	for _, required := range c.Requires() {
 		if !includes(excluded, required) && !dependencies.includes(required) {
@@ -282,18 +282,18 @@ func (c *container) Dependencies() *Dependencies {
 	return dependencies
 }
 
-func (c *container) Name() string {
+func (c *Container) Name() string {
 	return expandEnv(c.RawName)
 }
 
-func (c *container) ActualName() string {
+func (c *Container) ActualName() string {
 	if c.Unique() {
 		return c.PrefixedName() + "-unique-" + cfg.UniqueID()
 	}
 	return c.PrefixedName()
 }
 
-func (c *container) Image() string {
+func (c *Container) Image() string {
 	image := expandEnv(c.RawImage)
 
 	// Return if no global tag given or image is a digest
@@ -309,11 +309,11 @@ func (c *container) Image() string {
 	return image + ":" + cfg.Tag()
 }
 
-func (c *container) Unique() bool {
+func (c *Container) Unique() bool {
 	return c.RawUnique
 }
 
-func (c *container) Requires() []string {
+func (c *Container) Requires() []string {
 	var requires []string
 	for _, rawRequired := range c.RawRequires {
 		requires = append(requires, expandEnv(rawRequired))
@@ -735,7 +735,7 @@ func (e ExecParameters) User() string {
 	return expandEnv(e.RawUser)
 }
 
-func (c *container) ID() string {
+func (c *Container) ID() string {
 	if len(c.id) == 0 && !c.Unique() {
 		// `docker inspect` works for both image and containers, make sure this is a
 		// container payload we get back, otherwise we might end up getting the ID
@@ -745,11 +745,11 @@ func (c *container) ID() string {
 	return c.id
 }
 
-func (c *container) Exists() bool {
+func (c *Container) Exists() bool {
 	return c.ID() != ""
 }
 
-func (c *container) Status() [][]string {
+func (c *Container) Status() [][]string {
 	rows := [][]string{}
 	existingInstances := c.InstancesOfStatus("existing")
 	if len(existingInstances) == 0 {
@@ -772,7 +772,7 @@ func (c *container) Status() [][]string {
 	return rows
 }
 
-func (c *container) Provision(nocache bool) {
+func (c *Container) Provision(nocache bool) {
 	if len(c.BuildParams().Context()) > 0 {
 		c.buildImage(nocache)
 	} else {
@@ -781,7 +781,7 @@ func (c *container) Provision(nocache bool) {
 }
 
 // Create container
-func (c *container) Create(cmds []string, excluded []string) {
+func (c *Container) Create(cmds []string, excluded []string) {
 	if !c.Unique() {
 		c.Rm(true)
 	}
@@ -792,7 +792,7 @@ func (c *container) Create(cmds []string, excluded []string) {
 }
 
 // Run container, or start it if already existing
-func (c *container) Run(cmds []string, excluded []string) {
+func (c *Container) Run(cmds []string, excluded []string) {
 	if !c.Unique() {
 		c.Rm(true)
 	}
@@ -810,7 +810,7 @@ func (c *container) Run(cmds []string, excluded []string) {
 	wg.Wait()
 }
 
-func (c *container) executePostStartHook() *sync.WaitGroup {
+func (c *Container) executePostStartHook() *sync.WaitGroup {
 
 	var wg sync.WaitGroup
 
@@ -837,7 +837,7 @@ func (c *container) executePostStartHook() *sync.WaitGroup {
 }
 
 // Returns all the flags to be passed to `docker create`
-func (c *container) createArgs(cmds []string, excluded []string) []string {
+func (c *Container) createArgs(cmds []string, excluded []string) []string {
 	args := []string{}
 	// AddHost
 	for _, addHost := range c.RunParams().AddHost() {
@@ -1140,7 +1140,7 @@ func (c *container) createArgs(cmds []string, excluded []string) []string {
 }
 
 // Start container
-func (c *container) Start(excluded []string) {
+func (c *Container) Start(excluded []string) {
 	if !c.Unique() && c.Exists() {
 		if !c.running() {
 			executeHook(c.Hooks().PreStart(), c.ActualName())
@@ -1166,7 +1166,7 @@ func (c *container) Start(excluded []string) {
 }
 
 // Kill container
-func (c *container) Kill() {
+func (c *Container) Kill() {
 	for _, name := range c.InstancesOfStatus("running") {
 		executeHook(c.Hooks().PreStop(), name)
 		fmt.Fprintf(c.CommandsOut(), "Killing container %s ...\n", name)
@@ -1177,7 +1177,7 @@ func (c *container) Kill() {
 }
 
 // Stop container
-func (c *container) Stop() {
+func (c *Container) Stop() {
 	for _, name := range c.InstancesOfStatus("running") {
 		executeHook(c.Hooks().PreStop(), name)
 		fmt.Fprintf(c.CommandsOut(), "Stopping container %s ...\n", name)
@@ -1188,7 +1188,7 @@ func (c *container) Stop() {
 }
 
 // Pause container
-func (c *container) Pause() {
+func (c *Container) Pause() {
 	for _, name := range c.InstancesOfStatus("running") {
 		fmt.Fprintf(c.CommandsOut(), "Pausing container %s ...\n", name)
 		args := []string{"pause", name}
@@ -1197,7 +1197,7 @@ func (c *container) Pause() {
 }
 
 // Unpause container
-func (c *container) Unpause() {
+func (c *Container) Unpause() {
 	for _, name := range c.InstancesOfStatus("paused") {
 		fmt.Fprintf(c.CommandsOut(), "Unpausing container %s ...\n", name)
 		args := []string{"unpause", name}
@@ -1206,7 +1206,7 @@ func (c *container) Unpause() {
 }
 
 // Exec command in container
-func (c *container) Exec(cmds []string) {
+func (c *Container) Exec(cmds []string) {
 	runningInstances := c.InstancesOfStatus("running")
 	if len(runningInstances) == 0 {
 		c.Start([]string{})
@@ -1239,7 +1239,7 @@ func (c *container) Exec(cmds []string) {
 }
 
 // Remove container
-func (c *container) Rm(force bool) {
+func (c *Container) Rm(force bool) {
 	runningInstances := c.InstancesOfStatus("running")
 	for _, name := range c.InstancesOfStatus("existing") {
 		containerIsRunning := includes(runningInstances, name)
@@ -1268,7 +1268,7 @@ func (c *container) Rm(force bool) {
 }
 
 // Dump container logs
-func (c *container) Logs(follow bool, since string, tail string) (sources []LogSource) {
+func (c *Container) Logs(follow bool, since string, tail string) (sources []LogSource) {
 	for _, name := range c.InstancesOfStatus("existing") {
 		args := []string{"logs"}
 		if follow {
@@ -1295,28 +1295,28 @@ func (c *container) Logs(follow bool, since string, tail string) (sources []LogS
 }
 
 // Push container
-func (c *container) Push() {
+func (c *Container) Push() {
 	fmt.Fprintf(c.CommandsOut(), "Pushing image %s ...\n", c.Image())
 	args := []string{"push", c.Image()}
 	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 }
 
-func (c *container) Hooks() Hooks {
+func (c *Container) Hooks() HooksCommander {
 	return &c.hooks
 }
 
 // Pull image for container
-func (c *container) PullImage() {
+func (c *Container) PullImage() {
 	fmt.Fprintf(c.CommandsOut(), "Pulling image %s ...\n", c.Image())
 	args := []string{"pull", c.Image()}
 	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 }
 
-func (c *container) PrefixedName() string {
+func (c *Container) PrefixedName() string {
 	return cfg.Prefix() + c.Name()
 }
 
-func (c *container) InstancesOfStatus(status string) []string {
+func (c *Container) InstancesOfStatus(status string) []string {
 	if c.Unique() {
 		args := []string{
 			"ps",
@@ -1349,33 +1349,33 @@ func (c *container) InstancesOfStatus(status string) []string {
 	return []string{}
 }
 
-func (c *container) SetCommandsOutput(stdout, stderr io.Writer) {
+func (c *Container) SetCommandsOutput(stdout, stderr io.Writer) {
 	c.stdout = stdout
 	c.stderr = stderr
 }
 
-func (c *container) CommandsOut() io.Writer {
+func (c *Container) CommandsOut() io.Writer {
 	if c.stdout == nil {
 		return os.Stdout
 	}
 	return c.stdout
 }
 
-func (c *container) CommandsErr() io.Writer {
+func (c *Container) CommandsErr() io.Writer {
 	if c.stderr == nil {
 		return os.Stderr
 	}
 	return c.stderr
 }
 
-func (c *container) running() bool {
+func (c *Container) running() bool {
 	if !c.Exists() {
 		return false
 	}
 	return inspectBool(c.ID(), "{{.State.Running}}")
 }
 
-func (c *container) paused() bool {
+func (c *Container) paused() bool {
 	if !c.Exists() {
 		return false
 	}
@@ -1383,7 +1383,7 @@ func (c *container) paused() bool {
 }
 
 // Build image for container
-func (c *container) buildImage(nocache bool) {
+func (c *Container) buildImage(nocache bool) {
 	executeHook(c.Hooks().PreBuild(), c.ActualName())
 	fmt.Fprintf(c.CommandsOut(), "Building image %s ...\n", c.Image())
 	args := []string{"build"}
