@@ -1151,10 +1151,8 @@ func (c *container) Start(excluded []string) {
 			}
 			if len(c.StartParams().DetachKeys()) > 0 {
 				args = append(args, "--detach-keys", c.StartParams().DetachKeys())
-			} else if len(c.RunParams().DetachKeys()) > 0 {
-				args = append(args, "--detach-keys", c.RunParams().DetachKeys())
 			}
-			if c.StartParams().Interactive || c.RunParams().Interactive {
+			if c.StartParams().Interactive {
 				args = append(args, "--interactive")
 			}
 			args = append(args, c.ActualName())
@@ -1216,27 +1214,23 @@ func (c *container) Exec(cmds []string) {
 	}
 	for _, name := range runningInstances {
 		args := []string{"exec"}
-		if c.ExecParams().Detach || c.RunParams().Detach {
+		if c.ExecParams().Detach {
 			args = append(args, "--detach")
 		}
 		if len(c.ExecParams().DetachKeys()) > 0 {
 			args = append(args, "--detach-keys", c.ExecParams().DetachKeys())
-		} else if len(c.RunParams().DetachKeys()) > 0 {
-			args = append(args, "--detach-keys", c.RunParams().DetachKeys())
 		}
-		if c.ExecParams().Privileged || c.RunParams().Privileged {
+		if c.ExecParams().Privileged {
 			args = append(args, "--privileged")
 		}
-		if c.ExecParams().Interactive || c.RunParams().Interactive {
+		if c.ExecParams().Interactive {
 			args = append(args, "--interactive")
 		}
-		if c.ExecParams().Tty || c.RunParams().Tty {
+		if c.ExecParams().Tty {
 			args = append(args, "--tty")
 		}
 		if len(c.ExecParams().User()) > 0 {
 			args = append(args, "--user", c.ExecParams().User())
-		} else if len(c.RunParams().User()) > 0 {
-			args = append(args, "--user", c.RunParams().User())
 		}
 		args = append(args, name)
 		args = append(args, cmds...)
