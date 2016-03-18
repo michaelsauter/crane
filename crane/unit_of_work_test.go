@@ -75,80 +75,80 @@ func TestNewUnitOfWork(t *testing.T) {
 
 func TestRequiredNetworks(t *testing.T) {
 	var uow *UnitOfWork
-	var networkMap map[string]Network
+	var networkMap map[string]NetworkCommander
 
 	// no networks
-	cfg = &config{networkMap: networkMap}
+	cfg = &Config{networkMap: networkMap}
 	uow = &UnitOfWork{}
 	assert.Equal(t, []string{}, uow.RequiredNetworks())
 
 	// some networks
 	containerMap := NewStubbedContainerMap(true,
-		&container{
+		&Container{
 			RawName: "a",
 			RawRun: RunParameters{
 				RawNet: "foo",
 			},
 		},
-		&container{
+		&Container{
 			RawName: "b",
 			RawRun: RunParameters{
 				RawNet: "bar",
 			},
 		},
-		&container{
+		&Container{
 			RawName: "c",
 			RawRun: RunParameters{
 				RawNet: "bar",
 			},
 		},
 	)
-	networkMap = map[string]Network{
-		"foo": &network{RawName: "foo"},
-		"bar": &network{RawName: "bar"},
-		"baz": &network{RawName: "baz"},
+	networkMap = map[string]NetworkCommander{
+		"foo": &Network{RawName: "foo"},
+		"bar": &Network{RawName: "bar"},
+		"baz": &Network{RawName: "baz"},
 	}
-	cfg = &config{containerMap: containerMap, networkMap: networkMap}
+	cfg = &Config{containerMap: containerMap, networkMap: networkMap}
 	uow = &UnitOfWork{order: []string{"a", "b", "c"}}
 	assert.Equal(t, []string{"foo", "bar"}, uow.RequiredNetworks())
 }
 
 func TestRequiredVolumes(t *testing.T) {
 	var uow *UnitOfWork
-	var volumeMap map[string]Volume
+	var volumeMap map[string]VolumeCommander
 
 	// no volumes
-	cfg = &config{volumeMap: volumeMap}
+	cfg = &Config{volumeMap: volumeMap}
 	uow = &UnitOfWork{}
 	assert.Equal(t, []string{}, uow.RequiredVolumes())
 
 	// some volumes
 	containerMap := NewStubbedContainerMap(true,
-		&container{
+		&Container{
 			RawName: "a",
 			RawRun: RunParameters{
 				RawVolume: []string{"foo:/foo"},
 			},
 		},
-		&container{
+		&Container{
 			RawName: "b",
 			RawRun: RunParameters{
 				RawVolume: []string{"bar:/bar"},
 			},
 		},
-		&container{
+		&Container{
 			RawName: "c",
 			RawRun: RunParameters{
 				RawVolume: []string{"bar:/bar"},
 			},
 		},
 	)
-	volumeMap = map[string]Volume{
-		"foo": &volume{RawName: "foo"},
-		"bar": &volume{RawName: "bar"},
-		"baz": &volume{RawName: "baz"},
+	volumeMap = map[string]VolumeCommander{
+		"foo": &Volume{RawName: "foo"},
+		"bar": &Volume{RawName: "bar"},
+		"baz": &Volume{RawName: "baz"},
 	}
-	cfg = &config{containerMap: containerMap, volumeMap: volumeMap}
+	cfg = &Config{containerMap: containerMap, volumeMap: volumeMap}
 	uow = &UnitOfWork{order: []string{"a", "b", "c"}}
 	assert.Equal(t, []string{"foo", "bar"}, uow.RequiredVolumes())
 }

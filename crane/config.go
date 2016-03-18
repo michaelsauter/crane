@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-type Config interface {
+type ConfigCommander interface {
 	DependencyMap(excluded []string) map[string]*Dependencies
 	ContainersForReference(reference string) (result []string)
 	Path() string
@@ -25,19 +25,19 @@ type Config interface {
 	Tag() string
 	NetworkNames() []string
 	VolumeNames() []string
-	Network(name string) Network
-	Volume(name string) Volume
+	Network(name string) NetworkCommander
+	Volume(name string) VolumeCommander
 	ContainerMap() ContainerMap
-	Container(name string) Container
+	Container(name string) ContainerCommander
 	ContainerInfo(name string) ContainerInfo
 }
 
-type config struct {
-	RawContainers map[string]*container `json:"containers" yaml:"containers"`
+type Config struct {
+	RawContainers map[string]*Container `json:"containers" yaml:"containers"`
 	RawGroups     map[string][]string   `json:"groups" yaml:"groups"`
-	RawHooks      map[string]hooks      `json:"hooks" yaml:"hooks"`
-	RawNetworks   map[string]*network   `json:"networks" yaml:"networks"`
-	RawVolumes    map[string]*volume    `json:"volumes" yaml:"volumes"`
+	RawHooks      map[string]Hooks      `json:"hooks" yaml:"hooks"`
+	RawNetworks   map[string]*Network   `json:"networks" yaml:"networks"`
+	RawVolumes    map[string]*Volume    `json:"volumes" yaml:"volumes"`
 	containerMap  ContainerMap
 	networkMap    NetworkMap
 	volumeMap     VolumeMap
@@ -50,11 +50,11 @@ type config struct {
 
 // ContainerMap maps the container name
 // to its configuration
-type ContainerMap map[string]Container
+type ContainerMap map[string]ContainerCommander
 
-type NetworkMap map[string]Network
+type NetworkMap map[string]NetworkCommander
 
-type VolumeMap map[string]Volume
+type VolumeMap map[string]VolumeCommander
 
 // configFilenames returns a slice of
 // files to read the config from.
@@ -101,7 +101,7 @@ func findConfig(location string) string {
 
 // readConfig will read the config file
 // and return the created config.
-func readConfig(filename string) *config {
+func readConfig(filename string) *Config {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		panic(StatusError{err, 74})
@@ -137,8 +137,8 @@ func displaySyntaxError(data []byte, syntaxError error) (err error) {
 
 // unmarshal converts either JSON
 // or YAML into a config object.
-func unmarshal(data []byte, ext string) *config {
-	var config *config
+func unmarshal(data []byte, ext string) *Config {
+	var config *Config
 	var err error
 	if ext == ".json" {
 		err = json.Unmarshal(data, &config)
@@ -158,8 +158,8 @@ func unmarshal(data []byte, ext string) *config {
 // location.
 // Containers will be ordered so that they can be
 // brought up and down with Docker.
-func NewConfig(location string, prefix string, tag string) Config {
-	var config *config
+func NewConfig(location string, prefix string, tag string) ConfigCommander {
+	var config *Config
 	configFile := findConfig(location)
 	if isVerbose() {
 		printInfof("Using configuration file `%s`\n", configFile)
@@ -176,35 +176,35 @@ func NewConfig(location string, prefix string, tag string) Config {
 }
 
 // Return path of config file
-func (c *config) Path() string {
+func (c *Config) Path() string {
 	return c.path
 }
 
-func (c *config) UniqueID() string {
+func (c *Config) UniqueID() string {
 	return c.uniqueID
 }
 
-func (c *config) Prefix() string {
+func (c *Config) Prefix() string {
 	return c.prefix
 }
 
-func (c *config) Tag() string {
+func (c *Config) Tag() string {
 	return c.tag
 }
 
-func (c *config) ContainerMap() ContainerMap {
+func (c *Config) ContainerMap() ContainerMap {
 	return c.containerMap
 }
 
-func (c *config) Container(name string) Container {
+func (c *Config) Container(name string) ContainerCommander {
 	return c.containerMap[name]
 }
 
-func (c *config) ContainerInfo(name string) ContainerInfo {
+func (c *Config) ContainerInfo(name string) ContainerInfo {
 	return c.Container(name)
 }
 
-func (c *config) NetworkNames() []string {
+func (c *Config) NetworkNames() []string {
 	networks := []string{}
 	for name, _ := range c.networkMap {
 		networks = append(networks, name)
@@ -213,7 +213,7 @@ func (c *config) NetworkNames() []string {
 	return networks
 }
 
-func (c *config) VolumeNames() []string {
+func (c *Config) VolumeNames() []string {
 	volumes := []string{}
 	for name, _ := range c.volumeMap {
 		volumes = append(volumes, name)
@@ -222,24 +222,24 @@ func (c *config) VolumeNames() []string {
 	return volumes
 }
 
-func (c *config) Network(name string) Network {
+func (c *Config) Network(name string) NetworkCommander {
 	return c.networkMap[name]
 }
 
-func (c *config) Volume(name string) Volume {
+func (c *Config) Volume(name string) VolumeCommander {
 	return c.volumeMap[name]
 }
 
 // Load configuration into the internal structs from the raw, parsed ones
-func (c *config) initialize() {
+func (c *Config) initialize() {
 	// Local container map to query by expanded name
-	containerMap := make(map[string]*container)
+	containerMap := make(map[string]*Container)
 	for rawName, container := range c.RawContainers {
 		container.RawName = rawName
 		containerMap[container.Name()] = container
 	}
 	// Local hooks map to query by expanded name
-	hooksMap := make(map[string]hooks)
+	hooksMap := make(map[string]Hooks)
 	for hooksRawName, hooks := range c.RawHooks {
 		hooksMap[expandEnv(hooksRawName)] = hooks
 	}
@@ -260,7 +260,7 @@ func (c *config) initialize() {
 		}
 	}
 	// Container map
-	c.containerMap = make(map[string]Container)
+	c.containerMap = make(map[string]ContainerCommander)
 	for name, container := range containerMap {
 		if hooks, ok := hooksMap[name]; ok {
 			// attach container-defined hooks, overriding potential group-inherited hooks
@@ -273,29 +273,29 @@ func (c *config) initialize() {
 	c.setVolumeMap()
 }
 
-func (c *config) setNetworkMap() {
-	c.networkMap = make(map[string]Network)
+func (c *Config) setNetworkMap() {
+	c.networkMap = make(map[string]NetworkCommander)
 	for rawName, net := range c.RawNetworks {
 		if net == nil {
-			net = &network{}
+			net = &Network{}
 		}
 		net.RawName = rawName
 		c.networkMap[net.Name()] = net
 	}
 }
 
-func (c *config) setVolumeMap() {
-	c.volumeMap = make(map[string]Volume)
+func (c *Config) setVolumeMap() {
+	c.volumeMap = make(map[string]VolumeCommander)
 	for rawName, vol := range c.RawVolumes {
 		if vol == nil {
-			vol = &volume{}
+			vol = &Volume{}
 		}
 		vol.RawName = rawName
 		c.volumeMap[vol.Name()] = vol
 	}
 }
 
-func (c *config) validate() {
+func (c *Config) validate() {
 	for name, container := range c.RawContainers {
 		if len(container.RawImage) == 0 {
 			panic(StatusError{fmt.Errorf("No image specified for `%s`", name), 64})
@@ -304,7 +304,7 @@ func (c *config) validate() {
 }
 
 // DependencyMap returns a map of containers to their dependencies.
-func (c *config) DependencyMap(excluded []string) map[string]*Dependencies {
+func (c *Config) DependencyMap(excluded []string) map[string]*Dependencies {
 	dependencyMap := make(map[string]*Dependencies)
 	for _, container := range c.containerMap {
 		if !includes(excluded, container.Name()) {
@@ -316,7 +316,7 @@ func (c *config) DependencyMap(excluded []string) map[string]*Dependencies {
 
 // ContainersForReference receives a reference and determines which
 // containers of the map that resolves to.
-func (c *config) ContainersForReference(reference string) (result []string) {
+func (c *Config) ContainersForReference(reference string) (result []string) {
 	containers := []string{}
 	if len(reference) == 0 {
 		// reference not given

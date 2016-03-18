@@ -6,13 +6,13 @@ import (
 )
 
 func TestCopyFromBehavior(t *testing.T) {
-	target := hooks{
+	target := Hooks{
 		RawPreBuild:  "from target",
 		RawPostBuild: "from target",
 		RawPreStart:  "from target",
 		RawPostStart: "from target",
 	}
-	source := hooks{
+	source := Hooks{
 		RawPreBuild: "from source",
 		RawPreStart: "from source",
 	}
@@ -24,17 +24,17 @@ func TestCopyFromBehavior(t *testing.T) {
 }
 
 func TestCopyFromReturnValue(t *testing.T) {
-	target := hooks{
+	target := Hooks{
 		RawPreStart: "foo",
 	}
-	source := hooks{
+	source := Hooks{
 		RawPostStart: "bar",
 	}
 	assert.False(t, target.CopyFrom(source), "Copying unrelated hooks should not trigger an override")
-	target = hooks{
+	target = Hooks{
 		RawPreStart: "foo",
 	}
-	source = hooks{
+	source = Hooks{
 		RawPreStart:  "bar",
 		RawPostStart: "bar",
 	}

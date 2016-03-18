@@ -246,7 +246,7 @@ func (uow *UnitOfWork) Generate(templateFile string, output string) {
 }
 
 func (uow *UnitOfWork) Containers() Containers {
-	c := []Container{}
+	c := []ContainerCommander{}
 	for _, name := range uow.order {
 		c = append(c, cfg.Container(name))
 	}
@@ -254,7 +254,7 @@ func (uow *UnitOfWork) Containers() Containers {
 }
 
 func (uow *UnitOfWork) Targeted() Containers {
-	c := []Container{}
+	c := []ContainerCommander{}
 	for _, name := range uow.order {
 		if includes(uow.targeted, name) {
 			c = append(c, cfg.Container(name))

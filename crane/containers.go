@@ -13,10 +13,10 @@ import (
 	"text/tabwriter"
 )
 
-type Containers []Container
+type Containers []ContainerCommander
 
 func (containers Containers) Reversed() Containers {
-	var reversed []Container
+	var reversed []ContainerCommander
 	for i := len(containers) - 1; i >= 0; i-- {
 		reversed = append(reversed, containers[i])
 	}
@@ -40,7 +40,7 @@ func (containers Containers) Provision(nocache bool, parallel int) {
 			throttle <- struct{}{}
 		}
 		wg.Add(1)
-		go func(container Container) {
+		go func(container ContainerCommander) {
 			var out, err bytes.Buffer
 			defer func() {
 				out.WriteTo(os.Stdout)

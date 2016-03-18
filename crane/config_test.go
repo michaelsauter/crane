@@ -11,8 +11,8 @@ import (
 )
 
 // Create a map of stubbed containers out of the provided set
-func NewStubbedContainerMap(exists bool, containers ...Container) ContainerMap {
-	containerMap := make(map[string]Container)
+func NewStubbedContainerMap(exists bool, containers ...ContainerCommander) ContainerMap {
+	containerMap := make(map[string]ContainerCommander)
 	for _, container := range containers {
 		containerMap[container.Name()] = &StubbedContainer{container, exists}
 	}
@@ -20,7 +20,7 @@ func NewStubbedContainerMap(exists bool, containers ...Container) ContainerMap {
 }
 
 type StubbedContainer struct {
-	Container
+	ContainerCommander
 	exists bool
 }
 
@@ -63,7 +63,7 @@ func TestFindConfig(t *testing.T) {
 }
 
 func TestUnmarshal(t *testing.T) {
-	var actual *config
+	var actual *Config
 	json := []byte(
 		`{
     "containers": {
@@ -255,9 +255,9 @@ volumes:
 
 func TestInitialize(t *testing.T) {
 	// use different, undefined environment variables throughout the config to detect any issue in expansion
-	rawContainerMap := map[string]*container{
-		"${UNDEFINED1}a": &container{},
-		"${UNDEFINED2}b": &container{},
+	rawContainerMap := map[string]*Container{
+		"${UNDEFINED1}a": &Container{},
+		"${UNDEFINED2}b": &Container{},
 	}
 	rawGroups := map[string][]string{
 		"${UNDEFINED3}default": []string{
@@ -265,16 +265,16 @@ func TestInitialize(t *testing.T) {
 			"${UNDEFINED4}b",
 		},
 	}
-	rawHooksMap := map[string]hooks{
-		"${UNDEFINED5}default": hooks{
+	rawHooksMap := map[string]Hooks{
+		"${UNDEFINED5}default": Hooks{
 			RawPreStart:  "${UNDEFINED6}default-pre-start",
 			RawPostStart: "${UNDEFINED7}default-post-start",
 		},
-		"${UNDEFINED8}a": hooks{
+		"${UNDEFINED8}a": Hooks{
 			RawPreStart: "${UNDEFINED9}custom-pre-start",
 		},
 	}
-	c := &config{
+	c := &Config{
 		RawContainers: rawContainerMap,
 		RawGroups:     rawGroups,
 		RawHooks:      rawHooksMap,
@@ -290,19 +290,19 @@ func TestInitialize(t *testing.T) {
 }
 
 func TestInitializeAmbiguousHooks(t *testing.T) {
-	rawContainerMap := map[string]*container{
-		"a": &container{},
-		"b": &container{},
+	rawContainerMap := map[string]*Container{
+		"a": &Container{},
+		"b": &Container{},
 	}
 	rawGroups := map[string][]string{
 		"group1": []string{"a"},
 		"group2": []string{"a", "b"},
 	}
-	rawHooksMap := map[string]hooks{
-		"group1": hooks{RawPreStart: "group1-pre-start"},
-		"group2": hooks{RawPreStart: "group2-pre-start"},
+	rawHooksMap := map[string]Hooks{
+		"group1": Hooks{RawPreStart: "group1-pre-start"},
+		"group2": Hooks{RawPreStart: "group2-pre-start"},
 	}
-	c := &config{
+	c := &Config{
 		RawContainers: rawContainerMap,
 		RawGroups:     rawGroups,
 		RawHooks:      rawHooksMap,
@@ -313,19 +313,19 @@ func TestInitializeAmbiguousHooks(t *testing.T) {
 }
 
 func TestValidate(t *testing.T) {
-	rawContainerMap := map[string]*container{
-		"a": &container{RawName: "a", RawImage: "ubuntu"},
-		"b": &container{RawName: "b", RawImage: "ubuntu"},
+	rawContainerMap := map[string]*Container{
+		"a": &Container{RawName: "a", RawImage: "ubuntu"},
+		"b": &Container{RawName: "b", RawImage: "ubuntu"},
 	}
-	c := &config{RawContainers: rawContainerMap}
+	c := &Config{RawContainers: rawContainerMap}
 	assert.NotPanics(t, func() {
 		c.validate()
 	})
-	rawContainerMap = map[string]*container{
-		"a": &container{RawName: "a", RawImage: "ubuntu"},
-		"b": &container{RawName: "b"},
+	rawContainerMap = map[string]*Container{
+		"a": &Container{RawName: "a", RawImage: "ubuntu"},
+		"b": &Container{RawName: "b"},
 	}
-	c = &config{RawContainers: rawContainerMap}
+	c = &Config{RawContainers: rawContainerMap}
 	assert.Panics(t, func() {
 		c.validate()
 	})
@@ -333,11 +333,11 @@ func TestValidate(t *testing.T) {
 
 func TestDependencyMap(t *testing.T) {
 	containerMap := NewStubbedContainerMap(true,
-		&container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},
-		&container{RawName: "b", RawRun: RunParameters{RawLink: []string{"c:c"}}},
-		&container{RawName: "c"},
+		&Container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},
+		&Container{RawName: "b", RawRun: RunParameters{RawLink: []string{"c:c"}}},
+		&Container{RawName: "c"},
 	)
-	c := &config{containerMap: containerMap}
+	c := &Config{containerMap: containerMap}
 
 	dependencyMap := c.DependencyMap([]string{})
 	assert.Len(t, dependencyMap, 3)
@@ -352,9 +352,9 @@ func TestDependencyMap(t *testing.T) {
 func TestContainersForReference(t *testing.T) {
 	var containers []string
 	containerMap := NewStubbedContainerMap(true,
-		&container{RawName: "a"},
-		&container{RawName: "b"},
-		&container{RawName: "c"},
+		&Container{RawName: "a"},
+		&Container{RawName: "b"},
+		&Container{RawName: "c"},
 	)
 
 	// No target given
@@ -362,11 +362,11 @@ func TestContainersForReference(t *testing.T) {
 	groups := map[string][]string{
 		"default": []string{"a", "b"},
 	}
-	c := &config{containerMap: containerMap, groups: groups}
+	c := &Config{containerMap: containerMap, groups: groups}
 	containers = c.ContainersForReference("")
 	assert.Equal(t, []string{"a", "b"}, containers)
 	// If no default group, returns all containers
-	c = &config{containerMap: containerMap}
+	c = &Config{containerMap: containerMap}
 	containers = c.ContainersForReference("")
 	sort.Strings(containers)
 	assert.Equal(t, []string{"a", "b", "c"}, containers)
@@ -375,7 +375,7 @@ func TestContainersForReference(t *testing.T) {
 	groups = map[string][]string{
 		"second": []string{"b", "c"},
 	}
-	c = &config{containerMap: containerMap, groups: groups}
+	c = &Config{containerMap: containerMap, groups: groups}
 	containers = c.ContainersForReference("second")
 	assert.Equal(t, []string{"b", "c"}, containers)
 	// Target is a container
@@ -385,13 +385,13 @@ func TestContainersForReference(t *testing.T) {
 
 func TestContainersForReferenceInvalidReference(t *testing.T) {
 	containerMap := NewStubbedContainerMap(true,
-		&container{RawName: "a"},
-		&container{RawName: "b"},
+		&Container{RawName: "a"},
+		&Container{RawName: "b"},
 	)
 	groups := map[string][]string{
 		"foo": []string{"a", "doesntexist", "b"},
 	}
-	c := &config{containerMap: containerMap, groups: groups}
+	c := &Config{containerMap: containerMap, groups: groups}
 	assert.Panics(t, func() {
 		c.ContainersForReference("foo")
 	})
@@ -402,87 +402,87 @@ func TestContainersForReferenceInvalidReference(t *testing.T) {
 
 func TestContainersForReferenceDeduplication(t *testing.T) {
 	containerMap := NewStubbedContainerMap(true,
-		&container{RawName: "a"},
-		&container{RawName: "b"},
+		&Container{RawName: "a"},
+		&Container{RawName: "b"},
 	)
 	groups := map[string][]string{
 		"foo": []string{"a", "b", "a"},
 	}
-	c := &config{containerMap: containerMap, groups: groups}
+	c := &Config{containerMap: containerMap, groups: groups}
 	containers := c.ContainersForReference("foo")
 	assert.Equal(t, []string{"a", "b"}, containers)
 }
 
 func TestNetworkNames(t *testing.T) {
 	var networks []string
-	var networkMap map[string]Network
-	var c Config
+	var networkMap map[string]NetworkCommander
+	var c ConfigCommander
 
-	networkMap = map[string]Network{}
-	c = &config{networkMap: networkMap}
+	networkMap = map[string]NetworkCommander{}
+	c = &Config{networkMap: networkMap}
 	networks = c.NetworkNames()
 	assert.Equal(t, []string{}, networks)
 
-	networkMap = map[string]Network{
-		"foo": &network{},
-		"bar": &network{},
+	networkMap = map[string]NetworkCommander{
+		"foo": &Network{},
+		"bar": &Network{},
 	}
-	c = &config{networkMap: networkMap}
+	c = &Config{networkMap: networkMap}
 	networks = c.NetworkNames()
 	assert.Equal(t, []string{"bar", "foo"}, networks)
 }
 
 func TestVolumeNames(t *testing.T) {
 	var volumes []string
-	var volumeMap map[string]Volume
-	var c Config
+	var volumeMap map[string]VolumeCommander
+	var c ConfigCommander
 
-	volumeMap = map[string]Volume{}
-	c = &config{volumeMap: volumeMap}
+	volumeMap = map[string]VolumeCommander{}
+	c = &Config{volumeMap: volumeMap}
 	volumes = c.VolumeNames()
 	assert.Equal(t, []string{}, volumes)
 
-	volumeMap = map[string]Volume{
-		"foo": &network{},
-		"bar": &network{},
+	volumeMap = map[string]VolumeCommander{
+		"foo": &Network{},
+		"bar": &Network{},
 	}
-	c = &config{volumeMap: volumeMap}
+	c = &Config{volumeMap: volumeMap}
 	volumes = c.VolumeNames()
 	assert.Equal(t, []string{"bar", "foo"}, volumes)
 }
 
 func TestConfigNetwork(t *testing.T) {
-	var networkMap map[string]*network
-	var c *config
+	var networkMap map[string]*Network
+	var c *Config
 
-	networkMap = map[string]*network{}
-	c = &config{RawNetworks: networkMap}
+	networkMap = map[string]*Network{}
+	c = &Config{RawNetworks: networkMap}
 	c.setNetworkMap()
 	assert.Equal(t, nil, c.Network("foo"))
 
-	networkMap = map[string]*network{
-		"foo": &network{},
-		"bar": &network{},
+	networkMap = map[string]*Network{
+		"foo": &Network{},
+		"bar": &Network{},
 	}
-	c = &config{RawNetworks: networkMap}
+	c = &Config{RawNetworks: networkMap}
 	c.setNetworkMap()
 	assert.Equal(t, "bar", c.Network("bar").Name())
 }
 
 func TestConfigVolume(t *testing.T) {
-	var rawVolumes map[string]*volume
-	var c *config
+	var rawVolumes map[string]*Volume
+	var c *Config
 
-	rawVolumes = map[string]*volume{}
-	c = &config{RawVolumes: rawVolumes}
+	rawVolumes = map[string]*Volume{}
+	c = &Config{RawVolumes: rawVolumes}
 	c.setVolumeMap()
 	assert.Equal(t, nil, c.Volume("foo"))
 
-	rawVolumes = map[string]*volume{
-		"foo": &volume{},
-		"bar": &volume{},
+	rawVolumes = map[string]*Volume{
+		"foo": &Volume{},
+		"bar": &Volume{},
 	}
-	c = &config{RawVolumes: rawVolumes}
+	c = &Config{RawVolumes: rawVolumes}
 	c.setVolumeMap()
 	assert.Equal(t, "bar", c.Volume("bar").Name())
 }
