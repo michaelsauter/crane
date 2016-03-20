@@ -9,7 +9,7 @@ import (
 )
 
 var cfg Config
-var excluded []string
+var allowed []string
 
 var (
 	app         = kingpin.New("crane", "Lift containers with ease").Interspersed(false).DefaultEnvars()
@@ -202,9 +202,9 @@ func isVerbose() bool {
 func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork), mightStartRelated bool) {
 
 	cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
-	excluded = excludedContainers(*excludeFlag)
-	dependencyMap := cfg.DependencyMap(excluded)
-	target, err := NewTarget(dependencyMap, targetFlag, excluded)
+	allowed = allowedContainers(*excludeFlag)
+	dependencyMap := cfg.DependencyMap()
+	target, err := NewTarget(dependencyMap, targetFlag)
 	if err != nil {
 		panic(StatusError{err, 78})
 	}
@@ -234,11 +234,18 @@ func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork), migh
 	wrapped(unitOfWork)
 }
 
-func excludedContainers(excludedReference []string) (containers []string) {
+func allowedContainers(excludedReference []string) (containers []string) {
+	allContainers := cfg.ContainersForReference("")
+	excludedContainers := []string{}
 	for _, reference := range excludedReference {
-		containers = append(containers, cfg.ContainersForReference(reference)...)
+		excludedContainers = append(excludedContainers, cfg.ContainersForReference(reference)...)
 	}
-	return containers
+	for _, name := range allContainers {
+		if !includes(excludedContainers, name) {
+			containers = append(containers, name)
+		}
+	}
+	return
 }
 
 func runCli() {
@@ -246,7 +253,7 @@ func runCli() {
 
 	case liftCommand.FullCommand():
 		commandAction(*liftTargetArg, func(uow *UnitOfWork) {
-			uow.Lift(*liftCmdArg, excluded, *liftNoCacheFlag, *liftParallelFlag)
+			uow.Lift(*liftCmdArg, *liftNoCacheFlag, *liftParallelFlag)
 		}, true)
 
 	case versionCommand.FullCommand():
@@ -304,12 +311,12 @@ func runCli() {
 
 	case runCommand.FullCommand():
 		commandAction(*runTargetArg, func(uow *UnitOfWork) {
-			uow.Run(*runCmdArg, excluded)
+			uow.Run(*runCmdArg)
 		}, true)
 
 	case createCommand.FullCommand():
 		commandAction(*createTargetArg, func(uow *UnitOfWork) {
-			uow.Create(*createCmdArg, excluded)
+			uow.Create(*createCmdArg)
 		}, true)
 
 	case provisionCommand.FullCommand():

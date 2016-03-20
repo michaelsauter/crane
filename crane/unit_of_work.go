@@ -73,25 +73,25 @@ func NewUnitOfWork(dependencyMap map[string]*Dependencies, targeted []string) (u
 	return
 }
 
-func (uow *UnitOfWork) Run(cmds []string, excluded []string) {
+func (uow *UnitOfWork) Run(cmds []string) {
 	uow.prepareRequirements()
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Run(cmds, excluded)
+			container.Run(cmds)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
-			container.Start(excluded)
+			container.Start()
 		}
 	}
 }
 
-func (uow *UnitOfWork) Lift(cmds []string, excluded []string, noCache bool, parallel int) {
+func (uow *UnitOfWork) Lift(cmds []string, noCache bool, parallel int) {
 	uow.Targeted().Provision(noCache, parallel)
 	uow.prepareRequirements()
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Run(cmds, excluded)
+			container.Run(cmds)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
-			container.Start(excluded)
+			container.Start()
 		}
 	}
 }
@@ -140,9 +140,9 @@ func (uow *UnitOfWork) Start() {
 	uow.prepareRequirements()
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Start(excluded)
+			container.Start()
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
-			container.Start(excluded)
+			container.Start()
 		}
 	}
 }
@@ -166,7 +166,7 @@ func (uow *UnitOfWork) Exec(cmds []string) {
 		if includes(uow.targeted, container.Name()) {
 			container.Exec(cmds)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
-			container.Start(excluded)
+			container.Start()
 		}
 	}
 }
@@ -179,13 +179,13 @@ func (uow *UnitOfWork) Rm(force bool) {
 }
 
 // Create containers.
-func (uow *UnitOfWork) Create(cmds []string, excluded []string) {
+func (uow *UnitOfWork) Create(cmds []string) {
 	uow.prepareRequirements()
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Create(cmds, excluded)
+			container.Create(cmds)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
-			container.Start(excluded)
+			container.Start()
 		}
 	}
 }

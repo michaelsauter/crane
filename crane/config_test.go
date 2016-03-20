@@ -332,6 +332,10 @@ func TestValidate(t *testing.T) {
 }
 
 func TestDependencyMap(t *testing.T) {
+	defer func() {
+		allowed = []string{}
+	}()
+
 	containerMap := NewStubbedContainerMap(true,
 		&container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},
 		&container{RawName: "b", RawRun: RunParameters{RawLink: []string{"c:c"}}},
@@ -339,13 +343,15 @@ func TestDependencyMap(t *testing.T) {
 	)
 	c := &config{containerMap: containerMap}
 
-	dependencyMap := c.DependencyMap([]string{})
+	allowed = []string{"a", "b", "c"}
+	dependencyMap := c.DependencyMap()
 	assert.Len(t, dependencyMap, 3)
 	// make sure a new map is returned each time
 	delete(dependencyMap, "a")
-	assert.Len(t, c.DependencyMap([]string{}), 3)
+	assert.Len(t, c.DependencyMap(), 3)
 
-	dependencyMap = c.DependencyMap([]string{"b"})
+	allowed = []string{"a", "c"}
+	dependencyMap = c.DependencyMap()
 	assert.Len(t, dependencyMap, 2)
 }
 

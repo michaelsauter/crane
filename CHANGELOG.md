@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Refactor `exclude` behaviour to make it easier to support `only` in the future
+
+  _@michaelsauter_
+
 * Better handling of incorrect syntax for `env` and `label` configuration values
 
   _@bjaglin_
