@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+##2.7.0 (2016-03-20)
+
 * Refactor `exclude` behaviour to make it easier to support `only` in the future
 
   _@michaelsauter_
