@@ -6,6 +6,10 @@
 
   _@michaelsauter_
 
+* Add missing flags `--ip` and `--ip6` from Docker 1.10 to Crane
+
+  _@dreamcat4_
+
 * Better handling of incorrect syntax for `env` and `label` configuration values
 
   _@bjaglin_
