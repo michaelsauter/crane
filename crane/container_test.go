@@ -66,7 +66,7 @@ func TestDependencies(t *testing.T) {
 	}
 	assert.Equal(t, expected, c.Dependencies())
 
-	// with excluded containers
+	// with restricted allowed containers
 	allowed = []string{"foo", "c"}
 	c = &container{
 		RawRequires: []string{"foo", "bar"},

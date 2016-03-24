@@ -26,6 +26,10 @@ var (
 		"exclude",
 		"Exclude group or container. Can be repeated.",
 	).Short('e').PlaceHolder("container|group").Strings()
+	onlyFlag = app.Flag(
+		"only",
+		"Include only group or container.",
+	).Short('o').PlaceHolder("container|group").String()
 	tagFlag = app.Flag(
 		"tag",
 		"Override image tags.",
@@ -202,7 +206,7 @@ func isVerbose() bool {
 func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork), mightStartRelated bool) {
 
 	cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
-	allowed = allowedContainers(*excludeFlag)
+	allowed = allowedContainers(*excludeFlag, *onlyFlag)
 	dependencyMap := cfg.DependencyMap()
 	target, err := NewTarget(dependencyMap, targetFlag)
 	if err != nil {
@@ -234,8 +238,8 @@ func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork), migh
 	wrapped(unitOfWork)
 }
 
-func allowedContainers(excludedReference []string) (containers []string) {
-	allContainers := cfg.ContainersForReference("")
+func allowedContainers(excludedReference []string, onlyReference string) (containers []string) {
+	allContainers := cfg.ContainersForReference(onlyReference)
 	excludedContainers := []string{}
 	for _, reference := range excludedReference {
 		excludedContainers = append(excludedContainers, cfg.ContainersForReference(reference)...)
