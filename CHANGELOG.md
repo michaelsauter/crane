@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+* Add `--only` flag to restrict command to a container or group. This can be
+  used for example to start one container without its dependencies.
+
+  _@michaelsauter_
+
+* Rename short flag `--output` for `generate` command from `-o` to `-O` since
+  `-o` is the short flag for `--only` now. Since the generate feature is
+  marked as experimental, this change is done in a minor version.
+
+  _@michaelsauter_
+
 ## 2.7.0 (2016-03-20)
 
 * Refactor `exclude` behaviour to make it easier to support `only` in the future

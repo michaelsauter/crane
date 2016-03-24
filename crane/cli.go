@@ -195,7 +195,7 @@ var (
 	outputFlag = generateCommand.Flag(
 		"output",
 		"The file(s) to write the output to.",
-	).Short('o').String()
+	).Short('O').String()
 	generateTargetArg = generateCommand.Arg("target", "Target of command").String()
 )
 
