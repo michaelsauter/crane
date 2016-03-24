@@ -10,10 +10,11 @@ if [ -z "$version" ]; then
 fi
 
 go_path=$(cd ../../../../; pwd)
-docker_options="--rm -it -v $go_path:/go -w /go/src/github.com/michaelsauter/crane michaelsauter/golang:1.6"
+docker_options="--rm -it -v $go_path:/go -w /go/src/github.com/michaelsauter/crane"
+docker_image="michaelsauter/golang:1.6"
 
 echo "Running tests..."
-docker run $docker_options make test
+docker run $docker_options $docker_image make test
 
 echo "Update version..."
 sed -i.bak 's/fmt\.Println("v[0-9]\{1,2\}\.[0-9]\{1,2\}\.[0-9]\{1,2\}")/fmt.Println("v'$version'")/' crane/cli.go
@@ -31,8 +32,11 @@ rm CHANGELOG.md.bak
 echo "Update contributors..."
 git contributors | awk '{for (i=2; i<NF; i++) printf $i " "; print $NF}' > CONTRIBUTORS
 
-echo "Build binary..."
-docker run $docker_options gox -osarch="darwin/amd64" -osarch="linux/amd64" -osarch="linux/386" -osarch="windows/amd64"
+echo "Build binaries..."
+docker run $docker_options -e GOOS=linux -e GOARCH=386 $docker_image go build -o crane_linux_386 -v github.com/michaelsauter/crane
+docker run $docker_options -e GOOS=linux -e GOARCH=amd64 $docker_image go build -o crane_linux_amd64 -v github.com/michaelsauter/crane
+docker run $docker_options -e GOOS=darwin -e GOARCH=amd64 $docker_image go build -o crane_darwin_amd64 -v github.com/michaelsauter/crane
+docker run $docker_options -e GOOS=windows -e GOARCH=amd64 $docker_image go build -o crane_windows_amd64.exe -v github.com/michaelsauter/crane
 
 echo "Update repository..."
 git add crane/cli.go download.sh README.md CHANGELOG.md CONTRIBUTORS
