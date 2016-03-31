@@ -16,13 +16,13 @@ continuous integration.
   * [Groups and Targeting](#groups-and-targeting)
   * [Extending the target](#extending-the-target)
   * [Excluding containers](#excluding-containers)
+  * [Ad hoc commands](#ad-hoc-commands)
   * [Networking](#networking)
   * [Volumes](#volumes)
   * [Hooks](#hooks)
   * [Parallism](#parallism)
   * [Container Prefixes](#container-prefixes)
   * [Override image tag](#override-image-tag)
-  * [Unique Names](#unique-names)
   * [Generate command](#generate-command)
   * [YAML advanced usage](#yaml-advanced-usage)
 
@@ -94,7 +94,6 @@ The configuration defines a map of containers in either JSON or YAML. By default
 The map of containers consists of the name of the container mapped to the container configuration, with the following keys:
 
 * `image` (string, required): Name of the image to build/pull
-* `unique` (boolean, optional) `true` assigns a unique name to the container (experimental)
 * `requires` (array) Container dependencies (experimental)
 * `run` (object, optional): Parameters mapped to Docker's `run` & `create`.
 	* `add-host` (array) Add custom host-to-IP mappings.
@@ -304,6 +303,15 @@ This feature is experimental, which means it can be changed or even removed
 in every minor version update.
 
 
+### Ad hoc commands
+If you pass a command on the CLI to `lift` or `run`, Crane will add a timestamp
+to the container name (e.g. `foo` will become `foo-1447155694523`), making it
+possible to have multiple containers based on the same Crane config. Those ad
+hoc containers will have `ip`, `ip6`, `publish`, `publish-all` and `detach`
+disabled, and `rm` enabled. This feature is experimental, which means it can be
+changed or even removed in every minor version update.
+
+
 ### Networking
 Docker networks are supported via the top-level config `networks`, which does not take additional parameters at this stage. As links are not strict dependencies for containers attached to a user-defined network (but simply aliases), `requires` can be used instead to indicate that a container must be started for another one to be functional. Networks are automatically created by Crane when necessary, and never cleaned up. When a [prefix](#container-prefixes) is used, it is also applied to the network.
 
@@ -421,15 +429,6 @@ By using a the `--tag` flag, it is possible to globally overrides image tags. If
 you specify `--tag 2.0-rc2`, an image name `repo/app:1.0` is treated as
 `repo/app:2.0-rc2`. The `CRANE_TAG` environment variable can also be used to
 set the global tag.
-
-
-### Unique names
-If `unique` is set to true, Crane will add a timestamp to the container name
-(e.g. `foo` will become `foo-unique-1447155694523`), making it possible to have
-multiple containers based on the same Crane config. Consider setting `rm` to
-`true` at the same time to avoid lots of exited containers. This feature is
-experimental, which means it can be changed or even removed in every minor
-version update.
 
 
 ### Generate command

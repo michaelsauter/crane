@@ -17,7 +17,8 @@ import (
 type Container interface {
 	ContainerInfo
 	Exists() bool
-	InstancesOfStatus(status string) []string
+	Running() bool
+	Paused() bool
 	Status() [][]string
 	Provision(nocache bool)
 	PullImage()
@@ -40,11 +41,10 @@ type Container interface {
 type ContainerInfo interface {
 	Name() string
 	PrefixedName() string
-	ActualName() string
+	ActualName(bool) string
 	Image() string
 	ID() string
 	Dependencies() *Dependencies
-	Unique() bool
 	BuildParams() BuildParameters
 	RunParams() RunParameters
 	RmParams() RmParameters
@@ -56,7 +56,6 @@ type ContainerInfo interface {
 type container struct {
 	id          string
 	RawName     string
-	RawUnique   bool            `json:"unique" yaml:"unique"`
 	RawImage    string          `json:"image" yaml:"image"`
 	RawRequires []string        `json:"requires" yaml:"requires"`
 	RawBuild    BuildParameters `json:"build" yaml:"build"`
@@ -286,9 +285,9 @@ func (c *container) Name() string {
 	return expandEnv(c.RawName)
 }
 
-func (c *container) ActualName() string {
-	if c.Unique() {
-		return c.PrefixedName() + "-unique-" + cfg.UniqueID()
+func (c *container) ActualName(adHoc bool) string {
+	if adHoc {
+		return c.PrefixedName() + "-" + cfg.UniqueID()
 	}
 	return c.PrefixedName()
 }
@@ -307,10 +306,6 @@ func (c *container) Image() string {
 		image = image[:startOfTag]
 	}
 	return image + ":" + cfg.Tag()
-}
-
-func (c *container) Unique() bool {
-	return c.RawUnique
 }
 
 func (c *container) Requires() []string {
@@ -569,7 +564,7 @@ func (r RunParameters) ActualNet() string {
 	netContainer := containerReference(netParam)
 	if len(netContainer) > 0 {
 		if includes(allowed, netContainer) {
-			return "container:" + cfg.Container(netContainer).ActualName()
+			return "container:" + cfg.Container(netContainer).ActualName(false)
 		}
 	} else {
 		if includes(cfg.NetworkNames(), netParam) {
@@ -736,11 +731,11 @@ func (e ExecParameters) User() string {
 }
 
 func (c *container) ID() string {
-	if len(c.id) == 0 && !c.Unique() {
+	if len(c.id) == 0 {
 		// `docker inspect` works for both image and containers, make sure this is a
 		// container payload we get back, otherwise we might end up getting the ID
 		// of the image of the same name.
-		c.id = inspectString(c.ActualName(), "{{if .State}}{{.Id}}{{else}}{{end}}")
+		c.id = inspectString(c.ActualName(false), "{{if .State}}{{.Id}}{{else}}{{end}}")
 	}
 	return c.id
 }
@@ -751,23 +746,21 @@ func (c *container) Exists() bool {
 
 func (c *container) Status() [][]string {
 	rows := [][]string{}
-	existingInstances := c.InstancesOfStatus("existing")
-	if len(existingInstances) == 0 {
-		fields := []string{c.ActualName(), c.Image(), "-", "-", "-", "-", "-"}
+	if !c.Exists() {
+		fields := []string{c.ActualName(false), c.Image(), "-", "-", "-", "-", "-"}
 		rows = append(rows, fields)
 	} else {
-		for _, name := range existingInstances {
-			fields := []string{name, c.Image(), "-", "-", "-", "-", "-"}
-			// When using a `--tag` global flag, c.Image() may not represent an actual image tag.
-			// Instead we should get an image tag by inspecting "Config.Image".
-			output := inspectString(name, "{{.Config.Image}}+++{{.Id}}+++{{.Image}}+++{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}+++{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}+++{{.State.Running}}")
-			if output != "" {
-				copy(fields[1:], strings.Split(output, "+++"))
-				// We asked for the image id the container was created from
-				fields[3] = strconv.FormatBool(imageIDFromTag(fields[1]) == fields[3])
-			}
-			rows = append(rows, fields)
+		name := c.ActualName(false)
+		fields := []string{name, c.Image(), "-", "-", "-", "-", "-"}
+		// When using a `--tag` global flag, c.Image() may not represent an actual image tag.
+		// Instead we should get an image tag by inspecting "Config.Image".
+		output := inspectString(name, "{{.Config.Image}}+++{{.Id}}+++{{.Image}}+++{{if .NetworkSettings.IPAddress}}{{.NetworkSettings.IPAddress}}{{else}}-{{end}}+++{{range $k,$v := $.NetworkSettings.Ports}}{{$k}},{{else}}-{{end}}+++{{.State.Running}}")
+		if output != "" {
+			copy(fields[1:], strings.Split(output, "+++"))
+			// We asked for the image id the container was created from
+			fields[3] = strconv.FormatBool(imageIDFromTag(fields[1]) == fields[3])
 		}
+		rows = append(rows, fields)
 	}
 	return rows
 }
@@ -782,10 +775,11 @@ func (c *container) Provision(nocache bool) {
 
 // Create container
 func (c *container) Create(cmds []string) {
-	if !c.Unique() {
+	adHoc := (len(cmds) > 0)
+	if !adHoc {
 		c.Rm(true)
 	}
-	fmt.Fprintf(c.CommandsOut(), "Creating container %s ...\n", c.ActualName())
+	fmt.Fprintf(c.CommandsOut(), "Creating container %s ...\n", c.ActualName(adHoc))
 
 	args := append([]string{"create"}, c.createArgs(cmds)...)
 	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
@@ -793,30 +787,31 @@ func (c *container) Create(cmds []string) {
 
 // Run container, or start it if already existing
 func (c *container) Run(cmds []string) {
-	if !c.Unique() {
+	adHoc := (len(cmds) > 0)
+	if !adHoc {
 		c.Rm(true)
 	}
-	executeHook(c.Hooks().PreStart(), c.ActualName())
-	fmt.Fprintf(c.CommandsOut(), "Running container %s ...\n", c.ActualName())
+	executeHook(c.Hooks().PreStart(), c.ActualName(adHoc))
+	fmt.Fprintf(c.CommandsOut(), "Running container %s ...\n", c.ActualName(adHoc))
 
 	args := []string{"run"}
 	// Detach
-	if c.RunParams().Detach {
+	if !adHoc && c.RunParams().Detach {
 		args = append(args, "--detach")
 	}
 	args = append(args, c.createArgs(cmds)...)
-	wg := c.executePostStartHook()
+	wg := c.executePostStartHook(adHoc)
 	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 	wg.Wait()
 }
 
-func (c *container) executePostStartHook() *sync.WaitGroup {
+func (c *container) executePostStartHook(adHoc bool) *sync.WaitGroup {
 
 	var wg sync.WaitGroup
 
 	if len(c.Hooks().PostStart()) > 0 {
 		wg.Add(1)
-		cmd, cmdOut, _ := executeCommandBackground("docker", []string{"events", "--filter", "event=start", "--filter", "container=" + c.ActualName()})
+		cmd, cmdOut, _ := executeCommandBackground("docker", []string{"events", "--filter", "event=start", "--filter", "container=" + c.ActualName(adHoc)})
 		go func() {
 			defer func() {
 				handleRecoveredError(recover())
@@ -826,9 +821,9 @@ func (c *container) executePostStartHook() *sync.WaitGroup {
 			_, _, err := r.ReadLine()
 			cmd.Process.Kill()
 			if err != nil {
-				printNoticef("Could not execute post-start hook for %s.", c.ActualName())
+				printNoticef("Could not execute post-start hook for %s.", c.ActualName(adHoc))
 			} else {
-				executeHook(c.Hooks().PostStart(), c.ActualName())
+				executeHook(c.Hooks().PostStart(), c.ActualName(adHoc))
 			}
 		}()
 	}
@@ -838,6 +833,7 @@ func (c *container) executePostStartHook() *sync.WaitGroup {
 
 // Returns all the flags to be passed to `docker create`
 func (c *container) createArgs(cmds []string) []string {
+	adHoc := (len(cmds) > 0)
 	args := []string{}
 	// AddHost
 	for _, addHost := range c.RunParams().AddHost() {
@@ -949,19 +945,23 @@ func (c *container) createArgs(cmds []string) []string {
 		args = append(args, "--interactive")
 	}
 	// Ip
-	if len(c.RunParams().Ip()) > 0 {
-		args = append(args, "--ip", c.RunParams().Ip())
+	if !adHoc {
+		if len(c.RunParams().Ip()) > 0 {
+			args = append(args, "--ip", c.RunParams().Ip())
+		}
 	}
 	// Ip6
-	if len(c.RunParams().Ip6()) > 0 {
-		args = append(args, "--ip6", c.RunParams().Ip6())
+	if !adHoc {
+		if len(c.RunParams().Ip6()) > 0 {
+			args = append(args, "--ip6", c.RunParams().Ip6())
+		}
 	}
 	// IPC
 	if len(c.RunParams().IPC()) > 0 {
 		ipcContainer := containerReference(c.RunParams().IPC())
 		if len(ipcContainer) > 0 {
 			if includes(allowed, ipcContainer) {
-				args = append(args, "--ipc", "container:"+cfg.Container(ipcContainer).ActualName())
+				args = append(args, "--ipc", "container:"+cfg.Container(ipcContainer).ActualName(false))
 			}
 		} else {
 			args = append(args, "--ipc", c.RunParams().IPC())
@@ -988,7 +988,7 @@ func (c *container) createArgs(cmds []string) []string {
 		linkParts := strings.Split(link, ":")
 		linkName := linkParts[0]
 		if includes(allowed, linkName) {
-			linkParts[0] = cfg.Container(linkName).ActualName()
+			linkParts[0] = cfg.Container(linkName).ActualName(false)
 			args = append(args, "--link", strings.Join(linkParts, ":"))
 		}
 	}
@@ -1050,12 +1050,16 @@ func (c *container) createArgs(cmds []string) []string {
 		args = append(args, "--privileged")
 	}
 	// Publish
-	for _, port := range c.RunParams().Publish() {
-		args = append(args, "--publish", port)
+	if !adHoc {
+		for _, port := range c.RunParams().Publish() {
+			args = append(args, "--publish", port)
+		}
 	}
 	// PublishAll
-	if c.RunParams().PublishAll {
-		args = append(args, "--publish-all")
+	if !adHoc {
+		if c.RunParams().PublishAll {
+			args = append(args, "--publish-all")
+		}
 	}
 	// ReadOnly
 	if c.RunParams().ReadOnly {
@@ -1066,7 +1070,7 @@ func (c *container) createArgs(cmds []string) []string {
 		args = append(args, "--restart", c.RunParams().Restart())
 	}
 	// Rm
-	if c.RunParams().Rm {
+	if adHoc || c.RunParams().Rm {
 		args = append(args, "--rm")
 	}
 	// SecurityOpt
@@ -1118,7 +1122,7 @@ func (c *container) createArgs(cmds []string) []string {
 		volumesFromParts := strings.Split(volumesFrom, ":")
 		volumesFromName := volumesFromParts[0]
 		if includes(allowed, volumesFromName) {
-			volumesFromParts[0] = cfg.Container(volumesFromName).ActualName()
+			volumesFromParts[0] = cfg.Container(volumesFromName).ActualName(false)
 			args = append(args, "--volumes-from", strings.Join(volumesFromParts, ":"))
 		}
 	}
@@ -1127,7 +1131,7 @@ func (c *container) createArgs(cmds []string) []string {
 		args = append(args, "--workdir", c.RunParams().Workdir())
 	}
 	// Name
-	args = append(args, "--name", c.ActualName())
+	args = append(args, "--name", c.ActualName(adHoc))
 	// Image
 	args = append(args, c.Image())
 	// Command
@@ -1141,10 +1145,10 @@ func (c *container) createArgs(cmds []string) []string {
 
 // Start container
 func (c *container) Start() {
-	if !c.Unique() && c.Exists() {
-		if !c.running() {
-			executeHook(c.Hooks().PreStart(), c.ActualName())
-			fmt.Fprintf(c.CommandsOut(), "Starting container %s ...\n", c.ActualName())
+	if c.Exists() {
+		if !c.Running() {
+			executeHook(c.Hooks().PreStart(), c.ActualName(false))
+			fmt.Fprintf(c.CommandsOut(), "Starting container %s ...\n", c.ActualName(false))
 			args := []string{"start"}
 			if c.StartParams().Attach {
 				args = append(args, "--attach")
@@ -1155,8 +1159,8 @@ func (c *container) Start() {
 			if c.StartParams().Interactive {
 				args = append(args, "--interactive")
 			}
-			args = append(args, c.ActualName())
-			wg := c.executePostStartHook()
+			args = append(args, c.ActualName(false))
+			wg := c.executePostStartHook(false)
 			executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 			wg.Wait()
 		}
@@ -1167,7 +1171,8 @@ func (c *container) Start() {
 
 // Kill container
 func (c *container) Kill() {
-	for _, name := range c.InstancesOfStatus("running") {
+	if c.Running() {
+		name := c.ActualName(false)
 		executeHook(c.Hooks().PreStop(), name)
 		fmt.Fprintf(c.CommandsOut(), "Killing container %s ...\n", name)
 		args := []string{"kill", name}
@@ -1178,7 +1183,8 @@ func (c *container) Kill() {
 
 // Stop container
 func (c *container) Stop() {
-	for _, name := range c.InstancesOfStatus("running") {
+	if c.Running() {
+		name := c.ActualName(false)
 		executeHook(c.Hooks().PreStop(), name)
 		fmt.Fprintf(c.CommandsOut(), "Stopping container %s ...\n", name)
 		args := []string{"stop", name}
@@ -1189,7 +1195,8 @@ func (c *container) Stop() {
 
 // Pause container
 func (c *container) Pause() {
-	for _, name := range c.InstancesOfStatus("running") {
+	if c.Running() {
+		name := c.ActualName(false)
 		fmt.Fprintf(c.CommandsOut(), "Pausing container %s ...\n", name)
 		args := []string{"pause", name}
 		executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
@@ -1198,7 +1205,8 @@ func (c *container) Pause() {
 
 // Unpause container
 func (c *container) Unpause() {
-	for _, name := range c.InstancesOfStatus("paused") {
+	if c.Paused() {
+		name := c.ActualName(false)
 		fmt.Fprintf(c.CommandsOut(), "Unpausing container %s ...\n", name)
 		args := []string{"unpause", name}
 		executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
@@ -1207,45 +1215,42 @@ func (c *container) Unpause() {
 
 // Exec command in container
 func (c *container) Exec(cmds []string) {
-	runningInstances := c.InstancesOfStatus("running")
-	if len(runningInstances) == 0 {
+	name := c.ActualName(false)
+	if !c.Running() {
 		c.Start()
-		runningInstances = []string{c.ActualName()}
 	}
-	for _, name := range runningInstances {
-		args := []string{"exec"}
-		if c.ExecParams().Detach {
-			args = append(args, "--detach")
-		}
-		if len(c.ExecParams().DetachKeys()) > 0 {
-			args = append(args, "--detach-keys", c.ExecParams().DetachKeys())
-		}
-		if c.ExecParams().Privileged {
-			args = append(args, "--privileged")
-		}
-		if c.ExecParams().Interactive {
-			args = append(args, "--interactive")
-		}
-		if c.ExecParams().Tty {
-			args = append(args, "--tty")
-		}
-		if len(c.ExecParams().User()) > 0 {
-			args = append(args, "--user", c.ExecParams().User())
-		}
-		args = append(args, name)
-		args = append(args, cmds...)
-		executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
+	args := []string{"exec"}
+	if c.ExecParams().Detach {
+		args = append(args, "--detach")
 	}
+	if len(c.ExecParams().DetachKeys()) > 0 {
+		args = append(args, "--detach-keys", c.ExecParams().DetachKeys())
+	}
+	if c.ExecParams().Privileged {
+		args = append(args, "--privileged")
+	}
+	if c.ExecParams().Interactive {
+		args = append(args, "--interactive")
+	}
+	if c.ExecParams().Tty {
+		args = append(args, "--tty")
+	}
+	if len(c.ExecParams().User()) > 0 {
+		args = append(args, "--user", c.ExecParams().User())
+	}
+	args = append(args, name)
+	args = append(args, cmds...)
+	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 }
 
 // Remove container
 func (c *container) Rm(force bool) {
-	runningInstances := c.InstancesOfStatus("running")
-	for _, name := range c.InstancesOfStatus("existing") {
-		containerIsRunning := includes(runningInstances, name)
+	if c.Exists() {
+		name := c.ActualName(false)
+		containerIsRunning := c.Running()
 		if !force && containerIsRunning {
 			fmt.Fprintf(c.CommandsOut(), "Cannot remove running container %s, use --force to remove anyway.\n", name)
-			break
+			return
 		}
 		args := []string{"rm"}
 		if force && containerIsRunning {
@@ -1269,7 +1274,8 @@ func (c *container) Rm(force bool) {
 
 // Dump container logs
 func (c *container) Logs(follow bool, since string, tail string) (sources []LogSource) {
-	for _, name := range c.InstancesOfStatus("existing") {
+	if c.Exists() {
+		name := c.ActualName(false)
 		args := []string{"logs"}
 		if follow {
 			args = append(args, "-f")
@@ -1316,39 +1322,6 @@ func (c *container) PrefixedName() string {
 	return cfg.Prefix() + c.Name()
 }
 
-func (c *container) InstancesOfStatus(status string) []string {
-	if c.Unique() {
-		args := []string{
-			"ps",
-			"--quiet",
-			"--format='{{.Names}}'",
-			"--filter='name=" + c.PrefixedName() + "-unique-'",
-		}
-		if status == "running" {
-			args = append(args, "--filter='status=running'")
-		} else if status == "paused" {
-			args = append(args, "--filter='status=paused'")
-		} else if status == "existing" {
-			args = append(args, "--all")
-		}
-		output, err := commandOutput("docker", args)
-		if err != nil || len(output) == 0 {
-			return []string{}
-		} else {
-			return strings.Split(output, "\n")
-		}
-	} else {
-		if status == "running" && c.running() {
-			return []string{c.ActualName()}
-		} else if status == "paused" && c.paused() {
-			return []string{c.ActualName()}
-		} else if status == "existing" && c.Exists() {
-			return []string{c.ActualName()}
-		}
-	}
-	return []string{}
-}
-
 func (c *container) SetCommandsOutput(stdout, stderr io.Writer) {
 	c.stdout = stdout
 	c.stderr = stderr
@@ -1368,14 +1341,14 @@ func (c *container) CommandsErr() io.Writer {
 	return c.stderr
 }
 
-func (c *container) running() bool {
+func (c *container) Running() bool {
 	if !c.Exists() {
 		return false
 	}
 	return inspectBool(c.ID(), "{{.State.Running}}")
 }
 
-func (c *container) paused() bool {
+func (c *container) Paused() bool {
 	if !c.Exists() {
 		return false
 	}
@@ -1384,7 +1357,7 @@ func (c *container) paused() bool {
 
 // Build image for container
 func (c *container) buildImage(nocache bool) {
-	executeHook(c.Hooks().PreBuild(), c.ActualName())
+	executeHook(c.Hooks().PreBuild(), c.ActualName(false))
 	fmt.Fprintf(c.CommandsOut(), "Building image %s ...\n", c.Image())
 	args := []string{"build"}
 	if nocache {
@@ -1400,7 +1373,7 @@ func (c *container) buildImage(nocache bool) {
 
 	args = append(args, c.BuildParams().Context())
 	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
-	executeHook(c.Hooks().PostBuild(), c.ActualName())
+	executeHook(c.Hooks().PostBuild(), c.ActualName(false))
 }
 
 // Return the image id of a tag, or an empty string if it doesn't exist
