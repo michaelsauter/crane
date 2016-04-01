@@ -10,7 +10,7 @@ if [ -z "$version" ]; then
 fi
 
 go_path=$(cd ../../../../; pwd)
-docker_options="--rm -it -v $go_path:/go -w /go/src/github.com/michaelsauter/crane"
+docker_options="--rm -it -v $go_path:/go -w /go/src/github.com/michaelsauter/crane -e CGO_ENABLED=0"
 docker_image="michaelsauter/golang:1.6"
 
 echo "Running tests..."
