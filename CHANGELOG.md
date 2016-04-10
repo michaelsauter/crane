@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+* Implicit ad-hoc containers. The pre-defined `unique` key is removed in favour
+  of treating every container as unique when a command is passed via the CLI.
+  The container name is suffixed with a timestamp, and the following changes are
+  made to the configuration:
+
+  * `publish`, `publish-all`, `ip`, `ip6` and `detach` are disabled
+  * `rm` is enabled
+
+  Note that ad-hoc containers are not targeted by Crane in any way, e.g. when
+  running `crane rm`.
+
+  _@michaelsauter_
+
 * Add `--only` flag to restrict command to a container or group. This can be
   used for example to start one container without its dependencies.
 
