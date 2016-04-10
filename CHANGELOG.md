@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.8.0 (2016-04-10)
+
 * Implicit ad-hoc containers. The pre-defined `unique` key is removed in favour
   of treating every container as unique when a command is passed via the CLI.
   The container name is suffixed with a timestamp, and the following changes are
