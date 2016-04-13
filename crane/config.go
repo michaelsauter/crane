@@ -18,7 +18,7 @@ import (
 )
 
 type Config interface {
-	DependencyMap(excluded []string) map[string]*Dependencies
+	DependencyMap() map[string]*Dependencies
 	ContainersForReference(reference string) (result []string)
 	Path() string
 	UniqueID() string
@@ -305,10 +305,10 @@ func (c *config) validate() {
 }
 
 // DependencyMap returns a map of containers to their dependencies.
-func (c *config) DependencyMap(excluded []string) map[string]*Dependencies {
+func (c *config) DependencyMap() map[string]*Dependencies {
 	dependencyMap := make(map[string]*Dependencies)
 	for _, container := range c.containerMap {
-		if !includes(excluded, container.Name()) {
+		if includes(allowed, container.Name()) {
 			dependencyMap[container.Name()] = container.Dependencies()
 		}
 	}

@@ -18,7 +18,7 @@ type Target struct {
 // dynamic targets "dependencies" and/or "affected"
 // are included in the targetFlag.
 // Additionally, the target is sorted alphabetically.
-func NewTarget(dependencyMap map[string]*Dependencies, targetFlag string, excluded []string) (target Target, err error) {
+func NewTarget(dependencyMap map[string]*Dependencies, targetFlag string) (target Target, err error) {
 
 	targetParts := strings.Split(targetFlag, "+")
 	targetName := targetParts[0]
@@ -43,7 +43,7 @@ func NewTarget(dependencyMap map[string]*Dependencies, targetFlag string, exclud
 
 	initialTarget := cfg.ContainersForReference(targetName)
 	for _, c := range initialTarget {
-		if !includes(excluded, c) {
+		if includes(allowed, c) {
 			target.initial = append(target.initial, c)
 		}
 	}

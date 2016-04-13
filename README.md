@@ -16,22 +16,22 @@ continuous integration.
   * [Groups and Targeting](#groups-and-targeting)
   * [Extending the target](#extending-the-target)
   * [Excluding containers](#excluding-containers)
+  * [Ad hoc commands](#ad-hoc-commands)
   * [Networking](#networking)
   * [Volumes](#volumes)
   * [Hooks](#hooks)
   * [Parallism](#parallism)
   * [Container Prefixes](#container-prefixes)
   * [Override image tag](#override-image-tag)
-  * [Unique Names](#unique-names)
   * [Generate command](#generate-command)
   * [YAML advanced usage](#yaml-advanced-usage)
 
 
 ## Installation
-The latest release (2.6.0) can be installed via:
+The latest release (2.8.0) can be installed via:
 
 ```
-bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/v2.6.0/download.sh`" && sudo mv crane /usr/local/bin/crane
+bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/v2.8.0/download.sh`" && sudo mv crane /usr/local/bin/crane
 ```
 
 Older releases can be found on the
@@ -39,7 +39,7 @@ Older releases can be found on the
 build Crane yourself by using the standard Go toolchain.
 
 Please have a look at the
-[changelog](https://github.com/michaelsauter/crane/blob/v2.6.0/CHANGELOG.md)
+[changelog](https://github.com/michaelsauter/crane/blob/v2.8.0/CHANGELOG.md)
 when upgrading.
 
 Of course, you will need to have Docker (>= 1.6) installed.
@@ -94,11 +94,11 @@ The configuration defines a map of containers in either JSON or YAML. By default
 The map of containers consists of the name of the container mapped to the container configuration, with the following keys:
 
 * `image` (string, required): Name of the image to build/pull
-* `unique` (boolean, optional) `true` assigns a unique name to the container (experimental)
 * `requires` (array) Container dependencies (experimental)
 * `run` (object, optional): Parameters mapped to Docker's `run` & `create`.
 	* `add-host` (array) Add custom host-to-IP mappings.
 	* `blkio-weight` (integer) Need Docker >= 1.7
+	* `blkio-weight-device` (array) Need Docker >= 1.10
 	* `cap-add` (array) Add Linux capabilities.
 	* `cap-drop` (array) Drop Linux capabilities.
 	* `cgroup-parent` (string)
@@ -108,7 +108,12 @@ The map of containers consists of the name of the container mapped to the contai
 	* `cpuset` (integer)
 	* `cpu-shares` (integer)
 	* `detach` (boolean) `sudo docker attach <container name>` will work as normal.
+	* `detach-keys` (string) Need Docker >= 1.10
 	* `device` (array) Add host devices.
+	* `device-read-bps` (array) Need Docker >= 1.10
+	* `device-read-iops` (array) Need Docker >= 1.10
+	* `device-write-bp` (array) Need Docker >= 1.10
+	* `device-write-iops` (array) Need Docker >= 1.10
 	* `dns` (array)
 	* `dns-opt` (array) Need Docker >= 1.9
 	* `dns-search` (array)
@@ -119,7 +124,10 @@ The map of containers consists of the name of the container mapped to the contai
 	* `group-add` (array) Need Docker >= 1.8
 	* `hostname` (string)
 	* `interactive` (boolean)
+	* `ip` (string) ip address. Need Docker >= 1.10
+	* `ip6` (string) ipv6 address. Need Docker >= 1.10
 	* `ipc` (string) The `container:id` syntax is not supported, use `container:name` if you want to reuse another container IPC.
+	* `isolation` (string) Need Docker >= 1.10
 	* `kernel-memory` (string) Need Docker >= 1.9
 	* `label` (array/mapping) Can be declared as a string array with `"key[=value]"` items or a string-to-string mapping where each `key: value` will be translated to the corresponding `"key=value"` string.
 	* `label-file` (array)
@@ -133,7 +141,9 @@ The map of containers consists of the name of the container mapped to the contai
 	* `memory-swap` (string)
 	* `memory-swappiness` (int) Need Docker >= 1.8
 	* `net` (string) The `container:id` syntax is not supported, use `container:name` if you want to reuse another container network stack.
+	* `net-alias` (array) Need Docker >= 1.10
 	* `oom-kill-disable` (bool) Need Docker >= 1.7
+	* `oom-score-adj` (string) Need Docker >= 1.10
 	* `pid` (string)
 	* `privileged` (boolean)
 	* `publish` (array) Map network ports to the container.
@@ -141,14 +151,17 @@ The map of containers consists of the name of the container mapped to the contai
 	* `read-only` (boolean)
 	* `restart` (string) Restart policy.
 	* `security-opt` (array)
+	* `shm-size` (string) Need Docker >= 1.10
 	* `stop-signal` (string)  Need Docker >= 1.9
 	* `sig-proxy` (boolean) `true` by default
 	* `rm` (boolean)
+	* `tmpfs` (array) Need Docker >= 1.10
 	* `tty` (boolean)
 	* `ulimit` (array)
 	* `user` (string)
 	* `uts` (string) Need Docker >= 1.7
 	* `volume` (array) In contrast to plain Docker, the host path can be relative.
+	* `volume-driver` (string) Need Docker >= 1.10
 	* `volumes-from` (array) Mount volumes from other containers
 	* `workdir` (string)
 	* `cmd` (array/string) Command to append to `docker run` (overwriting `CMD`).
@@ -156,11 +169,12 @@ The map of containers consists of the name of the container mapped to the contai
 	* `volumes` (boolean)
 * `start` (object, optional): Parameters mapped to Docker's `start`.
 	* `attach` (boolean)
+	* `detach-keys` (string) Need Docker >= 1.10
 	* `interactive` (boolean)
 * `build` (object, optional): Parameters mapped to Docker's `build`.
 	* `context` (string)
 	* `file` (string)
-    * `build-arg` (array) Provide build arguments
+    * `build-arg` (array/mapping) Provide build arguments. Need Docker >= 1.9
 * `push` (object, optional): Parameters related to Docker's `push`.
   * `skip` (boolean): prevents pushing image when `push` is called
   * `registry` (string): Docker registry to connect to (will be prefixed to the image name. e.g. `registry.my/user/image`)
@@ -169,8 +183,12 @@ The map of containers consists of the name of the container mapped to the contai
   * `registry` (string): Docker registry to connect to (will be prefixed to the image name. e.g. `registry.my/user/image`)
   * `override_user` (string): Override the current image user (e.g. `registry.my/user/image` -> `registry.my/override/image`)
 * `exec` (object, optional): Parameters mapped to Docker's `exec`.
-  * `interactive` (boolean)
-  * `tty` (boolean)
+	* `detach` (boolean)
+	* `detach-keys` (string) Need Docker >= 1.10
+	* `interactive` (boolean)
+	* `privileged` (boolean) Need Docker >= 1.9
+	* `tty` (boolean)
+	* `user` (string) Need Docker >= 1.7
 
 Note that basic environment variable expansion (`${FOO}`, `$FOO`) is supported throughout the configuration, but advanced shell features such as command substitution (`$(cat foo)`, `` `cat foo` ``) or advanced expansions (`sp{el,il,al}l`, `foo*`, `~/project`, `$((A * B))`, `${PARAMETER#PATTERN}`) are *not* as the Docker CLI is called directly. Use `$$` for escaping a raw `$`.
 
@@ -292,6 +310,15 @@ This feature is experimental, which means it can be changed or even removed
 in every minor version update.
 
 
+### Ad hoc commands
+If you pass a command on the CLI to `lift` or `run`, Crane will add a timestamp
+to the container name (e.g. `foo` will become `foo-1447155694523`), making it
+possible to have multiple containers based on the same Crane config. Those ad
+hoc containers will have `ip`, `ip6`, `publish`, `publish-all` and `detach`
+disabled, and `rm` enabled. This feature is experimental, which means it can be
+changed or even removed in every minor version update.
+
+
 ### Networking
 Docker networks are supported via the top-level config `networks`, which does not take additional parameters at this stage. As links are not strict dependencies for containers attached to a user-defined network (but simply aliases), `requires` can be used instead to indicate that a container must be started for another one to be functional. Networks are automatically created by Crane when necessary, and never cleaned up. When a [prefix](#container-prefixes) is used, it is also applied to the network.
 
@@ -409,15 +436,6 @@ By using a the `--tag` flag, it is possible to globally overrides image tags. If
 you specify `--tag 2.0-rc2`, an image name `repo/app:1.0` is treated as
 `repo/app:2.0-rc2`. The `CRANE_TAG` environment variable can also be used to
 set the global tag.
-
-
-### Unique names
-If `unique` is set to true, Crane will add a timestamp to the container name
-(e.g. `foo` will become `foo-unique-1447155694523`), making it possible to have
-multiple containers based on the same Crane config. Consider setting `rm` to
-`true` at the same time to avoid lots of exited containers. This feature is
-experimental, which means it can be changed or even removed in every minor
-version update.
 
 
 ### Generate command
