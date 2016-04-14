@@ -174,7 +174,14 @@ The map of containers consists of the name of the container mapped to the contai
 * `build` (object, optional): Parameters mapped to Docker's `build`.
 	* `context` (string)
 	* `file` (string)
-  * `build-arg` (array/mapping) Provide build arguments. Need Docker >= 1.9
+    * `build-arg` (array/mapping) Provide build arguments. Need Docker >= 1.9
+* `push` (object, optional): Parameters related to Docker's `push`.
+  * `skip` (boolean): prevents pushing image when `push` is called
+  * `registry` (string): Docker registry to connect to (will be prefixed to the image name. e.g. `registry.my/user/image`)
+  * `override_user` (string): Override the current image user (e.g. `registry.my/user/image` -> `registry.my/override/image`)
+* `pull` (object, optional): Parameters related to Docker's `pull`.
+  * `registry` (string): Docker registry to connect to (will be prefixed to the image name. e.g. `registry.my/user/image`)
+  * `override_user` (string): Override the current image user (e.g. `registry.my/user/image` -> `registry.my/override/image`)
 * `exec` (object, optional): Parameters mapped to Docker's `exec`.
 	* `detach` (boolean)
 	* `detach-keys` (string) Need Docker >= 1.10

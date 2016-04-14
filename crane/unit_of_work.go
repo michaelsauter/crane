@@ -15,7 +15,6 @@ type UnitOfWork struct {
 }
 
 func NewUnitOfWork(dependencyMap map[string]*Dependencies, targeted []string) (uow *UnitOfWork, err error) {
-
 	uow = &UnitOfWork{
 		targeted:       targeted,
 		containers:     targeted,
@@ -69,7 +68,6 @@ func NewUnitOfWork(dependencyMap map[string]*Dependencies, targeted []string) (u
 	} else if len(uow.containers) == 0 {
 		err = fmt.Errorf("Command cannot be applied to any container.")
 	}
-
 	return
 }
 
@@ -199,7 +197,7 @@ func (uow *UnitOfWork) Provision(noCache bool, parallel int) {
 // Pull containers.
 func (uow *UnitOfWork) PullImage() {
 	for _, container := range uow.Targeted() {
-		if len(container.BuildParams().Context()) == 0 {
+		if len(container.BuildParams().Context()) == 0 || container.PullParameters().CanBePulled() {
 			container.PullImage()
 		}
 	}
