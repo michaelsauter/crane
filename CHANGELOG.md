@@ -2,6 +2,50 @@
 
 ## Unreleased
 
+## 2.8.0 (2016-04-10)
+
+* Implicit ad-hoc containers. The pre-defined `unique` key is removed in favour
+  of treating every container as unique when a command is passed via the CLI.
+  The container name is suffixed with a timestamp, and the following changes are
+  made to the configuration:
+
+  * `publish`, `publish-all`, `ip`, `ip6` and `detach` are disabled
+  * `rm` is enabled
+
+  Note that ad-hoc containers are not targeted by Crane in any way, e.g. when
+  running `crane rm`.
+
+  _@michaelsauter_
+
+* Add `--only` flag to restrict command to a container or group. This can be
+  used for example to start one container without its dependencies.
+
+  _@michaelsauter_
+
+* Rename short flag `--output` for `generate` command from `-o` to `-O` since
+  `-o` is the short flag for `--only` now. Since the generate feature is
+  marked as experimental, this change is done in a minor version.
+
+  _@michaelsauter_
+
+## 2.7.0 (2016-03-20)
+
+* Refactor `exclude` behaviour to make it easier to support `only` in the future
+
+  _@michaelsauter_
+
+* Add missing flags `--ip` and `--ip6` from Docker 1.10 to Crane
+
+  _@dreamcat4_
+
+* Better handling of incorrect syntax for `env` and `label` configuration values
+
+  _@bjaglin_
+
+* `docker run/exec/start` flags catch-up in Crane configuration.
+
+  _@bjaglin_
+
 * Add new `build-arg` key to the `build` map. Equivalent of `docker build --build-arg KEY=VALUE`
 
   Example:

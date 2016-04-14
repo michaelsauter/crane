@@ -127,7 +127,7 @@ func (containers Containers) Status(notrunc bool) {
 // Return the length of the longest container name.
 func (containers Containers) maxNameLength() (maxPrefixLength int) {
 	for _, container := range containers {
-		prefixLength := len(container.ActualName())
+		prefixLength := len(container.ActualName(false))
 		if prefixLength > maxPrefixLength {
 			maxPrefixLength = prefixLength
 		}

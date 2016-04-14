@@ -6,13 +6,17 @@ import (
 )
 
 func TestNewTarget(t *testing.T) {
+	defer func() {
+		allowed = []string{}
+	}()
+	allowed = []string{"a", "b", "c"}
 	containerMap := NewStubbedContainerMap(true,
 		&container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},
 		&container{RawName: "b", RawRun: RunParameters{RawLink: []string{"c:c"}}},
 		&container{RawName: "c"},
 	)
 	cfg = &config{containerMap: containerMap}
-	dependencyMap := cfg.DependencyMap([]string{})
+	dependencyMap := cfg.DependencyMap()
 
 	examples := []struct {
 		target   string
@@ -77,19 +81,23 @@ func TestNewTarget(t *testing.T) {
 	}
 
 	for _, example := range examples {
-		target, _ := NewTarget(dependencyMap, example.target, []string{})
+		target, _ := NewTarget(dependencyMap, example.target)
 		assert.Equal(t, example.expected, target)
 	}
 }
 
 func TestNewTargetNonExisting(t *testing.T) {
+	defer func() {
+		allowed = []string{}
+	}()
+	allowed = []string{"a", "b"}
 	containerMap := NewStubbedContainerMap(false,
 		&container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},
 		&container{RawName: "b"},
 	)
 
 	cfg = &config{containerMap: containerMap}
-	dependencyMap := cfg.DependencyMap([]string{})
+	dependencyMap := cfg.DependencyMap()
 
 	examples := []struct {
 		target   string
@@ -114,12 +122,16 @@ func TestNewTargetNonExisting(t *testing.T) {
 	}
 
 	for _, example := range examples {
-		target, _ := NewTarget(dependencyMap, example.target, []string{})
+		target, _ := NewTarget(dependencyMap, example.target)
 		assert.Equal(t, example.expected, target)
 	}
 }
 
 func TestDeduplicationAll(t *testing.T) {
+	defer func() {
+		allowed = []string{}
+	}()
+	allowed = []string{"a", "b", "c"}
 	containerMap := NewStubbedContainerMap(true,
 		&container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},
 		&container{RawName: "b", RawRun: RunParameters{RawLink: []string{"c:c"}}},
@@ -129,8 +141,8 @@ func TestDeduplicationAll(t *testing.T) {
 		"ab": []string{"a", "b", "a"},
 	}
 	cfg = &config{containerMap: containerMap, groups: groups}
-	dependencyMap := cfg.DependencyMap([]string{})
+	dependencyMap := cfg.DependencyMap()
 
-	target, _ := NewTarget(dependencyMap, "ab+dependencies+affected", []string{})
+	target, _ := NewTarget(dependencyMap, "ab+dependencies+affected")
 	assert.Equal(t, []string{"a", "b", "c"}, target.all())
 }
