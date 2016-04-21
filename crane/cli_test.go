@@ -54,4 +54,18 @@ func TestAllowedContainers(t *testing.T) {
 		sort.Strings(containers)
 		assert.Equal(t, example.expected, containers)
 	}
+
+	// with a default group
+	rawContainerMap = map[string]Container{
+		"a": &container{},
+		"b": &container{},
+		"c": &container{},
+	}
+	groups = map[string][]string{
+		"default": []string{"a", "b"},
+	}
+	cfg = &config{containerMap: rawContainerMap, groups: groups}
+	containers := allowedContainers([]string{}, "")
+	sort.Strings(containers)
+	assert.Equal(t, []string{"a", "b", "c"}, containers)
 }

@@ -239,7 +239,14 @@ func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork), migh
 }
 
 func allowedContainers(excludedReference []string, onlyReference string) (containers []string) {
-	allContainers := cfg.ContainersForReference(onlyReference)
+	allContainers := []string{}
+	if len(onlyReference) == 0 {
+		for name := range cfg.ContainerMap() {
+			allContainers = append(allContainers, name)
+		}
+	} else {
+		allContainers = cfg.ContainersForReference(onlyReference)
+	}
 	excludedContainers := []string{}
 	for _, reference := range excludedReference {
 		excludedContainers = append(excludedContainers, cfg.ContainersForReference(reference)...)
