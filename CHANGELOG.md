@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Fix broken target when a default group is specified. The regression was
+  introduced with #275, and reported in #285.
+
+  _@michaelsauter_
+
 ## 2.8.0 (2016-04-10)
 
 * Implicit ad-hoc containers. The pre-defined `unique` key is removed in favour
