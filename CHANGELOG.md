@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.8.1 (2016-04-21)
+
 * Fix broken target when a default group is specified. The regression was
   introduced with #275, and reported in #285.
 
