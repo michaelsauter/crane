@@ -96,15 +96,19 @@ func (uow *UnitOfWork) Lift(cmds []string, noCache bool, parallel int) {
 	}
 }
 
-func (uow *UnitOfWork) Stats() {
-	args := []string{"stats"}
+func (uow *UnitOfWork) Stats(noStream bool) {
+	defaultArgs := []string{"stats"}
+	if noStream {
+		defaultArgs = append(defaultArgs, "--no-stream")
+	}
+	args := defaultArgs
 	for _, container := range uow.Targeted() {
 		if container.Running() {
 			name := container.ActualName(false)
 			args = append(args, name)
 		}
 	}
-	if len(args) > 1 {
+	if len(args) > len(defaultArgs) {
 		executeCommand("docker", args, os.Stdout, os.Stderr)
 	} else {
 		printNoticef("None of the targeted container is running.\n")

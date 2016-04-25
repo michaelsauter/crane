@@ -59,6 +59,10 @@ var (
 		"stats",
 		"Displays statistics about containers.",
 	)
+	statsNoStreamFlag = statsCommand.Flag(
+		"no-stream",
+		"Disable stats streaming (Docker >= 1.7).",
+	).Short('n').Bool()
 	statsTargetArg = statsCommand.Arg("target", "Target of command").String()
 
 	statusCommand = app.Command(
@@ -272,7 +276,7 @@ func runCli() {
 
 	case statsCommand.FullCommand():
 		commandAction(*statsTargetArg, func(uow *UnitOfWork) {
-			uow.Stats()
+			uow.Stats(*statsNoStreamFlag)
 		}, false)
 
 	case statusCommand.FullCommand():
