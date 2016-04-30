@@ -78,7 +78,7 @@ Following are a list of supported commands and possible options:
 | unpause     | unpause          |  |
 | exec        | exec             | Starts container first if not running yet. |
 | logs        | logs             | Logs of containers are multiplexed. Use `--follow` to follow log output. |
-| stats       | stats            | |
+| stats       | stats            | Display resource information about the containers. Use `--no-stream` to disable auto-refresh. |
 | push        | push             | |
 | pull        | pull             | |
 | provision   | pull/build       | Calls Docker's `pull` if no Dockerfile is specified. Otherwise it builds the image, optionally with disabled cache by passing `--no-cache`. |
