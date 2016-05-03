@@ -21,57 +21,57 @@ func TestNewTarget(t *testing.T) {
 		{
 			target: "a+dependencies",
 			expected: Target{
-				initial:      []string{"a"},
-				dependencies: []string{"b", "c"},
-				affected:     []string{},
+				Initial:      []string{"a"},
+				Dependencies: []string{"b", "c"},
+				Affected:     []string{},
 			},
 		},
 		{
 			target: "b+dependencies",
 			expected: Target{
-				initial:      []string{"b"},
-				dependencies: []string{"c"},
-				affected:     []string{},
+				Initial:      []string{"b"},
+				Dependencies: []string{"c"},
+				Affected:     []string{},
 			},
 		},
 		{
 			target: "c+affected",
 			expected: Target{
-				initial:      []string{"c"},
-				dependencies: []string{},
-				affected:     []string{"a", "b"},
+				Initial:      []string{"c"},
+				Dependencies: []string{},
+				Affected:     []string{"a", "b"},
 			},
 		},
 		{
 			target: "b+affected",
 			expected: Target{
-				initial:      []string{"b"},
-				dependencies: []string{},
-				affected:     []string{"a"},
+				Initial:      []string{"b"},
+				Dependencies: []string{},
+				Affected:     []string{"a"},
 			},
 		},
 		{
 			target: "b+dependencies+affected",
 			expected: Target{
-				initial:      []string{"b"},
-				dependencies: []string{"c"},
-				affected:     []string{"a"},
+				Initial:      []string{"b"},
+				Dependencies: []string{"c"},
+				Affected:     []string{"a"},
 			},
 		},
 		{
 			target: "a+d",
 			expected: Target{
-				initial:      []string{"a"},
-				dependencies: []string{"b", "c"},
-				affected:     []string{},
+				Initial:      []string{"a"},
+				Dependencies: []string{"b", "c"},
+				Affected:     []string{},
 			},
 		},
 		{
 			target: "c+a",
 			expected: Target{
-				initial:      []string{"c"},
-				dependencies: []string{},
-				affected:     []string{"a", "b"},
+				Initial:      []string{"c"},
+				Dependencies: []string{},
+				Affected:     []string{"a", "b"},
 			},
 		},
 	}
@@ -98,17 +98,17 @@ func TestNewTargetNonExisting(t *testing.T) {
 		{
 			target: "a+dependencies",
 			expected: Target{
-				initial:      []string{"a"},
-				dependencies: []string{"b"},
-				affected:     []string{},
+				Initial:      []string{"a"},
+				Dependencies: []string{"b"},
+				Affected:     []string{},
 			},
 		},
 		{
 			target: "b+affected",
 			expected: Target{
-				initial:      []string{"b"},
-				dependencies: []string{},
-				affected:     []string{},
+				Initial:      []string{"b"},
+				Dependencies: []string{},
+				Affected:     []string{},
 			},
 		},
 	}

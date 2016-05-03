@@ -7,9 +7,9 @@ import (
 )
 
 type Target struct {
-	initial      []string
-	dependencies []string
-	affected     []string
+	Initial      []string
+	Dependencies []string
+	Affected     []string
 }
 
 // NewTarget receives the specified target
@@ -36,25 +36,25 @@ func NewTarget(dependencyMap map[string]*Dependencies, targetFlag string, exclud
 	}
 
 	target = Target{
-		initial:      []string{},
-		dependencies: []string{},
-		affected:     []string{},
+		Initial:      []string{},
+		Dependencies: []string{},
+		Affected:     []string{},
 	}
 
 	initialTarget := cfg.ContainersForReference(targetName)
 	for _, c := range initialTarget {
 		if !includes(excluded, c) {
-			target.initial = append(target.initial, c)
+			target.Initial = append(target.Initial, c)
 		}
 	}
 
 	if extendDependencies {
 		var (
 			dependenciesSet = make(map[string]struct{})
-			cascadingSeeds  = []string{}
+			cascadingSeeds = []string{}
 		)
 		// start from the explicitly targeted target
-		for _, name := range target.initial {
+		for _, name := range target.Initial {
 			dependenciesSet[name] = struct{}{}
 			cascadingSeeds = append(cascadingSeeds, name)
 		}
@@ -78,21 +78,21 @@ func NewTarget(dependencyMap map[string]*Dependencies, targetFlag string, exclud
 		}
 
 		for name := range dependenciesSet {
-			if !includes(target.initial, name) {
-				target.dependencies = append(target.dependencies, name)
+			if !includes(target.Initial, name) {
+				target.Dependencies = append(target.Dependencies, name)
 			}
 		}
 
-		sort.Strings(target.dependencies)
+		sort.Strings(target.Dependencies)
 	}
 
 	if extendAffected {
 		var (
-			affected       = make(map[string]bool)
+			affected = make(map[string]bool)
 			cascadingSeeds = []string{}
 		)
 		// start from the explicitly targeted target
-		for _, name := range target.initial {
+		for _, name := range target.Initial {
 			affected[name] = true
 			cascadingSeeds = append(cascadingSeeds, name)
 		}
@@ -117,12 +117,12 @@ func NewTarget(dependencyMap map[string]*Dependencies, targetFlag string, exclud
 		}
 
 		for name, included := range affected {
-			if included && !includes(target.initial, name) {
-				target.affected = append(target.affected, name)
+			if included && !includes(target.Initial, name) {
+				target.Affected = append(target.Affected, name)
 			}
 		}
 
-		sort.Strings(target.affected)
+		sort.Strings(target.Affected)
 	}
 
 	return
@@ -141,11 +141,11 @@ func (t Target) includes(needle string) bool {
 
 // Return all targeted containers, sorted alphabetically
 func (t Target) all() []string {
-	all := t.initial
-	for _, name := range t.dependencies {
+	all := t.Initial
+	for _, name := range t.Dependencies {
 		all = append(all, name)
 	}
-	for _, name := range t.affected {
+	for _, name := range t.Affected {
 		all = append(all, name)
 	}
 	sort.Strings(all)
