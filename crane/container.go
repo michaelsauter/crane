@@ -821,7 +821,7 @@ func (c *container) executePostStartHook(adHoc bool) *sync.WaitGroup {
 			_, _, err := r.ReadLine()
 			cmd.Process.Kill()
 			if err != nil {
-				printNoticef("Could not execute post-start hook for %s.", c.ActualName(adHoc))
+				printNoticef("Could not execute post-start hook for %s: %s.", c.ActualName(adHoc), err)
 			} else {
 				executeHook(c.Hooks().PostStart(), c.ActualName(adHoc))
 			}
