@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+* Add more error output when hook execution fails
+
+  _@michaelsauter_
+
+* Add support for `--no-stream` to `crane stats` (Docker >= 1.7)
+
+  _@bjaglin_
+
 ## 2.8.1 (2016-04-21)
 
 * Fix broken target when a default group is specified. The regression was
