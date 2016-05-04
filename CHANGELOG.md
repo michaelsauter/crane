@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.8.2 (2016-05-04)
+
 * Add more error output when hook execution fails
 
   _@michaelsauter_
