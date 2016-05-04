@@ -8,6 +8,10 @@
 
   _@michaelsauter_
 
+* Fix usage of CLI long flags prefixed by `--no-`
+
+  _@bjaglin_
+
 * Add support for `--no-stream` to `crane stats` (Docker >= 1.7)
 
   _@bjaglin_
