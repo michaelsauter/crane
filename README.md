@@ -299,7 +299,11 @@ Excluded containers' declaration _and_ references in the configuration file
 will be completely ignored, so their dependencies will also be excluded
 (unless they are also required by other non-excluded containers).
 
-This feature is experimental, which means it can be changed or even removed
+Apart from excluding containers, it is also possible to limit the target to just
+one container or group with `--only` (or via `CRANE_ONLY`). The flag cannot be
+repeated. Containers outside the targets will not be considered by Crane then.
+
+Both features are experimental, which means they can be changed or even removed
 in every minor version update.
 
 

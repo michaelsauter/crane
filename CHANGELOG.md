@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+* Add `--dry-run` option to see what a certain command would do without actually
+  doing anything.
+
+  _@michaelsauter_
+
+* Add `--subnet` support for networks
+
+  _@michaelsauter_
+
+* Document `--only` flag
+
+  _@michaelsauter_
+
 ## 2.8.2 (2016-05-04)
 
 * Add more error output when hook execution fails
