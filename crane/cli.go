@@ -14,6 +14,7 @@ var allowed []string
 var (
 	app         = kingpin.New("crane", "Lift containers with ease").Interspersed(false).DefaultEnvars()
 	verboseFlag = app.Flag("verbose", "Enable verbose output.").Short('v').Bool()
+	dryRunFlag = app.Flag("dry-run", "Dry run (implicit verbose, no side effects).").Bool()
 	configFlag  = app.Flag(
 		"config",
 		"Location of config file.",
@@ -204,7 +205,11 @@ var (
 )
 
 func isVerbose() bool {
-	return *verboseFlag
+	return *verboseFlag || *dryRunFlag
+}
+
+func isDryRun() bool {
+	return *dryRunFlag
 }
 
 func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork), mightStartRelated bool) {

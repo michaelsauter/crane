@@ -121,34 +121,39 @@ func executeHook(hook string, containerName string) {
 
 func executeCommand(name string, args []string, stdout, stderr io.Writer) {
 	if isVerbose() {
-		printInfof("\n--> %s %s\n", name, strings.Join(args, " "))
+		printInfof("--> %s %s\n", name, strings.Join(args, " "))
 	}
-	cmd := exec.Command(name, args...)
-	if cfg != nil {
-		cmd.Dir = cfg.Path()
-	}
-	cmd.Stdout = stdout
-	cmd.Stderr = stderr
-	cmd.Stdin = os.Stdin
-	cmd.Run()
-	if !cmd.ProcessState.Success() {
-		status := cmd.ProcessState.Sys().(syscall.WaitStatus).ExitStatus()
-		panic(StatusError{errors.New(cmd.ProcessState.String()), status})
+	if !isDryRun() {
+		cmd := exec.Command(name, args...)
+		if cfg != nil {
+			cmd.Dir = cfg.Path()
+		}
+		cmd.Stdout = stdout
+		cmd.Stderr = stderr
+		cmd.Stdin = os.Stdin
+		cmd.Run()
+		if !cmd.ProcessState.Success() {
+			status := cmd.ProcessState.Sys().(syscall.WaitStatus).ExitStatus()
+			panic(StatusError{errors.New(cmd.ProcessState.String()), status})
+		}
 	}
 }
 
 func executeCommandBackground(name string, args []string) (cmd *exec.Cmd, stdout io.ReadCloser, stderr io.ReadCloser) {
 	if isVerbose() {
-		printInfof("\n--> %s %s\n", name, strings.Join(args, " "))
+		printInfof("--> %s %s\n", name, strings.Join(args, " "))
 	}
-	cmd = exec.Command(name, args...)
-	if cfg != nil {
-		cmd.Dir = cfg.Path()
+	if !isDryRun() {
+		cmd = exec.Command(name, args...)
+		if cfg != nil {
+			cmd.Dir = cfg.Path()
+		}
+		stdout, _ = cmd.StdoutPipe()
+		stderr, _ = cmd.StderrPipe()
+		cmd.Start()
+		return cmd, stdout, stderr
 	}
-	stdout, _ = cmd.StdoutPipe()
-	stderr, _ = cmd.StderrPipe()
-	cmd.Start()
-	return cmd, stdout, stderr
+	return nil, nil, nil
 }
 
 func commandOutput(name string, args []string) (string, error) {
