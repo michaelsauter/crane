@@ -810,22 +810,24 @@ func (c *container) executePostStartHook(adHoc bool) *sync.WaitGroup {
 	var wg sync.WaitGroup
 
 	if len(c.Hooks().PostStart()) > 0 {
-		wg.Add(1)
 		cmd, cmdOut, _ := executeCommandBackground("docker", []string{"events", "--filter", "event=start", "--filter", "container=" + c.ActualName(adHoc)})
-		go func() {
-			defer func() {
-				handleRecoveredError(recover())
-				wg.Done()
+		if cmd != nil {
+			wg.Add(1)
+			go func() {
+				defer func() {
+					handleRecoveredError(recover())
+					wg.Done()
+				}()
+				r := bufio.NewReader(cmdOut)
+				_, _, err := r.ReadLine()
+				cmd.Process.Kill()
+				if err != nil {
+					printNoticef("Could not execute post-start hook for %s: %s.", c.ActualName(adHoc), err)
+				} else {
+					executeHook(c.Hooks().PostStart(), c.ActualName(adHoc))
+				}
 			}()
-			r := bufio.NewReader(cmdOut)
-			_, _, err := r.ReadLine()
-			cmd.Process.Kill()
-			if err != nil {
-				printNoticef("Could not execute post-start hook for %s: %s.", c.ActualName(adHoc), err)
-			} else {
-				executeHook(c.Hooks().PostStart(), c.ActualName(adHoc))
-			}
-		}()
+		}
 	}
 
 	return &wg
@@ -1290,12 +1292,14 @@ func (c *container) Logs(follow bool, since string, tail string) (sources []LogS
 		// them if the user doesn't want to see them
 		args = append(args, "-t")
 		args = append(args, name)
-		_, stdout, stderr := executeCommandBackground("docker", args)
-		sources = append(sources, LogSource{
-			Stdout: stdout,
-			Stderr: stderr,
-			Name:   name,
-		})
+		cmd, stdout, stderr := executeCommandBackground("docker", args)
+		if cmd != nil {
+			sources = append(sources, LogSource{
+				Stdout: stdout,
+				Stderr: stderr,
+				Name:   name,
+			})
+		}
 	}
 	return
 }
