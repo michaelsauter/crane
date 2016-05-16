@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.9.0 (2016-05-16)
+
 * Add `--dry-run` option to see what a certain command would do without actually
   doing anything.
 
