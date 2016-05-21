@@ -20,7 +20,7 @@ continuous integration.
   * [Networking](#networking)
   * [Volumes](#volumes)
   * [Hooks](#hooks)
-  * [Parallism](#parallism)
+  * [Parallelism](#parallelism)
   * [Container Prefixes](#container-prefixes)
   * [Override image tag](#override-image-tag)
   * [Generate command](#generate-command)
@@ -410,7 +410,7 @@ The following hooks are currently available:
 Every hook will have the name of the container for which this hook runs available as the environment variable `CRANE_HOOKED_CONTAINER`.
 
 
-### Parallism
+### Parallelism
 By default, Crane executes all commands sequentially. However, you might want
 to increase the level of parallelism for network-heavy operations, in order to
 cut down the overall run time. The `--parallel`/`-l` flag allows you to
