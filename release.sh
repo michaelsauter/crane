@@ -41,6 +41,8 @@ echo "Update repository..."
 git add crane/cli.go download.sh README.md CHANGELOG.md CONTRIBUTORS
 git commit -m "Bump version to ${version}"
 git tag --sign --message="v$version" "v$version"
+git tag --sign --message="latest" --force latest
+
 
 echo "v$version tagged."
 echo "Now, run 'git push origin master && git push --tags' and publish the release on GitHub."
