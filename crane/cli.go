@@ -277,7 +277,7 @@ func runCli() {
 		}, true)
 
 	case versionCommand.FullCommand():
-		fmt.Println("v2.9.0")
+		fmt.Println("v2.9.1")
 
 	case statsCommand.FullCommand():
 		commandAction(*statsTargetArg, func(uow *UnitOfWork) {

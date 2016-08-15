@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 2.9.1 (2016-08-15)
+
+* Fix tag override for images with no tag specified in the config.
+
+  _@michaelsauter_
+
 ## 2.9.0 (2016-05-16)
 
 * Add `--dry-run` option to see what a certain command would do without actually
