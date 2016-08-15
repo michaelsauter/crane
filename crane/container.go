@@ -303,7 +303,13 @@ func (c *container) Image() string {
 	// Replace image tag with global tag
 	startOfTag := strings.LastIndex(image, ":")
 	if startOfTag != -1 {
-		image = image[:startOfTag]
+		// Check that the colon does not refer to a port.
+		// Tags must not contain slashes.
+		tagPart := image[startOfTag+1:]
+		slashPosition := strings.LastIndex(tagPart, "/")
+		if slashPosition == -1 {
+			image = image[:startOfTag]
+		}
 	}
 	return image + ":" + cfg.Tag()
 }

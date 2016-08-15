@@ -129,6 +129,7 @@ func TestImage(t *testing.T) {
 		&container{RawName: "without-tag", RawImage: "test/image-c"},
 		&container{RawName: "image-only", RawImage: "image-d"},
 		&container{RawName: "private-registry", RawImage: "localhost:5000/foo/image-e:2.0"},
+		&container{RawName: "private-registry-without-tag", RawImage: "localhost:5000/foo/image-e"},
 		&container{RawName: "digest", RawImage: "localhost:5000/foo/image-f@sha256:xxx"},
 	}
 	containerMap := make(map[string]*container)
@@ -148,6 +149,8 @@ func TestImage(t *testing.T) {
 	assert.Equal(t, "image-d:rc-1", containerMap["image-only"].Image())
 
 	assert.Equal(t, "localhost:5000/foo/image-e:rc-1", containerMap["private-registry"].Image())
+
+	assert.Equal(t, "localhost:5000/foo/image-e:rc-1", containerMap["private-registry-without-tag"].Image())
 
 	assert.NotEqual(t, "localhost:5000/foo/image-f@sha256:rc-1", containerMap["digest"].Image())
 }
