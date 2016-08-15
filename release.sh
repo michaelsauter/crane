@@ -45,4 +45,4 @@ git tag --sign --message="latest" --force latest
 
 
 echo "v$version tagged."
-echo "Now, run 'git push origin master && git push --tags' and publish the release on GitHub."
+echo "Now, run 'git push origin master && git push --tags --force' and publish the release on GitHub."
