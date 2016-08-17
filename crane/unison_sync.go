@@ -7,6 +7,7 @@ import (
 	"path"
 	"strings"
 	"os"
+	"os/exec"
 )
 
 type UnisonSync interface {
@@ -54,18 +55,29 @@ func (s *unisonSync) Start() {
 
 	// start unison
 	unisonArgs := []string{s.hostDir, "socket://localhost:" + s.publishedPort() + "/", "-auto", "-batch", "-repeat", "watch"}
-	executeCommand("unison", unisonArgs, os.Stdout, os.Stderr)
+	verboseLog("unison", unisonArgs)
+	if !isDryRun() {
+		logfile, _ := os.Create(s.cName + ".log")
+		cmd := exec.Command("unison", unisonArgs...)
+		cmd.Dir = s.configPath
+		cmd.Stdout = logfile
+		cmd.Stderr = logfile
+		cmd.Stdin = nil
+		cmd.Start()
+	}
 }
 
 func (s *unisonSync) Stop() {
 	fmt.Printf("Stopping unison sync for %s ...\n", s.hostDir)
 
 	// stop sync (does not work yet!)
-	pgrepArgs := []string{"-f", "\"unison " + s.hostDir + " socket://localhost:" + s.publishedPort() + "/\""}
-	spid, _ := commandOutput("pgrep", pgrepArgs)
-	ipid, _ := strconv.Atoi(spid)
-	p, _ := os.FindProcess(ipid)
-	p.Kill()
+	if !isDryRun() {
+		pgrepArgs := []string{"-f", "\"unison " + s.hostDir + " socket://localhost:" + s.publishedPort() + "/\""}
+		spid, _ := commandOutput("pgrep", pgrepArgs)
+		ipid, _ := strconv.Atoi(spid)
+		p, _ := os.FindProcess(ipid)
+		p.Kill()
+	}
 	// stop container
 	dockerArgs := []string{"stop", s.cName}
 	executeCommand("docker", dockerArgs, os.Stdout, os.Stderr)

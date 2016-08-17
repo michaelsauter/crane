@@ -119,10 +119,14 @@ func executeHook(hook string, containerName string) {
 	}
 }
 
-func executeCommand(name string, args []string, stdout, stderr io.Writer) {
+func verboseLog(name string, args []string) {
 	if isVerbose() {
 		printInfof("--> %s %s\n", name, strings.Join(args, " "))
 	}
+}
+
+func executeCommand(name string, args []string, stdout, stderr io.Writer) {
+	verboseLog(name, args)
 	if !isDryRun() {
 		cmd := exec.Command(name, args...)
 		if cfg != nil {
@@ -140,9 +144,7 @@ func executeCommand(name string, args []string, stdout, stderr io.Writer) {
 }
 
 func executeCommandBackground(name string, args []string) (cmd *exec.Cmd, stdout io.ReadCloser, stderr io.ReadCloser) {
-	if isVerbose() {
-		printInfof("--> %s %s\n", name, strings.Join(args, " "))
-	}
+	verboseLog(name, args)
 	if !isDryRun() {
 		cmd = exec.Command(name, args...)
 		if cfg != nil {
