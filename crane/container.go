@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"runtime"
 )
 
 type Container interface {
@@ -1121,7 +1122,16 @@ func (c *container) createArgs(cmds []string) []string {
 	}
 	// Volumes
 	for _, volume := range c.RunParams().ActualVolume() {
-		args = append(args, "--volume", volume)
+		if runtime.GOOS == "darwin" {
+			cName := unisonSyncContainerName(cfg.Path(), volume)
+			if inspectBool(cName, "{{.State.Running}}") {
+				args = append(args, "--volumes-from", cName)
+			} else {
+				args = append(args, "--volume", volume)
+			}
+		} else {
+			args = append(args, "--volume", volume)
+		}
 	}
 	// VolumeDriver
 	if len(c.RunParams().VolumeDriver()) > 0 {

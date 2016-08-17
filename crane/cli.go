@@ -202,6 +202,21 @@ var (
 		"The file(s) to write the output to.",
 	).Short('O').String()
 	generateTargetArg = generateCommand.Arg("target", "Target of command").String()
+
+	unisonCommand = app.Command(
+		"unison",
+		"Unison sync",
+	)
+	unisonStartCommand = unisonCommand.Command(
+		"start",
+		"Start unison sync",
+	)
+	unisonStartSyncArg = unisonStartCommand.Arg("snyc", "Folders to sync").String()
+	unisonStopCommand = unisonCommand.Command(
+		"stop",
+		"Stop unison sync",
+	)
+	unisonStopSyncArg = unisonStopCommand.Arg("snyc", "Folders to sync").String()
 )
 
 func isVerbose() bool {
@@ -362,5 +377,18 @@ func runCli() {
 		commandAction(*generateTargetArg, func(uow *UnitOfWork) {
 			uow.Generate(*templateFlag, *outputFlag)
 		}, false)
+
+	case unisonStartCommand.FullCommand():
+		if unisonRequirementsMet() {
+			sync := NewUnisonSync(*configFlag, *unisonStartSyncArg)
+			sync.Start()
+		}
+
+	case unisonStopCommand.FullCommand():
+		if unisonRequirementsMet() {
+			sync := NewUnisonSync(*configFlag, *unisonStopSyncArg)
+			sync.Stop()
+		}
+
 	}
 }
