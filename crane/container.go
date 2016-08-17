@@ -652,11 +652,7 @@ func (r RunParameters) Volume() []string {
 	var volumes []string
 	for _, rawVolume := range r.RawVolume {
 		volume := expandEnv(rawVolume)
-		parts := strings.Split(volume, ":")
-		if !includes(cfg.VolumeNames(), parts[0]) && !path.IsAbs(parts[0]) {
-			parts[0] = cfg.Path() + "/" + parts[0]
-		}
-		volumes = append(volumes, strings.Join(parts, ":"))
+		volumes = append(volumes, volume)
 	}
 	return volumes
 }
@@ -677,6 +673,8 @@ func (r RunParameters) ActualVolume() []string {
 		parts := strings.Split(volume, ":")
 		if includes(cfg.VolumeNames(), parts[0]) {
 			parts[0] = cfg.Volume(parts[0]).ActualName()
+		} else if !path.IsAbs(parts[0]) {
+			parts[0] = cfg.Path() + "/" + parts[0]
 		}
 		vols = append(vols, strings.Join(parts, ":"))
 	}
@@ -736,12 +734,16 @@ func (e ExecParameters) User() string {
 	return expandEnv(e.RawUser)
 }
 
+func containerID(name string) string {
+	// `docker inspect` works for both image and containers, make sure this is a
+	// container payload we get back, otherwise we might end up getting the ID
+	// of the image of the same name.
+	return inspectString(name, "{{if .State}}{{.Id}}{{else}}{{end}}")
+}
+
 func (c *container) ID() string {
 	if len(c.id) == 0 {
-		// `docker inspect` works for both image and containers, make sure this is a
-		// container payload we get back, otherwise we might end up getting the ID
-		// of the image of the same name.
-		c.id = inspectString(c.ActualName(false), "{{if .State}}{{.Id}}{{else}}{{end}}")
+		c.id = containerID(c.ActualName(false))
 	}
 	return c.id
 }
