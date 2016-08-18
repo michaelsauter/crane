@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path"
 	"strings"
+	"strconv"
 )
 
 type UnisonSync interface {
@@ -19,6 +20,8 @@ type unisonSync struct {
 	RawVolume  string
 	RawFlags   string `json:"flags" yaml:"flags"`
 	RawImage   string `json:"image" yaml:"image"`
+	Uid     int `json:"uid" yaml:"uid"`
+	Gid     int `json:"gid" yaml:"gid"`
 	configPath string
 	cName      string
 	volume     string
@@ -58,7 +61,7 @@ func (s *unisonSync) Start(sync bool) {
 		}
 	} else {
 		verboseLog("Starting unison sync for " + s.hostDir())
-		dockerArgs := []string{"run", "--name", s.ContainerName(), "-d", "-P", "-e", "UNISON_DIR=" + s.containerDir(), "-v", s.containerDir(), s.image()}
+		dockerArgs := []string{"run", "--name", s.ContainerName(), "-d", "-P", "-e", "UNISON_DIR="+s.containerDir(), "-e", "UNISON_UID="+strconv.Itoa(s.Uid), "-e", "UNISON_GID="+strconv.Itoa(s.Gid), "-v", s.containerDir(), s.image()}
 		executeHiddenCommand("docker", dockerArgs)
 	}
 
@@ -90,7 +93,7 @@ func (s *unisonSync) image() string {
 	if len(s.RawImage) > 0 {
 		return expandEnv(s.RawImage)
 	}
-	return "onnimonni/unison:2.48.4"
+	return "michaelsauter/unison:2.48.4"
 }
 
 func (s *unisonSync) flags() []string {
