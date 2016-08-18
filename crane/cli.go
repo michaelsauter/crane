@@ -14,7 +14,7 @@ var allowed []string
 var (
 	app         = kingpin.New("crane", "Lift containers with ease").Interspersed(false).DefaultEnvars()
 	verboseFlag = app.Flag("verbose", "Enable verbose output.").Short('v').Bool()
-	dryRunFlag = app.Flag("dry-run", "Dry run (implicit verbose, no side effects).").Bool()
+	dryRunFlag  = app.Flag("dry-run", "Dry run (implicit verbose, no side effects).").Bool()
 	configFlag  = app.Flag(
 		"config",
 		"Location of config file.",
@@ -202,21 +202,6 @@ var (
 		"The file(s) to write the output to.",
 	).Short('O').String()
 	generateTargetArg = generateCommand.Arg("target", "Target of command").String()
-
-	unisonCommand = app.Command(
-		"unison",
-		"Unison sync",
-	)
-	unisonStartCommand = unisonCommand.Command(
-		"start",
-		"Start unison sync",
-	)
-	unisonStartSyncArg = unisonStartCommand.Arg("snyc", "Folders to sync").String()
-	unisonStopCommand = unisonCommand.Command(
-		"stop",
-		"Stop unison sync",
-	)
-	unisonStopSyncArg = unisonStopCommand.Arg("snyc", "Folders to sync").String()
 )
 
 func isVerbose() bool {
@@ -377,18 +362,6 @@ func runCli() {
 		commandAction(*generateTargetArg, func(uow *UnitOfWork) {
 			uow.Generate(*templateFlag, *outputFlag)
 		}, false)
-
-	case unisonStartCommand.FullCommand():
-		if unisonRequirementsMet() {
-			sync := NewUnisonSync(*configFlag, *unisonStartSyncArg)
-			sync.Start()
-		}
-
-	case unisonStopCommand.FullCommand():
-		if unisonRequirementsMet() {
-			sync := NewUnisonSync(*configFlag, *unisonStopSyncArg)
-			sync.Stop()
-		}
 
 	}
 }

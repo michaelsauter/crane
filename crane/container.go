@@ -9,10 +9,10 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
-	"runtime"
 )
 
 type Container interface {
@@ -784,6 +784,9 @@ func (c *container) Provision(nocache bool) {
 
 // Create container
 func (c *container) Create(cmds []string) {
+	containerPreparation(c, false)
+	defer containerExitCleanup(c)
+
 	adHoc := (len(cmds) > 0)
 	if !adHoc {
 		c.Rm(true)
@@ -796,6 +799,9 @@ func (c *container) Create(cmds []string) {
 
 // Run container, or start it if already existing
 func (c *container) Run(cmds []string) {
+	containerPreparation(c, true)
+	defer containerExitCleanup(c)
+
 	adHoc := (len(cmds) > 0)
 	if !adHoc {
 		c.Rm(true)
@@ -1123,9 +1129,9 @@ func (c *container) createArgs(cmds []string) []string {
 	// Volumes
 	for _, volume := range c.RunParams().ActualVolume() {
 		if runtime.GOOS == "darwin" {
-			cName := unisonSyncContainerName(cfg.Path(), volume)
-			if inspectBool(cName, "{{.State.Running}}") {
-				args = append(args, "--volumes-from", cName)
+			if s := cfg.UnisonSync(volume); s != nil {
+				args = append(args, "--volumes-from", s.ContainerName())
+				args = append(args, "--label", "io.github.michaelsauter.crane.unison="+s.ContainerName())
 			} else {
 				args = append(args, "--volume", volume)
 			}
@@ -1167,6 +1173,8 @@ func (c *container) createArgs(cmds []string) []string {
 func (c *container) Start() {
 	if c.Exists() {
 		if !c.Running() {
+			containerPreparation(c, true)
+			defer containerExitCleanup(c)
 			executeHook(c.Hooks().PreStart(), c.ActualName(false))
 			fmt.Fprintf(c.CommandsOut(), "Starting container %s ...\n", c.ActualName(false))
 			args := []string{"start"}
@@ -1192,6 +1200,7 @@ func (c *container) Start() {
 // Kill container
 func (c *container) Kill() {
 	if c.Running() {
+		defer containerExitCleanup(c)
 		name := c.ActualName(false)
 		executeHook(c.Hooks().PreStop(), name)
 		fmt.Fprintf(c.CommandsOut(), "Killing container %s ...\n", name)
@@ -1204,6 +1213,7 @@ func (c *container) Kill() {
 // Stop container
 func (c *container) Stop() {
 	if c.Running() {
+		defer containerExitCleanup(c)
 		name := c.ActualName(false)
 		executeHook(c.Hooks().PreStop(), name)
 		fmt.Fprintf(c.CommandsOut(), "Stopping container %s ...\n", name)
@@ -1272,6 +1282,7 @@ func (c *container) Rm(force bool) {
 			fmt.Fprintf(c.CommandsOut(), "Cannot remove running container %s, use --force to remove anyway.\n", name)
 			return
 		}
+		defer containerExitCleanup(c)
 		args := []string{"rm"}
 		if force && containerIsRunning {
 			executeHook(c.Hooks().PreStop(), name)
@@ -1475,4 +1486,28 @@ func inspectString(container string, format string) string {
 		return ""
 	}
 	return output
+}
+
+func containerPreparation(c Container, sync bool) {
+	if runtime.GOOS == "darwin" && unisonRequirementsMet() {
+		for _, volume := range c.RunParams().ActualVolume() {
+			if s := cfg.UnisonSync(volume); s != nil {
+				s.Start(sync)
+			}
+		}
+	}
+}
+
+func containerExitCleanup(c Container) {
+	if runtime.GOOS == "darwin" && unisonRequirementsMet() {
+		for _, volume := range c.RunParams().ActualVolume() {
+			if s := cfg.UnisonSync(volume); s != nil {
+				args := []string{"ps", "-q", "--filter", "label=io.github.michaelsauter.crane.unison=" + s.ContainerName()}
+				foo, _ := commandOutput("docker", args)
+				if foo == "" {
+					s.Stop()
+				}
+			}
+		}
+	}
 }

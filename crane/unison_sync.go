@@ -1,90 +1,118 @@
 package crane
 
 import (
-	"fmt"
 	"crypto/md5"
-	"strconv"
+	"fmt"
+	"os/exec"
 	"path"
 	"strings"
-	"os"
-	"os/exec"
 )
 
 type UnisonSync interface {
-	Start()
+	ContainerName() string
+	Volume() string
+	Start(bool)
 	Stop()
 }
 
 type unisonSync struct {
+	RawVolume  string
+	RawFlags   string `json:"flags" yaml:"flags"`
+	RawImage   string `json:"image" yaml:"image"`
 	configPath string
-	hostDir string
-	containerDir string
-	cName string
+	cName      string
+	volume     string
 }
 
-func NewUnisonSync(configFlag string, syncArg string) UnisonSync {
-	sync := &unisonSync{}
-
-	sync.configPath = path.Dir(findConfig(configFlag))
-
-	parts := strings.Split(syncArg, ":")
-	if !path.IsAbs(parts[0]) {
-		parts[0] = sync.configPath + "/" + parts[0]
+func (s *unisonSync) ContainerName() string {
+	if s.cName == "" {
+		syncIdentifier := []byte(s.configPath + ":" + s.Volume())
+		digest := fmt.Sprintf("%x", md5.Sum(syncIdentifier))
+		s.cName = "crane_unison_" + digest
 	}
-	sync.hostDir = parts[0]
-	sync.containerDir = parts[1]
-	bindMount := strings.Join(parts, ":")
-	sync.cName = unisonSyncContainerName(sync.configPath, bindMount)
-
-	return sync
+	return s.cName
 }
 
-func (s *unisonSync) Start() {
-	fmt.Printf("Starting unison sync for %s ...\n", s.hostDir)
+func (s *unisonSync) Volume() string {
+	if s.volume == "" {
+		v := expandEnv(s.RawVolume)
+		parts := strings.Split(v, ":")
+		if !path.IsAbs(parts[0]) {
+			parts[0] = s.configPath + "/" + parts[0]
+		}
+		s.volume = strings.Join(parts, ":")
+	}
+	return s.volume
+}
 
-	// bring container up
-	if containerID(s.cName) != "" {
-		if !inspectBool(s.cName, "{{.State.Running}}") {
-			dockerArgs := []string{"start", s.cName}
-			executeCommand("docker", dockerArgs, os.Stdout, os.Stderr)
+func (s *unisonSync) Start(sync bool) {
+	unisonRunning := false
+	// Start sync container if needed
+	if containerID(s.ContainerName()) != "" {
+		if inspectBool(s.ContainerName(), "{{.State.Running}}") {
+			unisonRunning = true
+		} else {
+			verboseLog("Starting unison sync for " + s.hostDir())
+			dockerArgs := []string{"start", s.ContainerName()}
+			executeHiddenCommand("docker", dockerArgs)
 		}
 	} else {
-		dockerArgs := []string{"run", "--name", s.cName, "-d", "-P", "-e", "UNISON_DIR=" + s.containerDir, "-v", s.containerDir, "onnimonni/unison:2.48.4"}
-		executeCommand("docker", dockerArgs, os.Stdout, os.Stderr)
+		verboseLog("Starting unison sync for " + s.hostDir())
+		dockerArgs := []string{"run", "--name", s.ContainerName(), "-d", "-P", "-e", "UNISON_DIR=" + s.containerDir(), "-v", s.containerDir(), s.image()}
+		executeHiddenCommand("docker", dockerArgs)
 	}
 
-	// start unison
-	unisonArgs := []string{s.hostDir, "socket://localhost:" + s.publishedPort() + "/", "-auto", "-batch", "-repeat", "watch"}
-	verboseLog("unison", unisonArgs)
-	if !isDryRun() {
-		logfile, _ := os.Create(s.cName + ".log")
-		cmd := exec.Command("unison", unisonArgs...)
-		cmd.Dir = s.configPath
-		cmd.Stdout = logfile
-		cmd.Stderr = logfile
-		cmd.Stdin = nil
-		cmd.Start()
+	// Start unison if needed
+	if sync && !unisonRunning {
+		unisonArgs := []string{s.hostDir(), "socket://localhost:" + s.publishedPort() + "/"}
+		unisonArgs = append(unisonArgs, s.flags()...)
+		verboseLog("unison " +  strings.Join(unisonArgs, " "))
+		if !isDryRun() {
+			cmd := exec.Command("unison", unisonArgs...)
+			cmd.Dir = cfg.Path()
+			cmd.Stdout = nil
+			cmd.Stderr = nil
+			cmd.Stdin = nil
+			cmd.Start()
+		}
 	}
 }
 
 func (s *unisonSync) Stop() {
-	fmt.Printf("Stopping unison sync for %s ...\n", s.hostDir)
+	verboseLog("Stopping unison sync for " + s.hostDir())
 
-	// stop sync (does not work yet!)
-	if !isDryRun() {
-		pgrepArgs := []string{"-f", "\"unison " + s.hostDir + " socket://localhost:" + s.publishedPort() + "/\""}
-		spid, _ := commandOutput("pgrep", pgrepArgs)
-		ipid, _ := strconv.Atoi(spid)
-		p, _ := os.FindProcess(ipid)
-		p.Kill()
+	// stop container (also stops Unison sync)
+	dockerArgs := []string{"stop", s.ContainerName()}
+	executeHiddenCommand("docker", dockerArgs)
+}
+
+func (s *unisonSync) image() string {
+	if len(s.RawImage) > 0 {
+		return expandEnv(s.RawImage)
 	}
-	// stop container
-	dockerArgs := []string{"stop", s.cName}
-	executeCommand("docker", dockerArgs, os.Stdout, os.Stderr)
+	return "onnimonni/unison:2.48.4"
+}
+
+func (s *unisonSync) flags() []string {
+	f := "-auto -batch -repeat watch"
+	if len(s.RawFlags) > 0 {
+		f = expandEnv(s.RawFlags)
+	}
+	return strings.Split(f, " ")
+}
+
+func (s *unisonSync) hostDir() string {
+	parts := strings.Split(s.Volume(), ":")
+	return parts[0]
+}
+
+func (s *unisonSync) containerDir() string {
+	parts := strings.Split(s.Volume(), ":")
+	return parts[1]
 }
 
 func (s *unisonSync) publishedPort() string {
-	args := []string{"port", s.cName, "5000/tcp"}
+	args := []string{"port", s.ContainerName(), "5000/tcp"}
 	published, _ := commandOutput("docker", args)
 	parts := strings.Split(published, ":")
 	return parts[1]
@@ -106,10 +134,4 @@ func unisonRequirementsMet() bool {
 	}
 
 	return met
-}
-
-func unisonSyncContainerName(configPath string, bindMount string) string {
-	syncIdentifier := []byte(configPath + ":" + bindMount)
-	digest := fmt.Sprintf("%x", md5.Sum(syncIdentifier))
-	return "crane_unison_" + digest
 }
