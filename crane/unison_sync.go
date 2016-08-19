@@ -106,7 +106,14 @@ func (s *unisonSync) image() string {
 	if len(s.RawImage) > 0 {
 		return expandEnv(s.RawImage)
 	}
-	return "michaelsauter/unison:2.48.4"
+	allowedVersions := []string{"2.48.4"}
+	versionOut, _ := commandOutput("unison", []string{"-version"})
+	versionParts := strings.Split(versionOut, " ")
+	installedVersion := versionParts[len(versionParts)-1]
+	if !includes(allowedVersions, installedVersion) {
+		panic(StatusError{errors.New("Unison version " + installedVersion + " is not supported. You need to install: " + strings.Join(allowedVersions, ", ")), 69})
+	}
+	return "michaelsauter/unison:" + installedVersion
 }
 
 func (s *unisonSync) flags() []string {
