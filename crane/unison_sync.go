@@ -144,11 +144,11 @@ func (s *unisonSync) publishedPort() string {
 func checkUnisonRequirements() {
 	_, err := commandOutput("which", []string{"unison"})
 	if err != nil {
-		panic(StatusError{errors.New("Unison is not installed. You need version 2.48.4. Install with:\n  brew install unison"), 69})
+		panic(StatusError{errors.New("`unison` is not installed or not in your $PATH.\nSee https://github.com/michaelsauter/crane/wiki/Unison-installation."), 69})
 	}
 
 	_, err = commandOutput("which", []string{"unison-fsmonitor"})
 	if err != nil {
-		panic(StatusError{errors.New("unison-fsmonitor is not installed. Install with:\n  pip install MacFSEvents\n  curl -o /usr/local/bin/unison-fsmonitor -L https://raw.githubusercontent.com/hnsl/unox/master/unox.py\n  chmod +x /usr/local/bin/unison-fsmonitor"), 69})
+		panic(StatusError{errors.New("`unison-fsmonitor` is not installed or not in your $PATH.\nSee https://github.com/michaelsauter/crane/wiki/Unison-installation."), 69})
 	}
 }
