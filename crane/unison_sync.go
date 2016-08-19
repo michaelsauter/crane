@@ -66,7 +66,13 @@ func (s *unisonSync) Start(sync bool) {
 		executeHiddenCommand("docker", dockerArgs)
 		fmt.Printf("Doing initial snyc for %s ...\n", s.hostDir())
 		unisonArgs = s.unisonArgs()
-		executeCommand("unison", unisonArgs, nil, nil)
+		initialSyncArgs := []string{}
+		for _, a := range unisonArgs {
+			if !strings.HasPrefix(a, "-repeat") {
+				initialSyncArgs = append(initialSyncArgs, a)
+			}
+		}
+		executeCommand("unison", initialSyncArgs, nil, nil)
 	}
 
 	// Start unison in background if needed
@@ -104,7 +110,7 @@ func (s *unisonSync) image() string {
 }
 
 func (s *unisonSync) flags() []string {
-	f := "-auto -batch -repeat watch"
+	f := "-auto -batch -repeat=watch"
 	if len(s.RawFlags) > 0 {
 		f = expandEnv(s.RawFlags)
 	}
