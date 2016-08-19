@@ -1489,9 +1489,10 @@ func inspectString(container string, format string) string {
 }
 
 func containerPreparation(c Container, sync bool) {
-	if runtime.GOOS == "darwin" && unisonRequirementsMet() {
+	if runtime.GOOS == "darwin" {
 		for _, volume := range c.RunParams().ActualVolume() {
 			if s := cfg.UnisonSync(volume); s != nil {
+				checkUnisonRequirements()
 				s.Start(sync)
 			}
 		}
@@ -1499,7 +1500,7 @@ func containerPreparation(c Container, sync bool) {
 }
 
 func containerExitCleanup(c Container) {
-	if runtime.GOOS == "darwin" && unisonRequirementsMet() {
+	if runtime.GOOS == "darwin" {
 		for _, volume := range c.RunParams().ActualVolume() {
 			if s := cfg.UnisonSync(volume); s != nil {
 				args := []string{"ps", "-q", "--filter", "label=io.github.michaelsauter.crane.unison=" + s.ContainerName()}

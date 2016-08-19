@@ -2,11 +2,12 @@ package crane
 
 import (
 	"crypto/md5"
+	"errors"
 	"fmt"
 	"os/exec"
 	"path"
-	"strings"
 	"strconv"
+	"strings"
 )
 
 type UnisonSync interface {
@@ -20,8 +21,8 @@ type unisonSync struct {
 	RawVolume  string
 	RawFlags   string `json:"flags" yaml:"flags"`
 	RawImage   string `json:"image" yaml:"image"`
-	Uid     int `json:"uid" yaml:"uid"`
-	Gid     int `json:"gid" yaml:"gid"`
+	Uid        int    `json:"uid" yaml:"uid"`
+	Gid        int    `json:"gid" yaml:"gid"`
 	configPath string
 	cName      string
 	volume     string
@@ -61,7 +62,7 @@ func (s *unisonSync) Start(sync bool) {
 		}
 	} else {
 		verboseLog("Starting unison sync for " + s.hostDir())
-		dockerArgs := []string{"run", "--name", s.ContainerName(), "-d", "-P", "-e", "UNISON_DIR="+s.containerDir(), "-e", "UNISON_UID="+strconv.Itoa(s.Uid), "-e", "UNISON_GID="+strconv.Itoa(s.Gid), "-v", s.containerDir(), s.image()}
+		dockerArgs := []string{"run", "--name", s.ContainerName(), "-d", "-P", "-e", "UNISON_DIR=" + s.containerDir(), "-e", "UNISON_UID=" + strconv.Itoa(s.Uid), "-e", "UNISON_GID=" + strconv.Itoa(s.Gid), "-v", s.containerDir(), s.image()}
 		executeHiddenCommand("docker", dockerArgs)
 	}
 
@@ -69,7 +70,7 @@ func (s *unisonSync) Start(sync bool) {
 	if sync && !unisonRunning {
 		unisonArgs := []string{s.hostDir(), "socket://localhost:" + s.publishedPort() + "/"}
 		unisonArgs = append(unisonArgs, s.flags()...)
-		verboseLog("unison " +  strings.Join(unisonArgs, " "))
+		verboseLog("unison " + strings.Join(unisonArgs, " "))
 		if !isDryRun() {
 			cmd := exec.Command("unison", unisonArgs...)
 			cmd.Dir = cfg.Path()
@@ -121,20 +122,14 @@ func (s *unisonSync) publishedPort() string {
 	return parts[1]
 }
 
-func unisonRequirementsMet() bool {
-	met := true
-
+func checkUnisonRequirements() {
 	_, err := commandOutput("which", []string{"unison"})
 	if err != nil {
-		printErrorf("ERROR: Unison is not installed. You need version 2.48.4. Install with:\n  brew install unison\n")
-		met = false
+		panic(StatusError{errors.New("Unison is not installed. You need version 2.48.4. Install with:\n  brew install unison"), 69})
 	}
 
 	_, err = commandOutput("which", []string{"unison-fsmonitor"})
 	if err != nil {
-		printErrorf("ERROR: unison-fsmonitor is not installed. Install with:\n  pip install MacFSEvents\n  curl -o /usr/local/bin/unison-fsmonitor -L https://raw.githubusercontent.com/hnsl/unox/master/unox.py\n  chmod +x /usr/local/bin/unison-fsmonitor\n")
-		met = false
+		panic(StatusError{errors.New("unison-fsmonitor is not installed. Install with:\n  pip install MacFSEvents\n  curl -o /usr/local/bin/unison-fsmonitor -L https://raw.githubusercontent.com/hnsl/unox/master/unox.py\n  chmod +x /usr/local/bin/unison-fsmonitor"), 69})
 	}
-
-	return met
 }
