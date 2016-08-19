@@ -1504,7 +1504,10 @@ func containerExitCleanup(c Container) {
 		for _, volume := range c.RunParams().ActualVolume() {
 			if s := cfg.UnisonSync(volume); s != nil {
 				args := []string{"ps", "-q", "--filter", "label=io.github.michaelsauter.crane.unison=" + s.ContainerName()}
-				foo, _ := commandOutput("docker", args)
+				foo, err := commandOutput("docker", args)
+				if err != nil {
+					printErrorf("Could not detect if container %s is still in use / being synced to.", s.ContainerName())
+				}
 				if foo == "" {
 					s.Stop()
 				}

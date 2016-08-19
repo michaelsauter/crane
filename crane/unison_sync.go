@@ -107,7 +107,10 @@ func (s *unisonSync) image() string {
 		return expandEnv(s.RawImage)
 	}
 	allowedVersions := []string{"2.48.4"}
-	versionOut, _ := commandOutput("unison", []string{"-version"})
+	versionOut, err := commandOutput("unison", []string{"-version"})
+	if err != nil {
+		return "michaelsauter/unison:2.48.4"
+	}
 	versionParts := strings.Split(versionOut, " ")
 	installedVersion := versionParts[len(versionParts)-1]
 	if !includes(allowedVersions, installedVersion) {
@@ -136,7 +139,11 @@ func (s *unisonSync) containerDir() string {
 
 func (s *unisonSync) publishedPort() string {
 	args := []string{"port", s.ContainerName(), "5000/tcp"}
-	published, _ := commandOutput("docker", args)
+	published, err := commandOutput("docker", args)
+	if err != nil {
+		printErrorf("Could not detect port of container %s. Sync will not work properly.", s.ContainerName())
+		return ""
+	}
 	parts := strings.Split(published, ":")
 	return parts[1]
 }
