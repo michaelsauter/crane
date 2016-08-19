@@ -356,10 +356,9 @@ This feature is experimental, which means it can be changed or even removed in
 every minor version update.
 
 
-## Docker for Mac with Unison sync
-Crane can optionally make use of Unison to sync files faster between the host
-and Docker for Mac. The integration is fully automated and requires no change
-to the CLI usage.
+### Docker for Mac with Unison sync
+Crane can optionally make use of Unison to have faster bind-mounts between the
+host and Docker for Mac. The integration is fully automated and requires no change to the CLI usage.
 
 Example config:
 
@@ -379,10 +378,11 @@ mac:
 ```
 
 If you run `crane run hello -ls /bar` now, the host directory `foo` (relative to
-the configuration directory) is synced to a volume container (e.g. named
-`crane_unison_d4b2758da0205c1e0aa9512cd188002a`), and the `hello` container has
-access to it under `/bar` since Crane injects `--volumes-from crane_unison_d4b2758da0205c1e0aa9512cd188002a`. This requires Unison 2.48.4 to
-be installed, see [instructions](https://github.com/michaelsauter/crane/wiki/Unison-installation).
+the configuration directory) is synced repeatedly to a volume container (e.g.
+named `crane_unison_d4b2758da0205c1e0aa9512cd188002a`), and the `hello`
+container has access to it under `/bar` since Crane injects
+`--volumes-from crane_unison_d4b2758da0205c1e0aa9512cd188002a` when running
+`hello`. This requires Unison 2.48.4 to be installed, see [instructions](https://github.com/michaelsauter/crane/wiki/Unison-installation).
 Any bind-mount not marked as a Unison sync will use the native Docker for Mac
 file sharing. Different containers or multiple instances of the same container
 definition can share the same volume container, as the last part of the
