@@ -34,12 +34,12 @@ type Config interface {
 }
 
 type config struct {
-	RawContainers map[string]*container  `json:"containers" yaml:"containers"`
-	RawGroups     map[string][]string    `json:"groups" yaml:"groups"`
-	RawHooks      map[string]hooks       `json:"hooks" yaml:"hooks"`
-	RawNetworks   map[string]*network    `json:"networks" yaml:"networks"`
-	RawVolumes    map[string]*volume     `json:"volumes" yaml:"volumes"`
-	RawUnison     map[string]*unisonSync `json:"unison" yaml:"unison"`
+	RawContainers map[string]*container `json:"containers" yaml:"containers"`
+	RawGroups     map[string][]string   `json:"groups" yaml:"groups"`
+	RawHooks      map[string]hooks      `json:"hooks" yaml:"hooks"`
+	RawNetworks   map[string]*network   `json:"networks" yaml:"networks"`
+	RawVolumes    map[string]*volume    `json:"volumes" yaml:"volumes"`
+	Mac           *mac                  `json:"mac" yaml:"mac"`
 	containerMap  ContainerMap
 	networkMap    NetworkMap
 	volumeMap     VolumeMap
@@ -49,6 +49,10 @@ type config struct {
 	prefix        string
 	tag           string
 	uniqueID      string
+}
+
+type mac struct {
+	RawUnisonSyncs map[string]*unisonSync `json:"unison-syncs" yaml:"unison-sncs"`
 }
 
 // ContainerMap maps the container name
@@ -307,7 +311,7 @@ func (c *config) setVolumeMap() {
 
 func (c *config) setUnisonSyncMap() {
 	c.unisonSyncMap = make(map[string]UnisonSync)
-	for rawVolume, sync := range c.RawUnison {
+	for rawVolume, sync := range c.Mac.RawUnisonSyncs {
 		if sync == nil {
 			sync = &unisonSync{}
 		}
