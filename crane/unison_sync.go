@@ -50,26 +50,27 @@ func (s *unisonSync) Volume() string {
 }
 
 func (s *unisonSync) Start(sync bool) {
-	unisonRunning := false
+	unisonArgs := []string{}
+
 	// Start sync container if needed
 	if containerID(s.ContainerName()) != "" {
-		if inspectBool(s.ContainerName(), "{{.State.Running}}") {
-			unisonRunning = true
-		} else {
+		if !inspectBool(s.ContainerName(), "{{.State.Running}}") {
 			verboseLog("Starting unison sync for " + s.hostDir())
 			dockerArgs := []string{"start", s.ContainerName()}
 			executeHiddenCommand("docker", dockerArgs)
+			unisonArgs = s.unisonArgs()
 		}
 	} else {
 		verboseLog("Starting unison sync for " + s.hostDir())
 		dockerArgs := []string{"run", "--name", s.ContainerName(), "-d", "-P", "-e", "UNISON_DIR=" + s.containerDir(), "-e", "UNISON_UID=" + strconv.Itoa(s.Uid), "-e", "UNISON_GID=" + strconv.Itoa(s.Gid), "-v", s.containerDir(), s.image()}
 		executeHiddenCommand("docker", dockerArgs)
+		fmt.Printf("Doing initial snyc for %s ...\n", s.hostDir())
+		unisonArgs = s.unisonArgs()
+		executeCommand("unison", unisonArgs, nil, nil)
 	}
 
-	// Start unison if needed
-	if sync && !unisonRunning {
-		unisonArgs := []string{s.hostDir(), "socket://localhost:" + s.publishedPort() + "/"}
-		unisonArgs = append(unisonArgs, s.flags()...)
+	// Start unison in background if needed
+	if sync && len(unisonArgs) > 0 {
 		verboseLog("unison " + strings.Join(unisonArgs, " "))
 		if !isDryRun() {
 			cmd := exec.Command("unison", unisonArgs...)
@@ -88,6 +89,11 @@ func (s *unisonSync) Stop() {
 	// stop container (also stops Unison sync)
 	dockerArgs := []string{"stop", s.ContainerName()}
 	executeHiddenCommand("docker", dockerArgs)
+}
+
+func (s *unisonSync) unisonArgs() []string {
+	unisonArgs := []string{s.hostDir(), "socket://localhost:" + s.publishedPort() + "/"}
+	return append(unisonArgs, s.flags()...)
 }
 
 func (s *unisonSync) image() string {
