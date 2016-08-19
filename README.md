@@ -399,6 +399,8 @@ It is possible to further customize the behaviour of each sync:
 * `uid`/`gid`: Defaults to `0`/`0`. Set this to the user/group ID the consuming
   container expects, e.g. `1000`/`1000`.
 
+This feature is experimental, which means it can be changed or even removed in every minor version update.
+
 
 ### Hooks
 
