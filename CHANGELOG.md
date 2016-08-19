@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+* Optional, fully automated Unison sync for Docker for Mac. Bind-mounts can be
+  marked in the configuration to be synced with Unison. Crane will then manage
+  the lifecycle of the volume container and the Unison sync to it.
+
+  For more information, see [Docker for Mac with Unison sync](https://github.com/michaelsauter/crane#docker-for-mac-with-unison-sync).
+
+  _@michaelsauter_
+
 ## 2.9.1 (2016-08-15)
 
 * Fix tag override for images with no tag specified in the config.
