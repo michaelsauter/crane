@@ -311,13 +311,15 @@ func (c *config) setVolumeMap() {
 
 func (c *config) setUnisonSyncMap() {
 	c.unisonSyncMap = make(map[string]UnisonSync)
-	for rawVolume, sync := range c.Mac.RawUnisonSyncs {
-		if sync == nil {
-			sync = &unisonSync{}
+	if c.Mac != nil {
+		for rawVolume, sync := range c.Mac.RawUnisonSyncs {
+			if sync == nil {
+				sync = &unisonSync{}
+			}
+			sync.RawVolume = rawVolume
+			sync.configPath = c.path
+			c.unisonSyncMap[sync.Volume()] = sync
 		}
-		sync.RawVolume = rawVolume
-		sync.configPath = c.path
-		c.unisonSyncMap[sync.Volume()] = sync
 	}
 }
 
