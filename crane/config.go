@@ -52,7 +52,7 @@ type config struct {
 }
 
 type mac struct {
-	RawUnisonSyncs map[string]*unisonSync `json:"unison-syncs" yaml:"unison-sncs"`
+	RawUnisonSyncs map[string]*unisonSync `json:"unison-syncs" yaml:"unison-syncs"`
 }
 
 // ContainerMap maps the container name
