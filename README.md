@@ -19,6 +19,7 @@ continuous integration.
   * [Ad hoc commands](#ad-hoc-commands)
   * [Networking](#networking)
   * [Volumes](#volumes)
+  * [Docker for Mac with Unison sync](#docker-for-mac-with-unison-sync)
   * [Hooks](#hooks)
   * [Parallelism](#parallelism)
   * [Container Prefixes](#container-prefixes)
@@ -353,6 +354,52 @@ volumes:
 
 This feature is experimental, which means it can be changed or even removed in
 every minor version update.
+
+
+### Docker for Mac with Unison sync
+Crane can optionally make use of Unison to have faster bind-mounts between the
+host and Docker for Mac. The integration is fully automated and requires no change to the CLI usage.
+
+Example config:
+
+```
+containers:
+  hello:
+    image: alpine
+    run:
+      rm: true
+      interactive: true
+      tty: true
+      volume:
+        - foo:/bar
+mac:
+  unison-syncs:
+    "foo:/bar":
+```
+
+If you run `crane run hello -ls /bar` now, the host directory `foo` (relative to
+the configuration directory) is synced repeatedly to a volume container (e.g.
+named `crane_unison_d4b2758da0205c1e0aa9512cd188002a`), and the `hello`
+container has access to it under `/bar` since Crane injects
+`--volumes-from crane_unison_d4b2758da0205c1e0aa9512cd188002a` when running
+`hello`. This requires Unison 2.48.4 to be installed, see [instructions](https://github.com/michaelsauter/crane/wiki/Unison-installation).
+Any bind-mount not marked as a Unison sync will use the native Docker for Mac
+file sharing. Different containers or multiple instances of the same container
+definition can share the same volume container, as the last part of the
+container name is a MD5 hash over
+`<config-directory>:<host-dir>:<container-dir>`.
+
+It is possible to further customize the behaviour of each sync:
+
+* `flags`: Defaults to `-auto -batch -repeat=watch`, but can be overriden using
+  anything that you can pass to `unison`, see the [manual](http://www.cis.upenn.edu/~bcpierce/unison/download/releases/stable/unison-manual.html#prefs).
+  Note that the folder to sync and the socket of the volume container are always
+  added by Crane. Also, you must use `=` between flags and their values.
+* `image`: Defaults to `michaelsauter/unison:2.48.4`.
+* `uid`/`gid`: Defaults to `0`/`0`. Set this to the user/group ID the consuming
+  container expects, e.g. `1000`/`1000`.
+
+This feature is experimental, which means it can be changed or even removed in every minor version update.
 
 
 ### Hooks

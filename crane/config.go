@@ -27,6 +27,7 @@ type Config interface {
 	VolumeNames() []string
 	Network(name string) Network
 	Volume(name string) Volume
+	UnisonSync(volume string) UnisonSync
 	ContainerMap() ContainerMap
 	Container(name string) Container
 	ContainerInfo(name string) ContainerInfo
@@ -38,14 +39,20 @@ type config struct {
 	RawHooks      map[string]hooks      `json:"hooks" yaml:"hooks"`
 	RawNetworks   map[string]*network   `json:"networks" yaml:"networks"`
 	RawVolumes    map[string]*volume    `json:"volumes" yaml:"volumes"`
+	Mac           *mac                  `json:"mac" yaml:"mac"`
 	containerMap  ContainerMap
 	networkMap    NetworkMap
 	volumeMap     VolumeMap
+	unisonSyncMap UnisonSyncMap
 	groups        map[string][]string
 	path          string
 	prefix        string
 	tag           string
 	uniqueID      string
+}
+
+type mac struct {
+	RawUnisonSyncs map[string]*unisonSync `json:"unison-syncs" yaml:"unison-syncs"`
 }
 
 // ContainerMap maps the container name
@@ -55,6 +62,8 @@ type ContainerMap map[string]Container
 type NetworkMap map[string]Network
 
 type VolumeMap map[string]Volume
+
+type UnisonSyncMap map[string]UnisonSync
 
 // configFilenames returns a slice of
 // files to read the config from.
@@ -165,9 +174,9 @@ func NewConfig(location string, prefix string, tag string) Config {
 		printInfof("Using configuration file `%s`\n", configFile)
 	}
 	config = readConfig(configFile)
+	config.path = path.Dir(configFile)
 	config.initialize()
 	config.validate()
-	config.path = path.Dir(configFile)
 	config.prefix = prefix
 	config.tag = tag
 	milliseconds := time.Now().UnixNano() / 1000000
@@ -230,6 +239,10 @@ func (c *config) Volume(name string) Volume {
 	return c.volumeMap[name]
 }
 
+func (c *config) UnisonSync(name string) UnisonSync {
+	return c.unisonSyncMap[name]
+}
+
 // Load configuration into the internal structs from the raw, parsed ones
 func (c *config) initialize() {
 	// Local container map to query by expanded name
@@ -271,6 +284,7 @@ func (c *config) initialize() {
 
 	c.setNetworkMap()
 	c.setVolumeMap()
+	c.setUnisonSyncMap()
 }
 
 func (c *config) setNetworkMap() {
@@ -292,6 +306,20 @@ func (c *config) setVolumeMap() {
 		}
 		vol.RawName = rawName
 		c.volumeMap[vol.Name()] = vol
+	}
+}
+
+func (c *config) setUnisonSyncMap() {
+	c.unisonSyncMap = make(map[string]UnisonSync)
+	if c.Mac != nil {
+		for rawVolume, sync := range c.Mac.RawUnisonSyncs {
+			if sync == nil {
+				sync = &unisonSync{}
+			}
+			sync.RawVolume = rawVolume
+			sync.configPath = c.path
+			c.unisonSyncMap[sync.Volume()] = sync
+		}
 	}
 }
 

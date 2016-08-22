@@ -14,7 +14,7 @@ type Network interface {
 }
 
 type network struct {
-	RawName string
+	RawName   string
 	RawSubnet string `json:"subnet" yaml:"subnet"`
 }
 
