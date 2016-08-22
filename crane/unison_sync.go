@@ -93,7 +93,7 @@ func (s *unisonSync) Stop() {
 	verboseLog("Stopping unison sync for " + s.hostDir())
 
 	// stop container (also stops Unison sync)
-	dockerArgs := []string{"stop", s.ContainerName()}
+	dockerArgs := []string{"kill", s.ContainerName()}
 	executeHiddenCommand("docker", dockerArgs)
 }
 
