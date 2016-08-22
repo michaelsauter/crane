@@ -120,7 +120,7 @@ func (s *unisonSync) image() string {
 }
 
 func (s *unisonSync) flags() []string {
-	f := "-auto -batch -confirmbigdel=false -repeat=watch"
+	f := "-auto -batch -confirmbigdel=false -prefer=newer -repeat=watch"
 	if len(s.RawFlags) > 0 {
 		f = expandEnv(s.RawFlags)
 	}
