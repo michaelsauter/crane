@@ -9,6 +9,10 @@
 
   _@michaelsauter_
 
+* Built with Go 1.7.1, which might solve potential issues with macOS Sierra.
+
+  _@michaelsauter_
+
 ## 2.9.1 (2016-08-15)
 
 * Fix tag override for images with no tag specified in the config.
