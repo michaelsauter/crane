@@ -25,27 +25,31 @@ type Config interface {
 	Tag() string
 	NetworkNames() []string
 	VolumeNames() []string
+	MacSyncNames() []string
 	Network(name string) Network
 	Volume(name string) Volume
+	MacSync(volume string) MacSync
 	ContainerMap() ContainerMap
 	Container(name string) Container
 	ContainerInfo(name string) ContainerInfo
 }
 
 type config struct {
-	RawContainers map[string]*container `json:"containers" yaml:"containers"`
-	RawGroups     map[string][]string   `json:"groups" yaml:"groups"`
-	RawHooks      map[string]hooks      `json:"hooks" yaml:"hooks"`
-	RawNetworks   map[string]*network   `json:"networks" yaml:"networks"`
-	RawVolumes    map[string]*volume    `json:"volumes" yaml:"volumes"`
-	containerMap  ContainerMap
-	networkMap    NetworkMap
-	volumeMap     VolumeMap
-	groups        map[string][]string
-	path          string
-	prefix        string
-	tag           string
-	uniqueID      string
+	RawContainers  map[string]*container  `json:"containers" yaml:"containers"`
+	RawGroups    map[string][]string `json:"groups" yaml:"groups"`
+	RawHooks     map[string]hooks    `json:"hooks" yaml:"hooks"`
+	RawNetworks  map[string]*network `json:"networks" yaml:"networks"`
+	RawVolumes   map[string]*volume  `json:"volumes" yaml:"volumes"`
+	RawMacSyncs  map[string]*macSync `json:"mac-syncs" yaml:"mac-syncs"`
+	containerMap ContainerMap
+	networkMap   NetworkMap
+	volumeMap    VolumeMap
+	macSyncMap   MacSyncMap
+	groups       map[string][]string
+	path         string
+	prefix       string
+	tag          string
+	uniqueID     string
 }
 
 // ContainerMap maps the container name
@@ -55,6 +59,8 @@ type ContainerMap map[string]Container
 type NetworkMap map[string]Network
 
 type VolumeMap map[string]Volume
+
+type MacSyncMap map[string]MacSync
 
 // configFilenames returns a slice of
 // files to read the config from.
@@ -165,9 +171,9 @@ func NewConfig(location string, prefix string, tag string) Config {
 		printInfof("Using configuration file `%s`\n", configFile)
 	}
 	config = readConfig(configFile)
+	config.path = path.Dir(configFile)
 	config.initialize()
 	config.validate()
-	config.path = path.Dir(configFile)
 	config.prefix = prefix
 	config.tag = tag
 	milliseconds := time.Now().UnixNano() / 1000000
@@ -222,12 +228,25 @@ func (c *config) VolumeNames() []string {
 	return volumes
 }
 
+func (c *config) MacSyncNames() []string {
+	macSyncs := []string{}
+	for name, _ := range c.macSyncMap {
+		macSyncs = append(macSyncs, name)
+	}
+	sort.Strings(macSyncs)
+	return macSyncs
+}
+
 func (c *config) Network(name string) Network {
 	return c.networkMap[name]
 }
 
 func (c *config) Volume(name string) Volume {
 	return c.volumeMap[name]
+}
+
+func (c *config) MacSync(name string) MacSync {
+	return c.macSyncMap[name]
 }
 
 // Load configuration into the internal structs from the raw, parsed ones
@@ -271,6 +290,7 @@ func (c *config) initialize() {
 
 	c.setNetworkMap()
 	c.setVolumeMap()
+	c.setMacSyncMap()
 }
 
 func (c *config) setNetworkMap() {
@@ -294,6 +314,19 @@ func (c *config) setVolumeMap() {
 		c.volumeMap[vol.Name()] = vol
 	}
 }
+
+func (c *config) setMacSyncMap() {
+	c.macSyncMap = make(map[string]MacSync)
+	for rawVolume, sync := range c.RawMacSyncs {
+		if sync == nil {
+			sync = &macSync{}
+		}
+		sync.RawVolume = rawVolume
+		sync.configPath = c.path
+		c.macSyncMap[sync.Volume()] = sync
+	}
+}
+
 
 func (c *config) validate() {
 	for name, container := range c.RawContainers {

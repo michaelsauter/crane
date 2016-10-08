@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/alecthomas/kingpin"
 )
@@ -202,6 +203,25 @@ var (
 		"The file(s) to write the output to.",
 	).Short('O').String()
 	generateTargetArg = generateCommand.Arg("target", "Target of command").String()
+
+	syncCommand = app.Command(
+		"mac-sync",
+		"Docker for Mac sync",
+	)
+	syncStartCommand = syncCommand.Command(
+		"start",
+		"Start Docker for Mac sync",
+	)
+	syncStartVolumeArg = syncStartCommand.Arg("volume", "Folders to sync").String()
+	syncStopCommand = syncCommand.Command(
+		"stop",
+		"Stop Docker for Mac sync",
+	)
+	syncStopVolumeArg = syncStopCommand.Arg("volume", "Folders to sync").String()
+	syncStatusCommand = syncCommand.Command(
+		"status",
+		"Status of Docker for Mac syncs",
+	)
 )
 
 func isVerbose() bool {
@@ -362,5 +382,33 @@ func runCli() {
 		commandAction(*generateTargetArg, func(uow *UnitOfWork) {
 			uow.Generate(*templateFlag, *outputFlag)
 		}, false)
+
+	case syncStartCommand.FullCommand():
+		cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
+		sync := cfg.MacSync(*syncStartVolumeArg)
+		sync.Start()
+
+	case syncStopCommand.FullCommand():
+		cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
+		sync := cfg.MacSync(*syncStopVolumeArg)
+		sync.Stop()
+
+	case syncStatusCommand.FullCommand():
+		cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
+		w := new(tabwriter.Writer)
+		w.Init(os.Stdout, 0, 8, 1, '\t', 0)
+		fmt.Fprintln(w, "VOLUME\tCONTAINER\tSTATUS")
+		for _, name := range cfg.MacSyncNames() {
+			s := cfg.MacSync(name)
+			status := "-"
+			if s.Exists() {
+				status = "stopped"
+				if s.Running() {
+					status = "running"
+				}
+			}
+			fmt.Fprintf(w, "%s\n", s.Volume() + "\t" + s.ContainerName() + "\t" + status)
+		}
+		w.Flush()
 	}
 }

@@ -1,0 +1,15 @@
+containers:
+  cranedev:
+    image: michaelsauter/golang:1.6
+    run:
+      rm: true
+      interactive: true
+      tty: true
+      volume: ["$GOPATH:/go"]
+      workdir: /go/src/github.com/michaelsauter/crane
+      cmd: ["sh"]
+
+mac-syncs:
+  "$GOPATH:/go":
+    uid: 1000
+    gid: 1000
