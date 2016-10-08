@@ -161,24 +161,12 @@ func TestVolume(t *testing.T) {
 	c = &container{RawRun: RunParameters{RawVolume: []string{"/a:/b"}}}
 	cfg = &config{path: "foo"}
 	assert.Equal(t, "/a:/b", c.RunParams().Volume()[0])
-	// Relative path
-	c = &container{RawRun: RunParameters{RawVolume: []string{"a:/b"}}}
-	dir, _ := os.Getwd()
-	cfg = &config{path: dir}
-	assert.Equal(t, dir+"/a:/b", c.RunParams().Volume()[0])
 	// Environment variable
 	c = &container{RawRun: RunParameters{RawVolume: []string{"$HOME/a:/b"}}}
 	os.Clearenv()
 	os.Setenv("HOME", "/home")
 	cfg = &config{path: "foo"}
 	assert.Equal(t, os.Getenv("HOME")+"/a:/b", c.RunParams().Volume()[0])
-	// Container-only path
-	c = &container{RawRun: RunParameters{RawVolume: []string{"/b"}}}
-	assert.Equal(t, "/b", c.RunParams().Volume()[0])
-	// Using Docker volume
-	c = &container{RawRun: RunParameters{RawVolume: []string{"a:/b"}}}
-	cfg = &config{volumeMap: map[string]Volume{"a": &volume{RawName: "a"}}}
-	assert.Equal(t, "a:/b", c.RunParams().Volume()[0])
 }
 
 func TestActualVolume(t *testing.T) {
@@ -187,6 +175,18 @@ func TestActualVolume(t *testing.T) {
 	c = &container{RawRun: RunParameters{RawVolume: []string{"/a:/b"}}}
 	cfg = &config{path: "foo"}
 	assert.Equal(t, "/a:/b", c.RunParams().ActualVolume()[0])
+	// Relative path
+	c = &container{RawRun: RunParameters{RawVolume: []string{"a:/b"}}}
+	dir, _ := os.Getwd()
+	cfg = &config{path: dir}
+	assert.Equal(t, dir+"/a:/b", c.RunParams().ActualVolume()[0])
+	// Container-only path
+	c = &container{RawRun: RunParameters{RawVolume: []string{"/b"}}}
+	assert.Equal(t, "/b", c.RunParams().Volume()[0])
+	// Using Docker volume
+	c = &container{RawRun: RunParameters{RawVolume: []string{"a:/b"}}}
+	cfg = &config{volumeMap: map[string]Volume{"a": &volume{RawName: "a"}}}
+	assert.Equal(t, "a:/b", c.RunParams().Volume()[0])
 	// With prefix Docker volume
 	c = &container{RawRun: RunParameters{RawVolume: []string{"a:/b"}}}
 	cfg = &config{prefix: "foo_", volumeMap: map[string]Volume{"a": &volume{RawName: "a"}}}

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Optional Unison sync for Docker for Mac to improve performance.
+  For more information, see [Docker for Mac with Unison sync](https://github.com/michaelsauter/crane#docker-for-mac-with-unison-sync).
+
+  _@michaelsauter_
+
 ## 2.9.1 (2016-08-15)
 
 * Fix tag override for images with no tag specified in the config.
