@@ -401,7 +401,7 @@ It is possible to further customize the behaviour of each sync:
   you can pass to `unison`, see the
   [manual](http://www.cis.upenn.edu/~bcpierce/unison/download/releases/stable/unison-manual.html#prefs).
   Note that the folder to sync and the socket of the volume container are always
-  added by Crane. Also, you must use `=` between flags and their values.
+  added by Crane.
 * `image`: Defaults to `michaelsauter/unison:2.48.4`.
 * `uid`/`gid`: Defaults to `0`/`0`. Set this to the user/group ID the consuming
   container expects, e.g. `1000`/`1000`.
