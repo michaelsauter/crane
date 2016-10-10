@@ -35,21 +35,21 @@ type Config interface {
 }
 
 type config struct {
-	RawContainers  map[string]*container  `json:"containers" yaml:"containers"`
-	RawGroups    map[string][]string `json:"groups" yaml:"groups"`
-	RawHooks     map[string]hooks    `json:"hooks" yaml:"hooks"`
-	RawNetworks  map[string]*network `json:"networks" yaml:"networks"`
-	RawVolumes   map[string]*volume  `json:"volumes" yaml:"volumes"`
-	RawMacSyncs  map[string]*macSync `json:"mac-syncs" yaml:"mac-syncs"`
-	containerMap ContainerMap
-	networkMap   NetworkMap
-	volumeMap    VolumeMap
-	macSyncMap   MacSyncMap
-	groups       map[string][]string
-	path         string
-	prefix       string
-	tag          string
-	uniqueID     string
+	RawContainers map[string]*container `json:"containers" yaml:"containers"`
+	RawGroups     map[string][]string   `json:"groups" yaml:"groups"`
+	RawHooks      map[string]hooks      `json:"hooks" yaml:"hooks"`
+	RawNetworks   map[string]*network   `json:"networks" yaml:"networks"`
+	RawVolumes    map[string]*volume    `json:"volumes" yaml:"volumes"`
+	RawMacSyncs   map[string]*macSync   `json:"mac-syncs" yaml:"mac-syncs"`
+	containerMap  ContainerMap
+	networkMap    NetworkMap
+	volumeMap     VolumeMap
+	macSyncMap    MacSyncMap
+	groups        map[string][]string
+	path          string
+	prefix        string
+	tag           string
+	uniqueID      string
 }
 
 // ContainerMap maps the container name
@@ -246,7 +246,11 @@ func (c *config) Volume(name string) Volume {
 }
 
 func (c *config) MacSync(name string) MacSync {
-	return c.macSyncMap[name]
+	parts := strings.Split(name, ":")
+	if !path.IsAbs(parts[0]) {
+		parts[0] = c.path + "/" + parts[0]
+	}
+	return c.macSyncMap[strings.Join(parts, ":")]
 }
 
 // Load configuration into the internal structs from the raw, parsed ones
@@ -326,7 +330,6 @@ func (c *config) setMacSyncMap() {
 		c.macSyncMap[sync.Volume()] = sync
 	}
 }
-
 
 func (c *config) validate() {
 	for name, container := range c.RawContainers {

@@ -1,6 +1,6 @@
 containers:
   cranedev:
-    image: michaelsauter/golang:1.6
+    image: michaelsauter/golang:1.7
     run:
       rm: true
       interactive: true
