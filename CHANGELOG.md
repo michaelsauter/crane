@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.10.1 (2016-10-10)
+
 ## 2.10.0 (2016-10-08)
 
 * Optional Unison sync for Docker for Mac to improve performance.
