@@ -1,6 +1,8 @@
 test:
 	@(go list ./... | grep -v "vendor/" | xargs -n1 go test -v -cover)
 
+build: build-linux-386 build-linux-amd64 build-darwin-amd64 build-windows-amd64
+
 build-linux-386:
 	GOOS=linux GOARCH=386 CGO_ENABLED=0 go build -o crane_linux_386 -v github.com/michaelsauter/crane
 
