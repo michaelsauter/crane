@@ -386,11 +386,19 @@ func runCli() {
 	case syncStartCommand.FullCommand():
 		cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
 		sync := cfg.MacSync(*syncStartVolumeArg)
+		if sync == nil {
+			printErrorf("ERROR: No such sync configured: %s.", *syncStartVolumeArg)
+			return
+		}
 		sync.Start()
 
 	case syncStopCommand.FullCommand():
 		cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
 		sync := cfg.MacSync(*syncStopVolumeArg)
+		if sync == nil {
+			printErrorf("ERROR: No such sync configured: %s.", *syncStartVolumeArg)
+			return
+		}
 		sync.Stop()
 
 	case syncStatusCommand.FullCommand():
