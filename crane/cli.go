@@ -15,7 +15,7 @@ var allowed []string
 var (
 	app         = kingpin.New("crane", "Lift containers with ease").Interspersed(false).DefaultEnvars()
 	verboseFlag = app.Flag("verbose", "Enable verbose output.").Short('v').Bool()
-	dryRunFlag = app.Flag("dry-run", "Dry run (implicit verbose, no side effects).").Bool()
+	dryRunFlag  = app.Flag("dry-run", "Dry run (implicit verbose, no side effects).").Bool()
 	configFlag  = app.Flag(
 		"config",
 		"Location of config file.",
@@ -213,7 +213,7 @@ var (
 		"Start Docker for Mac sync",
 	)
 	syncStartVolumeArg = syncStartCommand.Arg("volume", "Folders to sync").String()
-	syncStopCommand = syncCommand.Command(
+	syncStopCommand    = syncCommand.Command(
 		"stop",
 		"Stop Docker for Mac sync",
 	)
@@ -415,7 +415,7 @@ func runCli() {
 					status = "running"
 				}
 			}
-			fmt.Fprintf(w, "%s\n", s.Volume() + "\t" + s.ContainerName() + "\t" + status)
+			fmt.Fprintf(w, "%s\n", s.Volume()+"\t"+s.ContainerName()+"\t"+status)
 		}
 		w.Flush()
 	}
