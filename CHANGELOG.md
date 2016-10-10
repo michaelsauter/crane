@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 2.10.1 (2016-10-10)
+
+* Allow to pass relative host directories to `mac-sync start/stop`.
+
+  _@michaelsauter_
+
+* Print error message when volume passed to `mac-sync start/stop` is not
+  configured.
+
+  _@michaelsauter_
+
 ## 2.10.0 (2016-10-08)
 
 * Optional Unison sync for Docker for Mac to improve performance.
