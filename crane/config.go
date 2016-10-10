@@ -246,7 +246,11 @@ func (c *config) Volume(name string) Volume {
 }
 
 func (c *config) MacSync(name string) MacSync {
-	return c.macSyncMap[name]
+	parts := strings.Split(name, ":")
+	if !path.IsAbs(parts[0]) {
+		parts[0] = c.path + "/" + parts[0]
+	}
+	return c.macSyncMap[strings.Join(parts, ":")]
 }
 
 // Load configuration into the internal structs from the raw, parsed ones
