@@ -4,10 +4,12 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"path"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type MacSync interface {
@@ -96,7 +98,9 @@ func (s *macSync) Start() {
 				initialSyncArgs = append(initialSyncArgs, a)
 			}
 		}
-		executeCommand("unison", initialSyncArgs, nil, nil)
+		// Wait a bit for the Unison server to start
+		time.Sleep(time.Second)
+		executeCommand("unison", initialSyncArgs, nil, os.Stderr)
 	}
 
 	// Start unison in background if not already running
