@@ -15,6 +15,7 @@ import (
 type MacSync interface {
 	ContainerName() string
 	Volume() string
+	Autostart() bool
 	Exists() bool
 	Running() bool
 	Start()
@@ -22,14 +23,15 @@ type MacSync interface {
 }
 
 type macSync struct {
-	RawVolume  string
-	RawFlags   []string `json:"flags" yaml:"flags"`
-	RawImage   string   `json:"image" yaml:"image"`
-	Uid        int      `json:"uid" yaml:"uid"`
-	Gid        int      `json:"gid" yaml:"gid"`
-	configPath string
-	cName      string
-	volume     string
+	RawVolume    string
+	RawFlags     []string `json:"flags" yaml:"flags"`
+	RawImage     string   `json:"image" yaml:"image"`
+	Uid          int      `json:"uid" yaml:"uid"`
+	Gid          int      `json:"gid" yaml:"gid"`
+	RawAutostart bool     `json:"autostart" yaml:"autostart"`
+	configPath   string
+	cName        string
+	volume       string
 }
 
 func (s *macSync) ContainerName() string {
@@ -51,6 +53,10 @@ func (s *macSync) Volume() string {
 		s.volume = strings.Join(parts, ":")
 	}
 	return s.volume
+}
+
+func (s *macSync) Autostart() bool {
+	return s.RawAutostart
 }
 
 func (s *macSync) Exists() bool {

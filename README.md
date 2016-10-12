@@ -359,7 +359,7 @@ every minor version update.
 ### Docker for Mac with Unison sync
 Crane can optionally make use of Unison to have faster bind-mounts between the
 host and Docker for Mac. Example config:
- 
+
  ```
 containers:
   hello:
@@ -384,7 +384,7 @@ The `start` command creates a bi-directional sync between the host directory
 and syncs them as they happen. The sync is implemented via a special container
 running a Unison server, named e.g.
 `crane_unison_d4b2758da0205c1e0aa9512cd188002a`.
-While a sync is running, Crane replaces `--volume /path/to/foo:/bar` with 
+While a sync is running, Crane replaces `--volume /path/to/foo:/bar` with
 `--volumes-from crane_unison_d4b2758da0205c1e0aa9512cd188002a` in the Docker
 arguments automatically.
 
@@ -405,6 +405,9 @@ It is possible to further customize the behaviour of each sync:
 * `image`: Defaults to `michaelsauter/unison:2.48.4`.
 * `uid`/`gid`: Defaults to `0`/`0`. Set this to the user/group ID the consuming
   container expects, e.g. `1000`/`1000`.
+* `autostart`: Defaults to `false`. If `true` the sync is started automatically
+  when a container is using a volume which is configured as a mac sync. Crane
+  basically calls `crane mac-sync start /path/to/foo:/bar` behind the scenes.
 
 This feature is experimental, which means it can be changed or even removed in every minor version update.
 

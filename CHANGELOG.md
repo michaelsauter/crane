@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Add `autostart` option to Mac syncs.
+
+  _@michaelsauter_
+
 ## 2.10.1 (2016-10-10)
 
 * Allow to pass relative host directories to `mac-sync start/stop`.
