@@ -107,6 +107,8 @@ func (s *macSync) Start() {
 	if len(unisonArgs) > 0 {
 		verboseLog("unison " + strings.Join(unisonArgs, " "))
 		if !isDryRun() {
+			// Wait a bit for the Unison server to start
+			time.Sleep(time.Second)
 			cmd := exec.Command("unison", unisonArgs...)
 			cmd.Dir = cfg.Path()
 			cmd.Stdout = nil
