@@ -16,11 +16,13 @@ echo "Running tests..."
 $docker_run make test
 
 echo "Update version..."
-sed -i.bak 's/fmt\.Println("v[0-9]\{1,2\}\.[0-9]\{1,2\}\.[0-9]\{1,2\}")/fmt.Println("v'$version'")/' crane/cli.go
+grepped_version=$(grep -o "v[0-9]*\.[0-9]*\.[0-9]*" crane/cli.go)
+old_version=${grepped_version:1}
+sed -i.bak 's/fmt\.Println("v'$old_version'")/fmt.Println("v'$version'")/' crane/cli.go
 rm crane/cli.go.bak
-sed -i.bak 's/VERSION="[0-9]\{1,2\}\.[0-9]\{1,2\}\.[0-9]\{1,2\}"/VERSION="'$version'"/' download.sh
+sed -i.bak 's/VERSION="'$old_version'"/VERSION="'$version'"/' download.sh
 rm download.sh.bak
-sed -i.bak 's/[0-9]\{1,2\}\.[0-9]\{1,2\}\.[0-9]\{1,2\}/'$version'/' README.md
+sed -i.bak 's/'$old_version'/'$version'/' README.md
 rm README.md.bak
 
 echo "Mark version as released in changelog..."
