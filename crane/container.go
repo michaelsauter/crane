@@ -1122,16 +1122,23 @@ func (c *container) createArgs(cmds []string) []string {
 	}
 	// Volumes
 	for _, volume := range c.RunParams().ActualVolume() {
+		volumeArgs := []string{"--volume", volume}
 		if runtime.GOOS == "darwin" {
-			if s := cfg.MacSync(volume); s != nil && s.Running() {
-				args = append(args, "--volumes-from", s.ContainerName())
-				args = append(args, "--label", "io.github.michaelsauter.crane.mac-sync="+s.ContainerName())
-			} else {
-				args = append(args, "--volume", volume)
+			if s := cfg.MacSync(volume); s != nil {
+				syncRunning := s.Running()
+				if !syncRunning && s.Autostart() {
+					s.Start()
+					syncRunning = true
+				}
+				if syncRunning {
+					volumeArgs = []string{
+						"--volumes-from", s.ContainerName(),
+						"--label", "io.github.michaelsauter.crane.mac-sync=" + s.ContainerName(),
+					}
+				}
 			}
-		} else {
-			args = append(args, "--volume", volume)
 		}
+		args = append(args, volumeArgs...)
 	}
 	// VolumeDriver
 	if len(c.RunParams().VolumeDriver()) > 0 {
