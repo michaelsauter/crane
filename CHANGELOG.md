@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.10.2 (2016-10-13)
+
 * Add `autostart` option to Mac syncs.
 
   _@michaelsauter_
