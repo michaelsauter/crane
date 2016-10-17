@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Add image, flags, uid and gid to md5 hash identifying the Mac sync server.
+
+  _@michaelsauter_
+
 ## 2.10.2 (2016-10-13)
 
 * Add `autostart` option to Mac syncs.

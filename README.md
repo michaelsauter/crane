@@ -392,7 +392,7 @@ This feature requires Unison 2.48.4 to be installed, see [instructions](https://
 Different containers or multiple instances of the same container
 definition can share the same volume container, as the last part of the
 container name is a MD5 hash over
-`<config-directory>:<host-dir>:<container-dir>`.
+`<config-directory>:<host-dir>:<container-dir>:<image>:<flags>:<uid>:<gid>`.
 
 It is possible to further customize the behaviour of each sync:
 

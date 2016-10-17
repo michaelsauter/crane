@@ -36,7 +36,15 @@ type macSync struct {
 
 func (s *macSync) ContainerName() string {
 	if s.cName == "" {
-		syncIdentifier := []byte(s.configPath + ":" + s.Volume())
+		syncIdentifierParts := []string{
+			s.configPath,
+			s.Volume(),
+			s.image(),
+			strings.Join(s.flags(), " "),
+			strconv.Itoa(s.Uid),
+			strconv.Itoa(s.Gid),
+		}
+		syncIdentifier := []byte(strings.Join(syncIdentifierParts, ":"))
 		digest := fmt.Sprintf("%x", md5.Sum(syncIdentifier))
 		s.cName = "crane_unison_" + digest
 	}
