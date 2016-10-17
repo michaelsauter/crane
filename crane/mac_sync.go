@@ -72,7 +72,7 @@ func (s *macSync) Exists() bool {
 }
 
 func (s *macSync) Running() bool {
-	return s.Exists() && inspectBool(s.ContainerName(), "{{.State.Running}}")
+	return s.Exists() && s.serverRunning() && s.clientRunning()
 }
 
 func (s *macSync) Start() {
@@ -80,18 +80,16 @@ func (s *macSync) Start() {
 
 	// Start sync container if needed
 	if s.Exists() {
-		if !s.Running() {
-			checkUnisonRequirements()
-			verboseLog("Starting unison sync for " + s.hostDir())
+		if s.serverRunning() {
+			verboseLog("Unison sync server for " + s.hostDir() + " already running")
+		} else {
+			verboseLog("Starting unison sync server for " + s.hostDir())
 			dockerArgs := []string{"start", s.ContainerName()}
 			executeHiddenCommand("docker", dockerArgs)
-			unisonArgs = s.unisonArgs()
-		} else {
-			verboseLog("Unison sync for " + s.hostDir() + " already running")
 		}
 	} else {
 		checkUnisonRequirements()
-		verboseLog("Starting unison sync for " + s.hostDir())
+		verboseLog("Starting unison sync server for " + s.hostDir())
 		dockerArgs := []string{
 			"run",
 			"--name", s.ContainerName(),
@@ -118,7 +116,11 @@ func (s *macSync) Start() {
 	}
 
 	// Start unison in background if not already running
-	if len(unisonArgs) > 0 {
+	if s.clientRunning() {
+		verboseLog("Unison sync client for " + s.hostDir() + " already running")
+	} else {
+		verboseLog("Starting unison sync client for " + s.hostDir())
+		unisonArgs = s.unisonArgs()
 		verboseLog("unison " + strings.Join(unisonArgs, " "))
 		if !isDryRun() {
 			// Wait a bit for the Unison server to start
@@ -139,6 +141,16 @@ func (s *macSync) Stop() {
 	// stop container (also stops Unison sync)
 	dockerArgs := []string{"kill", s.ContainerName()}
 	executeHiddenCommand("docker", dockerArgs)
+}
+
+func (s *macSync) serverRunning() bool {
+	return s.Exists() && inspectBool(s.ContainerName(), "{{.State.Running}}")
+}
+
+func (s *macSync) clientRunning() bool {
+	args := []string{"-f", "'unison " + s.hostDir() + " socket://localhost:" + s.publishedPort() + "'"}
+	_, err := commandOutput("pgrep", args)
+	return err == nil
 }
 
 func (s *macSync) unisonArgs() []string {
