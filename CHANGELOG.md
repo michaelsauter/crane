@@ -6,6 +6,10 @@
 
   _@michaelsauter_
 
+* Check Unison client as well when determining whether a Mac sync is running.
+
+  _@michaelsauter_
+
 ## 2.10.2 (2016-10-13)
 
 * Add `autostart` option to Mac syncs.
