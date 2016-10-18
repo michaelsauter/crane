@@ -800,7 +800,8 @@ func (c *container) Run(cmds []string) {
 	if !adHoc {
 		c.Rm(true)
 	}
-	executeHook(c.Hooks().PreStart(), c.ActualName(adHoc))
+	containerName := c.ActualName(adHoc)
+	executeHook(c.Hooks().PreStart(), containerName)
 	fmt.Fprintf(c.CommandsOut(), "Running container %s ...\n", c.ActualName(adHoc))
 
 	args := []string{"run"}
@@ -808,8 +809,12 @@ func (c *container) Run(cmds []string) {
 	if !adHoc && c.RunParams().Detach {
 		args = append(args, "--detach")
 	}
+
+	args = append(args, "--env", "CRANE_CONTAINER="+containerName)
+
 	args = append(args, c.createArgs(cmds)...)
 	wg := c.executePostStartHook(adHoc)
+
 	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 	wg.Wait()
 }
