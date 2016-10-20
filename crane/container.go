@@ -810,7 +810,7 @@ func (c *container) Run(cmds []string) {
 		args = append(args, "--detach")
 	}
 
-	args = append(args, "--env", "CRANE_CONTAINER="+containerName)
+	args = append(args, "--env", "CONTAINER_NAME="+containerName)
 
 	args = append(args, c.createArgs(cmds)...)
 	wg := c.executePostStartHook(adHoc)
