@@ -20,6 +20,7 @@ type MacSync interface {
 	Running() bool
 	Start()
 	Stop()
+	Status() string
 }
 
 type macSync struct {
@@ -73,6 +74,17 @@ func (s *macSync) Exists() bool {
 
 func (s *macSync) Running() bool {
 	return s.Exists() && s.serverRunning() && s.clientRunning()
+}
+
+func (s *macSync) Status() string {
+	status := "-"
+	if s.Exists() {
+		status = "stopped"
+		if s.Running() {
+			status = "running"
+		}
+	}
+	return status
 }
 
 func (s *macSync) Start() {
