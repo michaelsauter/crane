@@ -1127,7 +1127,7 @@ func (c *container) createArgs(cmds []string) []string {
 			if s := cfg.MacSync(volume); s != nil {
 				syncRunning := s.Running()
 				if !syncRunning && s.Autostart() {
-					s.Start()
+					s.Start(false)
 					syncRunning = true
 				}
 				if syncRunning {

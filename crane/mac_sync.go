@@ -18,7 +18,7 @@ type MacSync interface {
 	Autostart() bool
 	Exists() bool
 	Running() bool
-	Start()
+	Start(debug bool)
 	Stop()
 	Status() string
 }
@@ -87,7 +87,7 @@ func (s *macSync) Status() string {
 	return status
 }
 
-func (s *macSync) Start() {
+func (s *macSync) Start(debug bool) {
 	unisonArgs := []string{}
 
 	// Start sync container if needed
@@ -124,7 +124,11 @@ func (s *macSync) Start() {
 		}
 		// Wait a bit for the Unison server to start
 		time.Sleep(3 * time.Second)
-		executeCommand("unison", initialSyncArgs, nil, os.Stderr)
+		if debug {
+			executeCommand("unison", initialSyncArgs, os.Stdout, os.Stderr)
+		} else {
+			executeCommand("unison", initialSyncArgs, nil, nil)
+		}
 	}
 
 	// Start unison in background if not already running
@@ -137,12 +141,16 @@ func (s *macSync) Start() {
 		if !isDryRun() {
 			// Wait a bit for the Unison server to start
 			time.Sleep(3 * time.Second)
-			cmd := exec.Command("unison", unisonArgs...)
-			cmd.Dir = cfg.Path()
-			cmd.Stdout = nil
-			cmd.Stderr = nil
-			cmd.Stdin = nil
-			cmd.Start()
+			if debug {
+				executeCommand("unison", unisonArgs, os.Stdout, os.Stderr)
+			} else {
+				cmd := exec.Command("unison", unisonArgs...)
+				cmd.Dir = cfg.Path()
+				cmd.Stdout = nil
+				cmd.Stderr = nil
+				cmd.Stdin = nil
+				cmd.Start()
+			}
 		}
 	}
 }

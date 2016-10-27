@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Add `--debug` flag to `crane mac-sync start` which turns on verbose logging
+  and runs the sync in the foreground.
+
+  _@michaelsauter_
+
 * Add image, flags, uid and gid to md5 hash identifying the Mac sync server.
 
   _@michaelsauter_

@@ -208,16 +208,20 @@ var (
 		"mac-sync",
 		"Docker for Mac sync",
 	)
+
 	syncStartCommand = syncCommand.Command(
 		"start",
 		"Start Docker for Mac sync",
 	)
+	syncStartDebugFlag = syncStartCommand.Flag("debug", "Debug mode (verbose and in foreground)").Bool()
 	syncStartVolumeArg = syncStartCommand.Arg("volume", "Folders to sync").String()
-	syncStopCommand    = syncCommand.Command(
+
+	syncStopCommand = syncCommand.Command(
 		"stop",
 		"Stop Docker for Mac sync",
 	)
 	syncStopVolumeArg = syncStopCommand.Arg("volume", "Folders to sync").String()
+
 	syncStatusCommand = syncCommand.Command(
 		"status",
 		"Status of Docker for Mac syncs",
@@ -225,7 +229,7 @@ var (
 )
 
 func isVerbose() bool {
-	return *verboseFlag || *dryRunFlag
+	return *verboseFlag || *dryRunFlag || *syncStartDebugFlag
 }
 
 func isDryRun() bool {
@@ -390,7 +394,7 @@ func runCli() {
 			printErrorf("ERROR: No such sync configured: %s.", *syncStartVolumeArg)
 			return
 		}
-		sync.Start()
+		sync.Start(*syncStartDebugFlag)
 
 	case syncStopCommand.FullCommand():
 		cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)

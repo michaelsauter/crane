@@ -409,6 +409,10 @@ It is possible to further customize the behaviour of each sync:
   when a container is using a volume which is configured as a mac sync. Crane
   basically calls `crane mac-sync start /path/to/foo:/bar` behind the scenes.
 
+To debug what is happening when the sync is started, you can use
+`crane mac-sync start --debug <host-dir>:<container-dir>`. This will turn on
+verbose logging and run the sync in the foreground.
+
 This feature is experimental, which means it can be changed or even removed in every minor version update.
 
 
