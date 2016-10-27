@@ -137,7 +137,9 @@ func (s *macSync) Start(debug bool) {
 	} else {
 		verboseLog("Starting unison sync client for " + s.hostDir())
 		unisonArgs = s.unisonArgs()
-		verboseLog("unison " + strings.Join(unisonArgs, " "))
+		if !debug { // Line will be logged later within executeCommand anyway
+			verboseLog("unison " + strings.Join(unisonArgs, " "))
+		}
 		if !isDryRun() {
 			// Wait a bit for the Unison server to start
 			time.Sleep(3 * time.Second)
