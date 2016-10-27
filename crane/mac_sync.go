@@ -170,7 +170,7 @@ func (s *macSync) serverRunning() bool {
 }
 
 func (s *macSync) clientRunning() bool {
-	args := []string{"-f", "'unison " + s.hostDir() + " socket://localhost:" + s.publishedPort() + "'"}
+	args := []string{"-f", "unison " + s.hostDir() + " socket://localhost:" + s.publishedPort()}
 	_, err := commandOutput("pgrep", args)
 	return err == nil
 }
