@@ -408,7 +408,11 @@ func runCli() {
 		fmt.Fprintln(w, "VOLUME\tCONTAINER\tSTATUS")
 		for _, name := range cfg.MacSyncNames() {
 			s := cfg.MacSync(name)
-			fmt.Fprintf(w, "%s\n", s.Volume()+"\t"+s.ContainerName()+"\t"+s.Status())
+			syncContainerName := "-"
+			if s.Exists() {
+				syncContainerName = s.ContainerName()
+			}
+			fmt.Fprintf(w, "%s\n", s.Volume()+"\t"+syncContainerName+"\t"+s.Status())
 		}
 		w.Flush()
 	}
