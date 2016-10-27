@@ -73,7 +73,7 @@ func (s *macSync) Exists() bool {
 }
 
 func (s *macSync) Running() bool {
-	return s.Exists() && s.serverRunning() && s.clientRunning()
+	return s.serverRunning() && s.clientRunning()
 }
 
 func (s *macSync) Status() string {
