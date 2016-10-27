@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.10.3 (2016-10-27)
+
 * Add `--debug` flag to `crane mac-sync start` which turns on verbose logging
   and runs the sync in the foreground.
 
