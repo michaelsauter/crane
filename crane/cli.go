@@ -20,6 +20,10 @@ var (
 		"config",
 		"Location of config file.",
 	).Short('c').PlaceHolder("~/crane.yaml").String()
+	overrideFlag = app.Flag(
+		"override",
+		"Location of override file.",
+	).String()
 	prefixFlag = app.Flag(
 		"prefix",
 		"Container prefix.",
@@ -238,7 +242,7 @@ func isDryRun() bool {
 
 func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork), mightStartRelated bool) {
 
-	cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
+	cfg = NewConfig(*configFlag, *overrideFlag, *prefixFlag, *tagFlag)
 	allowed = allowedContainers(*excludeFlag, *onlyFlag)
 	dependencyMap := cfg.DependencyMap()
 	target, err := NewTarget(dependencyMap, targetFlag)
@@ -388,7 +392,7 @@ func runCli() {
 		}, false)
 
 	case syncStartCommand.FullCommand():
-		cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
+		cfg = NewConfig(*configFlag, *overrideFlag, *prefixFlag, *tagFlag)
 		sync := cfg.MacSync(*syncStartVolumeArg)
 		if sync == nil {
 			printErrorf("ERROR: No such sync configured: %s.", *syncStartVolumeArg)
@@ -397,7 +401,7 @@ func runCli() {
 		sync.Start(*syncStartDebugFlag)
 
 	case syncStopCommand.FullCommand():
-		cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
+		cfg = NewConfig(*configFlag, *overrideFlag, *prefixFlag, *tagFlag)
 		sync := cfg.MacSync(*syncStopVolumeArg)
 		if sync == nil {
 			printErrorf("ERROR: No such sync configured: %s.", *syncStartVolumeArg)
@@ -406,7 +410,7 @@ func runCli() {
 		sync.Stop()
 
 	case syncStatusCommand.FullCommand():
-		cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
+		cfg = NewConfig(*configFlag, *overrideFlag, *prefixFlag, *tagFlag)
 		w := new(tabwriter.Writer)
 		w.Init(os.Stdout, 0, 8, 1, '\t', 0)
 		fmt.Fprintln(w, "VOLUME\tCONTAINER\tSTATUS")

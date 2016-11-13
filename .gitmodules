@@ -28,3 +28,6 @@
 [submodule "vendor/github.com/stretchr/testify"]
 	path = vendor/github.com/stretchr/testify
 	url = https://github.com/stretchr/testify
+[submodule "vendor/github.com/imdario/mergo"]
+	path = vendor/github.com/imdario/mergo
+	url = https://github.com/imdario/mergo.git
