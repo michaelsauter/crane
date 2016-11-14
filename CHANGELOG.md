@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.11.0 (2016-11-14)
+
 * Allow to override configuration by another configuration file. By default,
   Crane is looking for e.g. `crane.override.yml` if the config file in use is
   `crane.yml`. This can be customized via `--override`/`CRANE_OVERRIDE`.
