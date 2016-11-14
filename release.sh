@@ -10,7 +10,7 @@ if [ -z "$version" ]; then
 fi
 
 go_path=$(cd ../../../../; pwd)
-docker_run="docker run --rm -it -v $go_path:/go -w /go/src/github.com/michaelsauter/crane michaelsauter/golang:1.6"
+docker_run="docker run --rm -it -v $go_path:/go -w /go/src/github.com/michaelsauter/crane michaelsauter/golang:1.7"
 
 echo "Running tests..."
 $docker_run make test
