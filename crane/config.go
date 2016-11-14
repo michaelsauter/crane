@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"github.com/imdario/mergo"
 )
 
 type Config interface {
@@ -117,6 +118,31 @@ func readConfig(filename string) *config {
 	return unmarshal(data, ext)
 }
 
+func findOverride(filename, override string) string {
+	if len(override) > 0 {
+		if !path.IsAbs(override) {
+			override = path.Join(path.Dir(filename), override)
+		}
+		if _, err := os.Stat(override); err == nil {
+			return override
+		} else {
+			panic(StatusError{fmt.Errorf("Override %v not found", override), 78})
+		}
+	}
+
+	overrideFile := ""
+	lastIndex := strings.LastIndex(filename, ".")
+	if lastIndex > 0 {
+		overrideFile = filename[:lastIndex] + ".override" + filename[lastIndex:]
+	} else {
+		overrideFile = filename + ".override"
+	}
+	if _, err := os.Stat(overrideFile); err == nil {
+		return overrideFile
+	}
+	return ""
+}
+
 // displaySyntaxError will display more information
 // such as line and error type given an error and
 // the data that was unmarshalled.
@@ -164,13 +190,23 @@ func unmarshal(data []byte, ext string) *config {
 // location.
 // Containers will be ordered so that they can be
 // brought up and down with Docker.
-func NewConfig(location string, prefix string, tag string) Config {
+func NewConfig(location string, override string, prefix string, tag string) Config {
 	var config *config
 	configFile := findConfig(location)
 	if isVerbose() {
 		printInfof("Using configuration file `%s`\n", configFile)
 	}
-	config = readConfig(configFile)
+	configBase := readConfig(configFile)
+	overrideFile := findOverride(configFile, override)
+	if len(overrideFile) > 0 {
+		if isVerbose() {
+			printInfof("Using override file `%s`\n", overrideFile)
+		}
+		config = readConfig(overrideFile)
+		mergo.Merge(config, configBase)
+	} else {
+		config = configBase
+	}
 	config.path = path.Dir(configFile)
 	config.initialize()
 	config.validate()

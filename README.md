@@ -23,6 +23,7 @@ continuous integration.
   * [Hooks](#hooks)
   * [Parallelism](#parallelism)
   * [Container Prefixes](#container-prefixes)
+  * [Override configuration](#override-configuration)
   * [Override image tag](#override-image-tag)
   * [Generate command](#generate-command)
   * [YAML advanced usage](#yaml-advanced-usage)
@@ -487,6 +488,12 @@ prefix for subsequent calls if you want to address the same set of containers. A
 common use case for this feature is to launch a set of containers
 in parallel, e.g. for CI builds. Container prefixes can also be supplied by the
 `CRANE_PREFIX` environment variable.
+
+
+### Override configuration
+The configuration can be overriden by another configuration file. By default,
+Crane is looking for e.g. `crane.override.yml` if the config file in use is
+`crane.yml`. This can be customized via `--override`/`CRANE_OVERRIDE`.
 
 
 ### Override image tag

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Allow to override configuration by another configuration file. By default,
+  Crane is looking for e.g. `crane.override.yml` if the config file in use is
+  `crane.yml`. This can be customized via `--override`/`CRANE_OVERRIDE`.
+
+  _@michaelsauter_
+
 ## 2.10.3 (2016-10-27)
 
 * Add `--debug` flag to `crane mac-sync start` which turns on verbose logging
