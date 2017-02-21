@@ -71,7 +71,7 @@ Following are a list of supported commands and possible options:
 | Command | Maps to | Explanation and Options |
 | ------------- | ----------- | ---------|
 | create      | create           | Creates containers. Any existing containers are removed first. |
-| run         | run              | Runs containers. Any existing containers are removed first. |
+| run         | run              | Runs containers. Any existing containers are removed first. The container's name will be exposed inside the container as the environment variable `CONTAINER_NAME` |
 | rm          | rm               | Removes containers if they exist. Use `--force` to kill running containers first. |
 | start       | start            | Starts containers if not they are not running yet. Non-existing containers are created first. |
 | stop        | stop             | Stops containers if they are running. |
