@@ -96,7 +96,7 @@ The configuration defines a map of containers in either JSON or YAML. By default
 The map of containers consists of the name of the container mapped to the container configuration, with the following keys:
 
 * `image` (string, required): Name of the image to build/pull
-* `requires` (array) Container dependencies (experimental)
+* `requires` (array) Container dependencies
 * `run` (object, optional): Parameters mapped to Docker's `run` & `create`.
 	* `add-host` (array) Add custom host-to-IP mappings.
 	* `blkio-weight` (integer) Need Docker >= 1.7
@@ -301,12 +301,12 @@ Excluded containers' declaration _and_ references in the configuration file
 will be completely ignored, so their dependencies will also be excluded
 (unless they are also required by other non-excluded containers).
 
+This feature is experimental, which means it can be changed or even removed
+in every minor version update.
+
 Apart from excluding containers, it is also possible to limit the target to just
 one container or group with `--only` (or via `CRANE_ONLY`). The flag cannot be
 repeated. Containers outside the targets will not be considered by Crane then.
-
-Both features are experimental, which means they can be changed or even removed
-in every minor version update.
 
 
 ### Ad hoc commands
@@ -314,8 +314,7 @@ If you pass a command on the CLI to `lift` or `run`, Crane will add a timestamp
 to the container name (e.g. `foo` will become `foo-1447155694523`), making it
 possible to have multiple containers based on the same Crane config. Those ad
 hoc containers will have `ip`, `ip6`, `publish`, `publish-all` and `detach`
-disabled, and `rm` enabled. This feature is experimental, which means it can be
-changed or even removed in every minor version update.
+disabled, and `rm` enabled.
 
 
 ### Networking
@@ -334,10 +333,6 @@ networks:
   qux:
 ```
 
-This feature is experimental, which means it can be changed or even removed in
-every minor version update.
-
-
 ### Volumes
 Docker volumes are supported via the top-level config `volumes`, which does not
 take additional parameters at this stage. Volumes are automatically created by
@@ -352,10 +347,6 @@ containers:
 volumes:
   bar:
 ```
-
-This feature is experimental, which means it can be changed or even removed in
-every minor version update.
-
 
 ### Docker for Mac with Unison sync
 Crane can optionally make use of Unison to have faster bind-mounts between the
