@@ -187,7 +187,7 @@ The map of containers consists of the name of the container mapped to the contai
 
 Note that basic environment variable expansion (`${FOO}`, `$FOO`) is supported throughout the configuration, but advanced shell features such as command substitution (`$(cat foo)`, `` `cat foo` ``) or advanced expansions (`sp{el,il,al}l`, `foo*`, `~/project`, `$((A * B))`, `${PARAMETER#PATTERN}`) are *not* as the Docker CLI is called directly. Use `$$` for escaping a raw `$`.
 
-See the [Docker documentation](http://docs.docker.com/reference/commandline/cli/) for more details about the parameters.
+See the [Docker documentation](https://docs.docker.com/engine/reference/commandline/docker/) for more details about the parameters.
 
 
 ## Example
