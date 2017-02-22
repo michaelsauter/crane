@@ -109,7 +109,7 @@ The map of containers consists of the name of the container mapped to the contai
 	* `cpu-quota` (integer) Need Docker >= 1.7
 	* `cpuset` (integer)
 	* `cpu-shares` (integer)
-	* `detach` (boolean) `sudo docker attach <container name>` will work as normal.
+	* `detach` (boolean)
 	* `detach-keys` (string) Need Docker >= 1.10
 	* `device` (array) Add host devices.
 	* `device-read-bps` (array) Need Docker >= 1.10
