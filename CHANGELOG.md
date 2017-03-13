@@ -59,8 +59,8 @@ Behaviour changes:
 * The integration of Unison on macOS has been extracted into a paid pro version,
   see [www.craneup.tech](https://www.craneup.tech). There is still a free
   version for macOS without this feature. If you would like to support Crane,
-  you can also buy a pro version for Linux, but right now is no difference in
-  functionality.
+  you can also buy a pro version for Linux, but right now there is no difference
+  in functionality.
 
 
 ## 2.11.0 (2016-11-14)
