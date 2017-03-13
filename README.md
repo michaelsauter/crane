@@ -9,7 +9,7 @@ describes how to obtain images and how to run containers. Crane is ideally
 suited for setting up a development environment or continuous integration.
 
 There's a free version for Linux and a pro version for macOS which offers
-ultra-fast bind-mounts via Unison.
+**ultra-fast bind-mounts via Unison**!
 
 Please see [www.craneup.tech](https://www.craneup.tech) for more information
 and documentation.
