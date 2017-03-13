@@ -2,11 +2,7 @@ package crane
 
 import (
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"sort"
-	"syscall"
 	"testing"
 )
 
@@ -28,64 +24,30 @@ func (stubbedContainer *StubbedContainer) Exists() bool {
 	return stubbedContainer.exists
 }
 
-func TestConfigFilenames(t *testing.T) {
-	// With given fileName
-	fileName := "some/file.yml"
-	files := configFilenames(fileName)
-	assert.Equal(t, []string{fileName}, files)
-	// Without given fileName
-	files = configFilenames("")
-	assert.Equal(t, []string{"crane.json", "crane.yaml", "crane.yml"}, files)
-}
-
-func TestFindConfig(t *testing.T) {
-	f, _ := ioutil.TempFile("", "crane.yml")
-	defer syscall.Unlink(f.Name())
-	configName := filepath.Base(f.Name())
-	absConfigName := os.TempDir() + "/" + configName
-	var fileName string
-
-	// Finds config in current dir
-	os.Chdir(os.TempDir())
-	fileName = findConfig(configName)
-	assert.Equal(t, f.Name(), fileName)
-
-	// Finds config in parent dir
-	d, _ := ioutil.TempDir("", "sub")
-	defer syscall.Unlink(d)
-	os.Chdir(d)
-	fileName = findConfig(configName)
-	assert.Equal(t, f.Name(), fileName)
-
-	// Finds config with absolute path
-	fileName = findConfig(absConfigName)
-	assert.Equal(t, f.Name(), fileName)
-}
-
 func TestUnmarshal(t *testing.T) {
 	var actual *config
 	json := []byte(
 		`{
-    "containers": {
+    "services": {
         "apache": {
-            "dockerfile": "apache",
+            "build": {
+              "dockerfile": "apache"
+            },
             "image": "michaelsauter/apache",
-            "run": {
-                "volumes-from": ["crane_app"],
-                "publish": ["80:80"],
-                "env": {
-                    "foo": 1234,
-                    "4567": "bar",
-                    "true": false
-                },
-                "label": [
-                    "foo=1234",
-                    "4567=bar",
-                    "true=false"
-                ],
-                "link": ["crane_mysql:db", "crane_memcached:cache"],
-                "detach": true
-            }
+            "volumes-from": ["crane_app"],
+            "publish": ["80:80"],
+            "env": {
+                "foo": 1234,
+                "4567": "bar",
+                "true": false
+            },
+            "label": [
+                "foo=1234",
+                "4567=bar",
+                "true=false"
+            ],
+            "link": ["crane_mysql:db", "crane_memcached:cache"],
+            "detach": true
         }
     },
     "groups": {
@@ -112,9 +74,9 @@ func TestUnmarshal(t *testing.T) {
 `)
 	actual = unmarshal(json, ".json")
 	assert.Len(t, actual.RawContainers, 1)
-	assert.Len(t, actual.RawContainers["apache"].RunParams().Env(), 3)
-	assert.Len(t, actual.RawContainers["apache"].RunParams().Label(), 3)
-	assert.Len(t, actual.RawContainers["apache"].RunParams().Link(), 2)
+	assert.Len(t, actual.RawContainers["apache"].Env(), 3)
+	assert.Len(t, actual.RawContainers["apache"].Label(), 3)
+	assert.Len(t, actual.RawContainers["apache"].Link(), 2)
 	assert.Len(t, actual.RawGroups, 1)
 	assert.Len(t, actual.RawHooks, 2)
 	assert.Len(t, actual.RawNetworks, 1)
@@ -123,23 +85,23 @@ func TestUnmarshal(t *testing.T) {
 	assert.NotEmpty(t, actual.RawHooks["default"].RawPostStart)
 
 	yaml := []byte(
-		`containers:
+		`services:
   apache:
-    dockerfile: apache
+    build:
+      dockerfile: "apache"
     image: michaelsauter/apache
-    run:
-      volumes-from: ["crane_app"]
-      publish: ["80:80"]
-      env:
-        foo: 1234
-        4567: bar
-        true: false
-      label:
-        - foo=1234
-        - 4567=bar
-        - true=false
-      link: ["crane_mysql:db", "crane_memcached:cache"]
-      detach: true
+    volumes-from: ["crane_app"]
+    publish: ["80:80"]
+    env:
+      foo: 1234
+      4567: bar
+      true: false
+    label:
+      - foo=1234
+      - 4567=bar
+      - true=false
+    link: ["crane_mysql:db", "crane_memcached:cache"]
+    detach: true
 groups:
   default:
     - apache
@@ -156,9 +118,9 @@ volumes:
 `)
 	actual = unmarshal(yaml, ".yml")
 	assert.Len(t, actual.RawContainers, 1)
-	assert.Len(t, actual.RawContainers["apache"].RunParams().Env(), 3)
-	assert.Len(t, actual.RawContainers["apache"].RunParams().Label(), 3)
-	assert.Len(t, actual.RawContainers["apache"].RunParams().Link(), 2)
+	assert.Len(t, actual.RawContainers["apache"].Env(), 3)
+	assert.Len(t, actual.RawContainers["apache"].Label(), 3)
+	assert.Len(t, actual.RawContainers["apache"].Link(), 2)
 	assert.Len(t, actual.RawGroups, 1)
 	assert.Len(t, actual.RawHooks, 2)
 	assert.Len(t, actual.RawNetworks, 1)
@@ -170,12 +132,10 @@ volumes:
 func TestUnmarshalInvalidJSON(t *testing.T) {
 	json := []byte(
 		`{
-    "containers": {
+    "services": {
         "apache": {
             "image": "michaelsauter/apache",
-            "run": {
-                "publish": "shouldbeanarray"
-            }
+            "publish": "shouldbeanarray"
         }
     }
 }
@@ -187,55 +147,51 @@ func TestUnmarshalInvalidJSON(t *testing.T) {
 
 func TestUnmarshalInvalidYAML(t *testing.T) {
 	yaml := []byte(
-		`containers:
+		`services:
   apache:
     image: michaelsauter/apache
-    run:
-      publish: "shouldbeanarray"
+    publish: "shouldbeanarray"
 `)
 	assert.Panics(t, func() {
 		unmarshal(yaml, ".yml")
 	})
 
 	yaml = []byte(
-		`containers:
+		`services:
   apache:
     image: michaelsauter/apache
-    run:
-      env:
-        - shouldbe: astring
+    env:
+      - shouldbe: astring
 `)
 	assert.Panics(t, func() {
 		config := unmarshal(yaml, ".yml")
-		config.RawContainers["apache"].RunParams().Env()
+		config.RawContainers["apache"].Env()
 	})
 
 	yaml = []byte(
-		`containers:
+		`services:
   apache:
     image: michaelsauter/apache
-    run:
-      env:
-        foo:
-          - shouldbeastring
+    env:
+      foo:
+        - shouldbeastring
 `)
 	assert.Panics(t, func() {
 		config := unmarshal(yaml, ".yml")
-		config.RawContainers["apache"].RunParams().Env()
+		config.RawContainers["apache"].Env()
 	})
 
 	yaml = []byte(
-		`containers:
+		`services:
   apache:
     image: michaelsauter/apache
-    run:
-      env:
-        foo:
-          should: beastring
+    env:
+      foo:
+        should: beastring
 `)
 	assert.Panics(t, func() {
 		config := unmarshal(yaml, ".yml")
-		config.RawContainers["apache"].RunParams().Env()
+		config.RawContainers["apache"].Env()
 	})
 }
 
@@ -337,8 +293,8 @@ func TestDependencyMap(t *testing.T) {
 	}()
 
 	containerMap := NewStubbedContainerMap(true,
-		&container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},
-		&container{RawName: "b", RawRun: RunParameters{RawLink: []string{"c:c"}}},
+		&container{RawName: "a", RawLink: []string{"b:b"}},
+		&container{RawName: "b", RawLink: []string{"c:c"}},
 		&container{RawName: "c"},
 	)
 	c := &config{containerMap: containerMap}

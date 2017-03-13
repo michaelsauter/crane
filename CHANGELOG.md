@@ -2,6 +2,67 @@
 
 ## Unreleased
 
+## 3.0.0 (2017-03-13)
+
+As this is a major release, lots of things have changed. Please review the
+following list very carefully and adjust as needed.
+
+CLI interface changes:
+
+* `lift` has been renamed to `up`.
+* `rm` doesn't have the short flag `-f` anymore, but `--force` still works
+* `rm` learned `--volumes` to removed associated volumes, too
+* `exec` adds `--interactive` and `--tty` by default, and supports specifying
+  `--privileged` and `--user USER`
+* The short-hand for `--exclude` is `-x` now
+* Dynamic targets (`+affected`/`+dependencies`) have been dropped, but it is
+  still possible to extend a target to all dependencies by using
+  `--extend`/`-e`. `+affected` was mainly useful with legacy links and should
+  not be needed with the "new" networks. If you used it regularly, please open
+  an issue.
+* `lift`/`run` by default attach to the target, and detach from dependencies. If
+  the target is configured to detach (either via file or `--detach`/`-d`)
+  however, then `lift`/`run` detach from the target, too.
+* The configuration flag `--config`/`-c` can be repeated now. The specified
+  configurations are merged together, last one wins. Multiple configuration
+  files can also be set via `CRANE_CONFIG` by separating the files via colons.
+  Consequently, the `--override` flag has been dropped.
+
+Configuration changes:
+
+* The parameters for `stop`, `start` and `exec` have been removed. The
+  corresponding CLI commands have learned some of the options to mitigate this.
+* The top-level configuration key `containers` has been renamed to `services` to
+  align with docker-compose.
+* All `run ` parameters have been moved up one level to align with
+  docker-compose.
+* `cmd` has to be specified as `command` now.
+* `image` is optional now. If it is not given, the service name will be used as
+  the image name.
+* `stop-timeout`, `sysctl` and `userns` can be configured now.
+* Most configuration keys have an alternative name now, e.g. `publish` can now
+  be specified as `ports`. The alternative name is the one that docker-compose
+  uses. This allows Crane to read docker-compose configuration files, with some
+  minor exceptions.
+* `net` also allows the form `service:<container>` now.
+
+Behaviour changes:
+
+* Crane reads `docker-compose.yml`, `docker-compose.override.yml`, `crane.yml`,
+  `crane.override.yml` by default now (in this order).
+* To align with docker-compose, Crane sets a default prefix now, which is the
+  name of the directory where the configuration files are in. You can remove
+  the prefix by passing `--prefix=""`/`-p ""` or setting `CRANE_PREFIX=""`.
+* If neither `net`, `network_mode` or `networks` is configured, the default
+  network mode is no longer `bridge` but a `default` network (to align with
+  docker-compose).
+* The integration of Unison on macOS has been extracted into a paid pro version,
+  see [www.craneup.tech](https://www.craneup.tech). There is still a free
+  version for macOS without this feature. If you would like to support Crane,
+  you can also buy a pro version for Linux, but right now is no difference in
+  functionality.
+
+
 ## 2.11.0 (2016-11-14)
 
 * Allow to override configuration by another configuration file. By default,

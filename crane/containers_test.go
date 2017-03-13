@@ -23,12 +23,12 @@ func TestProvisioningDuplicates(t *testing.T) {
 		&container{RawName: "D", RawBuild: BuildParameters{RawContext: "dockerfile1"}, RawImage: "image2"}, //dup of C
 		&container{RawName: "E", RawBuild: BuildParameters{RawContext: "dockerfile2"}, RawImage: "image1"},
 		&container{RawName: "F", RawBuild: BuildParameters{RawContext: "dockerfile2"}, RawImage: "image1"}, //dup of E
-		&container{RawName: "G", RawBuild: BuildParameters{RawContext: "dockerfile1"}},
-		&container{RawName: "H", RawBuild: BuildParameters{RawContext: "dockerfile1"}}, //dup of G
+		&container{RawName: "G", RawBuild: BuildParameters{RawContext: "dockerfile1"}},                     // image is "G"
+		&container{RawName: "H", RawBuild: BuildParameters{RawContext: "dockerfile1"}},                     // image is "H"
 		&container{RawName: "I", RawImage: "image1"},
 		&container{RawName: "J", RawImage: "image1"}, //dup of I
 	}
 	deduplicated := containers.stripProvisioningDuplicates()
-	assert.Len(t, deduplicated, 5)
+	assert.Len(t, deduplicated, 6)
 	assert.Len(t, containers, 10) // input was not mutated - further operations won't be affected
 }
