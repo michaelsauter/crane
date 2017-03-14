@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 3.0.0 (2017-03-13)
+## 3.0.0 beta (2017-03-13)
 
 As this is a major release, lots of things have changed. Please review the
 following list very carefully and adjust as needed.
