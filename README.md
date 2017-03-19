@@ -11,6 +11,24 @@ suited for setting up a development environment or continuous integration.
 There's a free version for Linux and a pro version for macOS which offers
 **ultra-fast bind-mounts via Unison**!
 
+## Features
+
+* Extensive support of Docker run flags
+* Intuitive configuration format with 1:1 mapping to Docker run flags
+* `docker-compose` compatible
+* Fast bind-mounts via Unison on macOS
+* Grouping of containers
+* Excluding / limiting containers via CLI
+* Smart detach / attach behaviour
+* Verbose output which shows exact Docker commands
+* Hooks
+* Container / network / volume prefix
+* Tag override
+* Generate other files from configuration via templates
+* ... and much more!
+
+## Documentation & Usage
+
 Please see [www.craneup.tech](https://www.craneup.tech) for more information
 and documentation.
 

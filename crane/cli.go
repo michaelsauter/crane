@@ -14,7 +14,7 @@ var allowed []string
 var defaultFiles = []string{"docker-compose.yml", "docker-compose.override.yml", "crane.yml", "crane.override.yml"}
 
 var (
-	app         = kingpin.New("crane", "Lift containers with ease - https://craneup.tech").Interspersed(false).DefaultEnvars()
+	app         = kingpin.New("crane", "Lift containers with ease - https://www.craneup.tech").Interspersed(false).DefaultEnvars()
 	verboseFlag = app.Flag("verbose", "Enable verbose output.").Short('v').Bool()
 	dryRunFlag  = app.Flag("dry-run", "Dry run (implicit verbose, no side effects).").Bool()
 	configFlag  = app.Flag(

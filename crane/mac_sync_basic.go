@@ -53,7 +53,7 @@ func (s *macSync) Status() string {
 	return "-"
 }
 
-var proOnly = "Mac Sync is not available in the free version, please purchase the pro version: https://craneup.tech"
+var proOnly = "Mac Sync is not available in the free version, please purchase the pro version: https://www.craneup.tech"
 
 func (s *macSync) Start(debug bool) {
 	panic(StatusError{errors.New(proOnly), 69})
