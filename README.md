@@ -5,8 +5,8 @@ Lift containers with ease - [www.craneup.tech](https://www.craneup.tech)
 ## Overview
 Crane is a Docker orchestration tool similar to Docker Compose with extra
 features. It works by reading in some configuration (JSON or YAML) which
-describes how to obtain images and how to run containers. Crane is ideally
-suited for setting up a development environment or continuous integration.
+describes how to to run containers. Crane is ideally suited for setting up a
+development environment or continuous integration.
 
 There's a free version for Linux and a pro version for macOS which offers
 **ultra-fast bind-mounts via Unison**!
