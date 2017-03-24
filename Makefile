@@ -12,5 +12,8 @@ build-linux-amd64:
 build-darwin-amd64:
 	GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -o crane_darwin_amd64 -v github.com/michaelsauter/crane
 
+build-darwin-amd64-pro:
+	GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -tags pro -o crane_darwin_amd64_pro -v github.com/michaelsauter/crane
+
 build-windows-amd64:
 	GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -o crane_windows_amd64.exe -v github.com/michaelsauter/crane
