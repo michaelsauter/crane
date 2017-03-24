@@ -24,7 +24,7 @@ var (
 	prefixFlag = app.Flag(
 		"prefix",
 		"Container/Network/Volume prefix.",
-	).Default("$PROJECT_NAME$").Short('p').String()
+	).Default("$DEFAULT$").Short('p').String()
 	excludeFlag = app.Flag(
 		"exclude",
 		"Exclude group or container. Can be repeated.",

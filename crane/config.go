@@ -36,6 +36,7 @@ type Config interface {
 }
 
 type config struct {
+	RawPrefix     interface{}           `json:"prefix" yaml:"prefix"`
 	RawContainers map[string]*container `json:"services" yaml:"services"`
 	RawGroups     map[string][]string   `json:"groups" yaml:"groups"`
 	RawHooks      map[string]hooks      `json:"hooks" yaml:"hooks"`
@@ -133,13 +134,8 @@ func NewConfig(files []string, prefix string, tag string) Config {
 	configPath := findConfigPath(expandedFiles)
 	config = readConfig(configPath, expandedFiles)
 	config.path = configPath
-	config.initialize()
+	config.initialize(prefix)
 	config.validate()
-	if prefix == "$PROJECT_NAME$" {
-		config.prefix = filepath.Base(config.path) + "_"
-	} else {
-		config.prefix = prefix
-	}
 	config.tag = tag
 	milliseconds := time.Now().UnixNano() / 1000000
 	config.uniqueID = strconv.FormatInt(milliseconds, 10)
@@ -269,7 +265,7 @@ func (c *config) MacSync(name string) MacSync {
 }
 
 // Load configuration into the internal structs from the raw, parsed ones
-func (c *config) initialize() {
+func (c *config) initialize(prefixFlag string) {
 	// Local container map to query by expanded name
 	containerMap := make(map[string]*container)
 	for rawName, container := range c.RawContainers {
@@ -307,6 +303,7 @@ func (c *config) initialize() {
 		c.containerMap[name] = container
 	}
 
+	c.determinePrefix(prefixFlag)
 	c.setNetworkMap()
 	c.setVolumeMap()
 	c.setMacSyncMap()
@@ -321,7 +318,7 @@ func (c *config) setNetworkMap() {
 		net.RawName = rawName
 		c.networkMap[net.Name()] = net
 	}
-	if len(c.networkMap) == 0 {
+	if len(c.networkMap) == 0 && len(c.prefix) != 0 {
 		c.networkMap["default"] = &network{RawName: "default"}
 	}
 }
@@ -346,6 +343,36 @@ func (c *config) setMacSyncMap() {
 		sync.RawVolume = rawVolume
 		sync.configPath = c.path
 		c.macSyncMap[sync.Volume()] = sync
+	}
+}
+
+// CLI > Config > Default
+func (c *config) determinePrefix(prefixFlag string) {
+	if c.RawPrefix == nil {
+		if prefixFlag == "$DEFAULT$" {
+			c.prefix = filepath.Base(c.path) + "_"
+		} else {
+			c.prefix = prefixFlag
+		}
+		return
+	}
+	switch concretePrefix := c.RawPrefix.(type) {
+	case bool:
+		if concretePrefix == true && prefixFlag == "$DEFAULT$" {
+			c.prefix = filepath.Base(c.path) + "_"
+		} else if concretePrefix == false && prefixFlag == "$DEFAULT$" {
+			c.prefix = ""
+		} else {
+			c.prefix = prefixFlag
+		}
+	case string:
+		if prefixFlag == "$DEFAULT$" {
+			c.prefix = expandEnv(concretePrefix)
+		} else {
+			c.prefix = prefixFlag
+		}
+	default:
+		panic(StatusError{fmt.Errorf("prefix must be either string or boolean", c.RawPrefix), 65})
 	}
 }
 

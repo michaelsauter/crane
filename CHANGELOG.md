@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* A prefix can be specified in the configuration now. When no prefix is set,
+  the default (the folder name) is used. When `prefix: false` is configured,
+  by default no prefix is used (this was Crane's 2.x behaviour). An explicit
+  prefix can be set via `prefix: "foo"`.
+
 ## 3.0.0 beta (2017-03-13)
 
 As this is a major release, lots of things have changed. Please review the

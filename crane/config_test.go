@@ -235,7 +235,7 @@ func TestInitialize(t *testing.T) {
 		RawGroups:     rawGroups,
 		RawHooks:      rawHooksMap,
 	}
-	c.initialize()
+	c.initialize("")
 	assert.Equal(t, "a", c.containerMap["a"].Name())
 	assert.Equal(t, "b", c.containerMap["b"].Name())
 	assert.Equal(t, map[string][]string{"default": []string{"a", "b"}}, c.groups)
@@ -264,7 +264,7 @@ func TestInitializeAmbiguousHooks(t *testing.T) {
 		RawHooks:      rawHooksMap,
 	}
 	assert.Panics(t, func() {
-		c.initialize()
+		c.initialize("")
 	})
 }
 
