@@ -55,109 +55,115 @@ type ContainerInfo interface {
 type container struct {
 	id                   string
 	RawName              string
-	RawImage             string            `json:"image" yaml:"image"`
-	RawRequires          []string          `json:"requires" yaml:"requires"`
-	RawDependsOn         []string          `json:"depends_on" yaml:"depends_on"`
-	RawBuild             BuildParameters   `json:"build" yaml:"build"`
-	RawAddHost           []string          `json:"add-host" yaml:"add-host"`
-	RawExtraHosts        []string          `json:"extra-hosts" yaml:"extra-hosts"`
-	BlkioWeight          int               `json:"blkio-weight" yaml:"blkio-weight"`
-	RawBlkioWeightDevice []string          `json:"blkio-weight-device" yaml:"blkio-weight-device"`
-	RawCapAdd            []string          `json:"cap-add" yaml:"cap-add"`
-	RawCapDrop           []string          `json:"cap-drop" yaml:"cap-drop"`
-	RawCap_Add           []string          `json:"cap_add" yaml:"cap_add"`
-	RawCap_Drop          []string          `json:"cap_drop" yaml:"cap_drop"`
-	RawCgroupParent      string            `json:"cgroup-parent" yaml:"cgroup-parent"`
-	RawCgroup_Parent     string            `json:"cgroup_parent" yaml:"cgroup_parent"`
-	CPUPeriod            int               `json:"cpu-period" yaml:"cpu-period"`
-	CPUQuota             int               `json:"cpu-quota" yaml:"cpu-quota"`
-	RawCidfile           string            `json:"cidfile" yaml:"cidfile"`
-	CPUset               int               `json:"cpuset" yaml:"cpuset"`
-	CPUShares            int               `json:"cpu-shares" yaml:"cpu-shares"`
-	Detach               bool              `json:"detach" yaml:"detach"`
-	RawDetachKeys        string            `json:"detach-keys" yaml:"detach-keys"`
-	RawDevice            []string          `json:"device" yaml:"device"`
-	RawDevices           []string          `json:"devices" yaml:"devices"`
-	RawDeviceReadBps     []string          `json:"device-read-bps" yaml:"device-read-bps"`
-	RawDeviceReadIops    []string          `json:"device-read-iops" yaml:"device-read-iops"`
-	RawDeviceWriteBps    []string          `json:"device-write-bps" yaml:"device-write-bps"`
-	RawDeviceWriteIops   []string          `json:"device-rewritead-iops" yaml:"device-write-iops"`
-	RawDNS               []string          `json:"dns" yaml:"dns"`
-	RawDNSOpt            []string          `json:"dns-opt" yaml:"dns-opt"`
-	RawDNSSearch         []string          `json:"dns-search" yaml:"dns-search"`
-	RawDNS_Search        []string          `json:"dns_search" yaml:"dns_search"`
-	RawEntrypoint        string            `json:"entrypoint" yaml:"entrypoint"`
-	RawEnv               interface{}       `json:"env" yaml:"env"`
-	RawEnvironment       interface{}       `json:"environment" yaml:"environment"`
-	RawEnvFile           []string          `json:"env-file" yaml:"env-file"`
-	RawEnv_File          []string          `json:"env_file" yaml:"env_file"`
-	RawExpose            []string          `json:"expose" yaml:"expose"`
-	RawGroupAdd          []string          `json:"group-add" yaml:"group-add"`
-	RawGroup_Add         []string          `json:"group_add" yaml:"group_add"`
-	RawHostname          string            `json:"hostname" yaml:"hostname"`
-	Interactive          bool              `json:"interactive" yaml:"interactive"`
-	Stdin_Open           bool              `json:"stdin_open" yaml:"stdin_open"`
-	RawIp                string            `json:"ip" yaml:"ip"`
-	RawIp6               string            `json:"ip6" yaml:"ip6"`
-	RawIPC               string            `json:"ipc" yaml:"ipc"`
-	RawIsolation         string            `json:"isolation" yaml:"isolation"`
-	RawKernelMemory      string            `json:"kernel-memory" yaml:"kernel-memory"`
-	RawLabel             interface{}       `json:"label" yaml:"label"`
-	RawLabels            interface{}       `json:"labels" yaml:"labels"`
-	RawLabelFile         []string          `json:"label-file" yaml:"label-file"`
-	RawLink              []string          `json:"link" yaml:"link"`
-	RawLinks             []string          `json:"links" yaml:"links"`
-	RawLogDriver         string            `json:"log-driver" yaml:"log-driver"`
-	RawLogOpt            []string          `json:"log-opt" yaml:"log-opt"`
-	RawLogging           LoggingParameters `json:"logging" yaml:"logging"`
-	RawLxcConf           []string          `json:"lxc-conf" yaml:"lxc-conf"`
-	RawMacAddress        string            `json:"mac-address" yaml:"mac-address"`
-	RawMac_Address       string            `json:"mac_address" yaml:"mac_address"`
-	RawMemory            string            `json:"memory" yaml:"memory"`
-	RawMemoryReservation string            `json:"memory-reservation" yaml:"memory-reservation"`
-	RawMemorySwap        string            `json:"memory-swap" yaml:"memory-swap"`
-	MemorySwappiness     OptInt            `json:"memory-swappiness" yaml:"memory-swappiness"`
-	RawNet               string            `json:"net" yaml:"net"`
-	RawNetwork_Mode      string            `json:"network_mode" yaml:"network_mode"`
-	RawNetAlias          []string          `json:"net-alias" yaml:"net-alias"`
-	RawNetworks          []string          `json:"networks" yaml:"networks"`
-	OomKillDisable       bool              `json:"oom-kill-disable" yaml:"oom-kill-disable"`
-	RawOomScoreAdj       string            `json:"oom-score-adj" yaml:"oom-score-adj"`
-	RawPid               string            `json:"pid" yaml:"pid"`
-	Privileged           bool              `json:"privileged" yaml:"privileged"`
-	RawPublish           []string          `json:"publish" yaml:"publish"`
-	RawPorts             []string          `json:"ports" yaml:"ports"`
-	PublishAll           bool              `json:"publish-all" yaml:"publish-all"`
-	ReadOnly             bool              `json:"read-only" yaml:"read-only"`
-	Read_Only            bool              `json:"read_only" yaml:"read_only"`
-	RawRestart           string            `json:"restart" yaml:"restart"`
-	RawRm                bool              `json:"rm" yaml:"rm"`
-	RawSecurityOpt       []string          `json:"security-opt" yaml:"security-opt"`
-	RawSecurity_Opt      []string          `json:"security_opt" yaml:"security_opt"`
-	RawShmSize           string            `json:"shm-size" yaml:"shm-size"`
-	RawShm_Size          string            `json:"shm_size" yaml:"shm_size"`
-	SigProxy             OptBool           `json:"sig-proxy" yaml:"sig-proxy"`
-	RawStopSignal        string            `json:"stop-signal" yaml:"stop-signal"`
-	RawStop_Signal       string            `json:"stop_signal" yaml:"stop_signal"`
-	RawStopTimeout       string            `json:"stop-timeout" yaml:"stop-timeout"`
-	RawStop_Grace_Period string            `json:"stop_grace_period" yaml:"stop_grace_period"`
-	RawSysctl            interface{}       `json:"sysctl" yaml:"sysctl"`
-	RawSysctls           interface{}       `json:"sysctls" yaml:"sysctls"`
-	RawTmpfs             []string          `json:"tmpfs" yaml:"tmpfs"`
-	Tty                  bool              `json:"tty" yaml:"tty"`
-	RawUlimit            []string          `json:"ulimit" yaml:"ulimit"`
-	RawUser              string            `json:"user" yaml:"user"`
-	RawUserns            string            `json:"userns" yaml:"userns"`
-	RawUserns_Mode       string            `json:"userns_mode" yaml:"userns_mode"`
-	RawUts               string            `json:"uts" yaml:"uts"`
-	RawVolume            []string          `json:"volume" yaml:"volume"`
-	RawVolumes           []string          `json:"volumes" yaml:"volumes"`
-	RawVolumeDriver      string            `json:"volume-driver" yaml:"volume-driver"`
-	RawVolume_Driver     string            `json:"volume_driver" yaml:"volume_driver"`
-	RawVolumesFrom       []string          `json:"volumes-from" yaml:"volumes-from"`
-	RawWorkdir           string            `json:"workdir" yaml:"workdir"`
-	RawWorking_Dir       string            `json:"working_dir" yaml:"working_dir"`
-	RawCmd               interface{}       `json:"command" yaml:"command"`
+	RawImage             string                `json:"image" yaml:"image"`
+	RawRequires          []string              `json:"requires" yaml:"requires"`
+	RawDependsOn         []string              `json:"depends_on" yaml:"depends_on"`
+	RawBuild             BuildParameters       `json:"build" yaml:"build"`
+	RawAddHost           []string              `json:"add-host" yaml:"add-host"`
+	RawExtraHosts        []string              `json:"extra-hosts" yaml:"extra-hosts"`
+	BlkioWeight          int                   `json:"blkio-weight" yaml:"blkio-weight"`
+	RawBlkioWeightDevice []string              `json:"blkio-weight-device" yaml:"blkio-weight-device"`
+	RawCapAdd            []string              `json:"cap-add" yaml:"cap-add"`
+	RawCapDrop           []string              `json:"cap-drop" yaml:"cap-drop"`
+	RawCap_Add           []string              `json:"cap_add" yaml:"cap_add"`
+	RawCap_Drop          []string              `json:"cap_drop" yaml:"cap_drop"`
+	RawCgroupParent      string                `json:"cgroup-parent" yaml:"cgroup-parent"`
+	RawCgroup_Parent     string                `json:"cgroup_parent" yaml:"cgroup_parent"`
+	CPUPeriod            int                   `json:"cpu-period" yaml:"cpu-period"`
+	CPUQuota             int                   `json:"cpu-quota" yaml:"cpu-quota"`
+	RawCidfile           string                `json:"cidfile" yaml:"cidfile"`
+	CPUset               int                   `json:"cpuset" yaml:"cpuset"`
+	CPUShares            int                   `json:"cpu-shares" yaml:"cpu-shares"`
+	Detach               bool                  `json:"detach" yaml:"detach"`
+	RawDetachKeys        string                `json:"detach-keys" yaml:"detach-keys"`
+	RawDevice            []string              `json:"device" yaml:"device"`
+	RawDevices           []string              `json:"devices" yaml:"devices"`
+	RawDeviceReadBps     []string              `json:"device-read-bps" yaml:"device-read-bps"`
+	RawDeviceReadIops    []string              `json:"device-read-iops" yaml:"device-read-iops"`
+	RawDeviceWriteBps    []string              `json:"device-write-bps" yaml:"device-write-bps"`
+	RawDeviceWriteIops   []string              `json:"device-rewritead-iops" yaml:"device-write-iops"`
+	RawDNS               []string              `json:"dns" yaml:"dns"`
+	RawDNSOpt            []string              `json:"dns-opt" yaml:"dns-opt"`
+	RawDNSSearch         []string              `json:"dns-search" yaml:"dns-search"`
+	RawDNS_Search        []string              `json:"dns_search" yaml:"dns_search"`
+	RawEntrypoint        string                `json:"entrypoint" yaml:"entrypoint"`
+	RawEnv               interface{}           `json:"env" yaml:"env"`
+	RawEnvironment       interface{}           `json:"environment" yaml:"environment"`
+	RawEnvFile           []string              `json:"env-file" yaml:"env-file"`
+	RawEnv_File          []string              `json:"env_file" yaml:"env_file"`
+	RawExpose            []string              `json:"expose" yaml:"expose"`
+	RawGroupAdd          []string              `json:"group-add" yaml:"group-add"`
+	RawGroup_Add         []string              `json:"group_add" yaml:"group_add"`
+	RawHealthcheck       HealthcheckParameters `json:"healthcheck" yaml:"healthcheck"`
+	RawHealthCmd         string                `json:"health-cmd" yaml:"health-cmd"`
+	RawHealthInterval    string                `json:"health-interval" yaml:"health-interval"`
+	HealthRetries        int                   `json:"health-retries" yaml:"health-retries"`
+	RawHealthTimeout     string                `json:"health-timeout" yaml:"health-timeout"`
+	RawHostname          string                `json:"hostname" yaml:"hostname"`
+	Interactive          bool                  `json:"interactive" yaml:"interactive"`
+	Stdin_Open           bool                  `json:"stdin_open" yaml:"stdin_open"`
+	RawIp                string                `json:"ip" yaml:"ip"`
+	RawIp6               string                `json:"ip6" yaml:"ip6"`
+	RawIPC               string                `json:"ipc" yaml:"ipc"`
+	RawIsolation         string                `json:"isolation" yaml:"isolation"`
+	RawKernelMemory      string                `json:"kernel-memory" yaml:"kernel-memory"`
+	RawLabel             interface{}           `json:"label" yaml:"label"`
+	RawLabels            interface{}           `json:"labels" yaml:"labels"`
+	RawLabelFile         []string              `json:"label-file" yaml:"label-file"`
+	RawLink              []string              `json:"link" yaml:"link"`
+	RawLinks             []string              `json:"links" yaml:"links"`
+	RawLogDriver         string                `json:"log-driver" yaml:"log-driver"`
+	RawLogOpt            []string              `json:"log-opt" yaml:"log-opt"`
+	RawLogging           LoggingParameters     `json:"logging" yaml:"logging"`
+	RawLxcConf           []string              `json:"lxc-conf" yaml:"lxc-conf"`
+	RawMacAddress        string                `json:"mac-address" yaml:"mac-address"`
+	RawMac_Address       string                `json:"mac_address" yaml:"mac_address"`
+	RawMemory            string                `json:"memory" yaml:"memory"`
+	RawMemoryReservation string                `json:"memory-reservation" yaml:"memory-reservation"`
+	RawMemorySwap        string                `json:"memory-swap" yaml:"memory-swap"`
+	MemorySwappiness     OptInt                `json:"memory-swappiness" yaml:"memory-swappiness"`
+	RawNet               string                `json:"net" yaml:"net"`
+	RawNetwork_Mode      string                `json:"network_mode" yaml:"network_mode"`
+	RawNetAlias          []string              `json:"net-alias" yaml:"net-alias"`
+	RawNetworks          []string              `json:"networks" yaml:"networks"`
+	NoHealthcheck        bool                  `json:"no-healthcheck" yaml:"no-healthcheck"`
+	OomKillDisable       bool                  `json:"oom-kill-disable" yaml:"oom-kill-disable"`
+	RawOomScoreAdj       string                `json:"oom-score-adj" yaml:"oom-score-adj"`
+	RawPid               string                `json:"pid" yaml:"pid"`
+	Privileged           bool                  `json:"privileged" yaml:"privileged"`
+	RawPublish           []string              `json:"publish" yaml:"publish"`
+	RawPorts             []string              `json:"ports" yaml:"ports"`
+	PublishAll           bool                  `json:"publish-all" yaml:"publish-all"`
+	ReadOnly             bool                  `json:"read-only" yaml:"read-only"`
+	Read_Only            bool                  `json:"read_only" yaml:"read_only"`
+	RawRestart           string                `json:"restart" yaml:"restart"`
+	RawRm                bool                  `json:"rm" yaml:"rm"`
+	RawSecurityOpt       []string              `json:"security-opt" yaml:"security-opt"`
+	RawSecurity_Opt      []string              `json:"security_opt" yaml:"security_opt"`
+	RawShmSize           string                `json:"shm-size" yaml:"shm-size"`
+	RawShm_Size          string                `json:"shm_size" yaml:"shm_size"`
+	SigProxy             OptBool               `json:"sig-proxy" yaml:"sig-proxy"`
+	RawStopSignal        string                `json:"stop-signal" yaml:"stop-signal"`
+	RawStop_Signal       string                `json:"stop_signal" yaml:"stop_signal"`
+	RawStopTimeout       string                `json:"stop-timeout" yaml:"stop-timeout"`
+	RawStop_Grace_Period string                `json:"stop_grace_period" yaml:"stop_grace_period"`
+	RawSysctl            interface{}           `json:"sysctl" yaml:"sysctl"`
+	RawSysctls           interface{}           `json:"sysctls" yaml:"sysctls"`
+	RawTmpfs             []string              `json:"tmpfs" yaml:"tmpfs"`
+	Tty                  bool                  `json:"tty" yaml:"tty"`
+	RawUlimit            []string              `json:"ulimit" yaml:"ulimit"`
+	RawUser              string                `json:"user" yaml:"user"`
+	RawUserns            string                `json:"userns" yaml:"userns"`
+	RawUserns_Mode       string                `json:"userns_mode" yaml:"userns_mode"`
+	RawUts               string                `json:"uts" yaml:"uts"`
+	RawVolume            []string              `json:"volume" yaml:"volume"`
+	RawVolumes           []string              `json:"volumes" yaml:"volumes"`
+	RawVolumeDriver      string                `json:"volume-driver" yaml:"volume-driver"`
+	RawVolume_Driver     string                `json:"volume_driver" yaml:"volume_driver"`
+	RawVolumesFrom       []string              `json:"volumes-from" yaml:"volumes-from"`
+	RawWorkdir           string                `json:"workdir" yaml:"workdir"`
+	RawWorking_Dir       string                `json:"working_dir" yaml:"working_dir"`
+	RawCmd               interface{}           `json:"command" yaml:"command"`
 	hooks                hooks
 	stdout               io.Writer
 	stderr               io.Writer
@@ -174,6 +180,14 @@ type BuildParameters struct {
 type LoggingParameters struct {
 	RawDriver  string      `json:"driver" yaml:"driver"`
 	RawOptions interface{} `json:"options" yaml:"options"`
+}
+
+type HealthcheckParameters struct {
+	RawTest     string `json:"test" yaml:"test"`
+	RawInterval string `json:"interval" yaml:"interval"`
+	RawTimeout  string `json:"timeout" yaml:"timeout"`
+	Retries     int    `json:"retries" yaml:"retries"`
+	Disable     bool   `json:"disable" yaml:"disable"`
 }
 
 type OptInt struct {
@@ -238,6 +252,10 @@ func (c *container) BuildParams() BuildParameters {
 
 func (c *container) LoggingParams() LoggingParameters {
 	return c.RawLogging
+}
+
+func (c *container) HealthcheckParams() HealthcheckParameters {
+	return c.RawHealthcheck
 }
 
 func (c *container) Dependencies() *Dependencies {
@@ -521,6 +539,42 @@ func (c *container) GroupAdd() []string {
 		groupAdd = append(groupAdd, expandEnv(raw))
 	}
 	return groupAdd
+}
+
+func (h HealthcheckParameters) Test() string {
+	return expandEnv(h.RawTest)
+}
+
+func (h HealthcheckParameters) Interval() string {
+	return expandEnv(h.RawInterval)
+}
+
+func (h HealthcheckParameters) Timeout() string {
+	return expandEnv(h.RawTimeout)
+}
+
+func (c *container) HealthCmd() string {
+	cmd := c.HealthcheckParams().Test()
+	if len(c.RawLogDriver) > 0 {
+		cmd = expandEnv(c.RawHealthCmd)
+	}
+	return cmd
+}
+
+func (c *container) HealthInterval() string {
+	interval := c.HealthcheckParams().Interval()
+	if len(c.RawHealthInterval) > 0 {
+		interval = expandEnv(c.RawHealthInterval)
+	}
+	return interval
+}
+
+func (c *container) HealthTimeout() string {
+	timeout := c.HealthcheckParams().Timeout()
+	if len(c.RawHealthTimeout) > 0 {
+		timeout = expandEnv(c.RawHealthTimeout)
+	}
+	return timeout
 }
 
 func (c *container) Hostname() string {
@@ -1069,6 +1123,24 @@ func (c *container) createArgs(cmds []string) []string {
 	for _, groupAdd := range c.GroupAdd() {
 		args = append(args, "--group-add", groupAdd)
 	}
+	// Health Cmd
+	if len(c.HealthCmd()) > 0 {
+		args = append(args, "--health-cmd", c.HealthCmd())
+	}
+	// Health Interval
+	if len(c.HealthInterval()) > 0 {
+		args = append(args, "--health-interval", c.HealthInterval())
+	}
+	// Health Retries
+	if c.HealthRetries > 0 {
+		args = append(args, "--health-retries", strconv.Itoa(c.HealthRetries))
+	} else if c.HealthcheckParams().Retries > 0 {
+		args = append(args, "--health-retries", strconv.Itoa(c.HealthcheckParams().Retries))
+	}
+	// Health Timeout
+	if len(c.HealthTimeout()) > 0 {
+		args = append(args, "--health-timeout", c.HealthTimeout())
+	}
 	// Host
 	if len(c.Hostname()) > 0 {
 		args = append(args, "--hostname", c.Hostname())
@@ -1168,6 +1240,10 @@ func (c *container) createArgs(cmds []string) []string {
 	// NetAlias
 	for _, netAlias := range c.NetAlias() {
 		args = append(args, "--net-alias", netAlias)
+	}
+	// NoHealthcheck
+	if c.NoHealthcheck || c.HealthcheckParams().Disable {
+		args = append(args, "--no-healthcheck")
 	}
 	// OomKillDisable
 	if c.OomKillDisable {

@@ -6,6 +6,10 @@
   the default (the folder name) is used. When `prefix: false` is configured,
   by default no prefix is used (this was Crane's 2.x behaviour). An explicit
   prefix can be set via `prefix: "foo"`.
+* Support `--health-cmd`, `--health-interval`, `--health-retries`,
+  `--health-timeout` and `--no-healthcheck`. Configuration via docker-compose's
+  `healtcheck` object is also possible (though only string is supported for
+  `test` at the moment).
 
 ## 3.0.0 beta (2017-03-13)
 
