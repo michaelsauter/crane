@@ -1,5 +1,5 @@
 services:
-  cranedev:
+  dev:
     image: michaelsauter/golang:1.7
     rm: true
     interactive: true

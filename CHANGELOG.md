@@ -2,16 +2,9 @@
 
 ## Unreleased
 
-* A prefix can be specified in the configuration now. When no prefix is set,
-  the default (the folder name) is used. When `prefix: false` is configured,
-  by default no prefix is used (this was Crane's 2.x behaviour). An explicit
-  prefix can be set via `prefix: "foo"`.
-* Support `--health-cmd`, `--health-interval`, `--health-retries`,
-  `--health-timeout` and `--no-healthcheck`. Configuration via docker-compose's
-  `healtcheck` object is also possible (though only string is supported for
-  `test` at the moment).
+-
 
-## 3.0.0 beta (2017-03-13)
+## 3.0.0 (2017-04-08)
 
 As this is a major release, lots of things have changed. Please review the
 following list very carefully and adjust as needed.
@@ -54,6 +47,10 @@ Configuration changes:
   uses. This allows Crane to read docker-compose configuration files, with some
   minor exceptions.
 * `net` also allows the form `service:<container>` now.
+* Support `--health-cmd`, `--health-interval`, `--health-retries`,
+  `--health-timeout` and `--no-healthcheck`. Configuration via docker-compose's
+  `healtcheck` object is also possible (though only string is supported for
+  `test` at the moment).
 
 Behaviour changes:
 
@@ -61,7 +58,7 @@ Behaviour changes:
   `crane.override.yml` by default now (in this order).
 * To align with docker-compose, Crane sets a default prefix now, which is the
   name of the directory where the configuration files are in. You can remove
-  the prefix by passing `--prefix=""`/`-p ""` or setting `CRANE_PREFIX=""`.
+  the prefix by setting `prefix: false` in the configuration or by passing `--prefix=""`/`-p ""` or exporting `CRANE_PREFIX=""`.
 * If neither `net`, `network_mode` or `networks` is configured, the default
   network mode is no longer `bridge` but a `default` network (to align with
   docker-compose).
@@ -70,7 +67,6 @@ Behaviour changes:
   version for macOS without this feature. If you would like to support Crane,
   you can also buy a pro version for Linux, but right now there is no difference
   in functionality.
-
 
 ## 2.11.0 (2016-11-14)
 
