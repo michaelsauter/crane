@@ -34,7 +34,6 @@ echo "Update contributors..."
 git contributors | awk '{for (i=2; i<NF; i++) printf $i " "; print $NF}' > CONTRIBUTORS
 
 echo "Build binaries..."
-$docker_run make build-linux-386
 $docker_run make build-linux-amd64
 $docker_run make build-darwin-amd64
 $docker_run make build-windows-amd64

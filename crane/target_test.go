@@ -11,77 +11,62 @@ func TestNewTarget(t *testing.T) {
 	}()
 	allowed = []string{"a", "b", "c"}
 	containerMap := NewStubbedContainerMap(true,
-		&container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},
-		&container{RawName: "b", RawRun: RunParameters{RawLink: []string{"c:c"}}},
-		&container{RawName: "c"},
+		&container{RawName: "a", RawNet: "bridge", RawLink: []string{"b:b"}},
+		&container{RawName: "b", RawNet: "bridge", RawLink: []string{"c:c"}},
+		&container{RawName: "c", RawNet: "bridge"},
 	)
 	cfg = &config{containerMap: containerMap}
 	dependencyMap := cfg.DependencyMap()
 
 	examples := []struct {
 		target   string
+		extend   bool
 		expected Target
 	}{
 		{
-			target: "a+dependencies",
+			target: "a",
+			extend: true,
 			expected: Target{
 				initial:      []string{"a"},
 				dependencies: []string{"b", "c"},
-				affected:     []string{},
 			},
 		},
 		{
-			target: "b+dependencies",
+			target: "b",
+			extend: true,
 			expected: Target{
 				initial:      []string{"b"},
 				dependencies: []string{"c"},
-				affected:     []string{},
 			},
 		},
 		{
-			target: "c+affected",
+			target: "c",
+			extend: false,
 			expected: Target{
 				initial:      []string{"c"},
 				dependencies: []string{},
-				affected:     []string{"a", "b"},
 			},
 		},
 		{
-			target: "b+affected",
+			target: "b",
+			extend: false,
 			expected: Target{
 				initial:      []string{"b"},
 				dependencies: []string{},
-				affected:     []string{"a"},
 			},
 		},
 		{
-			target: "b+dependencies+affected",
+			target: "b",
+			extend: true,
 			expected: Target{
 				initial:      []string{"b"},
 				dependencies: []string{"c"},
-				affected:     []string{"a"},
-			},
-		},
-		{
-			target: "a+d",
-			expected: Target{
-				initial:      []string{"a"},
-				dependencies: []string{"b", "c"},
-				affected:     []string{},
-			},
-		},
-		{
-			target: "c+a",
-			expected: Target{
-				initial:      []string{"c"},
-				dependencies: []string{},
-				affected:     []string{"a", "b"},
 			},
 		},
 	}
 
 	for _, example := range examples {
-		target, _ := NewTarget(dependencyMap, example.target)
+		target, _ := NewTarget(dependencyMap, example.target, example.extend)
 		assert.Equal(t, example.expected, target)
 	}
 }
@@ -92,8 +77,8 @@ func TestNewTargetNonExisting(t *testing.T) {
 	}()
 	allowed = []string{"a", "b"}
 	containerMap := NewStubbedContainerMap(false,
-		&container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},
-		&container{RawName: "b"},
+		&container{RawName: "a", RawNet: "bridge", RawLink: []string{"b:b"}},
+		&container{RawName: "b", RawNet: "bridge"},
 	)
 
 	cfg = &config{containerMap: containerMap}
@@ -101,28 +86,29 @@ func TestNewTargetNonExisting(t *testing.T) {
 
 	examples := []struct {
 		target   string
+		extend   bool
 		expected Target
 	}{
 		{
-			target: "a+dependencies",
+			target: "a",
+			extend: true,
 			expected: Target{
 				initial:      []string{"a"},
 				dependencies: []string{"b"},
-				affected:     []string{},
 			},
 		},
 		{
-			target: "b+affected",
+			target: "b",
+			extend: false,
 			expected: Target{
 				initial:      []string{"b"},
 				dependencies: []string{},
-				affected:     []string{},
 			},
 		},
 	}
 
 	for _, example := range examples {
-		target, _ := NewTarget(dependencyMap, example.target)
+		target, _ := NewTarget(dependencyMap, example.target, example.extend)
 		assert.Equal(t, example.expected, target)
 	}
 }
@@ -133,9 +119,9 @@ func TestDeduplicationAll(t *testing.T) {
 	}()
 	allowed = []string{"a", "b", "c"}
 	containerMap := NewStubbedContainerMap(true,
-		&container{RawName: "a", RawRun: RunParameters{RawLink: []string{"b:b"}}},
-		&container{RawName: "b", RawRun: RunParameters{RawLink: []string{"c:c"}}},
-		&container{RawName: "c"},
+		&container{RawName: "a", RawNet: "bridge", RawLink: []string{"b:b"}},
+		&container{RawName: "b", RawNet: "bridge", RawLink: []string{"c:c"}},
+		&container{RawName: "c", RawNet: "bridge"},
 	)
 	groups := map[string][]string{
 		"ab": []string{"a", "b", "a"},
@@ -143,6 +129,6 @@ func TestDeduplicationAll(t *testing.T) {
 	cfg = &config{containerMap: containerMap, groups: groups}
 	dependencyMap := cfg.DependencyMap()
 
-	target, _ := NewTarget(dependencyMap, "ab+dependencies+affected")
+	target, _ := NewTarget(dependencyMap, "ab", true)
 	assert.Equal(t, []string{"a", "b", "c"}, target.all())
 }

@@ -86,21 +86,15 @@ func TestRequiredNetworks(t *testing.T) {
 	containerMap := NewStubbedContainerMap(true,
 		&container{
 			RawName: "a",
-			RawRun: RunParameters{
-				RawNet: "foo",
-			},
+			RawNet:  "foo",
 		},
 		&container{
 			RawName: "b",
-			RawRun: RunParameters{
-				RawNet: "bar",
-			},
+			RawNet:  "bar",
 		},
 		&container{
 			RawName: "c",
-			RawRun: RunParameters{
-				RawNet: "bar",
-			},
+			RawNet:  "bar",
 		},
 	)
 	networkMap = map[string]Network{
@@ -125,22 +119,16 @@ func TestRequiredVolumes(t *testing.T) {
 	// some volumes
 	containerMap := NewStubbedContainerMap(true,
 		&container{
-			RawName: "a",
-			RawRun: RunParameters{
-				RawVolume: []string{"foo:/foo"},
-			},
+			RawName:   "a",
+			RawVolume: []string{"foo:/foo"},
 		},
 		&container{
-			RawName: "b",
-			RawRun: RunParameters{
-				RawVolume: []string{"bar:/bar"},
-			},
+			RawName:   "b",
+			RawVolume: []string{"bar:/bar"},
 		},
 		&container{
-			RawName: "c",
-			RawRun: RunParameters{
-				RawVolume: []string{"bar:/bar"},
-			},
+			RawName:   "c",
+			RawVolume: []string{"bar:/bar"},
 		},
 	)
 	volumeMap = map[string]Volume{

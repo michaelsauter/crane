@@ -24,19 +24,21 @@ type Container interface {
 	Provision(nocache bool)
 	PullImage()
 	Create(cmds []string)
-	Run(cmds []string)
+	Run(cmds []string, detach bool)
 	Start()
 	Kill()
 	Stop()
 	Pause()
 	Unpause()
-	Exec(cmds []string)
-	Rm(force bool)
+	Exec(cmds []string, privileged bool, user string)
+	Rm(force bool, volumes bool)
 	Logs(follow bool, since string, tail string) (sources []LogSource)
 	Push()
 	SetCommandsOutput(stdout, stderr io.Writer)
 	CommandsOut() io.Writer
 	CommandsErr() io.Writer
+	VolumeSources() []string
+	Net() string
 }
 
 type ContainerInfo interface {
@@ -47,123 +49,145 @@ type ContainerInfo interface {
 	ID() string
 	Dependencies() *Dependencies
 	BuildParams() BuildParameters
-	RunParams() RunParameters
-	RmParams() RmParameters
-	StartParams() StartParameters
-	ExecParams() ExecParameters
 	Hooks() Hooks
 }
 
 type container struct {
-	id          string
-	RawName     string
-	RawImage    string          `json:"image" yaml:"image"`
-	RawRequires []string        `json:"requires" yaml:"requires"`
-	RawBuild    BuildParameters `json:"build" yaml:"build"`
-	RawRun      RunParameters   `json:"run" yaml:"run"`
-	RawRm       RmParameters    `json:"rm" yaml:"rm"`
-	RawStart    StartParameters `json:"start" yaml:"start"`
-	RawExec     ExecParameters  `json:"exec" yaml:"exec"`
-	hooks       hooks
-	stdout      io.Writer
-	stderr      io.Writer
+	id                   string
+	RawName              string
+	RawImage             string                `json:"image" yaml:"image"`
+	RawRequires          []string              `json:"requires" yaml:"requires"`
+	RawDependsOn         []string              `json:"depends_on" yaml:"depends_on"`
+	RawBuild             BuildParameters       `json:"build" yaml:"build"`
+	RawAddHost           []string              `json:"add-host" yaml:"add-host"`
+	RawExtraHosts        []string              `json:"extra-hosts" yaml:"extra-hosts"`
+	BlkioWeight          int                   `json:"blkio-weight" yaml:"blkio-weight"`
+	RawBlkioWeightDevice []string              `json:"blkio-weight-device" yaml:"blkio-weight-device"`
+	RawCapAdd            []string              `json:"cap-add" yaml:"cap-add"`
+	RawCapDrop           []string              `json:"cap-drop" yaml:"cap-drop"`
+	RawCap_Add           []string              `json:"cap_add" yaml:"cap_add"`
+	RawCap_Drop          []string              `json:"cap_drop" yaml:"cap_drop"`
+	RawCgroupParent      string                `json:"cgroup-parent" yaml:"cgroup-parent"`
+	RawCgroup_Parent     string                `json:"cgroup_parent" yaml:"cgroup_parent"`
+	CPUPeriod            int                   `json:"cpu-period" yaml:"cpu-period"`
+	CPUQuota             int                   `json:"cpu-quota" yaml:"cpu-quota"`
+	RawCidfile           string                `json:"cidfile" yaml:"cidfile"`
+	CPUset               int                   `json:"cpuset" yaml:"cpuset"`
+	CPUShares            int                   `json:"cpu-shares" yaml:"cpu-shares"`
+	Detach               bool                  `json:"detach" yaml:"detach"`
+	RawDetachKeys        string                `json:"detach-keys" yaml:"detach-keys"`
+	RawDevice            []string              `json:"device" yaml:"device"`
+	RawDevices           []string              `json:"devices" yaml:"devices"`
+	RawDeviceReadBps     []string              `json:"device-read-bps" yaml:"device-read-bps"`
+	RawDeviceReadIops    []string              `json:"device-read-iops" yaml:"device-read-iops"`
+	RawDeviceWriteBps    []string              `json:"device-write-bps" yaml:"device-write-bps"`
+	RawDeviceWriteIops   []string              `json:"device-rewritead-iops" yaml:"device-write-iops"`
+	RawDNS               []string              `json:"dns" yaml:"dns"`
+	RawDNSOpt            []string              `json:"dns-opt" yaml:"dns-opt"`
+	RawDNSSearch         []string              `json:"dns-search" yaml:"dns-search"`
+	RawDNS_Search        []string              `json:"dns_search" yaml:"dns_search"`
+	RawEntrypoint        string                `json:"entrypoint" yaml:"entrypoint"`
+	RawEnv               interface{}           `json:"env" yaml:"env"`
+	RawEnvironment       interface{}           `json:"environment" yaml:"environment"`
+	RawEnvFile           []string              `json:"env-file" yaml:"env-file"`
+	RawEnv_File          []string              `json:"env_file" yaml:"env_file"`
+	RawExpose            []string              `json:"expose" yaml:"expose"`
+	RawGroupAdd          []string              `json:"group-add" yaml:"group-add"`
+	RawGroup_Add         []string              `json:"group_add" yaml:"group_add"`
+	RawHealthcheck       HealthcheckParameters `json:"healthcheck" yaml:"healthcheck"`
+	RawHealthCmd         string                `json:"health-cmd" yaml:"health-cmd"`
+	RawHealthInterval    string                `json:"health-interval" yaml:"health-interval"`
+	HealthRetries        int                   `json:"health-retries" yaml:"health-retries"`
+	RawHealthTimeout     string                `json:"health-timeout" yaml:"health-timeout"`
+	RawHostname          string                `json:"hostname" yaml:"hostname"`
+	Interactive          bool                  `json:"interactive" yaml:"interactive"`
+	Stdin_Open           bool                  `json:"stdin_open" yaml:"stdin_open"`
+	RawIp                string                `json:"ip" yaml:"ip"`
+	RawIp6               string                `json:"ip6" yaml:"ip6"`
+	RawIPC               string                `json:"ipc" yaml:"ipc"`
+	RawIsolation         string                `json:"isolation" yaml:"isolation"`
+	RawKernelMemory      string                `json:"kernel-memory" yaml:"kernel-memory"`
+	RawLabel             interface{}           `json:"label" yaml:"label"`
+	RawLabels            interface{}           `json:"labels" yaml:"labels"`
+	RawLabelFile         []string              `json:"label-file" yaml:"label-file"`
+	RawLink              []string              `json:"link" yaml:"link"`
+	RawLinks             []string              `json:"links" yaml:"links"`
+	RawLogDriver         string                `json:"log-driver" yaml:"log-driver"`
+	RawLogOpt            []string              `json:"log-opt" yaml:"log-opt"`
+	RawLogging           LoggingParameters     `json:"logging" yaml:"logging"`
+	RawLxcConf           []string              `json:"lxc-conf" yaml:"lxc-conf"`
+	RawMacAddress        string                `json:"mac-address" yaml:"mac-address"`
+	RawMac_Address       string                `json:"mac_address" yaml:"mac_address"`
+	RawMemory            string                `json:"memory" yaml:"memory"`
+	RawMemoryReservation string                `json:"memory-reservation" yaml:"memory-reservation"`
+	RawMemorySwap        string                `json:"memory-swap" yaml:"memory-swap"`
+	MemorySwappiness     OptInt                `json:"memory-swappiness" yaml:"memory-swappiness"`
+	RawNet               string                `json:"net" yaml:"net"`
+	RawNetwork_Mode      string                `json:"network_mode" yaml:"network_mode"`
+	RawNetAlias          []string              `json:"net-alias" yaml:"net-alias"`
+	RawNetworks          []string              `json:"networks" yaml:"networks"`
+	NoHealthcheck        bool                  `json:"no-healthcheck" yaml:"no-healthcheck"`
+	OomKillDisable       bool                  `json:"oom-kill-disable" yaml:"oom-kill-disable"`
+	RawOomScoreAdj       string                `json:"oom-score-adj" yaml:"oom-score-adj"`
+	RawPid               string                `json:"pid" yaml:"pid"`
+	Privileged           bool                  `json:"privileged" yaml:"privileged"`
+	RawPublish           []string              `json:"publish" yaml:"publish"`
+	RawPorts             []string              `json:"ports" yaml:"ports"`
+	PublishAll           bool                  `json:"publish-all" yaml:"publish-all"`
+	ReadOnly             bool                  `json:"read-only" yaml:"read-only"`
+	Read_Only            bool                  `json:"read_only" yaml:"read_only"`
+	RawRestart           string                `json:"restart" yaml:"restart"`
+	RawRm                bool                  `json:"rm" yaml:"rm"`
+	RawSecurityOpt       []string              `json:"security-opt" yaml:"security-opt"`
+	RawSecurity_Opt      []string              `json:"security_opt" yaml:"security_opt"`
+	RawShmSize           string                `json:"shm-size" yaml:"shm-size"`
+	RawShm_Size          string                `json:"shm_size" yaml:"shm_size"`
+	SigProxy             OptBool               `json:"sig-proxy" yaml:"sig-proxy"`
+	RawStopSignal        string                `json:"stop-signal" yaml:"stop-signal"`
+	RawStop_Signal       string                `json:"stop_signal" yaml:"stop_signal"`
+	RawStopTimeout       string                `json:"stop-timeout" yaml:"stop-timeout"`
+	RawStop_Grace_Period string                `json:"stop_grace_period" yaml:"stop_grace_period"`
+	RawSysctl            interface{}           `json:"sysctl" yaml:"sysctl"`
+	RawSysctls           interface{}           `json:"sysctls" yaml:"sysctls"`
+	RawTmpfs             []string              `json:"tmpfs" yaml:"tmpfs"`
+	Tty                  bool                  `json:"tty" yaml:"tty"`
+	RawUlimit            []string              `json:"ulimit" yaml:"ulimit"`
+	RawUser              string                `json:"user" yaml:"user"`
+	RawUserns            string                `json:"userns" yaml:"userns"`
+	RawUserns_Mode       string                `json:"userns_mode" yaml:"userns_mode"`
+	RawUts               string                `json:"uts" yaml:"uts"`
+	RawVolume            []string              `json:"volume" yaml:"volume"`
+	RawVolumes           []string              `json:"volumes" yaml:"volumes"`
+	RawVolumeDriver      string                `json:"volume-driver" yaml:"volume-driver"`
+	RawVolume_Driver     string                `json:"volume_driver" yaml:"volume_driver"`
+	RawVolumesFrom       []string              `json:"volumes-from" yaml:"volumes-from"`
+	RawWorkdir           string                `json:"workdir" yaml:"workdir"`
+	RawWorking_Dir       string                `json:"working_dir" yaml:"working_dir"`
+	RawCmd               interface{}           `json:"command" yaml:"command"`
+	hooks                hooks
+	stdout               io.Writer
+	stderr               io.Writer
 }
 
 type BuildParameters struct {
-	RawContext   string      `json:"context" yaml:"context"`
-	RawFile      string      `json:"file" yaml:"file"`
-	RawBuildArgs interface{} `json:"build-arg" yaml:"build-arg"`
+	RawContext    string      `json:"context" yaml:"context"`
+	RawFile       string      `json:"file" yaml:"file"`
+	RawDockerfile string      `json:"dockerfile" yaml:"dockerfile"`
+	RawBuildArgs  interface{} `json:"build-arg" yaml:"build-arg"`
+	RawArgs       interface{} `json:"args" yaml:"args"`
 }
 
-type RunParameters struct {
-	RawAddHost           []string    `json:"add-host" yaml:"add-host"`
-	BlkioWeight          int         `json:"blkio-weight" yaml:"blkio-weight"`
-	RawBlkioWeightDevice []string    `json:"blkio-weight-device" yaml:"blkio-weight-device"`
-	RawCapAdd            []string    `json:"cap-add" yaml:"cap-add"`
-	RawCapDrop           []string    `json:"cap-drop" yaml:"cap-drop"`
-	RawCgroupParent      string      `json:"cgroup-parent" yaml:"cgroup-parent"`
-	CPUPeriod            int         `json:"cpu-period" yaml:"cpu-period"`
-	CPUQuota             int         `json:"cpu-quota" yaml:"cpu-quota"`
-	RawCidfile           string      `json:"cidfile" yaml:"cidfile"`
-	CPUset               int         `json:"cpuset" yaml:"cpuset"`
-	CPUShares            int         `json:"cpu-shares" yaml:"cpu-shares"`
-	Detach               bool        `json:"detach" yaml:"detach"`
-	RawDetachKeys        string      `json:"detach-keys" yaml:"detach-keys"`
-	RawDevice            []string    `json:"device" yaml:"device"`
-	RawDeviceReadBps     []string    `json:"device-read-bps" yaml:"device-read-bps"`
-	RawDeviceReadIops    []string    `json:"device-read-iops" yaml:"device-read-iops"`
-	RawDeviceWriteBps    []string    `json:"device-write-bps" yaml:"device-write-bps"`
-	RawDeviceWriteIops   []string    `json:"device-rewritead-iops" yaml:"device-write-iops"`
-	RawDNS               []string    `json:"dns" yaml:"dns"`
-	RawDNSOpt            []string    `json:"dns-opt" yaml:"dns-opt"`
-	RawDNSSearch         []string    `json:"dns-search" yaml:"dns-search"`
-	RawEntrypoint        string      `json:"entrypoint" yaml:"entrypoint"`
-	RawEnv               interface{} `json:"env" yaml:"env"`
-	RawEnvFile           []string    `json:"env-file" yaml:"env-file"`
-	RawExpose            []string    `json:"expose" yaml:"expose"`
-	RawGroupAdd          []string    `json:"group-add" yaml:"group-add"`
-	RawHostname          string      `json:"hostname" yaml:"hostname"`
-	Interactive          bool        `json:"interactive" yaml:"interactive"`
-	RawIp                string      `json:"ip" yaml:"ip"`
-	RawIp6               string      `json:"ip6" yaml:"ip6"`
-	RawIPC               string      `json:"ipc" yaml:"ipc"`
-	RawIsolation         string      `json:"isolation" yaml:"isolation"`
-	RawKernelMemory      string      `json:"kernel-memory" yaml:"kernel-memory"`
-	RawLabel             interface{} `json:"label" yaml:"label"`
-	RawLabelFile         []string    `json:"label-file" yaml:"label-file"`
-	RawLink              []string    `json:"link" yaml:"link"`
-	RawLogDriver         string      `json:"log-driver" yaml:"log-driver"`
-	RawLogOpt            []string    `json:"log-opt" yaml:"log-opt"`
-	RawLxcConf           []string    `json:"lxc-conf" yaml:"lxc-conf"`
-	RawMacAddress        string      `json:"mac-address" yaml:"mac-address"`
-	RawMemory            string      `json:"memory" yaml:"memory"`
-	RawMemoryReservation string      `json:"memory-reservation" yaml:"memory-reservation"`
-	RawMemorySwap        string      `json:"memory-swap" yaml:"memory-swap"`
-	MemorySwappiness     OptInt      `json:"memory-swappiness" yaml:"memory-swappiness"`
-	RawNet               string      `json:"net" yaml:"net"`
-	RawNetAlias          []string    `json:"net-alias" yaml:"net-alias"`
-	OomKillDisable       bool        `json:"oom-kill-disable" yaml:"oom-kill-disable"`
-	RawOomScoreAdj       string      `json:"oom-score-adj" yaml:"oom-score-adj"`
-	RawPid               string      `json:"pid" yaml:"pid"`
-	Privileged           bool        `json:"privileged" yaml:"privileged"`
-	RawPublish           []string    `json:"publish" yaml:"publish"`
-	PublishAll           bool        `json:"publish-all" yaml:"publish-all"`
-	ReadOnly             bool        `json:"read-only" yaml:"read-only"`
-	RawRestart           string      `json:"restart" yaml:"restart"`
-	Rm                   bool        `json:"rm" yaml:"rm"`
-	RawSecurityOpt       []string    `json:"security-opt" yaml:"security-opt"`
-	RawShmSize           string      `json:"shm-size" yaml:"shm-size"`
-	SigProxy             OptBool     `json:"sig-proxy" yaml:"sig-proxy"`
-	RawStopSignal        string      `json:"stop-signal" yaml:"stop-signal"`
-	RawTmpfs             []string    `json:"tmpfs" yaml:"tmpfs"`
-	Tty                  bool        `json:"tty" yaml:"tty"`
-	RawUlimit            []string    `json:"ulimit" yaml:"ulimit"`
-	RawUser              string      `json:"user" yaml:"user"`
-	RawUts               string      `json:"uts" yaml:"uts"`
-	RawVolume            []string    `json:"volume" yaml:"volume"`
-	RawVolumeDriver      string      `json:"volume-driver" yaml:"volume-driver"`
-	RawVolumesFrom       []string    `json:"volumes-from" yaml:"volumes-from"`
-	RawWorkdir           string      `json:"workdir" yaml:"workdir"`
-	RawCmd               interface{} `json:"cmd" yaml:"cmd"`
+type LoggingParameters struct {
+	RawDriver  string      `json:"driver" yaml:"driver"`
+	RawOptions interface{} `json:"options" yaml:"options"`
 }
 
-type RmParameters struct {
-	Volumes bool `json:"volumes" yaml:"volumes"`
-}
-
-type StartParameters struct {
-	Attach        bool   `json:"attach" yaml:"attach"`
-	RawDetachKeys string `json:"detach-keys" yaml:"detach-keys"`
-	Interactive   bool   `json:"interactive" yaml:"interactive"`
-}
-
-type ExecParameters struct {
-	Detach        bool   `json:"detach" yaml:"detach"`
-	RawDetachKeys string `json:"detach-keys" yaml:"detach-keys"`
-	Interactive   bool   `json:"interactive" yaml:"interactive"`
-	Privileged    bool   `json:"privileged" yaml:"privileged"`
-	Tty           bool   `json:"tty" yaml:"tty"`
-	RawUser       string `json:"user" yaml:"user"`
+type HealthcheckParameters struct {
+	RawTest     string `json:"test" yaml:"test"`
+	RawInterval string `json:"interval" yaml:"interval"`
+	RawTimeout  string `json:"timeout" yaml:"timeout"`
+	Retries     int    `json:"retries" yaml:"retries"`
+	Disable     bool   `json:"disable" yaml:"disable"`
 }
 
 type OptInt struct {
@@ -226,20 +250,12 @@ func (c *container) BuildParams() BuildParameters {
 	return c.RawBuild
 }
 
-func (c *container) RunParams() RunParameters {
-	return c.RawRun
+func (c *container) LoggingParams() LoggingParameters {
+	return c.RawLogging
 }
 
-func (c *container) RmParams() RmParameters {
-	return c.RawRm
-}
-
-func (c *container) StartParams() StartParameters {
-	return c.RawStart
-}
-
-func (c *container) ExecParams() ExecParameters {
-	return c.RawExec
+func (c *container) HealthcheckParams() HealthcheckParameters {
+	return c.RawHealthcheck
 }
 
 func (c *container) Dependencies() *Dependencies {
@@ -250,9 +266,9 @@ func (c *container) Dependencies() *Dependencies {
 			dependencies.Requires = append(dependencies.Requires, required)
 		}
 	}
-	if c.RunParams().Net() == "bridge" {
+	if c.Net() == "bridge" {
 		// links are strict dependencies only on bridge networks
-		for _, link := range c.RunParams().Link() {
+		for _, link := range c.Link() {
 			linkName := strings.Split(link, ":")[0]
 			if includes(allowed, linkName) && !dependencies.includes(linkName) {
 				dependencies.All = append(dependencies.All, linkName)
@@ -260,20 +276,20 @@ func (c *container) Dependencies() *Dependencies {
 			}
 		}
 	}
-	for _, volumesFrom := range c.RunParams().VolumesFrom() {
+	for _, volumesFrom := range c.VolumesFrom() {
 		volumesFromName := strings.Split(volumesFrom, ":")[0]
 		if includes(allowed, volumesFromName) && !dependencies.includes(volumesFromName) {
 			dependencies.All = append(dependencies.All, volumesFromName)
 			dependencies.VolumesFrom = append(dependencies.VolumesFrom, volumesFromName)
 		}
 	}
-	if net := containerReference(c.RunParams().Net()); net != "" {
+	if net := containerReference(c.Net()); net != "" {
 		if includes(allowed, net) && !dependencies.includes(net) {
 			dependencies.Net = net
 			dependencies.All = append(dependencies.All, net)
 		}
 	}
-	if ipc := containerReference(c.RunParams().IPC()); ipc != "" {
+	if ipc := containerReference(c.IPC()); ipc != "" {
 		if includes(allowed, ipc) && !dependencies.includes(ipc) {
 			dependencies.IPC = ipc
 			dependencies.All = append(dependencies.All, ipc)
@@ -294,6 +310,10 @@ func (c *container) ActualName(adHoc bool) string {
 }
 
 func (c *container) Image() string {
+	if len(c.RawImage) == 0 {
+		return c.ActualName(false)
+	}
+
 	image := expandEnv(c.RawImage)
 
 	// Return if no global tag given or image is a digest
@@ -317,7 +337,11 @@ func (c *container) Image() string {
 
 func (c *container) Requires() []string {
 	var requires []string
-	for _, rawRequired := range c.RawRequires {
+	rawRequires := c.RawDependsOn
+	if len(c.RawRequires) > 0 {
+		rawRequires = c.RawRequires
+	}
+	for _, rawRequired := range rawRequires {
 		requires = append(requires, expandEnv(rawRequired))
 	}
 	return requires
@@ -328,245 +352,362 @@ func (b BuildParameters) Context() string {
 }
 
 func (b BuildParameters) File() string {
-	return expandEnv(b.RawFile)
+	if len(b.RawFile) > 0 {
+		return expandEnv(b.RawFile)
+	}
+	return expandEnv(b.RawDockerfile)
 }
 
 func (b BuildParameters) BuildArgs() []string {
-	return sliceOrMap2ExpandedSlice(b.RawBuildArgs)
+	buildArgs := sliceOrMap2ExpandedSlice(b.RawBuildArgs)
+	if len(buildArgs) == 0 {
+		return sliceOrMap2ExpandedSlice(b.RawArgs)
+	}
+	return buildArgs
 }
 
-func (r RunParameters) AddHost() []string {
+func (c *container) AddHost() []string {
 	var addHost []string
-	for _, rawAddHost := range r.RawAddHost {
-		addHost = append(addHost, expandEnv(rawAddHost))
+	rawAddHost := c.RawExtraHosts
+	if len(c.RawAddHost) > 0 {
+		rawAddHost = c.RawAddHost
+	}
+	for _, raw := range rawAddHost {
+		addHost = append(addHost, expandEnv(raw))
 	}
 	return addHost
 }
 
-func (r RunParameters) BlkioWeightDevice() []string {
+func (c *container) BlkioWeightDevice() []string {
 	var blkioWeightDevice []string
-	for _, rawBlkioWeightDevice := range r.RawBlkioWeightDevice {
+	for _, rawBlkioWeightDevice := range c.RawBlkioWeightDevice {
 		blkioWeightDevice = append(blkioWeightDevice, expandEnv(rawBlkioWeightDevice))
 	}
 	return blkioWeightDevice
 }
 
-func (r RunParameters) CapAdd() []string {
+func (c *container) CapAdd() []string {
 	var capAdd []string
-	for _, rawCapAdd := range r.RawCapAdd {
-		capAdd = append(capAdd, expandEnv(rawCapAdd))
+	rawCapAdd := c.RawCap_Add
+	if len(c.RawCapAdd) > 0 {
+		rawCapAdd = c.RawCapAdd
+	}
+	for _, raw := range rawCapAdd {
+		capAdd = append(capAdd, expandEnv(raw))
 	}
 	return capAdd
 }
 
-func (r RunParameters) CapDrop() []string {
+func (c *container) CapDrop() []string {
 	var capDrop []string
-	for _, rawCapDrop := range r.RawCapDrop {
-		capDrop = append(capDrop, expandEnv(rawCapDrop))
+	rawCapDrop := c.RawCap_Drop
+	if len(c.RawCapDrop) > 0 {
+		rawCapDrop = c.RawCap_Drop
+	}
+	for _, raw := range rawCapDrop {
+		capDrop = append(capDrop, expandEnv(raw))
 	}
 	return capDrop
 }
 
-func (r RunParameters) CgroupParent() string {
-	return expandEnv(r.RawCgroupParent)
+func (c *container) CgroupParent() string {
+	if len(c.RawCgroupParent) > 0 {
+		return expandEnv(c.RawCgroupParent)
+	}
+	return expandEnv(c.RawCgroup_Parent)
 }
 
-func (r RunParameters) Cidfile() string {
-	return expandEnv(r.RawCidfile)
+func (c *container) Cidfile() string {
+	return expandEnv(c.RawCidfile)
 }
 
-func (r RunParameters) DetachKeys() string {
-	return expandEnv(r.RawDetachKeys)
+func (c *container) DetachKeys() string {
+	return expandEnv(c.RawDetachKeys)
 }
 
-func (r RunParameters) Device() []string {
+func (c *container) Device() []string {
 	var device []string
-	for _, rawDevice := range r.RawDevice {
+	rawDevice := c.RawDevices
+	if len(c.RawDevice) > 0 {
+		rawDevice = c.RawDevice
+	}
+	for _, rawDevice := range rawDevice {
 		device = append(device, expandEnv(rawDevice))
 	}
 	return device
 }
 
-func (r RunParameters) DeviceReadBps() []string {
+func (c *container) DeviceReadBps() []string {
 	var deviceReadBps []string
-	for _, rawDeviceReadBps := range r.RawDeviceReadBps {
+	for _, rawDeviceReadBps := range c.RawDeviceReadBps {
 		deviceReadBps = append(deviceReadBps, expandEnv(rawDeviceReadBps))
 	}
 	return deviceReadBps
 }
 
-func (r RunParameters) DeviceReadIops() []string {
+func (c *container) DeviceReadIops() []string {
 	var deviceReadIops []string
-	for _, rawDeviceReadIops := range r.RawDeviceReadIops {
+	for _, rawDeviceReadIops := range c.RawDeviceReadIops {
 		deviceReadIops = append(deviceReadIops, expandEnv(rawDeviceReadIops))
 	}
 	return deviceReadIops
 }
 
-func (r RunParameters) DeviceWriteBps() []string {
+func (c *container) DeviceWriteBps() []string {
 	var deviceWriteBps []string
-	for _, rawDeviceWriteBps := range r.RawDeviceWriteBps {
+	for _, rawDeviceWriteBps := range c.RawDeviceWriteBps {
 		deviceWriteBps = append(deviceWriteBps, expandEnv(rawDeviceWriteBps))
 	}
 	return deviceWriteBps
 }
 
-func (r RunParameters) DeviceWriteIops() []string {
+func (c *container) DeviceWriteIops() []string {
 	var deviceWriteIops []string
-	for _, rawDeviceWriteIops := range r.RawDeviceWriteIops {
+	for _, rawDeviceWriteIops := range c.RawDeviceWriteIops {
 		deviceWriteIops = append(deviceWriteIops, expandEnv(rawDeviceWriteIops))
 	}
 	return deviceWriteIops
 }
 
-func (r RunParameters) DNS() []string {
+func (c *container) DNS() []string {
 	var dns []string
-	for _, rawDNS := range r.RawDNS {
+	for _, rawDNS := range c.RawDNS {
 		dns = append(dns, expandEnv(rawDNS))
 	}
 	return dns
 }
 
-func (r RunParameters) DNSOpt() []string {
+func (c *container) DNSOpt() []string {
 	var dnsOpt []string
-	for _, rawDNSOpt := range r.RawDNSOpt {
+	for _, rawDNSOpt := range c.RawDNSOpt {
 		dnsOpt = append(dnsOpt, expandEnv(rawDNSOpt))
 	}
 	return dnsOpt
 }
 
-func (r RunParameters) DNSSearch() []string {
+func (c *container) DNSSearch() []string {
 	var dnsSearch []string
-	for _, rawDNSSearch := range r.RawDNSSearch {
+	rawDNSSearch := c.RawDNS_Search
+	if len(c.RawDNSSearch) > 0 {
+		rawDNSSearch = c.RawDNSSearch
+	}
+	for _, rawDNSSearch := range rawDNSSearch {
 		dnsSearch = append(dnsSearch, expandEnv(rawDNSSearch))
 	}
 	return dnsSearch
 }
 
-func (r RunParameters) Entrypoint() string {
-	return expandEnv(r.RawEntrypoint)
+func (c *container) Entrypoint() string {
+	return expandEnv(c.RawEntrypoint)
 }
 
-func (r RunParameters) Env() []string {
-	return sliceOrMap2ExpandedSlice(r.RawEnv)
+func (c *container) Env() []string {
+	env := sliceOrMap2ExpandedSlice(c.RawEnv)
+	if len(env) == 0 {
+		return sliceOrMap2ExpandedSlice(c.RawEnvironment)
+	}
+	return env
 }
 
-func (r RunParameters) EnvFile() []string {
+func (c *container) EnvFile() []string {
 	var envFile []string
-	for _, rawEnvFile := range r.RawEnvFile {
+	rawEnvFile := c.RawEnv_File
+	if len(c.RawEnvFile) > 0 {
+		rawEnvFile = c.RawEnvFile
+	}
+	for _, rawEnvFile := range rawEnvFile {
 		envFile = append(envFile, expandEnv(rawEnvFile))
 	}
 	return envFile
 }
 
-func (r RunParameters) Expose() []string {
+func (c *container) Expose() []string {
 	var expose []string
-	for _, rawExpose := range r.RawExpose {
+	for _, rawExpose := range c.RawExpose {
 		expose = append(expose, expandEnv(rawExpose))
 	}
 	return expose
 }
 
-func (r RunParameters) GroupAdd() []string {
+func (c *container) GroupAdd() []string {
 	var groupAdd []string
-	for _, rawGroupAdd := range r.RawGroupAdd {
-		groupAdd = append(groupAdd, expandEnv(rawGroupAdd))
+	rawGroupAdd := c.RawGroup_Add
+	if len(c.RawGroupAdd) > 0 {
+		rawGroupAdd = c.RawGroupAdd
+	}
+	for _, raw := range rawGroupAdd {
+		groupAdd = append(groupAdd, expandEnv(raw))
 	}
 	return groupAdd
 }
 
-func (r RunParameters) Hostname() string {
-	return expandEnv(r.RawHostname)
+func (h HealthcheckParameters) Test() string {
+	return expandEnv(h.RawTest)
 }
 
-func (r RunParameters) Ip() string {
-	return expandEnv(r.RawIp)
+func (h HealthcheckParameters) Interval() string {
+	return expandEnv(h.RawInterval)
 }
 
-func (r RunParameters) Ip6() string {
-	return expandEnv(r.RawIp6)
+func (h HealthcheckParameters) Timeout() string {
+	return expandEnv(h.RawTimeout)
 }
 
-func (r RunParameters) IPC() string {
-	return expandEnv(r.RawIPC)
+func (c *container) HealthCmd() string {
+	cmd := c.HealthcheckParams().Test()
+	if len(c.RawLogDriver) > 0 {
+		cmd = expandEnv(c.RawHealthCmd)
+	}
+	return cmd
 }
 
-func (r RunParameters) Isolation() string {
-	return expandEnv(r.RawIsolation)
+func (c *container) HealthInterval() string {
+	interval := c.HealthcheckParams().Interval()
+	if len(c.RawHealthInterval) > 0 {
+		interval = expandEnv(c.RawHealthInterval)
+	}
+	return interval
 }
 
-func (r RunParameters) KernelMemory() string {
-	return expandEnv(r.RawKernelMemory)
+func (c *container) HealthTimeout() string {
+	timeout := c.HealthcheckParams().Timeout()
+	if len(c.RawHealthTimeout) > 0 {
+		timeout = expandEnv(c.RawHealthTimeout)
+	}
+	return timeout
 }
 
-func (r RunParameters) Label() []string {
-	return sliceOrMap2ExpandedSlice(r.RawLabel)
+func (c *container) Hostname() string {
+	return expandEnv(c.RawHostname)
 }
 
-func (r RunParameters) LabelFile() []string {
+func (c *container) Ip() string {
+	return expandEnv(c.RawIp)
+}
+
+func (c *container) Ip6() string {
+	return expandEnv(c.RawIp6)
+}
+
+func (c *container) IPC() string {
+	return expandEnv(c.RawIPC)
+}
+
+func (c *container) Isolation() string {
+	return expandEnv(c.RawIsolation)
+}
+
+func (c *container) KernelMemory() string {
+	return expandEnv(c.RawKernelMemory)
+}
+
+func (c *container) Label() []string {
+	label := sliceOrMap2ExpandedSlice(c.RawLabel)
+	if len(label) == 0 {
+		return sliceOrMap2ExpandedSlice(c.RawLabels)
+	}
+	return label
+}
+
+func (c *container) LabelFile() []string {
 	var labelFile []string
-	for _, rawLabelFile := range r.RawLabelFile {
+	for _, rawLabelFile := range c.RawLabelFile {
 		labelFile = append(labelFile, expandEnv(rawLabelFile))
 	}
 	return labelFile
 }
 
-func (r RunParameters) Link() []string {
+func (c *container) Link() []string {
 	var link []string
-	for _, rawLink := range r.RawLink {
-		link = append(link, expandEnv(rawLink))
+	rawLink := c.RawLinks
+	if len(c.RawLink) > 0 {
+		rawLink = c.RawLink
+	}
+	for _, raw := range rawLink {
+		link = append(link, expandEnv(raw))
 	}
 	return link
 }
 
-func (r RunParameters) LogDriver() string {
-	return expandEnv(r.RawLogDriver)
+func (l LoggingParameters) Options() []string {
+	return sliceOrMap2ExpandedSlice(l.RawOptions)
 }
 
-func (r RunParameters) LogOpt() []string {
-	var opt []string
-	for _, rawOpt := range r.RawLogOpt {
-		opt = append(opt, expandEnv(rawOpt))
+func (l LoggingParameters) Driver() string {
+	return expandEnv(l.RawDriver)
+}
+
+func (c *container) LogDriver() string {
+	driver := c.LoggingParams().Driver()
+	if len(c.RawLogDriver) > 0 {
+		driver = expandEnv(c.RawLogDriver)
 	}
-	return opt
+	return driver
 }
 
-func (r RunParameters) LxcConf() []string {
+func (c *container) LogOpt() []string {
+	var logOpt []string
+	rawLogOpt := c.LoggingParams().Options()
+	if len(c.RawLogOpt) > 0 {
+		rawLogOpt = c.RawLogOpt
+	}
+	for _, raw := range rawLogOpt {
+		logOpt = append(logOpt, expandEnv(raw))
+	}
+	return logOpt
+}
+
+func (c *container) LxcConf() []string {
 	var lxcConf []string
-	for _, rawLxcConf := range r.RawLxcConf {
+	for _, rawLxcConf := range c.RawLxcConf {
 		lxcConf = append(lxcConf, expandEnv(rawLxcConf))
 	}
 	return lxcConf
 }
 
-func (r RunParameters) MacAddress() string {
-	return expandEnv(r.RawMacAddress)
-}
-
-func (r RunParameters) Memory() string {
-	return expandEnv(r.RawMemory)
-}
-
-func (r RunParameters) MemoryReservation() string {
-	return expandEnv(r.RawMemoryReservation)
-}
-
-func (r RunParameters) MemorySwap() string {
-	return expandEnv(r.RawMemorySwap)
-}
-
-func (r RunParameters) Net() string {
-	// Default to bridge
-	if len(r.RawNet) == 0 {
-		return "bridge"
+func (c *container) MacAddress() string {
+	if len(c.RawMacAddress) > 0 {
+		return expandEnv(c.RawMacAddress)
 	}
-	return expandEnv(r.RawNet)
+	return expandEnv(c.RawMac_Address)
 }
 
-func (r RunParameters) ActualNet() string {
-	netParam := r.Net()
+func (c *container) Memory() string {
+	return expandEnv(c.RawMemory)
+}
+
+func (c *container) MemoryReservation() string {
+	return expandEnv(c.RawMemoryReservation)
+}
+
+func (c *container) MemorySwap() string {
+	return expandEnv(c.RawMemorySwap)
+}
+
+func (c *container) Net() string {
+	rawNet := c.RawNetwork_Mode
+	// docker-compose's "networks" actually works via "docker network connect".
+	// This is not supported yet, but we can at least take the first network
+	// until we fully support it.
+	if len(c.RawNetworks) > 0 {
+		rawNet = c.RawNetworks[0]
+	}
+	if len(c.RawNet) > 0 {
+		rawNet = c.RawNet
+	}
+	// Fall back to the "default" network
+	if len(rawNet) == 0 {
+		return "default"
+	}
+	return expandEnv(rawNet)
+}
+
+func (c *container) ActualNet() string {
+	netParam := c.Net()
 	if netParam == "bridge" {
 		return "bridge"
+	} else if netParam == "none" {
+		return "none"
 	}
 	netContainer := containerReference(netParam)
 	if len(netContainer) > 0 {
@@ -581,85 +722,126 @@ func (r RunParameters) ActualNet() string {
 	return netParam
 }
 
-func (r RunParameters) NetAlias() []string {
+func (c *container) NetAlias() []string {
 	var netAlias []string
-	for _, rawNetAlias := range r.RawNetAlias {
+	for _, rawNetAlias := range c.RawNetAlias {
 		netAlias = append(netAlias, expandEnv(rawNetAlias))
 	}
 	return netAlias
 }
 
-func (r RunParameters) OomScoreAdj() string {
-	return expandEnv(r.RawOomScoreAdj)
+func (c *container) OomScoreAdj() string {
+	return expandEnv(c.RawOomScoreAdj)
 }
 
-func (r RunParameters) Pid() string {
-	return expandEnv(r.RawPid)
+func (c *container) Pid() string {
+	return expandEnv(c.RawPid)
 }
 
-func (r RunParameters) Publish() []string {
+func (c *container) Publish() []string {
 	var publish []string
-	for _, rawPublish := range r.RawPublish {
-		publish = append(publish, expandEnv(rawPublish))
+	rawPublish := c.RawPorts
+	if len(c.RawPublish) > 0 {
+		rawPublish = c.RawPublish
+	}
+	for _, raw := range rawPublish {
+		publish = append(publish, expandEnv(raw))
 	}
 	return publish
 }
 
-func (r RunParameters) Restart() string {
-	return expandEnv(r.RawRestart)
+func (c *container) Restart() string {
+	return expandEnv(c.RawRestart)
 }
 
-func (r RunParameters) SecurityOpt() []string {
+func (c *container) SecurityOpt() []string {
 	var securityOpt []string
-	for _, rawSecurityOpt := range r.RawSecurityOpt {
-		securityOpt = append(securityOpt, expandEnv(rawSecurityOpt))
+	rawSecurityOpt := c.RawSecurity_Opt
+	if len(c.RawSecurityOpt) > 0 {
+		rawSecurityOpt = c.RawSecurityOpt
+	}
+	for _, raw := range rawSecurityOpt {
+		securityOpt = append(securityOpt, expandEnv(raw))
 	}
 	return securityOpt
 }
 
-func (r RunParameters) ShmSize() string {
-	return expandEnv(r.RawShmSize)
+func (c *container) ShmSize() string {
+	if len(c.RawShmSize) > 0 {
+		return expandEnv(c.RawShmSize)
+	}
+	return expandEnv(c.RawShm_Size)
 }
 
-func (r RunParameters) StopSignal() string {
-	return expandEnv(r.RawStopSignal)
+func (c *container) StopSignal() string {
+	if len(c.RawStopSignal) > 0 {
+		return expandEnv(c.RawStopSignal)
+	}
+	return expandEnv(c.RawStop_Signal)
 }
 
-func (r RunParameters) Tmpfs() []string {
+func (c *container) StopTimeout() string {
+	if len(c.RawStopTimeout) > 0 {
+		return expandEnv(c.RawStopTimeout)
+	}
+	return expandEnv(c.RawStop_Grace_Period)
+}
+
+func (c *container) Sysctl() []string {
+	sysctl := sliceOrMap2ExpandedSlice(c.RawSysctl)
+	if len(sysctl) > 0 {
+		return sysctl
+	}
+	return sliceOrMap2ExpandedSlice(c.RawSysctls)
+}
+
+func (c *container) Tmpfs() []string {
 	var tmpfs []string
-	for _, rawTmpfs := range r.RawTmpfs {
+	for _, rawTmpfs := range c.RawTmpfs {
 		tmpfs = append(tmpfs, expandEnv(rawTmpfs))
 	}
 	return tmpfs
 }
 
-func (r RunParameters) Ulimit() []string {
+func (c *container) Ulimit() []string {
 	var ulimit []string
-	for _, rawUlimit := range r.RawUlimit {
-		ulimit = append(ulimit, expandEnv(rawUlimit))
+	rawUlimit := c.RawUlimit
+	for _, raw := range rawUlimit {
+		ulimit = append(ulimit, expandEnv(raw))
 	}
 	return ulimit
 }
 
-func (r RunParameters) User() string {
-	return expandEnv(r.RawUser)
+func (c *container) User() string {
+	return expandEnv(c.RawUser)
 }
 
-func (r RunParameters) Uts() string {
-	return expandEnv(r.RawUts)
+func (c *container) Userns() string {
+	if len(c.RawUserns) > 0 {
+		return expandEnv(c.RawUserns)
+	}
+	return expandEnv(c.RawUserns_Mode)
 }
 
-func (r RunParameters) Volume() []string {
+func (c *container) Uts() string {
+	return expandEnv(c.RawUts)
+}
+
+func (c *container) Volume() []string {
 	var volumes []string
-	for _, rawVolume := range r.RawVolume {
-		volume := expandEnv(rawVolume)
+	rawVolume := c.RawVolumes
+	if len(c.RawVolume) > 0 {
+		rawVolume = c.RawVolume
+	}
+	for _, raw := range rawVolume {
+		volume := expandEnv(raw)
 		volumes = append(volumes, volume)
 	}
 	return volumes
 }
 
-func (r RunParameters) VolumeSources() []string {
-	volumes := r.Volume()
+func (c *container) VolumeSources() []string {
+	volumes := c.Volume()
 	var volumeSources []string
 	for _, volume := range volumes {
 		parts := strings.Split(volume, ":")
@@ -668,9 +850,9 @@ func (r RunParameters) VolumeSources() []string {
 	return volumeSources
 }
 
-func (r RunParameters) ActualVolume() []string {
+func (c *container) ActualVolume() []string {
 	vols := []string{}
-	for _, volume := range r.Volume() {
+	for _, volume := range c.Volume() {
 		parts := strings.Split(volume, ":")
 		if includes(cfg.VolumeNames(), parts[0]) {
 			parts[0] = cfg.Volume(parts[0]).ActualName()
@@ -682,26 +864,32 @@ func (r RunParameters) ActualVolume() []string {
 	return vols
 }
 
-func (r RunParameters) VolumeDriver() string {
-	return expandEnv(r.RawVolumeDriver)
+func (c *container) VolumeDriver() string {
+	if len(c.RawVolumeDriver) > 0 {
+		return expandEnv(c.RawVolumeDriver)
+	}
+	return expandEnv(c.RawVolume_Driver)
 }
 
-func (r RunParameters) VolumesFrom() []string {
+func (c *container) VolumesFrom() []string {
 	var volumesFrom []string
-	for _, rawVolumesFrom := range r.RawVolumesFrom {
+	for _, rawVolumesFrom := range c.RawVolumesFrom {
 		volumesFrom = append(volumesFrom, expandEnv(rawVolumesFrom))
 	}
 	return volumesFrom
 }
 
-func (r RunParameters) Workdir() string {
-	return expandEnv(r.RawWorkdir)
+func (c *container) Workdir() string {
+	if len(c.RawWorkdir) > 0 {
+		return expandEnv(c.RawWorkdir)
+	}
+	return expandEnv(c.RawWorking_Dir)
 }
 
-func (r RunParameters) Cmd() []string {
+func (c *container) Cmd() []string {
 	var cmd []string
-	if r.RawCmd != nil {
-		switch rawCmd := r.RawCmd.(type) {
+	if c.RawCmd != nil {
+		switch rawCmd := c.RawCmd.(type) {
 		case string:
 			if len(rawCmd) > 0 {
 				cmds, err := shlex.Split(expandEnv(rawCmd))
@@ -721,18 +909,6 @@ func (r RunParameters) Cmd() []string {
 		}
 	}
 	return cmd
-}
-
-func (s StartParameters) DetachKeys() string {
-	return expandEnv(s.RawDetachKeys)
-}
-
-func (e ExecParameters) DetachKeys() string {
-	return expandEnv(e.RawDetachKeys)
-}
-
-func (e ExecParameters) User() string {
-	return expandEnv(e.RawUser)
 }
 
 func containerID(name string) string {
@@ -786,7 +962,7 @@ func (c *container) Provision(nocache bool) {
 func (c *container) Create(cmds []string) {
 	adHoc := (len(cmds) > 0)
 	if !adHoc {
-		c.Rm(true)
+		c.Rm(true, false)
 	}
 	fmt.Fprintf(c.CommandsOut(), "Creating container %s ...\n", c.ActualName(adHoc))
 
@@ -795,17 +971,17 @@ func (c *container) Create(cmds []string) {
 }
 
 // Run container, or start it if already existing
-func (c *container) Run(cmds []string) {
+func (c *container) Run(cmds []string, detach bool) {
 	adHoc := (len(cmds) > 0)
 	if !adHoc {
-		c.Rm(true)
+		c.Rm(true, false)
 	}
 	executeHook(c.Hooks().PreStart(), c.ActualName(adHoc))
 	fmt.Fprintf(c.CommandsOut(), "Running container %s ...\n", c.ActualName(adHoc))
 
 	args := []string{"run"}
 	// Detach
-	if !adHoc && c.RunParams().Detach {
+	if !adHoc && (detach || c.Detach) {
 		args = append(args, "--detach")
 	}
 	args = append(args, c.createArgs(cmds)...)
@@ -847,155 +1023,173 @@ func (c *container) createArgs(cmds []string) []string {
 	adHoc := (len(cmds) > 0)
 	args := []string{}
 	// AddHost
-	for _, addHost := range c.RunParams().AddHost() {
+	for _, addHost := range c.AddHost() {
 		args = append(args, "--add-host", addHost)
 	}
 	// BlkioWeight
-	if c.RunParams().BlkioWeight > 0 {
-		args = append(args, "--blkio-weight", strconv.Itoa(c.RunParams().BlkioWeight))
+	if c.BlkioWeight > 0 {
+		args = append(args, "--blkio-weight", strconv.Itoa(c.BlkioWeight))
 	}
 	// BlkioWeightDevice
-	for _, blkioWeightDevice := range c.RunParams().BlkioWeightDevice() {
+	for _, blkioWeightDevice := range c.BlkioWeightDevice() {
 		args = append(args, "--blkio-weight-device", blkioWeightDevice)
 	}
 	// CapAdd
-	for _, capAdd := range c.RunParams().CapAdd() {
+	for _, capAdd := range c.CapAdd() {
 		args = append(args, "--cap-add", capAdd)
 	}
 	// CapDrop
-	for _, capDrop := range c.RunParams().CapDrop() {
+	for _, capDrop := range c.CapDrop() {
 		args = append(args, "--cap-drop", capDrop)
 	}
 	// CgroupParent
-	if len(c.RunParams().CgroupParent()) > 0 {
-		args = append(args, "--cgroup-parent", c.RunParams().CgroupParent())
+	if len(c.CgroupParent()) > 0 {
+		args = append(args, "--cgroup-parent", c.CgroupParent())
 	}
 	// Cidfile
-	if len(c.RunParams().Cidfile()) > 0 {
-		args = append(args, "--cidfile", c.RunParams().Cidfile())
+	if len(c.Cidfile()) > 0 {
+		args = append(args, "--cidfile", c.Cidfile())
 	}
 	// CPUPeriod
-	if c.RunParams().CPUPeriod > 0 {
-		args = append(args, "--cpu-period", strconv.Itoa(c.RunParams().CPUPeriod))
+	if c.CPUPeriod > 0 {
+		args = append(args, "--cpu-period", strconv.Itoa(c.CPUPeriod))
 	}
 	// CPUQuota
-	if c.RunParams().CPUQuota > 0 {
-		args = append(args, "--cpu-quota", strconv.Itoa(c.RunParams().CPUQuota))
+	if c.CPUQuota > 0 {
+		args = append(args, "--cpu-quota", strconv.Itoa(c.CPUQuota))
 	}
 	// CPU set
-	if c.RunParams().CPUset > 0 {
-		args = append(args, "--cpuset", strconv.Itoa(c.RunParams().CPUset))
+	if c.CPUset > 0 {
+		args = append(args, "--cpuset", strconv.Itoa(c.CPUset))
 	}
 	// CPU shares
-	if c.RunParams().CPUShares > 0 {
-		args = append(args, "--cpu-shares", strconv.Itoa(c.RunParams().CPUShares))
+	if c.CPUShares > 0 {
+		args = append(args, "--cpu-shares", strconv.Itoa(c.CPUShares))
 	}
 	// DetachKeys
-	if len(c.RunParams().DetachKeys()) > 0 {
-		args = append(args, "--detach-keys", c.RunParams().DetachKeys())
+	if len(c.DetachKeys()) > 0 {
+		args = append(args, "--detach-keys", c.DetachKeys())
 	}
 	// Device
-	for _, device := range c.RunParams().Device() {
+	for _, device := range c.Device() {
 		args = append(args, "--device", device)
 	}
 	// DeviceReadBps
-	for _, deviceReadBps := range c.RunParams().DeviceReadBps() {
+	for _, deviceReadBps := range c.DeviceReadBps() {
 		args = append(args, "--device-read-bps", deviceReadBps)
 	}
 	// DeviceReadIops
-	for _, deviceReadIops := range c.RunParams().DeviceReadIops() {
+	for _, deviceReadIops := range c.DeviceReadIops() {
 		args = append(args, "--device-read-iops", deviceReadIops)
 	}
 	// DeviceWriteBps
-	for _, deviceWriteBps := range c.RunParams().DeviceWriteBps() {
+	for _, deviceWriteBps := range c.DeviceWriteBps() {
 		args = append(args, "--device-write-bps", deviceWriteBps)
 	}
 	// DeviceWriteIops
-	for _, deviceWriteIops := range c.RunParams().DeviceWriteIops() {
+	for _, deviceWriteIops := range c.DeviceWriteIops() {
 		args = append(args, "--device-write-iops", deviceWriteIops)
 	}
 	// DNS
-	for _, dns := range c.RunParams().DNS() {
+	for _, dns := range c.DNS() {
 		args = append(args, "--dns", dns)
 	}
 
 	// DNSOpt
-	for _, dnsOpt := range c.RunParams().DNSOpt() {
+	for _, dnsOpt := range c.DNSOpt() {
 		args = append(args, "--dns-opt", dnsOpt)
 	}
 	// DNS Search
-	for _, dnsSearch := range c.RunParams().DNSSearch() {
+	for _, dnsSearch := range c.DNSSearch() {
 		args = append(args, "--dns-search", dnsSearch)
 	}
 	// Entrypoint
-	if len(c.RunParams().Entrypoint()) > 0 {
-		args = append(args, "--entrypoint", c.RunParams().Entrypoint())
+	if len(c.Entrypoint()) > 0 {
+		args = append(args, "--entrypoint", c.Entrypoint())
 	}
 	// Env
-	for _, env := range c.RunParams().Env() {
+	for _, env := range c.Env() {
 		args = append(args, "--env", env)
 	}
 	// Env file
-	for _, envFile := range c.RunParams().EnvFile() {
+	for _, envFile := range c.EnvFile() {
 		args = append(args, "--env-file", envFile)
 	}
 	// Expose
-	for _, expose := range c.RunParams().Expose() {
+	for _, expose := range c.Expose() {
 		args = append(args, "--expose", expose)
 	}
 	// GroupAdd
-	for _, groupAdd := range c.RunParams().GroupAdd() {
+	for _, groupAdd := range c.GroupAdd() {
 		args = append(args, "--group-add", groupAdd)
 	}
+	// Health Cmd
+	if len(c.HealthCmd()) > 0 {
+		args = append(args, "--health-cmd", c.HealthCmd())
+	}
+	// Health Interval
+	if len(c.HealthInterval()) > 0 {
+		args = append(args, "--health-interval", c.HealthInterval())
+	}
+	// Health Retries
+	if c.HealthRetries > 0 {
+		args = append(args, "--health-retries", strconv.Itoa(c.HealthRetries))
+	} else if c.HealthcheckParams().Retries > 0 {
+		args = append(args, "--health-retries", strconv.Itoa(c.HealthcheckParams().Retries))
+	}
+	// Health Timeout
+	if len(c.HealthTimeout()) > 0 {
+		args = append(args, "--health-timeout", c.HealthTimeout())
+	}
 	// Host
-	if len(c.RunParams().Hostname()) > 0 {
-		args = append(args, "--hostname", c.RunParams().Hostname())
+	if len(c.Hostname()) > 0 {
+		args = append(args, "--hostname", c.Hostname())
 	}
 	// Interactive
-	if c.RunParams().Interactive {
+	if c.Stdin_Open || c.Interactive {
 		args = append(args, "--interactive")
 	}
 	// Ip
 	if !adHoc {
-		if len(c.RunParams().Ip()) > 0 {
-			args = append(args, "--ip", c.RunParams().Ip())
+		if len(c.Ip()) > 0 {
+			args = append(args, "--ip", c.Ip())
 		}
 	}
 	// Ip6
 	if !adHoc {
-		if len(c.RunParams().Ip6()) > 0 {
-			args = append(args, "--ip6", c.RunParams().Ip6())
+		if len(c.Ip6()) > 0 {
+			args = append(args, "--ip6", c.Ip6())
 		}
 	}
 	// IPC
-	if len(c.RunParams().IPC()) > 0 {
-		ipcContainer := containerReference(c.RunParams().IPC())
+	if len(c.IPC()) > 0 {
+		ipcContainer := containerReference(c.IPC())
 		if len(ipcContainer) > 0 {
 			if includes(allowed, ipcContainer) {
 				args = append(args, "--ipc", "container:"+cfg.Container(ipcContainer).ActualName(false))
 			}
 		} else {
-			args = append(args, "--ipc", c.RunParams().IPC())
+			args = append(args, "--ipc", c.IPC())
 		}
 	}
 	// Isolation
-	if len(c.RunParams().Isolation()) > 0 {
-		args = append(args, "--isolation", c.RunParams().Isolation())
+	if len(c.Isolation()) > 0 {
+		args = append(args, "--isolation", c.Isolation())
 	}
 	// KernelMemory
-	if len(c.RunParams().KernelMemory()) > 0 {
-		args = append(args, "--kernel-memory", c.RunParams().KernelMemory())
+	if len(c.KernelMemory()) > 0 {
+		args = append(args, "--kernel-memory", c.KernelMemory())
 	}
 	// Label
-	for _, label := range c.RunParams().Label() {
+	for _, label := range c.Label() {
 		args = append(args, "--label", label)
 	}
 	// LabelFile
-	for _, labelFile := range c.RunParams().LabelFile() {
+	for _, labelFile := range c.LabelFile() {
 		args = append(args, "--label-file", labelFile)
 	}
 	// Link
-	for _, link := range c.RunParams().Link() {
+	for _, link := range c.Link() {
 		linkParts := strings.Split(link, ":")
 		linkName := linkParts[0]
 		if includes(allowed, linkName) {
@@ -1004,126 +1198,141 @@ func (c *container) createArgs(cmds []string) []string {
 		}
 	}
 	// LogDriver
-	if len(c.RunParams().LogDriver()) > 0 {
-		args = append(args, "--log-driver", c.RunParams().LogDriver())
+	if len(c.LogDriver()) > 0 {
+		args = append(args, "--log-driver", c.LogDriver())
 	}
 	// LogOpt
-	for _, opt := range c.RunParams().LogOpt() {
+	for _, opt := range c.LogOpt() {
 		args = append(args, "--log-opt", opt)
 	}
 	// LxcConf
-	for _, lxcConf := range c.RunParams().LxcConf() {
+	for _, lxcConf := range c.LxcConf() {
 		args = append(args, "--lxc-conf", lxcConf)
 	}
 	// Mac address
-	if len(c.RunParams().MacAddress()) > 0 {
-		args = append(args, "--mac-address", c.RunParams().MacAddress())
+	if len(c.MacAddress()) > 0 {
+		args = append(args, "--mac-address", c.MacAddress())
 	}
 	// Memory
-	if len(c.RunParams().Memory()) > 0 {
-		args = append(args, "--memory", c.RunParams().Memory())
+	if len(c.Memory()) > 0 {
+		args = append(args, "--memory", c.Memory())
 	}
 	// MemoryReservation
-	if len(c.RunParams().MemoryReservation()) > 0 {
-		args = append(args, "--memory-reservation", c.RunParams().MemoryReservation())
+	if len(c.MemoryReservation()) > 0 {
+		args = append(args, "--memory-reservation", c.MemoryReservation())
 	}
 	// MemorySwap
-	if len(c.RunParams().MemorySwap()) > 0 {
-		args = append(args, "--memory-swap", c.RunParams().MemorySwap())
+	if len(c.MemorySwap()) > 0 {
+		args = append(args, "--memory-swap", c.MemorySwap())
 	}
 	// MemorySwappiness
-	if c.RunParams().MemorySwappiness.Defined {
-		args = append(args, "--memory-swappiness", strconv.Itoa(c.RunParams().MemorySwappiness.Value))
+	if c.MemorySwappiness.Defined {
+		args = append(args, "--memory-swappiness", strconv.Itoa(c.MemorySwappiness.Value))
 	}
 	// Net
-	netParam := c.RunParams().ActualNet()
+	netParam := c.ActualNet()
+	if len(c.RawNetworks) > 1 {
+		printErrorf("Crane does not support joining more than one network yet. Connecting service %s to network %s.\n", c.ActualName(adHoc), netParam)
+	}
 	if netParam != "bridge" {
 		args = append(args, "--net", netParam)
 	}
 	// NetAlias
-	for _, netAlias := range c.RunParams().NetAlias() {
+	for _, netAlias := range c.NetAlias() {
 		args = append(args, "--net-alias", netAlias)
 	}
+	// NoHealthcheck
+	if c.NoHealthcheck || c.HealthcheckParams().Disable {
+		args = append(args, "--no-healthcheck")
+	}
 	// OomKillDisable
-	if c.RunParams().OomKillDisable {
+	if c.OomKillDisable {
 		args = append(args, "--oom-kill-disable")
 	}
 	// OomScoreAdj
-	if len(c.RunParams().OomScoreAdj()) > 0 {
-		args = append(args, "--oom-score-adj", c.RunParams().OomScoreAdj())
+	if len(c.OomScoreAdj()) > 0 {
+		args = append(args, "--oom-score-adj", c.OomScoreAdj())
 	}
 	// PID
-	if len(c.RunParams().Pid()) > 0 {
-		args = append(args, "--pid", c.RunParams().Pid())
+	if len(c.Pid()) > 0 {
+		args = append(args, "--pid", c.Pid())
 	}
 	// Privileged
-	if c.RunParams().Privileged {
+	if c.Privileged {
 		args = append(args, "--privileged")
 	}
 	// Publish
 	if !adHoc {
-		for _, port := range c.RunParams().Publish() {
+		for _, port := range c.Publish() {
 			args = append(args, "--publish", port)
 		}
 	}
 	// PublishAll
 	if !adHoc {
-		if c.RunParams().PublishAll {
+		if c.PublishAll {
 			args = append(args, "--publish-all")
 		}
 	}
 	// ReadOnly
-	if c.RunParams().ReadOnly {
+	if c.ReadOnly || c.Read_Only {
 		args = append(args, "--read-only")
 	}
 	// Restart
-	if len(c.RunParams().Restart()) > 0 {
-		args = append(args, "--restart", c.RunParams().Restart())
+	if len(c.Restart()) > 0 {
+		args = append(args, "--restart", c.Restart())
 	}
 	// Rm
-	if adHoc || c.RunParams().Rm {
+	if adHoc || c.RawRm {
 		args = append(args, "--rm")
 	}
 	// SecurityOpt
-	for _, securityOpt := range c.RunParams().SecurityOpt() {
+	for _, securityOpt := range c.SecurityOpt() {
 		args = append(args, "--security-opt", securityOpt)
 	}
 	// ShmSize
-	if len(c.RunParams().ShmSize()) > 0 {
-		args = append(args, "--shm-size", c.RunParams().ShmSize())
+	if len(c.ShmSize()) > 0 {
+		args = append(args, "--shm-size", c.ShmSize())
 	}
 	// SigProxy
-	if c.RunParams().SigProxy.Falsy() {
+	if c.SigProxy.Falsy() {
 		args = append(args, "--sig-proxy=false")
 	}
 	// StopSignal
-	if len(c.RunParams().StopSignal()) > 0 {
-		args = append(args, "--stop-signal", c.RunParams().StopSignal())
+	if len(c.StopSignal()) > 0 {
+		args = append(args, "--stop-signal", c.StopSignal())
+	}
+	// StopTimeout
+	if len(c.StopTimeout()) > 0 {
+		args = append(args, "--stop-timeout", c.StopTimeout())
 	}
 	// Tmpfs
-	for _, tmpfs := range c.RunParams().Tmpfs() {
+	for _, tmpfs := range c.Tmpfs() {
 		args = append(args, "--tmpfs", tmpfs)
 	}
 	// Tty
-	if c.RunParams().Tty {
+	if c.Tty {
 		args = append(args, "--tty")
 	}
 	// Ulimit
-	for _, ulimit := range c.RunParams().Ulimit() {
+	for _, ulimit := range c.Ulimit() {
 		args = append(args, "--ulimit", ulimit)
 	}
 	// User
-	if len(c.RunParams().User()) > 0 {
-		args = append(args, "--user", c.RunParams().User())
+	if len(c.User()) > 0 {
+		args = append(args, "--user", c.User())
+	}
+	// Userns
+	if len(c.Userns()) > 0 {
+		args = append(args, "--userns", c.Userns())
 	}
 	// Uts
-	if len(c.RunParams().Uts()) > 0 {
-		args = append(args, "--uts", c.RunParams().Uts())
+	if len(c.Uts()) > 0 {
+		args = append(args, "--uts", c.Uts())
 	}
 	// Volumes
-	for _, volume := range c.RunParams().ActualVolume() {
+	for _, volume := range c.ActualVolume() {
 		volumeArgs := []string{"--volume", volume}
-		if runtime.GOOS == "darwin" {
+		if runtime.GOOS == "darwin" && isSyncPossible() {
 			if s := cfg.MacSync(volume); s != nil {
 				syncRunning := s.Running()
 				if !syncRunning && s.Autostart() {
@@ -1133,7 +1342,7 @@ func (c *container) createArgs(cmds []string) []string {
 				if syncRunning {
 					volumeArgs = []string{
 						"--volumes-from", s.ContainerName(),
-						"--label", "io.github.michaelsauter.crane.mac-sync=" + s.ContainerName(),
+						"--label", "tech.craneup.mac-sync=" + s.ContainerName(),
 					}
 				}
 			}
@@ -1141,11 +1350,11 @@ func (c *container) createArgs(cmds []string) []string {
 		args = append(args, volumeArgs...)
 	}
 	// VolumeDriver
-	if len(c.RunParams().VolumeDriver()) > 0 {
-		args = append(args, "--volume-driver", c.RunParams().VolumeDriver())
+	if len(c.VolumeDriver()) > 0 {
+		args = append(args, "--volume-driver", c.VolumeDriver())
 	}
 	// VolumesFrom
-	for _, volumesFrom := range c.RunParams().VolumesFrom() {
+	for _, volumesFrom := range c.VolumesFrom() {
 		volumesFromParts := strings.Split(volumesFrom, ":")
 		volumesFromName := volumesFromParts[0]
 		if includes(allowed, volumesFromName) {
@@ -1154,8 +1363,8 @@ func (c *container) createArgs(cmds []string) []string {
 		}
 	}
 	// Workdir
-	if len(c.RunParams().Workdir()) > 0 {
-		args = append(args, "--workdir", c.RunParams().Workdir())
+	if len(c.Workdir()) > 0 {
+		args = append(args, "--workdir", c.Workdir())
 	}
 	// Name
 	args = append(args, "--name", c.ActualName(adHoc))
@@ -1165,7 +1374,7 @@ func (c *container) createArgs(cmds []string) []string {
 	if len(cmds) > 0 {
 		args = append(args, cmds...)
 	} else {
-		args = append(args, c.RunParams().Cmd()...)
+		args = append(args, c.Cmd()...)
 	}
 	return args
 }
@@ -1177,22 +1386,13 @@ func (c *container) Start() {
 			executeHook(c.Hooks().PreStart(), c.ActualName(false))
 			fmt.Fprintf(c.CommandsOut(), "Starting container %s ...\n", c.ActualName(false))
 			args := []string{"start"}
-			if c.StartParams().Attach {
-				args = append(args, "--attach")
-			}
-			if len(c.StartParams().DetachKeys()) > 0 {
-				args = append(args, "--detach-keys", c.StartParams().DetachKeys())
-			}
-			if c.StartParams().Interactive {
-				args = append(args, "--interactive")
-			}
 			args = append(args, c.ActualName(false))
 			wg := c.executePostStartHook(false)
 			executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 			wg.Wait()
 		}
 	} else {
-		c.Run([]string{})
+		c.Run([]string{}, true)
 	}
 }
 
@@ -1241,29 +1441,19 @@ func (c *container) Unpause() {
 }
 
 // Exec command in container
-func (c *container) Exec(cmds []string) {
+func (c *container) Exec(cmds []string, privileged bool, user string) {
 	name := c.ActualName(false)
 	if !c.Running() {
 		c.Start()
 	}
 	args := []string{"exec"}
-	if c.ExecParams().Detach {
-		args = append(args, "--detach")
-	}
-	if len(c.ExecParams().DetachKeys()) > 0 {
-		args = append(args, "--detach-keys", c.ExecParams().DetachKeys())
-	}
-	if c.ExecParams().Privileged {
+	if privileged {
 		args = append(args, "--privileged")
 	}
-	if c.ExecParams().Interactive {
-		args = append(args, "--interactive")
-	}
-	if c.ExecParams().Tty {
-		args = append(args, "--tty")
-	}
-	if len(c.ExecParams().User()) > 0 {
-		args = append(args, "--user", c.ExecParams().User())
+	args = append(args, "--interactive")
+	args = append(args, "--tty")
+	if len(user) > 0 {
+		args = append(args, "--user", user)
 	}
 	args = append(args, name)
 	args = append(args, cmds...)
@@ -1271,7 +1461,7 @@ func (c *container) Exec(cmds []string) {
 }
 
 // Remove container
-func (c *container) Rm(force bool) {
+func (c *container) Rm(force bool, volumes bool) {
 	if c.Exists() {
 		name := c.ActualName(false)
 		containerIsRunning := c.Running()
@@ -1284,7 +1474,7 @@ func (c *container) Rm(force bool) {
 			executeHook(c.Hooks().PreStop(), name)
 			args = append(args, "--force")
 		}
-		if c.RmParams().Volumes {
+		if volumes {
 			fmt.Fprintf(c.CommandsOut(), "Removing container %s and its volumes ...\n", name)
 			args = append(args, "--volumes")
 		} else {
@@ -1417,7 +1607,7 @@ func imageIDFromTag(tag string) string {
 
 // If the reference follows the `container:foo` pattern, return "foo"; otherwise, return an empty string
 func containerReference(reference string) (name string) {
-	if parts := strings.Split(reference, ":"); len(parts) == 2 && parts[0] == "container" {
+	if parts := strings.Split(reference, ":"); len(parts) == 2 && (parts[0] == "container" || parts[0] == "service") {
 		// We'll just assume here that the reference is a name, and not an id, even
 		// though docker supports it, since we have no bullet-proof way to tell:
 		// heuristics to detect whether it's an id could bring false positives, and
@@ -1427,7 +1617,7 @@ func containerReference(reference string) (name string) {
 	return
 }
 
-// Transform an unmarshalled payload (YAML or JSON) of type slice or map to an slice of env-expanded "K=V" strings
+// Transform an unmarshalled payload (YAML or JSON) of type slice or map to a slice of env-expanded "K=V" strings
 func sliceOrMap2ExpandedSlice(value interface{}) []string {
 	var result []string
 	expandedStringOrPanic := func(v interface{}) string {
@@ -1444,15 +1634,15 @@ func sliceOrMap2ExpandedSlice(value interface{}) []string {
 	}
 	if value != nil {
 		switch concreteValue := value.(type) {
-		case []interface{}: // YAML or JSON
+		case []interface{}: // YAML or JSON: array
 			for _, v := range concreteValue {
 				result = append(result, expandedStringOrPanic(v))
 			}
-		case map[interface{}]interface{}: // YAML
+		case map[interface{}]interface{}: // YAML: hash
 			for k, v := range concreteValue {
 				result = append(result, expandedStringOrPanic(k)+"="+expandedStringOrPanic(v))
 			}
-		case map[string]interface{}: // JSON
+		case map[string]interface{}: // JSON: hash
 			for k, v := range concreteValue {
 				result = append(result, expandEnv(k)+"="+expandedStringOrPanic(v))
 			}
@@ -1464,7 +1654,7 @@ func sliceOrMap2ExpandedSlice(value interface{}) []string {
 }
 
 // Attempt to parse the value referenced by the go template
-// for the `docker inspect` as a boolean, fallbacking to
+// for the `docker inspect` as a boolean, falling back to
 // false on error
 func inspectBool(container string, format string) bool {
 	output := inspectString(container, format)

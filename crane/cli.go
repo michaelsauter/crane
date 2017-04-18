@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"text/tabwriter"
 
 	"github.com/alecthomas/kingpin"
 )
@@ -12,49 +11,55 @@ import (
 var cfg Config
 var allowed []string
 
+var defaultFiles = []string{"docker-compose.yml", "docker-compose.override.yml", "crane.yml", "crane.override.yml"}
+
 var (
-	app         = kingpin.New("crane", "Lift containers with ease").Interspersed(false).DefaultEnvars()
+	app         = kingpin.New("crane", "Lift containers with ease - https://www.craneup.tech").Interspersed(false).DefaultEnvars()
 	verboseFlag = app.Flag("verbose", "Enable verbose output.").Short('v').Bool()
 	dryRunFlag  = app.Flag("dry-run", "Dry run (implicit verbose, no side effects).").Bool()
 	configFlag  = app.Flag(
 		"config",
 		"Location of config file.",
-	).Short('c').PlaceHolder("~/crane.yaml").String()
-	overrideFlag = app.Flag(
-		"override",
-		"Location of override file.",
-	).String()
+	).Short('c').Default(defaultFiles...).PlaceHolder("~/crane.yml").Strings()
 	prefixFlag = app.Flag(
 		"prefix",
-		"Container prefix.",
-	).Short('p').String()
+		"Container/Network/Volume prefix.",
+	).Default("$DEFAULT$").Short('p').String()
 	excludeFlag = app.Flag(
 		"exclude",
 		"Exclude group or container. Can be repeated.",
-	).Short('e').PlaceHolder("container|group").Strings()
+	).Short('x').PlaceHolder("container|group").Strings()
 	onlyFlag = app.Flag(
 		"only",
 		"Include only group or container.",
 	).Short('o').PlaceHolder("container|group").String()
+	extendFlag = app.Flag(
+		"extend",
+		"Extend command from target to dependencies",
+	).Short('e').Bool()
 	tagFlag = app.Flag(
 		"tag",
 		"Override image tags.",
-	).OverrideDefaultFromEnvar("CRANE_TAG").String()
+	).String()
 
-	liftCommand = app.Command(
-		"lift",
+	upCommand = app.Command(
+		"up",
 		"Build or pull images if they don't exist, then run or start the containers.",
 	)
-	liftNoCacheFlag = liftCommand.Flag(
+	upNoCacheFlag = upCommand.Flag(
 		"no-cache",
 		"Build the image without any cache.",
 	).Short('n').Bool()
-	liftParallelFlag = liftCommand.Flag(
+	upParallelFlag = upCommand.Flag(
 		"parallel",
 		"Define how many containers are provisioned in parallel.",
 	).Short('l').Default("1").Int()
-	liftTargetArg = liftCommand.Arg("target", "Target of command").String()
-	liftCmdArg    = liftCommand.Arg("cmd", "Command for container").Strings()
+	upDetachFlag = upCommand.Flag(
+		"detach",
+		"Detach from container",
+	).Short('d').Bool()
+	upTargetArg = upCommand.Arg("target", "Target of command").String()
+	upCmdArg    = upCommand.Arg("cmd", "Command for container").Strings()
 
 	versionCommand = app.Command(
 		"version",
@@ -75,7 +80,7 @@ var (
 		"status",
 		"Displays status of containers.",
 	)
-	noTruncFlag = liftCommand.Flag(
+	noTruncFlag = statusCommand.Flag(
 		"no-trunc",
 		"Don't truncate output.",
 	).Bool()
@@ -121,6 +126,14 @@ var (
 		"exec",
 		"Execute command in the container(s).",
 	)
+	execPrivilegedFlag = execCommand.Flag(
+		"privileged",
+		"Give extended privileges to the process.",
+	).Bool()
+	execUserFlag = execCommand.Flag(
+		"user",
+		"Run the command as this user.",
+	).String()
 	execTargetArg = execCommand.Arg("target", "Target of command").String()
 	execCmdArg    = execCommand.Arg("cmd", "Command for container").Strings()
 
@@ -128,16 +141,24 @@ var (
 		"rm",
 		"Remove the containers.",
 	)
-	forceRmFlag = rmCommand.Flag(
+	rmForceFlag = rmCommand.Flag(
 		"force",
 		"Kill containers if they are running first.",
-	).Short('f').Bool()
+	).Bool()
+	rmVolumesFlag = provisionCommand.Flag(
+		"volumes",
+		"Remove volumes as well.",
+	).Bool()
 	rmTargetArg = rmCommand.Arg("target", "Target of command").String()
 
 	runCommand = app.Command(
 		"run",
 		"Run the containers.",
 	)
+	runDetachFlag = runCommand.Flag(
+		"detach",
+		"Detach from container",
+	).Short('d').Bool()
 	runTargetArg = runCommand.Arg("target", "Target of command").String()
 	runCmdArg    = runCommand.Arg("cmd", "Command for container").Strings()
 
@@ -240,12 +261,12 @@ func isDryRun() bool {
 	return *dryRunFlag
 }
 
-func commandAction(targetFlag string, wrapped func(unitOfWork *UnitOfWork), mightStartRelated bool) {
+func commandAction(targetArg string, wrapped func(unitOfWork *UnitOfWork), mightStartRelated bool) {
 
-	cfg = NewConfig(*configFlag, *overrideFlag, *prefixFlag, *tagFlag)
+	cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
 	allowed = allowedContainers(*excludeFlag, *onlyFlag)
 	dependencyMap := cfg.DependencyMap()
-	target, err := NewTarget(dependencyMap, targetFlag)
+	target, err := NewTarget(dependencyMap, targetArg, *extendFlag)
 	if err != nil {
 		panic(StatusError{err, 78})
 	}
@@ -299,13 +320,13 @@ func allowedContainers(excludedReference []string, onlyReference string) (contai
 func runCli() {
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 
-	case liftCommand.FullCommand():
-		commandAction(*liftTargetArg, func(uow *UnitOfWork) {
-			uow.Lift(*liftCmdArg, *liftNoCacheFlag, *liftParallelFlag)
+	case upCommand.FullCommand():
+		commandAction(*upTargetArg, func(uow *UnitOfWork) {
+			uow.Up(*upCmdArg, *upDetachFlag, *upNoCacheFlag, *upParallelFlag)
 		}, true)
 
 	case versionCommand.FullCommand():
-		fmt.Println("v2.11.0")
+		printVersion()
 
 	case statsCommand.FullCommand():
 		commandAction(*statsTargetArg, func(uow *UnitOfWork) {
@@ -349,17 +370,17 @@ func runCli() {
 
 	case execCommand.FullCommand():
 		commandAction(*execTargetArg, func(uow *UnitOfWork) {
-			uow.Exec(*execCmdArg)
+			uow.Exec(*execCmdArg, *execPrivilegedFlag, *execUserFlag)
 		}, false)
 
 	case rmCommand.FullCommand():
 		commandAction(*rmTargetArg, func(uow *UnitOfWork) {
-			uow.Rm(*forceRmFlag)
+			uow.Rm(*rmForceFlag, *rmVolumesFlag)
 		}, false)
 
 	case runCommand.FullCommand():
 		commandAction(*runTargetArg, func(uow *UnitOfWork) {
-			uow.Run(*runCmdArg)
+			uow.Run(*runCmdArg, *runDetachFlag)
 		}, true)
 
 	case createCommand.FullCommand():
@@ -392,36 +413,15 @@ func runCli() {
 		}, false)
 
 	case syncStartCommand.FullCommand():
-		cfg = NewConfig(*configFlag, *overrideFlag, *prefixFlag, *tagFlag)
-		sync := cfg.MacSync(*syncStartVolumeArg)
-		if sync == nil {
-			printErrorf("ERROR: No such sync configured: %s.", *syncStartVolumeArg)
-			return
-		}
-		sync.Start(*syncStartDebugFlag)
+		cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
+		startSync(*syncStartVolumeArg, *syncStartDebugFlag)
 
 	case syncStopCommand.FullCommand():
-		cfg = NewConfig(*configFlag, *overrideFlag, *prefixFlag, *tagFlag)
-		sync := cfg.MacSync(*syncStopVolumeArg)
-		if sync == nil {
-			printErrorf("ERROR: No such sync configured: %s.", *syncStartVolumeArg)
-			return
-		}
-		sync.Stop()
+		cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
+		stopSync(*syncStopVolumeArg)
 
 	case syncStatusCommand.FullCommand():
-		cfg = NewConfig(*configFlag, *overrideFlag, *prefixFlag, *tagFlag)
-		w := new(tabwriter.Writer)
-		w.Init(os.Stdout, 0, 8, 1, '\t', 0)
-		fmt.Fprintln(w, "VOLUME\tCONTAINER\tSTATUS")
-		for _, name := range cfg.MacSyncNames() {
-			s := cfg.MacSync(name)
-			syncContainerName := "-"
-			if s.Exists() {
-				syncContainerName = s.ContainerName()
-			}
-			fmt.Fprintf(w, "%s\n", s.Volume()+"\t"+syncContainerName+"\t"+s.Status())
-		}
-		w.Flush()
+		cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
+		printSyncStatus()
 	}
 }

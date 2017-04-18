@@ -1,54 +1,33 @@
 package crane
 
 import (
-	"fmt"
 	"sort"
-	"strings"
 )
 
 type Target struct {
 	initial      []string
 	dependencies []string
-	affected     []string
 }
 
 // NewTarget receives the specified target
 // and determines which containers should be targeted.
-// The target might be extended depending whether the
-// dynamic targets "dependencies" and/or "affected"
-// are included in the targetFlag.
+// The target might be extended to dependencies if --extend is given.
 // Additionally, the target is sorted alphabetically.
-func NewTarget(dependencyMap map[string]*Dependencies, targetFlag string) (target Target, err error) {
-
-	targetParts := strings.Split(targetFlag, "+")
-	targetName := targetParts[0]
-	extendDependencies := false
-	extendAffected := false
-	for _, v := range targetParts[1:] {
-		if v == "dependencies" || v == "d" {
-			extendDependencies = true
-		} else if v == "affected" || v == "a" {
-			extendAffected = true
-		} else {
-			err = fmt.Errorf("Unknown target extension %s. Available options are 'dependencies'/'d' and 'affected'/'a'", v)
-			return
-		}
-	}
+func NewTarget(dependencyMap map[string]*Dependencies, targetArg string, extendFlag bool) (target Target, err error) {
 
 	target = Target{
 		initial:      []string{},
 		dependencies: []string{},
-		affected:     []string{},
 	}
 
-	initialTarget := cfg.ContainersForReference(targetName)
+	initialTarget := cfg.ContainersForReference(targetArg)
 	for _, c := range initialTarget {
 		if includes(allowed, c) {
 			target.initial = append(target.initial, c)
 		}
 	}
 
-	if extendDependencies {
+	if extendFlag {
 		var (
 			dependenciesSet = make(map[string]struct{})
 			cascadingSeeds  = []string{}
@@ -86,45 +65,6 @@ func NewTarget(dependencyMap map[string]*Dependencies, targetFlag string) (targe
 		sort.Strings(target.dependencies)
 	}
 
-	if extendAffected {
-		var (
-			affected       = make(map[string]bool)
-			cascadingSeeds = []string{}
-		)
-		// start from the explicitly targeted target
-		for _, name := range target.initial {
-			affected[name] = true
-			cascadingSeeds = append(cascadingSeeds, name)
-		}
-
-		for len(cascadingSeeds) > 0 {
-			nextCascadingSeeds := []string{}
-			for _, seed := range cascadingSeeds {
-				for name, dependencies := range dependencyMap {
-					if _, alreadyConsidered := affected[name]; !alreadyConsidered {
-						if dependencies.includes(seed) {
-							if cfg.Container(name).Exists() {
-								affected[name] = true
-								nextCascadingSeeds = append(nextCascadingSeeds, name)
-							} else {
-								affected[name] = false
-							}
-						}
-					}
-				}
-			}
-			cascadingSeeds = nextCascadingSeeds
-		}
-
-		for name, included := range affected {
-			if included && !includes(target.initial, name) {
-				target.affected = append(target.affected, name)
-			}
-		}
-
-		sort.Strings(target.affected)
-	}
-
 	return
 }
 
@@ -143,9 +83,6 @@ func (t Target) includes(needle string) bool {
 func (t Target) all() []string {
 	all := t.initial
 	for _, name := range t.dependencies {
-		all = append(all, name)
-	}
-	for _, name := range t.affected {
 		all = append(all, name)
 	}
 	sort.Strings(all)

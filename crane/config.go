@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/imdario/mergo"
 	"gopkg.in/v2/yaml"
 	"io/ioutil"
 	"os"
@@ -14,7 +15,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"github.com/imdario/mergo"
 )
 
 type Config interface {
@@ -36,7 +36,8 @@ type Config interface {
 }
 
 type config struct {
-	RawContainers map[string]*container `json:"containers" yaml:"containers"`
+	RawPrefix     interface{}           `json:"prefix" yaml:"prefix"`
+	RawContainers map[string]*container `json:"services" yaml:"services"`
 	RawGroups     map[string][]string   `json:"groups" yaml:"groups"`
 	RawHooks      map[string]hooks      `json:"hooks" yaml:"hooks"`
 	RawNetworks   map[string]*network   `json:"networks" yaml:"networks"`
@@ -63,52 +64,10 @@ type VolumeMap map[string]Volume
 
 type MacSyncMap map[string]MacSync
 
-// configFilenames returns a slice of
-// files to read the config from.
-// If the --config option was given,
-// it will only use the given file.
-func configFilenames(location string) []string {
-	if len(location) > 0 {
-		return []string{location}
-	}
-	return []string{"crane.json", "crane.yaml", "crane.yml"}
-}
-
-// findConfig returns the filename of the
-// config. It searches parent directories
-// if it can't find any of the config
-// filenames in the current directory.
-func findConfig(location string) string {
-	configFiles := configFilenames(location)
-	// Absolute path to config given
-	if len(location) > 0 && path.IsAbs(location) {
-		if _, err := os.Stat(location); err == nil {
-			return location
-		}
-	} else { // Relative config
-		configPath, _ := os.Getwd()
-		for {
-			for _, f := range configFiles {
-				// the root path is a `/` but others don't have a trailing `/`
-				filename := strings.TrimSuffix(configPath, "/") + "/" + f
-				if _, err := os.Stat(filename); err == nil {
-					return filename
-				}
-			}
-			// loop only if we haven't yet reached the root
-			if parentPath := path.Dir(configPath); len(parentPath) != len(configPath) {
-				configPath = parentPath
-			} else {
-				break
-			}
-		}
-	}
-	panic(StatusError{fmt.Errorf("No configuration found %v", configFiles), 78})
-}
-
-// readConfig will read the config file
+// readFile will read the config file
 // and return the created config.
-func readConfig(filename string) *config {
+func readFile(filename string) *config {
+	verboseLog("Reading configuration " + filename)
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		panic(StatusError{err, 74})
@@ -116,31 +75,6 @@ func readConfig(filename string) *config {
 
 	ext := filepath.Ext(filename)
 	return unmarshal(data, ext)
-}
-
-func findOverride(filename, override string) string {
-	if len(override) > 0 {
-		if !path.IsAbs(override) {
-			override = path.Join(path.Dir(filename), override)
-		}
-		if _, err := os.Stat(override); err == nil {
-			return override
-		} else {
-			panic(StatusError{fmt.Errorf("Override %v not found", override), 78})
-		}
-	}
-
-	overrideFile := ""
-	lastIndex := strings.LastIndex(filename, ".")
-	if lastIndex > 0 {
-		overrideFile = filename[:lastIndex] + ".override" + filename[lastIndex:]
-	} else {
-		overrideFile = filename + ".override"
-	}
-	if _, err := os.Stat(overrideFile); err == nil {
-		return overrideFile
-	}
-	return ""
 }
 
 // displaySyntaxError will display more information
@@ -190,31 +124,72 @@ func unmarshal(data []byte, ext string) *config {
 // location.
 // Containers will be ordered so that they can be
 // brought up and down with Docker.
-func NewConfig(location string, override string, prefix string, tag string) Config {
+func NewConfig(files []string, prefix string, tag string) Config {
 	var config *config
-	configFile := findConfig(location)
-	if isVerbose() {
-		printInfof("Using configuration file `%s`\n", configFile)
+	// Files can be given colon-separated
+	expandedFiles := []string{}
+	for _, f := range files {
+		expandedFiles = append(expandedFiles, strings.Split(f, ":")...)
 	}
-	configBase := readConfig(configFile)
-	overrideFile := findOverride(configFile, override)
-	if len(overrideFile) > 0 {
-		if isVerbose() {
-			printInfof("Using override file `%s`\n", overrideFile)
-		}
-		config = readConfig(overrideFile)
-		mergo.Merge(config, configBase)
-	} else {
-		config = configBase
-	}
-	config.path = path.Dir(configFile)
-	config.initialize()
+	configPath := findConfigPath(expandedFiles)
+	config = readConfig(configPath, expandedFiles)
+	config.path = configPath
+	config.initialize(prefix)
 	config.validate()
-	config.prefix = prefix
 	config.tag = tag
 	milliseconds := time.Now().UnixNano() / 1000000
 	config.uniqueID = strconv.FormatInt(milliseconds, 10)
 	return config
+}
+
+func readConfig(configPath string, files []string) *config {
+	var config *config
+
+	for _, f := range files {
+		filename := filepath.Base(f)
+		absFile := path.Join(configPath, filename)
+		if _, err := os.Stat(absFile); err == nil {
+			fileConfig := readFile(absFile)
+			if config == nil {
+				config = fileConfig
+			} else {
+				mergo.Merge(config, fileConfig)
+			}
+		} else if !includes(defaultFiles, filename) {
+			panic(StatusError{fmt.Errorf("Configuration file %v was not found!", filename), 78})
+		}
+	}
+
+	return config
+}
+
+func findConfigPath(files []string) string {
+	// If the first of the locations array is specified as an absolute
+	// path, we use its directory as the config path.
+	if path.IsAbs(files[0]) {
+		return path.Dir(files[0])
+	}
+
+	// Otherwise, we traverse directories upwards, until we find a
+	// directory which has one of the locations, then use that
+	// directory as the config path.
+	configPath, _ := os.Getwd()
+	for {
+		for _, f := range files {
+			filename := path.Join(configPath, f)
+			if _, err := os.Stat(filename); err == nil {
+				return configPath
+			}
+		}
+		// Loop only if we haven't yet reached the root
+		if parentPath := path.Dir(configPath); len(parentPath) != len(configPath) {
+			configPath = parentPath
+		} else {
+			break
+		}
+	}
+
+	panic(StatusError{fmt.Errorf("No config files found for: %v", files), 78})
 }
 
 // Return path of config file
@@ -290,7 +265,7 @@ func (c *config) MacSync(name string) MacSync {
 }
 
 // Load configuration into the internal structs from the raw, parsed ones
-func (c *config) initialize() {
+func (c *config) initialize(prefixFlag string) {
 	// Local container map to query by expanded name
 	containerMap := make(map[string]*container)
 	for rawName, container := range c.RawContainers {
@@ -328,6 +303,7 @@ func (c *config) initialize() {
 		c.containerMap[name] = container
 	}
 
+	c.determinePrefix(prefixFlag)
 	c.setNetworkMap()
 	c.setVolumeMap()
 	c.setMacSyncMap()
@@ -341,6 +317,9 @@ func (c *config) setNetworkMap() {
 		}
 		net.RawName = rawName
 		c.networkMap[net.Name()] = net
+	}
+	if len(c.networkMap) == 0 && len(c.prefix) != 0 {
+		c.networkMap["default"] = &network{RawName: "default"}
 	}
 }
 
@@ -367,10 +346,40 @@ func (c *config) setMacSyncMap() {
 	}
 }
 
+// CLI > Config > Default
+func (c *config) determinePrefix(prefixFlag string) {
+	if c.RawPrefix == nil {
+		if prefixFlag == "$DEFAULT$" {
+			c.prefix = filepath.Base(c.path) + "_"
+		} else {
+			c.prefix = prefixFlag
+		}
+		return
+	}
+	switch concretePrefix := c.RawPrefix.(type) {
+	case bool:
+		if concretePrefix == true && prefixFlag == "$DEFAULT$" {
+			c.prefix = filepath.Base(c.path) + "_"
+		} else if concretePrefix == false && prefixFlag == "$DEFAULT$" {
+			c.prefix = ""
+		} else {
+			c.prefix = prefixFlag
+		}
+	case string:
+		if prefixFlag == "$DEFAULT$" {
+			c.prefix = expandEnv(concretePrefix)
+		} else {
+			c.prefix = prefixFlag
+		}
+	default:
+		panic(StatusError{fmt.Errorf("prefix must be either string or boolean", c.RawPrefix), 65})
+	}
+}
+
 func (c *config) validate() {
 	for name, container := range c.RawContainers {
-		if len(container.RawImage) == 0 {
-			panic(StatusError{fmt.Errorf("No image specified for `%s`", name), 64})
+		if len(container.RawImage) == 0 && container.RawBuild == (BuildParameters{}) {
+			panic(StatusError{fmt.Errorf("Neither image or build specified for `%s`", name), 64})
 		}
 	}
 }

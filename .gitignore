@@ -1,4 +1,7 @@
 crane_darwin_amd64
+crane_darwin_amd64_pro
 crane_linux_amd64
 crane_linux_386
 crane_windows_amd64.exe
+crane/mac_sync_pro.go
+crane/version_pro.go

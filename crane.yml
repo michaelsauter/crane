@@ -1,15 +1,15 @@
-containers:
-  cranedev:
+services:
+  dev:
     image: michaelsauter/golang:1.7
-    run:
-      rm: true
-      interactive: true
-      tty: true
-      volume: ["$GOPATH:/go"]
-      workdir: /go/src/github.com/michaelsauter/crane
-      cmd: ["sh"]
+    rm: true
+    interactive: true
+    tty: true
+    volume: ["$GOPATH:/go"]
+    workdir: /go/src/github.com/michaelsauter/crane
+    command: ["sh"]
 
 mac-syncs:
   "$GOPATH:/go":
     uid: 1000
     gid: 1000
+    autostart: true

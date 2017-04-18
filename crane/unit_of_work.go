@@ -73,23 +73,23 @@ func NewUnitOfWork(dependencyMap map[string]*Dependencies, targeted []string) (u
 	return
 }
 
-func (uow *UnitOfWork) Run(cmds []string) {
+func (uow *UnitOfWork) Run(cmds []string, detach bool) {
 	uow.prepareRequirements()
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Run(cmds)
+			container.Run(cmds, detach)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
 			container.Start()
 		}
 	}
 }
 
-func (uow *UnitOfWork) Lift(cmds []string, noCache bool, parallel int) {
+func (uow *UnitOfWork) Up(cmds []string, detach bool, noCache bool, parallel int) {
 	uow.Targeted().Provision(noCache, parallel)
 	uow.prepareRequirements()
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Run(cmds)
+			container.Run(cmds, detach)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
 			container.Start()
 		}
@@ -166,10 +166,10 @@ func (uow *UnitOfWork) Kill() {
 	}
 }
 
-func (uow *UnitOfWork) Exec(cmds []string) {
+func (uow *UnitOfWork) Exec(cmds []string, privileged bool, user string) {
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Exec(cmds)
+			container.Exec(cmds, privileged, user)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
 			container.Start()
 		}
@@ -177,9 +177,9 @@ func (uow *UnitOfWork) Exec(cmds []string) {
 }
 
 // Rm containers.
-func (uow *UnitOfWork) Rm(force bool) {
+func (uow *UnitOfWork) Rm(force bool, volumes bool) {
 	for _, container := range uow.Targeted().Reversed() {
-		container.Rm(force)
+		container.Rm(force, volumes)
 	}
 }
 
@@ -295,7 +295,7 @@ func (uow *UnitOfWork) RequiredNetworks() []string {
 		return required
 	}
 	for _, container := range uow.Containers() {
-		net := container.RunParams().Net()
+		net := container.Net()
 		if includes(networks, net) && !includes(required, net) {
 			required = append(required, net)
 		}
@@ -310,7 +310,7 @@ func (uow *UnitOfWork) RequiredVolumes() []string {
 		return required
 	}
 	for _, container := range uow.Containers() {
-		for _, volumeSource := range container.RunParams().VolumeSources() {
+		for _, volumeSource := range container.VolumeSources() {
 			if includes(volumes, volumeSource) && !includes(required, volumeSource) {
 				required = append(required, volumeSource)
 			}
