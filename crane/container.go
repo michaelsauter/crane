@@ -74,7 +74,7 @@ type container struct {
 	RawCidfile           string                `json:"cidfile" yaml:"cidfile"`
 	CPUset               int                   `json:"cpuset" yaml:"cpuset"`
 	CPUShares            int                   `json:"cpu-shares" yaml:"cpu-shares"`
-	Detach               bool                  `json:"detach" yaml:"detach"`
+	Detach               *bool                 `json:"detach" yaml:"detach"`
 	RawDetachKeys        string                `json:"detach-keys" yaml:"detach-keys"`
 	RawDevice            []string              `json:"device" yaml:"device"`
 	RawDevices           []string              `json:"devices" yaml:"devices"`
@@ -981,7 +981,7 @@ func (c *container) Run(cmds []string, detach bool) {
 
 	args := []string{"run"}
 	// Detach
-	if !adHoc && (detach || c.Detach) {
+	if !adHoc && ((detach && c.Detach == nil) || *c.Detach) {
 		args = append(args, "--detach")
 	}
 	args = append(args, c.createArgs(cmds)...)
