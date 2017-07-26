@@ -163,7 +163,7 @@ var (
 	rmForceFlag = rmCommand.Flag(
 		"force",
 		"Kill containers if they are running first.",
-	).Bool()
+	).Short('f').Bool()
 	rmVolumesFlag = provisionCommand.Flag(
 		"volumes",
 		"Remove volumes as well.",
