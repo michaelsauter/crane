@@ -163,7 +163,8 @@ type container struct {
 	RawVolumesFrom       []string              `json:"volumes-from" yaml:"volumes-from"`
 	RawWorkdir           string                `json:"workdir" yaml:"workdir"`
 	RawWorking_Dir       string                `json:"working_dir" yaml:"working_dir"`
-	RawCmd               interface{}           `json:"command" yaml:"command"`
+	RawCmd               interface{}           `json:"cmd" yaml:"cmd"`
+	RawCommand           interface{}           `json:"command" yaml:"command"`
 	hooks                hooks
 	stdout               io.Writer
 	stderr               io.Writer
@@ -888,8 +889,12 @@ func (c *container) Workdir() string {
 
 func (c *container) Cmd() []string {
 	var cmd []string
+	var rCmd = c.RawCommand
 	if c.RawCmd != nil {
-		switch rawCmd := c.RawCmd.(type) {
+		rCmd = c.RawCmd
+	}
+	if rCmd != nil {
+		switch rawCmd := rCmd.(type) {
 		case string:
 			if len(rawCmd) > 0 {
 				cmds, err := shlex.Split(expandEnv(rawCmd))
