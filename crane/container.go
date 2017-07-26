@@ -985,9 +985,10 @@ func (c *container) Run(cmds []string, detach bool) {
 
 	args := []string{"run"}
 	// Detach
+	// If the user explicitly configured "detach", honour that.
 	if c.Detach != nil {
-                detach = *c.Detach
-        }
+		detach = *c.Detach
+	}
 	if !adHoc && detach {
 		args = append(args, "--detach")
 	}
