@@ -188,9 +188,6 @@ func TestActualVolume(t *testing.T) {
 
 func TestNet(t *testing.T) {
 	var c *container
-	// Empty defaults to "bridge"
-	c = &container{}
-	assert.Equal(t, "default", c.Net())
 	// Environment variable
 	os.Clearenv()
 	os.Setenv("NET", "container")
@@ -200,9 +197,9 @@ func TestNet(t *testing.T) {
 
 func TestActualNet(t *testing.T) {
 	var c *container
-	// Empty defaults to "bridge"
+	// Empty defaults to ""
 	c = &container{}
-	assert.Equal(t, "default", c.ActualNet())
+	assert.Equal(t, "", c.ActualNet())
 	// Container
 	c = &container{RawName: "foo", RawNet: "container:foo"}
 	cfg = &config{containerMap: map[string]Container{"foo": c}}

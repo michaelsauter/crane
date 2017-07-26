@@ -318,9 +318,6 @@ func (c *config) setNetworkMap() {
 		net.RawName = rawName
 		c.networkMap[net.Name()] = net
 	}
-	if len(c.networkMap) == 0 && len(c.prefix) != 0 {
-		c.networkMap["default"] = &network{RawName: "default"}
-	}
 }
 
 func (c *config) setVolumeMap() {

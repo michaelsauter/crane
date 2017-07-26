@@ -696,15 +696,14 @@ func (c *container) Net() string {
 	if len(c.RawNet) > 0 {
 		rawNet = c.RawNet
 	}
-	// Fall back to the "default" network
-	if len(rawNet) == 0 {
-		return "default"
-	}
 	return expandEnv(rawNet)
 }
 
 func (c *container) ActualNet() string {
 	netParam := c.Net()
+	if len(netParam) == 0 {
+		return ""
+	}
 	if netParam == "bridge" {
 		return "bridge"
 	} else if netParam == "none" {
@@ -1242,7 +1241,7 @@ func (c *container) createArgs(cmds []string) []string {
 	if len(c.RawNetworks) > 1 {
 		printErrorf("Crane does not support joining more than one network yet. Connecting service %s to network %s.\n", c.ActualName(adHoc), netParam)
 	}
-	if netParam != "bridge" {
+	if len(netParam) > 0 && netParam != "bridge" {
 		args = append(args, "--net", netParam)
 	}
 	// NetAlias
