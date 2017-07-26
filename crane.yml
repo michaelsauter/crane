@@ -6,7 +6,7 @@ services:
     tty: true
     volume: ["$GOPATH:/go"]
     workdir: /go/src/github.com/michaelsauter/crane
-    command: ["sh"]
+    cmd: ["sh"]
 
 mac-syncs:
   "$GOPATH:/go":
