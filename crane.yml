@@ -1,12 +1,12 @@
 services:
   dev:
-    image: michaelsauter/golang:1.7
+    image: michaelsauter/golang:1.8.3
     rm: true
     interactive: true
     tty: true
     volume: ["$GOPATH:/go"]
     workdir: /go/src/github.com/michaelsauter/crane
-    cmd: ["sh"]
+    cmd: ["bash"]
 
 mac-syncs:
   "$GOPATH:/go":
