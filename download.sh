@@ -20,7 +20,7 @@ then
   ARCH="amd64"
 else
   echo "Currently, there are no 32bit binaries provided."
-  echo "You will need to go get / go install github.com/michaelsauter/crane."
+  echo "You will need to build binaries yourself."
   exit 1
 fi
 
