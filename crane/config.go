@@ -348,29 +348,29 @@ func (c *config) setMacSyncMap() {
 
 // CLI > Config > Default
 func (c *config) determinePrefix(prefixFlag string) {
-	if c.RawPrefix == nil {
-		if prefixFlag == "$DEFAULT$" {
-			c.prefix = filepath.Base(c.path) + "_"
-		} else {
-			c.prefix = prefixFlag
-		}
+	// CLI takes precedence over config
+	if len(prefixFlag) > 0 {
+		c.prefix = prefixFlag
 		return
 	}
+	// If prefix is not configured, don't use any
+	if c.RawPrefix == nil {
+		c.prefix = ""
+		return
+	}
+	// Use configured prefix:
+	// true -> folder name
+	// false -> no prefix
+	// string -> use as-is
 	switch concretePrefix := c.RawPrefix.(type) {
 	case bool:
-		if concretePrefix == true && prefixFlag == "$DEFAULT$" {
+		if concretePrefix {
 			c.prefix = filepath.Base(c.path) + "_"
-		} else if concretePrefix == false && prefixFlag == "$DEFAULT$" {
-			c.prefix = ""
 		} else {
-			c.prefix = prefixFlag
+			c.prefix = ""
 		}
 	case string:
-		if prefixFlag == "$DEFAULT$" {
-			c.prefix = expandEnv(concretePrefix)
-		} else {
-			c.prefix = prefixFlag
-		}
+		c.prefix = expandEnv(concretePrefix)
 	default:
 		panic(StatusError{fmt.Errorf("prefix must be either string or boolean", c.RawPrefix), 65})
 	}
