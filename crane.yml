@@ -1,6 +1,6 @@
 services:
   crane:
-    image: michaelsauter/golang:1.8.3
+    image: michaelsauter/golang:1.8
     rm: true
     interactive: true
     tty: true
