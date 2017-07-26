@@ -61,6 +61,25 @@ var (
 	upTargetArg = upCommand.Arg("target", "Target of command").String()
 	upCmdArg    = upCommand.Arg("cmd", "Command for container").Strings()
 
+	liftCommand = app.Command(
+		"lift",
+		"Build or pull images if they don't exist, then run or start the containers.",
+	)
+	liftNoCacheFlag = liftCommand.Flag(
+		"no-cache",
+		"Build the image without any cache.",
+	).Short('n').Bool()
+	liftParallelFlag = liftCommand.Flag(
+		"parallel",
+		"Define how many containers are provisioned in parallel.",
+	).Short('l').Default("1").Int()
+	liftDetachFlag = liftCommand.Flag(
+		"detach",
+		"Detach from container",
+	).Short('d').Bool()
+	liftTargetArg = liftCommand.Arg("target", "Target of command").String()
+	liftCmdArg    = liftCommand.Arg("cmd", "Command for container").Strings()
+
 	versionCommand = app.Command(
 		"version",
 		"Displays the version of Crane.",
@@ -323,6 +342,11 @@ func runCli() {
 	case upCommand.FullCommand():
 		commandAction(*upTargetArg, func(uow *UnitOfWork) {
 			uow.Up(*upCmdArg, *upDetachFlag, *upNoCacheFlag, *upParallelFlag)
+		}, true)
+
+	case liftCommand.FullCommand():
+		commandAction(*liftTargetArg, func(uow *UnitOfWork) {
+			uow.Up(*liftCmdArg, *liftDetachFlag, *liftNoCacheFlag, *liftParallelFlag)
 		}, true)
 
 	case versionCommand.FullCommand():
