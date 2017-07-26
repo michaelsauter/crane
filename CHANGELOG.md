@@ -2,7 +2,24 @@
 
 ## Unreleased
 
--
+CLI interface changes:
+
+* `lift` command is now an alias for `up` again
+* `rm` command accepts `-f` (short for `--force`) again
+
+Configuration changes:
+
+* `cmd` config is now an alias for `command` again
+
+Behaviour changes:
+
+* Prefixing is disabled by default again - this is a breaking change from 3.0.0,
+  and restores Crane 2.x behaviour. To set a prefix like docker-compose based on the containing folder, you now need to configure `prefix: true` explicitly.
+* Crane does not create a `default` network anymore - this is a breaking change
+  from 3.0.0 as well and restores Crane 2.x behaviour. You need to configure
+  all networks explicitly.
+* When `detach` is configured explicitly, it is honoured (thanks _@inthroxify_)
+
 
 ## 3.0.0 (2017-04-08)
 
@@ -11,8 +28,8 @@ following list very carefully and adjust as needed.
 
 CLI interface changes:
 
-* `lift` has been renamed to `up`.
-* `rm` doesn't have the short flag `-f` anymore, but `--force` still works
+* `lift` has been renamed to `up` (3.1.0 adds `lift` again).
+* `rm` doesn't have the short flag `-f` anymore, but `--force` still works (3.1.0 adds `-f` again)
 * `rm` learned `--volumes` to removed associated volumes, too
 * `exec` adds `--interactive` and `--tty` by default, and supports specifying
   `--privileged` and `--user USER`
@@ -22,7 +39,7 @@ CLI interface changes:
   `--extend`/`-e`. `+affected` was mainly useful with legacy links and should
   not be needed with the "new" networks. If you used it regularly, please open
   an issue.
-* `lift`/`run` by default attach to the target, and detach from dependencies. If
+* `up`/`run` by default attach to the target, and detach from dependencies. If
   the target is configured to detach (either via file or `--detach`/`-d`)
   however, then `lift`/`run` detach from the target, too.
 * The configuration flag `--config`/`-c` can be repeated now. The specified
@@ -38,7 +55,7 @@ Configuration changes:
   align with docker-compose.
 * All `run ` parameters have been moved up one level to align with
   docker-compose.
-* `cmd` has to be specified as `command` now.
+* `cmd` has to be specified as `command` now (3.1.0 adds `cmd` again).
 * `image` is optional now. If it is not given, the service name will be used as
   the image name.
 * `stop-timeout`, `sysctl` and `userns` can be configured now.
@@ -58,10 +75,10 @@ Behaviour changes:
   `crane.override.yml` by default now (in this order).
 * To align with docker-compose, Crane sets a default prefix now, which is the
   name of the directory where the configuration files are in. You can remove
-  the prefix by setting `prefix: false` in the configuration or by passing `--prefix=""`/`-p ""` or exporting `CRANE_PREFIX=""`.
+  the prefix by setting `prefix: false` in the configuration or by passing `--prefix=""`/`-p ""` or exporting `CRANE_PREFIX=""` (Careful! 3.1.0 reverts this to 2.x behaviour).
 * If neither `net`, `network_mode` or `networks` is configured, the default
-  network mode is no longer `bridge` but a `default` network (to align with
-  docker-compose).
+  network mode is no longer `bridge` but a `default` network to align with
+  docker-compose (Careful! 3.1.0 reverts this to 2.x behaviour).
 * The integration of Unison on macOS has been extracted into a paid pro version,
   see [www.craneup.tech](https://www.craneup.tech). There is still a free
   version for macOS without this feature. If you would like to support Crane,
