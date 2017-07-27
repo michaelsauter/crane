@@ -9,21 +9,18 @@ if [ -z "$version" ]; then
   exit 1
 fi
 
-go_path=$(cd ../../../../; pwd)
-docker_run="docker run --rm -it -v $go_path:/go -w /go/src/github.com/michaelsauter/crane michaelsauter/golang:1.7"
-
 echo "Running tests..."
-$docker_run make test
+crane run crane make test
 
 echo "Update version..."
-grepped_version=$(grep -o "v[0-9]*\.[0-9]*\.[0-9]*" crane/cli.go)
+grepped_version=$(grep -o "v[0-9]*\.[0-9]*\.[0-9]*" crane/version_basic.go)
 old_version=${grepped_version:1}
-sed -i.bak 's/fmt\.Println("v'$old_version'")/fmt.Println("v'$version'")/' crane/cli.go
-rm crane/cli.go.bak
+sed -i.bak 's/fmt\.Println("v'$old_version'")/fmt.Println("v'$version'")/' crane/version_basic.go
+sed -i.bak 's/fmt\.Println("v'$old_version' (PRO)")/fmt.Println("v'$version' (PRO)")/' crane/version_pro.go
+rm crane/version_basic.go.bak
+rm crane/version_pro.go.bak
 sed -i.bak 's/VERSION="'$old_version'"/VERSION="'$version'"/' download.sh
 rm download.sh.bak
-sed -i.bak 's/'$old_version'/'$version'/' README.md
-rm README.md.bak
 
 echo "Mark version as released in changelog..."
 today=$(date +'%Y-%m-%d')
@@ -34,9 +31,7 @@ echo "Update contributors..."
 git contributors | awk '{for (i=2; i<NF; i++) printf $i " "; print $NF}' > CONTRIBUTORS
 
 echo "Build binaries..."
-$docker_run make build-linux-amd64
-$docker_run make build-darwin-amd64
-$docker_run make build-windows-amd64
+crane run crane make build
 
 echo "Update repository..."
 git add crane/cli.go download.sh README.md CHANGELOG.md CONTRIBUTORS

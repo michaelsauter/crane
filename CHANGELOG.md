@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 3.1.0 (2017-07-27)
+
 CLI interface changes:
 
 * `lift` command is now an alias for `up` again
