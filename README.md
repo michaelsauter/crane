@@ -1,5 +1,5 @@
 # Crane
-Lift containers with ease - [www.craneup.tech](https://www.craneup.tech)
+Lift containers with ease - [www.craneup.tech](https://www.craneup.tech?utm_source=github&utm_medium=web&utm_campaign=readme&utm_content=header)
 
 
 ## Overview
@@ -25,9 +25,25 @@ Next to the free version (Linux, Mac, Windows) there is a pro version for Mac wh
 * Generate other files from configuration via templates
 * ... and much more!
 
-## Installation, Documentation & Usage
+## Documentation & Usage
 
-Please see [www.craneup.tech](https://www.craneup.tech).
+Please see [www.craneup.tech](https://www.craneup.tech?utm_source=github&utm_medium=web&utm_campaign=readme&utm_content=docs).
+
+## Installation
+
+The latest release is 3.1.0 and requires Docker >= 1.10.
+Please have a look at the [changelog](https://github.com/michaelsauter/crane/blob/master/CHANGELOG.md) when upgrading.
+
+The free version can be installed via:
+
+```
+bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/v3.1.0/download.sh`" && \
+mv crane /usr/local/bin/crane
+```
+
+If you are on Mac, have a look the PRO version which seamlessly integrates
+**ultra-fast bind-mounts via Unison**, see
+[www.craneup.tech](https://www.craneup.tech?utm_source=github&utm_medium=web&utm_campaign=readme&utm_content=pro) for details.
 
 ## Copyright & Licensing
 Copyright © 2013-2017 Michael Sauter. See the LICENSE file for details.
