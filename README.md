@@ -11,17 +11,14 @@ ideally suited for development environments or continuous integration.
 ## Features
 
 * Extensive support of Docker run flags
-* Intuitive configuration format with 1:1 mapping to Docker run flags
+* Simple configuration with 1:1 mapping to Docker run flags
 * `docker-compose` compatible
-* **ultra-fast bind-mounts via Unison** on Mac in the PRO version
+* **ultra-fast bind-mounts via Unison on Mac** in the PRO version
 * Grouping of containers
 * Excluding / limiting containers via CLI
 * Smart detach / attach behaviour
 * Verbose output which shows exact Docker commands
 * Hooks
-* Container / network / volume prefix
-* Tag override
-* Generate other files from configuration via templates
 * ... and much more!
 
 ## Documentation & Usage
@@ -43,7 +40,8 @@ mv crane /usr/local/bin/crane
 If you are on Mac, check out the PRO version which seamlessly integrates
 **[ultra-fast bind-mounts via Unison](https://www.craneup.tech?utm_source=github&utm_medium=web&utm_campaign=readme&utm_content=pro)**.
 
-## Copyright & Licensing
+---
+
 Copyright © 2013-2017 Michael Sauter. See the LICENSE file for details.
 
 ---
