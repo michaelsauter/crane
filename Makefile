@@ -1,6 +1,9 @@
 test:
 	@(go list ./... | grep -v "vendor/" | xargs -n1 go test -v -cover)
 
+fmt:
+	@(gofmt -w crane)
+
 build: build-linux build-darwin build-darwin-pro build-windows
 
 build-linux:
