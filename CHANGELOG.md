@@ -22,6 +22,9 @@ Behaviour changes:
   all networks explicitly.
 * When `detach` is configured explicitly, it is honoured (thanks _@inthroxify_)
 
+Other changes:
+
+* Built using Go 1.8.3
 
 ## 3.0.0 (2017-04-08)
 
