@@ -37,8 +37,8 @@ bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/v3.1.0/
 mv crane /usr/local/bin/crane
 ```
 
-If you are on Mac, check out the PRO version which seamlessly integrates
-**[ultra-fast bind-mounts via Unison](https://www.craneup.tech?utm_source=github&utm_medium=web&utm_campaign=readme&utm_content=pro)**.
+**If you are on Mac, check out the PRO version which seamlessly integrates
+[ultra-fast bind-mounts via Unison](https://www.craneup.tech?utm_source=github&utm_medium=web&utm_campaign=readme&utm_content=pro)**.
 
 ---
 
