@@ -8,13 +8,12 @@ features and (arguably) smarter behaviour. It works by reading in some
 configuration (JSON or YAML) which describes how to run containers. Crane is
 ideally suited for development environments or continuous integration.
 
-Next to the free version (Linux, Mac, Windows) there is a pro version for Mac which offers **ultra-fast bind-mounts via Unison**!
-
 ## Features
 
 * Extensive support of Docker run flags
 * Intuitive configuration format with 1:1 mapping to Docker run flags
 * `docker-compose` compatible
+* **ultra-fast bind-mounts via Unison** on Mac in the PRO version
 * Grouping of containers
 * Excluding / limiting containers via CLI
 * Smart detach / attach behaviour
@@ -41,9 +40,8 @@ bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/v3.1.0/
 mv crane /usr/local/bin/crane
 ```
 
-If you are on Mac, have a look the PRO version which seamlessly integrates
-**ultra-fast bind-mounts via Unison**, see
-[www.craneup.tech](https://www.craneup.tech?utm_source=github&utm_medium=web&utm_campaign=readme&utm_content=pro) for details.
+If you are on Mac, check out the PRO version which seamlessly integrates
+**[ultra-fast bind-mounts via Unison](https://www.craneup.tech?utm_source=github&utm_medium=web&utm_campaign=readme&utm_content=pro)**.
 
 ## Copyright & Licensing
 Copyright © 2013-2017 Michael Sauter. See the LICENSE file for details.
