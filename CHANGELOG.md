@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+The following changes only affect the PRO version:
+
+* Rename `mac-syncs` to `accelerated-mounts`, as it is available on Windows as
+  well now. Using `mac-syncs` in the config still works but is deprecated.
+* Installation of Unison / Unox is not needed anymore, accelerated mounts work
+  out-of-the-box and have no host dependencies.
+* Accelerated mounts always start automatically once configured.
+* The `mac-sync` subcommand has been removed without replacement (for now).
+
 ## 3.1.0 (2017-07-27)
 
 CLI interface changes:

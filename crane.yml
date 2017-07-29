@@ -8,8 +8,7 @@ services:
     workdir: /go/src/github.com/michaelsauter/crane
     cmd: ["bash"]
 
-mac-syncs:
+accelerated-mounts:
   "$GOPATH:/go":
     uid: 1000
     gid: 1000
-    autostart: true

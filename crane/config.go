@@ -26,32 +26,32 @@ type Config interface {
 	Tag() string
 	NetworkNames() []string
 	VolumeNames() []string
-	MacSyncNames() []string
 	Network(name string) Network
 	Volume(name string) Volume
-	MacSync(volume string) MacSync
+	AcceleratedMount(volume string) AcceleratedMount
 	ContainerMap() ContainerMap
 	Container(name string) Container
 	ContainerInfo(name string) ContainerInfo
 }
 
 type config struct {
-	RawPrefix     interface{}           `json:"prefix" yaml:"prefix"`
-	RawContainers map[string]*container `json:"services" yaml:"services"`
-	RawGroups     map[string][]string   `json:"groups" yaml:"groups"`
-	RawHooks      map[string]hooks      `json:"hooks" yaml:"hooks"`
-	RawNetworks   map[string]*network   `json:"networks" yaml:"networks"`
-	RawVolumes    map[string]*volume    `json:"volumes" yaml:"volumes"`
-	RawMacSyncs   map[string]*macSync   `json:"mac-syncs" yaml:"mac-syncs"`
-	containerMap  ContainerMap
-	networkMap    NetworkMap
-	volumeMap     VolumeMap
-	macSyncMap    MacSyncMap
-	groups        map[string][]string
-	path          string
-	prefix        string
-	tag           string
-	uniqueID      string
+	RawPrefix            interface{}                  `json:"prefix" yaml:"prefix"`
+	RawContainers        map[string]*container        `json:"services" yaml:"services"`
+	RawGroups            map[string][]string          `json:"groups" yaml:"groups"`
+	RawHooks             map[string]hooks             `json:"hooks" yaml:"hooks"`
+	RawNetworks          map[string]*network          `json:"networks" yaml:"networks"`
+	RawVolumes           map[string]*volume           `json:"volumes" yaml:"volumes"`
+	RawAcceleratedMounts map[string]*acceleratedMount `json:"accelerated-mounts" yaml:"accelerated-mounts"`
+	RawMacSyncs          map[string]*acceleratedMount `json:"mac-syncs" yaml:"mac-syncs"`
+	containerMap         ContainerMap
+	networkMap           NetworkMap
+	volumeMap            VolumeMap
+	acceleratedMountMap  AcceleratedMountMap
+	groups               map[string][]string
+	path                 string
+	prefix               string
+	tag                  string
+	uniqueID             string
 }
 
 // ContainerMap maps the container name
@@ -62,7 +62,7 @@ type NetworkMap map[string]Network
 
 type VolumeMap map[string]Volume
 
-type MacSyncMap map[string]MacSync
+type AcceleratedMountMap map[string]AcceleratedMount
 
 // readFile will read the config file
 // and return the created config.
@@ -239,15 +239,6 @@ func (c *config) VolumeNames() []string {
 	return volumes
 }
 
-func (c *config) MacSyncNames() []string {
-	macSyncs := []string{}
-	for name, _ := range c.macSyncMap {
-		macSyncs = append(macSyncs, name)
-	}
-	sort.Strings(macSyncs)
-	return macSyncs
-}
-
 func (c *config) Network(name string) Network {
 	return c.networkMap[name]
 }
@@ -256,12 +247,8 @@ func (c *config) Volume(name string) Volume {
 	return c.volumeMap[name]
 }
 
-func (c *config) MacSync(name string) MacSync {
-	parts := strings.Split(name, ":")
-	if !path.IsAbs(parts[0]) {
-		parts[0] = c.path + "/" + parts[0]
-	}
-	return c.macSyncMap[strings.Join(parts, ":")]
+func (c *config) AcceleratedMount(name string) AcceleratedMount {
+	return c.acceleratedMountMap[name]
 }
 
 // Load configuration into the internal structs from the raw, parsed ones
@@ -306,7 +293,7 @@ func (c *config) initialize(prefixFlag string) {
 	c.determinePrefix(prefixFlag)
 	c.setNetworkMap()
 	c.setVolumeMap()
-	c.setMacSyncMap()
+	c.setAcceleratedMountMap()
 }
 
 func (c *config) setNetworkMap() {
@@ -331,15 +318,23 @@ func (c *config) setVolumeMap() {
 	}
 }
 
-func (c *config) setMacSyncMap() {
-	c.macSyncMap = make(map[string]MacSync)
-	for rawVolume, sync := range c.RawMacSyncs {
-		if sync == nil {
-			sync = &macSync{}
+func (c *config) setAcceleratedMountMap() {
+	c.acceleratedMountMap = make(map[string]AcceleratedMount)
+	for rawVolume, am := range c.RawAcceleratedMounts {
+		if am == nil {
+			am = &acceleratedMount{}
 		}
-		sync.RawVolume = rawVolume
-		sync.configPath = c.path
-		c.macSyncMap[sync.Volume()] = sync
+		am.RawVolume = rawVolume
+		am.configPath = c.path
+		c.acceleratedMountMap[am.Volume()] = am
+	}
+	for rawVolume, am := range c.RawMacSyncs {
+		if am == nil {
+			am = &acceleratedMount{}
+		}
+		am.RawVolume = rawVolume
+		am.configPath = c.path
+		c.acceleratedMountMap[am.Volume()] = am
 	}
 }
 

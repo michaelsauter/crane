@@ -162,28 +162,22 @@ func TestVolume(t *testing.T) {
 	assert.Equal(t, os.Getenv("HOME")+"/a:/b", c.Volume()[0])
 }
 
-func TestActualVolume(t *testing.T) {
-	var c *container
+func TestActualVolumeArg(t *testing.T) {
 	// Simple case
-	c = &container{RawVolume: []string{"/a:/b"}}
 	cfg = &config{path: "foo"}
-	assert.Equal(t, "/a:/b", c.ActualVolume()[0])
+	assert.Equal(t, "/a:/b", actualVolumeArg("/a:/b"))
 	// Relative path
-	c = &container{RawVolume: []string{"a:/b"}}
 	dir, _ := os.Getwd()
 	cfg = &config{path: dir}
-	assert.Equal(t, dir+"/a:/b", c.ActualVolume()[0])
+	assert.Equal(t, dir+"/a:/b", actualVolumeArg("a:/b"))
 	// Container-only path
-	c = &container{RawVolume: []string{"/b"}}
-	assert.Equal(t, "/b", c.Volume()[0])
+	assert.Equal(t, "/b", actualVolumeArg("/b"))
 	// Using Docker volume
-	c = &container{RawVolume: []string{"a:/b"}}
 	cfg = &config{volumeMap: map[string]Volume{"a": &volume{RawName: "a"}}}
-	assert.Equal(t, "a:/b", c.Volume()[0])
+	assert.Equal(t, "a:/b", actualVolumeArg("a:/b"))
 	// With prefix Docker volume
-	c = &container{RawVolume: []string{"a:/b"}}
 	cfg = &config{prefix: "foo_", volumeMap: map[string]Volume{"a": &volume{RawName: "a"}}}
-	assert.Equal(t, "foo_a:/b", c.ActualVolume()[0])
+	assert.Equal(t, "foo_a:/b", actualVolumeArg("a:/b"))
 }
 
 func TestNet(t *testing.T) {
