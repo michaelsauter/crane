@@ -9,7 +9,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -850,20 +849,6 @@ func (c *container) VolumeSources() []string {
 	return volumeSources
 }
 
-func (c *container) ActualVolume() []string {
-	vols := []string{}
-	for _, volume := range c.Volume() {
-		parts := strings.Split(volume, ":")
-		if includes(cfg.VolumeNames(), parts[0]) {
-			parts[0] = cfg.Volume(parts[0]).ActualName()
-		} else if !path.IsAbs(parts[0]) {
-			parts[0] = cfg.Path() + "/" + parts[0]
-		}
-		vols = append(vols, strings.Join(parts, ":"))
-	}
-	return vols
-}
-
 func (c *container) VolumeDriver() string {
 	if len(c.RawVolumeDriver) > 0 {
 		return expandEnv(c.RawVolumeDriver)
@@ -1338,22 +1323,15 @@ func (c *container) createArgs(cmds []string) []string {
 		args = append(args, "--uts", c.Uts())
 	}
 	// Volumes
-	for _, volume := range c.ActualVolume() {
-		volumeArgs := []string{"--volume", volume}
-		if runtime.GOOS == "darwin" && isSyncPossible() {
-			if s := cfg.MacSync(volume); s != nil {
-				syncRunning := s.Running()
-				if !syncRunning && s.Autostart() {
-					s.Start(false)
-					syncRunning = true
-				}
-				if syncRunning {
-					volumeArgs = []string{
-						"--volumes-from", s.ContainerName(),
-						"--label", "tech.craneup.mac-sync=" + s.ContainerName(),
-					}
-				}
+	for _, volume := range c.Volume() {
+		volumeArgs := []string{"--volume"}
+		if accelerationEnabled() {
+			if am := cfg.AcceleratedMount(volume); am != nil {
+				am.Run()
+				volumeArgs = append(volumeArgs, am.VolumeArg())
 			}
+		} else {
+			volumeArgs = append(volumeArgs, actualVolumeArg(volume))
 		}
 		args = append(args, volumeArgs...)
 	}
@@ -1601,6 +1579,16 @@ func (c *container) buildImage(nocache bool) {
 	args = append(args, c.BuildParams().Context())
 	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
 	executeHook(c.Hooks().PostBuild(), c.ActualName(false))
+}
+
+func actualVolumeArg(volume string) string {
+	parts := strings.Split(volume, ":")
+	if includes(cfg.VolumeNames(), parts[0]) {
+		parts[0] = cfg.Volume(parts[0]).ActualName()
+	} else if !path.IsAbs(parts[0]) {
+		parts[0] = cfg.Path() + "/" + parts[0]
+	}
+	return strings.Join(parts, ":")
 }
 
 // Return the image id of a tag, or an empty string if it doesn't exist

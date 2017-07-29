@@ -247,33 +247,10 @@ var (
 		"The file(s) to write the output to.",
 	).Short('O').String()
 	generateTargetArg = generateCommand.Arg("target", "Target of command").String()
-
-	syncCommand = app.Command(
-		"mac-sync",
-		"Docker for Mac sync",
-	)
-
-	syncStartCommand = syncCommand.Command(
-		"start",
-		"Start Docker for Mac sync",
-	)
-	syncStartDebugFlag = syncStartCommand.Flag("debug", "Debug mode (verbose and in foreground)").Bool()
-	syncStartVolumeArg = syncStartCommand.Arg("volume", "Folders to sync").String()
-
-	syncStopCommand = syncCommand.Command(
-		"stop",
-		"Stop Docker for Mac sync",
-	)
-	syncStopVolumeArg = syncStopCommand.Arg("volume", "Folders to sync").String()
-
-	syncStatusCommand = syncCommand.Command(
-		"status",
-		"Status of Docker for Mac syncs",
-	)
 )
 
 func isVerbose() bool {
-	return *verboseFlag || *dryRunFlag || *syncStartDebugFlag
+	return *verboseFlag || *dryRunFlag
 }
 
 func isDryRun() bool {
@@ -435,17 +412,5 @@ func runCli() {
 		commandAction(*generateTargetArg, func(uow *UnitOfWork) {
 			uow.Generate(*templateFlag, *outputFlag)
 		}, false)
-
-	case syncStartCommand.FullCommand():
-		cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
-		startSync(*syncStartVolumeArg, *syncStartDebugFlag)
-
-	case syncStopCommand.FullCommand():
-		cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
-		stopSync(*syncStopVolumeArg)
-
-	case syncStatusCommand.FullCommand():
-		cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
-		printSyncStatus()
 	}
 }
