@@ -7,7 +7,6 @@ import (
 	"github.com/flynn/go-shlex"
 	"io"
 	"os"
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -1585,8 +1584,8 @@ func actualVolumeArg(volume string) string {
 	parts := strings.Split(volume, ":")
 	if includes(cfg.VolumeNames(), parts[0]) {
 		parts[0] = cfg.Volume(parts[0]).ActualName()
-	} else if !path.IsAbs(parts[0]) {
-		parts[0] = cfg.Path() + "/" + parts[0]
+	} else if !filepath.IsAbs(parts[0]) {
+		parts[0] = cfg.Path() + fmt.Sprintf("%c", filepath.Separator) + parts[0]
 	}
 	return strings.Join(parts, ":")
 }

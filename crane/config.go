@@ -9,7 +9,6 @@ import (
 	"gopkg.in/v2/yaml"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -147,7 +146,7 @@ func readConfig(configPath string, files []string) *config {
 
 	for _, f := range files {
 		filename := filepath.Base(f)
-		absFile := path.Join(configPath, filename)
+		absFile := filepath.Join(configPath, filename)
 		if _, err := os.Stat(absFile); err == nil {
 			fileConfig := readFile(absFile)
 			if config == nil {
@@ -166,8 +165,8 @@ func readConfig(configPath string, files []string) *config {
 func findConfigPath(files []string) string {
 	// If the first of the locations array is specified as an absolute
 	// path, we use its directory as the config path.
-	if path.IsAbs(files[0]) {
-		return path.Dir(files[0])
+	if filepath.IsAbs(files[0]) {
+		return filepath.Dir(files[0])
 	}
 
 	// Otherwise, we traverse directories upwards, until we find a
@@ -176,13 +175,13 @@ func findConfigPath(files []string) string {
 	configPath, _ := os.Getwd()
 	for {
 		for _, f := range files {
-			filename := path.Join(configPath, f)
+			filename := filepath.Join(configPath, f)
 			if _, err := os.Stat(filename); err == nil {
 				return configPath
 			}
 		}
 		// Loop only if we haven't yet reached the root
-		if parentPath := path.Dir(configPath); len(parentPath) != len(configPath) {
+		if parentPath := filepath.Dir(configPath); len(parentPath) != len(configPath) {
 			configPath = parentPath
 		} else {
 			break
