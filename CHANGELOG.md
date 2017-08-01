@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 3.2.0 (2017-08-01)
+
 The following changes only affect the PRO version:
 
 * Rename `mac-syncs` to `accelerated-mounts`, as it is available on Windows as
