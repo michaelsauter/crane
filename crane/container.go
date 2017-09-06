@@ -1324,11 +1324,10 @@ func (c *container) createArgs(cmds []string) []string {
 	// Volumes
 	for _, volume := range c.Volume() {
 		volumeArgs := []string{"--volume"}
-		if accelerationEnabled() {
-			if am := cfg.AcceleratedMount(volume); am != nil {
-				am.Run()
-				volumeArgs = append(volumeArgs, am.VolumeArg())
-			}
+		am := cfg.AcceleratedMount(volume)
+		if accelerationEnabled() && am != nil {
+			am.Run()
+			volumeArgs = append(volumeArgs, am.VolumeArg())
 		} else {
 			volumeArgs = append(volumeArgs, actualVolumeArg(volume))
 		}
