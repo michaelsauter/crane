@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 3.2.1 (2017-09-06)
+
 * Fix non-accelerated mounts if acceleration is enabled in general
 
 ## 3.2.0 (2017-08-01)
