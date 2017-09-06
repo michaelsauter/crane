@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Fix non-accelerated mounts if acceleration is enabled in general
+
 ## 3.2.0 (2017-08-01)
 
 The following changes only affect the PRO version:
