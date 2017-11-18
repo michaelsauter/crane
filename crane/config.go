@@ -344,10 +344,9 @@ func (c *config) determinePrefix(prefixFlag string) {
 		c.prefix = prefixFlag
 		return
 	}
-	// If prefix is not configured, don't use any
+	// If prefix is not configured, it is equal to prefix: true
 	if c.RawPrefix == nil {
-		c.prefix = ""
-		return
+		c.RawPrefix = true
 	}
 	// Use configured prefix:
 	// true -> folder name
