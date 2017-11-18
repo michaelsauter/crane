@@ -4,7 +4,7 @@
 
 * Fix `--dns-search` option
 
-* Enable prefixing by default again. This restores 3.0 behaviour and makes Crane more compatible with docker-compose. If you don't want this, configure `prefix: true`.
+* Enable prefixing by default again. This restores 3.0 behaviour and makes Crane more compatible with docker-compose. If you don't want this, configure `prefix: false`. However, doing this will also disable the new, automatic `default` network described in the next section.
 
 * Create a `default` network automatically if prefixing is enabled, and connect every container to it (using it's name as an alias). This is the same behaviour that docker-compose has.
 
