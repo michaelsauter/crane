@@ -166,6 +166,7 @@ type container struct {
 	RawCmd               interface{}           `json:"cmd" yaml:"cmd"`
 	RawCommand           interface{}           `json:"command" yaml:"command"`
 	hooks                hooks
+	networks             map[string]NetworkParameters
 	stdout               io.Writer
 	stderr               io.Writer
 }
@@ -626,41 +627,51 @@ func (c *container) MemorySwap() string {
 }
 
 func (c *container) Networks() map[string]NetworkParameters {
-	result := make(map[string]NetworkParameters)
-	value := c.RawNetworks
-	if value != nil {
-		switch concreteValue := value.(type) {
-		case []interface{}: // YAML or JSON: array
-			for _, v := range concreteValue {
-				result[v.(string)] = NetworkParameters{}
-			}
-		case map[interface{}]interface{}: // YAML: hash
-			for k, v := range concreteValue {
-				if v == nil {
-					result[k.(string)] = NetworkParameters{}
-				} else {
-					switch concreteParams := v.(type) {
-					case NetworkParameters:
-						result[k.(string)] = concreteParams
-					default:
-						panic(StatusError{fmt.Errorf("unknown type: %v", v), 65})
+	if c.networks == nil {
+		c.networks = make(map[string]NetworkParameters)
+		value := c.RawNetworks
+		if value != nil {
+			switch concreteValue := value.(type) {
+			case []interface{}: // YAML or JSON: array
+				for _, v := range concreteValue {
+					c.networks[v.(string)] = NetworkParameters{}
+				}
+			case map[interface{}]interface{}: // YAML: hash
+				for k, v := range concreteValue {
+					if v == nil {
+						c.networks[k.(string)] = NetworkParameters{}
+					} else {
+						switch concreteParams := v.(type) {
+						case map[interface{}]interface{}:
+							stringMap := make(map[string]interface{})
+							for x, y := range concreteParams {
+								stringMap[x.(string)] = y
+							}
+							c.networks[k.(string)] = createNetworkParemetersFromMap(stringMap)
+						default:
+							panic(StatusError{fmt.Errorf("unknown type: %v", v), 65})
+						}
 					}
 				}
-			}
-		case map[string]interface{}: // JSON: hash
-			for k, v := range concreteValue {
-				switch concreteParams := v.(type) {
-				case NetworkParameters:
-					result[k] = concreteParams
-				default:
-					panic(StatusError{fmt.Errorf("unknown type: %v", v), 65})
+			case map[string]interface{}: // JSON: hash
+				for k, v := range concreteValue {
+					if v == nil {
+						c.networks[k] = NetworkParameters{}
+					} else {
+						switch concreteParams := v.(type) {
+						case map[string]interface{}:
+							c.networks[k] = createNetworkParemetersFromMap(concreteParams)
+						default:
+							panic(StatusError{fmt.Errorf("unknown type: %v", v), 65})
+						}
+					}
 				}
+			default:
+				panic(StatusError{fmt.Errorf("unknown type: %v", value), 65})
 			}
-		default:
-			panic(StatusError{fmt.Errorf("unknown type: %v", value), 65})
 		}
 	}
-	return result
+	return c.networks
 }
 
 func (c *container) Net() string {
@@ -962,14 +973,12 @@ func (c *container) Run(cmds []string, detachFlag bool) {
 func (c *container) connectWithNetworks(adHoc bool) {
 	containerNetworks := c.Networks()
 	if _, ok := containerNetworks["default"]; !ok {
-		containerNetworks["default"] = NetworkParameters{
-			RawAlias: []string{c.Name()},
-		}
+		containerNetworks["default"] = NetworkParameters{}
 	}
 	for name, params := range containerNetworks {
 		networkName := cfg.Network(name).ActualName()
 		args := []string{"network", "connect"}
-		for _, alias := range params.Alias() {
+		for _, alias := range params.Alias(c.Name()) {
 			args = append(args, "--alias", alias)
 		}
 		if len(params.Ip()) > 0 {

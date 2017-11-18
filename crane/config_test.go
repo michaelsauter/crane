@@ -26,6 +26,7 @@ func (stubbedContainer *StubbedContainer) Exists() bool {
 
 func TestUnmarshal(t *testing.T) {
 	var actual *config
+	var networks map[string]NetworkParameters
 	json := []byte(
 		`{
     "services": {
@@ -36,6 +37,15 @@ func TestUnmarshal(t *testing.T) {
             "image": "michaelsauter/apache",
             "volumes-from": ["crane_app"],
             "publish": ["80:80"],
+            "networks": {
+              "foo": {
+                "alias": [
+                  "bar",
+                  "baz"
+                ],
+                "ip": "192.168.0.1"
+              }
+            },
             "env": {
                 "foo": 1234,
                 "4567": "bar",
@@ -77,6 +87,11 @@ func TestUnmarshal(t *testing.T) {
 	assert.Len(t, actual.RawContainers["apache"].Env(), 3)
 	assert.Len(t, actual.RawContainers["apache"].Label(), 3)
 	assert.Len(t, actual.RawContainers["apache"].Link(), 2)
+	networks = actual.RawContainers["apache"].Networks()
+	assert.Len(t, networks, 1)
+	assert.Equal(t, []string{"bar", "baz"}, networks["foo"].Alias("apache"))
+	assert.Equal(t, "192.168.0.1", networks["foo"].Ip())
+	assert.Equal(t, []string{"apache"}, networks["default"].Alias("apache"))
 	assert.Len(t, actual.RawGroups, 1)
 	assert.Len(t, actual.RawHooks, 2)
 	assert.Len(t, actual.RawNetworks, 1)
@@ -92,6 +107,12 @@ func TestUnmarshal(t *testing.T) {
     image: michaelsauter/apache
     volumes-from: ["crane_app"]
     publish: ["80:80"]
+    networks:
+      foo:
+        alias:
+          - "bar"
+          - "baz"
+        ip: "192.168.0.1"
     env:
       foo: 1234
       4567: bar
@@ -121,6 +142,11 @@ volumes:
 	assert.Len(t, actual.RawContainers["apache"].Env(), 3)
 	assert.Len(t, actual.RawContainers["apache"].Label(), 3)
 	assert.Len(t, actual.RawContainers["apache"].Link(), 2)
+	networks = actual.RawContainers["apache"].Networks()
+	assert.Len(t, networks, 1)
+	assert.Equal(t, []string{"bar", "baz"}, networks["foo"].Alias("apache"))
+	assert.Equal(t, "192.168.0.1", networks["foo"].Ip())
+	assert.Equal(t, []string{"apache"}, networks["default"].Alias("apache"))
 	assert.Len(t, actual.RawGroups, 1)
 	assert.Len(t, actual.RawHooks, 2)
 	assert.Len(t, actual.RawNetworks, 1)
