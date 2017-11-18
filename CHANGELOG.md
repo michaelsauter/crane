@@ -20,6 +20,8 @@
 
 * Allow service names as accelerated mount as well. If a service is given, all configured bind-mounts of that service are accelerated. If a single bind-mount is given, only this mount is accelerated. Service names can also be passed to `am reset` (resulting in the reset of all configured bind-mounts) and `am logs` (if more than one bind-mount is configured, the first one is selected).
 
+* The `start` command has learned the new option `--attach` to attach to a targeted container even if the configuration specifies `detach: true`.
+
 ## 3.2.1 (2017-09-06)
 
 * Fix non-accelerated mounts if acceleration is enabled in general
