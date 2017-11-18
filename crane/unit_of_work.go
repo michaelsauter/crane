@@ -79,7 +79,7 @@ func (uow *UnitOfWork) Run(cmds []string, detach bool) {
 		if includes(uow.targeted, container.Name()) {
 			container.Run(cmds, detach)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
-			container.Start()
+			container.Start(false, false)
 		}
 	}
 }
@@ -91,7 +91,7 @@ func (uow *UnitOfWork) Up(cmds []string, detach bool, noCache bool, parallel int
 		if includes(uow.targeted, container.Name()) {
 			container.Run(cmds, detach)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
-			container.Start()
+			container.Start(false, false)
 		}
 	}
 }
@@ -141,13 +141,13 @@ func (uow *UnitOfWork) Pause() {
 }
 
 // Start containers.
-func (uow *UnitOfWork) Start() {
+func (uow *UnitOfWork) Start(attach bool) {
 	uow.prepareRequirements()
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Start()
+			container.Start(true, attach)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
-			container.Start()
+			container.Start(false, false)
 		}
 	}
 }
@@ -171,7 +171,7 @@ func (uow *UnitOfWork) Exec(cmds []string, privileged bool, user string) {
 		if includes(uow.targeted, container.Name()) {
 			container.Exec(cmds, privileged, user)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
-			container.Start()
+			container.Start(false, false)
 		}
 	}
 }
@@ -190,7 +190,7 @@ func (uow *UnitOfWork) Create(cmds []string) {
 		if includes(uow.targeted, container.Name()) {
 			container.Create(cmds)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
-			container.Start()
+			container.Start(false, false)
 		}
 	}
 }
@@ -298,6 +298,11 @@ func (uow *UnitOfWork) RequiredNetworks() []string {
 		net := container.Net()
 		if includes(networks, net) && !includes(required, net) {
 			required = append(required, net)
+		}
+		for name, _ := range container.Networks() {
+			if includes(networks, name) && !includes(required, name) {
+				required = append(required, name)
+			}
 		}
 	}
 	return required

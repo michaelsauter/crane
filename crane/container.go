@@ -22,8 +22,8 @@ type Container interface {
 	Provision(nocache bool)
 	PullImage()
 	Create(cmds []string)
-	Run(cmds []string, detach bool)
-	Start()
+	Run(cmds []string, detachFlag bool)
+	Start(targeted bool, attachFlag bool)
 	Kill()
 	Stop()
 	Pause()
@@ -37,6 +37,7 @@ type Container interface {
 	CommandsErr() io.Writer
 	VolumeSources() []string
 	Net() string
+	Networks() map[string]NetworkParameters
 }
 
 type ContainerInfo interface {
@@ -123,7 +124,7 @@ type container struct {
 	RawNet               string                `json:"net" yaml:"net"`
 	RawNetwork_Mode      string                `json:"network_mode" yaml:"network_mode"`
 	RawNetAlias          []string              `json:"net-alias" yaml:"net-alias"`
-	RawNetworks          []string              `json:"networks" yaml:"networks"`
+	RawNetworks          interface{}           `json:"networks" yaml:"networks"`
 	NoHealthcheck        bool                  `json:"no-healthcheck" yaml:"no-healthcheck"`
 	OomKillDisable       bool                  `json:"oom-kill-disable" yaml:"oom-kill-disable"`
 	RawOomScoreAdj       string                `json:"oom-score-adj" yaml:"oom-score-adj"`
@@ -623,14 +624,46 @@ func (c *container) MemorySwap() string {
 	return expandEnv(c.RawMemorySwap)
 }
 
+func (c *container) Networks() map[string]NetworkParameters {
+	result := make(map[string]NetworkParameters)
+	value := c.RawNetworks
+	if value != nil {
+		switch concreteValue := value.(type) {
+		case []interface{}: // YAML or JSON: array
+			for _, v := range concreteValue {
+				result[v.(string)] = NetworkParameters{}
+			}
+		case map[interface{}]interface{}: // YAML: hash
+			for k, v := range concreteValue {
+				if v == nil {
+					result[k.(string)] = NetworkParameters{}
+				} else {
+					switch concreteParams := v.(type) {
+					case NetworkParameters:
+						result[k.(string)] = concreteParams
+					default:
+						panic(StatusError{fmt.Errorf("unknown type: %v", v), 65})
+					}
+				}
+			}
+		case map[string]interface{}: // JSON: hash
+			for k, v := range concreteValue {
+				switch concreteParams := v.(type) {
+				case NetworkParameters:
+					result[k] = concreteParams
+				default:
+					panic(StatusError{fmt.Errorf("unknown type: %v", v), 65})
+				}
+			}
+		default:
+			panic(StatusError{fmt.Errorf("unknown type: %v", value), 65})
+		}
+	}
+	return result
+}
+
 func (c *container) Net() string {
 	rawNet := c.RawNetwork_Mode
-	// docker-compose's "networks" actually works via "docker network connect".
-	// This is not supported yet, but we can at least take the first network
-	// until we fully support it.
-	if len(c.RawNetworks) > 0 {
-		rawNet = c.RawNetworks[0]
-	}
 	if len(c.RawNet) > 0 {
 		rawNet = c.RawNet
 	}
@@ -896,34 +929,62 @@ func (c *container) Create(cmds []string) {
 
 	args := append([]string{"create"}, c.createArgs(cmds)...)
 	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
+
+	c.connectWithNetworks(adHoc)
 }
 
-// Run container, or start it if already existing
-func (c *container) Run(cmds []string, detach bool) {
+// Run container (possibly removes existing one)
+// Implement as create+start as we also ned to connect to networks,
+// and that might fail if we used run and have a very short-lived
+// container.
+func (c *container) Run(cmds []string, detachFlag bool) {
 	adHoc := (len(cmds) > 0)
+	targeted := true
+	attachFlag := false
+
 	if !adHoc {
 		c.Rm(true, false)
 	}
-	executeHook(c.Hooks().PreStart(), c.ActualName(adHoc))
+
 	fmt.Fprintf(c.CommandsOut(), "Running container %s ...\n", c.ActualName(adHoc))
 
-	args := []string{"run"}
-	// Detach
-	// If the user explicitly configured "detach", honour that.
-	if c.Detach != nil {
-		detach = *c.Detach
-	}
-	if !adHoc && detach {
-		args = append(args, "--detach")
-	}
-	args = append(args, c.createArgs(cmds)...)
-	wg := c.executePostStartHook(adHoc)
+	args := append([]string{"create"}, c.createArgs(cmds)...)
 	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
-	wg.Wait()
+
+	c.connectWithNetworks(adHoc)
+
+	c.start(adHoc, targeted, attachFlag, detachFlag)
 }
 
-func (c *container) executePostStartHook(adHoc bool) *sync.WaitGroup {
+// Connects container with default network if required,
+// using the non-prefixed name as an alias
+func (c *container) connectWithNetworks(adHoc bool) {
+	containerNetworks := c.Networks()
+	if _, ok := containerNetworks["default"]; !ok {
+		containerNetworks["default"] = NetworkParameters{
+			RawAlias: []string{c.Name()},
+		}
+	}
+	for name, params := range containerNetworks {
+		networkName := cfg.Network(name).ActualName()
+		args := []string{"network", "connect"}
+		for _, alias := range params.Alias() {
+			args = append(args, "--alias", alias)
+		}
+		if len(params.Ip()) > 0 {
+			args = append(args, "--ip", params.Ip())
+		}
+		if len(params.Ip6()) > 0 {
+			args = append(args, "--ip6", params.Ip6())
+		}
+		args = append(args, networkName, c.ActualName(adHoc))
+		executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
+	}
+}
 
+// FIXME: Output from this (e.g. verbose logging) interferes with
+// container output ...
+func (c *container) executePostStartHook(adHoc bool) *sync.WaitGroup {
 	var wg sync.WaitGroup
 
 	if len(c.Hooks().PostStart()) > 0 {
@@ -997,10 +1058,6 @@ func (c *container) createArgs(cmds []string) []string {
 	// CPU shares
 	if c.CPUShares > 0 {
 		args = append(args, "--cpu-shares", strconv.Itoa(c.CPUShares))
-	}
-	// DetachKeys
-	if len(c.DetachKeys()) > 0 {
-		args = append(args, "--detach-keys", c.DetachKeys())
 	}
 	// Device
 	for _, device := range c.Device() {
@@ -1163,9 +1220,6 @@ func (c *container) createArgs(cmds []string) []string {
 	}
 	// Net
 	netParam := c.ActualNet()
-	if len(c.RawNetworks) > 1 {
-		printErrorf("Crane does not support joining more than one network yet. Connecting service %s to network %s.\n", c.ActualName(adHoc), netParam)
-	}
 	if len(netParam) > 0 && netParam != "bridge" {
 		args = append(args, "--net", netParam)
 	}
@@ -1304,20 +1358,54 @@ func (c *container) createArgs(cmds []string) []string {
 }
 
 // Start container
-func (c *container) Start() {
+func (c *container) Start(targeted bool, attachFlag bool) {
+	adHoc := false
+	detachFlag := false
 	if c.Exists() {
 		if !c.Running() {
-			executeHook(c.Hooks().PreStart(), c.ActualName(false))
-			fmt.Fprintf(c.CommandsOut(), "Starting container %s ...\n", c.ActualName(false))
-			args := []string{"start"}
-			args = append(args, c.ActualName(false))
-			wg := c.executePostStartHook(false)
-			executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
-			wg.Wait()
+			fmt.Fprintf(c.CommandsOut(), "Starting container %s ...\n", c.ActualName(adHoc))
+			c.start(adHoc, targeted, attachFlag, detachFlag)
 		}
 	} else {
-		c.Run([]string{}, true)
+		c.Run([]string{}, detachFlag)
 	}
+}
+
+func (c *container) start(adHoc bool, targeted bool, attachFlag bool, detachFlag bool) {
+	executeHook(c.Hooks().PreStart(), c.ActualName(adHoc))
+
+	args := []string{"start"}
+
+	// Attach or detach?
+	// Precedence: flags > ad-hoc > config > default (targeted)
+	if !detachFlag {
+		if attachFlag || adHoc {
+			args = append(args, "--attach")
+		} else {
+			detach := !targeted
+			if c.Detach != nil {
+				detach = *c.Detach
+			}
+			if !detach {
+				args = append(args, "--attach")
+			}
+		}
+	}
+	// DetachKeys
+	if len(c.DetachKeys()) > 0 {
+		args = append(args, "--detach-keys", c.DetachKeys())
+	}
+	if c.Stdin_Open || c.Interactive {
+		args = append(args, "--interactive")
+	}
+
+	args = append(args, c.ActualName(adHoc))
+
+	wg := c.executePostStartHook(adHoc)
+
+	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
+
+	wg.Wait()
 }
 
 // Kill container
@@ -1368,7 +1456,7 @@ func (c *container) Unpause() {
 func (c *container) Exec(cmds []string, privileged bool, user string) {
 	name := c.ActualName(false)
 	if !c.Running() {
-		c.Start()
+		c.Start(false, false)
 	}
 	args := []string{"exec"}
 	if privileged {

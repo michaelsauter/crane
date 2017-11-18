@@ -304,6 +304,18 @@ func (c *config) setNetworkMap() {
 		net.RawName = rawName
 		c.networkMap[net.Name()] = net
 	}
+	// Add default network if possible and not defined yet
+	if _, ok := c.networkMap["default"]; ok {
+		if len(c.prefix) == 0 {
+			panic(StatusError{fmt.Errorf("You must configure a prefix to use the default network"), 65})
+		}
+	} else {
+		if len(c.prefix) > 0 {
+			c.networkMap["default"] = &network{RawName: "default"}
+		} else {
+			verboseLog("Prefix is disabled, not setting up the default network")
+		}
+	}
 }
 
 func (c *config) setVolumeMap() {

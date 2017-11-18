@@ -6,6 +6,10 @@
 
 * Enable prefixing by default again. This restores 3.0 behaviour and makes Crane more compatible with docker-compose. If you don't want this, configure `prefix: true`.
 
+* Create a `default` network automatically if prefixing is enabled, and connect every container to it (using it's name as an alias). This is the same behaviour that docker-compose has.
+
+* Allow multiple networks to be configured under `networks`, as well as options for each network: `--alias` (array), `--ip` (string) and `--ip6`.
+
 ## 3.2.1 (2017-09-06)
 
 * Fix non-accelerated mounts if acceleration is enabled in general
