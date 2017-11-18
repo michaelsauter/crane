@@ -1368,11 +1368,22 @@ func (c *container) Start(targeted bool, attachFlag bool) {
 	detachFlag := false
 	if c.Exists() {
 		if !c.Running() {
+			c.startAcceleratedMounts()
 			fmt.Fprintf(c.CommandsOut(), "Starting container %s ...\n", c.ActualName(adHoc))
 			c.start(adHoc, targeted, attachFlag, detachFlag)
 		}
 	} else {
 		c.Run([]string{}, detachFlag)
+	}
+}
+
+// Ensure all accelerated mounts used by this container are running.
+func (c *container) startAcceleratedMounts() {
+	for _, volume := range c.Volume() {
+		am := cfg.AcceleratedMount(volume)
+		if accelerationEnabled() && am != nil {
+			am.Run()
+		}
 	}
 }
 
@@ -1451,6 +1462,7 @@ func (c *container) Pause() {
 func (c *container) Unpause() {
 	if c.Paused() {
 		name := c.ActualName(false)
+		c.startAcceleratedMounts()
 		fmt.Fprintf(c.CommandsOut(), "Unpausing container %s ...\n", name)
 		args := []string{"unpause", name}
 		executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())

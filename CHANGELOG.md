@@ -12,6 +12,8 @@
 
 * Add `--init` option
 
+* Ensure that accelerated mounts are started when starting / unpausing a container
+
 ## 3.2.1 (2017-09-06)
 
 * Fix non-accelerated mounts if acceleration is enabled in general
