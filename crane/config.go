@@ -339,16 +339,32 @@ func (c *config) setVolumeMap() {
 	}
 }
 
+// accelerated mounts can either be:
+// * a service (which is expanded to all configured bind-mounts) or
+// * a single bind-mount
 func (c *config) setAcceleratedMountMap() {
 	c.acceleratedMountMap = make(map[string]AcceleratedMount)
 	for rawVolume, am := range c.RawAcceleratedMounts {
-		if am == nil {
-			am = &acceleratedMount{}
+		container := c.Container(rawVolume)
+		if container != nil {
+			for _, bm := range container.BindMounts(c.VolumeNames()) {
+				if am == nil {
+					am = &acceleratedMount{}
+				}
+				am.RawVolume = bm
+				am.configPath = c.path
+				c.acceleratedMountMap[am.Volume()] = am
+			}
+		} else {
+			if am == nil {
+				am = &acceleratedMount{}
+			}
+			am.RawVolume = rawVolume
+			am.configPath = c.path
+			c.acceleratedMountMap[am.Volume()] = am
 		}
-		am.RawVolume = rawVolume
-		am.configPath = c.path
-		c.acceleratedMountMap[am.Volume()] = am
 	}
+	// legacy support for mac-syncs configuration
 	for rawVolume, am := range c.RawMacSyncs {
 		if am == nil {
 			am = &acceleratedMount{}

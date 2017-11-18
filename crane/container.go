@@ -35,6 +35,7 @@ type Container interface {
 	SetCommandsOutput(stdout, stderr io.Writer)
 	CommandsOut() io.Writer
 	CommandsErr() io.Writer
+	BindMounts(volumeNames []string) []string
 	VolumeSources() []string
 	Net() string
 	Networks() map[string]NetworkParameters
@@ -1610,6 +1611,19 @@ func (c *container) Paused() bool {
 		return false
 	}
 	return inspectBool(c.ID(), "{{.State.Paused}}")
+}
+
+// Volume values are bind-mounts if they contain a colon
+// and the part before the colon is not a configured volume.
+func (c *container) BindMounts(volumeNames []string) []string {
+	bindMounts := []string{}
+	for _, volume := range c.Volume() {
+		parts := strings.Split(volume, ":")
+		if len(parts) > 1 && !includes(volumeNames, parts[0]) {
+			bindMounts = append(bindMounts, volume)
+		}
+	}
+	return bindMounts
 }
 
 // Build image for container

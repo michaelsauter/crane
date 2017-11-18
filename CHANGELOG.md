@@ -18,6 +18,8 @@
 
 * Add subcommand `am logs <mount>` to show the Unison logs to debug syncing issues. Use `--follow`/`-f` to follow the logs.
 
+* Allow service names as accelerated mount as well. If a service is given, all configured bind-mounts of that service are accelerated. If a single bind-mount is given, only this mount is accelerated. Service names can also be passed to `am reset` (resulting in the reset of all configured bind-mounts) and `am logs` (if more than one bind-mount is configured, the first one is selected).
+
 ## 3.2.1 (2017-09-06)
 
 * Fix non-accelerated mounts if acceleration is enabled in general

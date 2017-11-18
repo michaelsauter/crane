@@ -438,22 +438,46 @@ func runCli() {
 
 	case amResetCommand.FullCommand():
 		cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
-		am := cfg.AcceleratedMount(*amResetTargetArg)
-		if accelerationEnabled() && am != nil {
-			printInfof("Resetting accelerated mount %s ...\n", *amResetTargetArg)
-			am.Reset()
+		resetTargets := []string{}
+		container := cfg.Container(*amResetTargetArg)
+		if container != nil {
+			for _, bm := range container.BindMounts(cfg.VolumeNames()) {
+				am := &acceleratedMount{RawVolume: bm, configPath: cfg.Path()}
+				resetTargets = append(resetTargets, am.Volume())
+			}
 		} else {
-			amNames := cfg.AcceleratedMountNames()
-			if len(amNames) > 0 {
-				printErrorf("ERROR: No such accelerated mount. Configured mounts: %s\n", strings.Join(amNames, ", "))
+			resetTargets = append(resetTargets, *amResetTargetArg)
+		}
+		for _, resetTarget := range resetTargets {
+			am := cfg.AcceleratedMount(resetTarget)
+			if accelerationEnabled() && am != nil {
+				printInfof("Resetting accelerated mount %s ...\n", resetTarget)
+				am.Reset()
 			} else {
-				printErrorf("ERROR: No accelerated mounts configured.\n")
+				amNames := cfg.AcceleratedMountNames()
+				if len(amNames) > 0 {
+					printErrorf("ERROR: No such accelerated mount. Configured mounts: %s\n", strings.Join(amNames, ", "))
+				} else {
+					printErrorf("ERROR: No accelerated mounts configured.\n")
+				}
 			}
 		}
 
 	case amLogsCommand.FullCommand():
 		cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
-		am := cfg.AcceleratedMount(*amLogsTargetArg)
+		var logsTarget string
+		container := cfg.Container(*amLogsTargetArg)
+		if container != nil {
+			bindMounts := container.BindMounts(cfg.VolumeNames())
+			am := &acceleratedMount{RawVolume: bindMounts[0], configPath: cfg.Path()}
+			logsTarget = am.Volume()
+			if len(bindMounts) > 1 {
+				printNoticef("WARNING: %s has more than one bind-mount configured. The first one will be selected. To select a different bind-mount, pass it directly.\n", *amLogsTargetArg)
+			}
+		} else {
+			logsTarget = *amLogsTargetArg
+		}
+		am := cfg.AcceleratedMount(logsTarget)
 		if accelerationEnabled() && am != nil {
 			kind := "Showing"
 			if *amFollowFlag {
