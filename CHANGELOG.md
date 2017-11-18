@@ -14,6 +14,10 @@
 
 * Ensure that accelerated mounts are started when starting / unpausing a container
 
+* Add subcommand `am reset <mount>` to reset an accelerated mount
+
+* Add subcommand `am logs <mount>` to show the Unison logs to debug syncing issues. Use `--follow`/`-f` to follow the logs.
+
 ## 3.2.1 (2017-09-06)
 
 * Fix non-accelerated mounts if acceleration is enabled in general

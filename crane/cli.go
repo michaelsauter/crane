@@ -251,6 +251,25 @@ var (
 		"The file(s) to write the output to.",
 	).Short('O').String()
 	generateTargetArg = generateCommand.Arg("target", "Target of command").String()
+
+	amCommand = app.Command(
+		"am",
+		"Sub-commands for accelerated mounts",
+	)
+	amResetCommand = amCommand.Command(
+		"reset",
+		"Resets accelerated mount",
+	)
+	amResetTargetArg = amResetCommand.Arg("target", "Target of command").String()
+	amLogsCommand    = amCommand.Command(
+		"logs",
+		"Show logs of accelerated mount",
+	)
+	amFollowFlag = amLogsCommand.Flag(
+		"follow",
+		"Follow log output.",
+	).Short('f').Bool()
+	amLogsTargetArg = amLogsCommand.Arg("target", "Target of command").String()
 )
 
 func isVerbose() bool {
@@ -416,5 +435,39 @@ func runCli() {
 		commandAction(*generateTargetArg, func(uow *UnitOfWork) {
 			uow.Generate(*templateFlag, *outputFlag)
 		}, false)
+
+	case amResetCommand.FullCommand():
+		cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
+		am := cfg.AcceleratedMount(*amResetTargetArg)
+		if accelerationEnabled() && am != nil {
+			printInfof("Resetting accelerated mount %s ...\n", *amResetTargetArg)
+			am.Reset()
+		} else {
+			amNames := cfg.AcceleratedMountNames()
+			if len(amNames) > 0 {
+				printErrorf("ERROR: No such accelerated mount. Configured mounts: %s\n", strings.Join(amNames, ", "))
+			} else {
+				printErrorf("ERROR: No accelerated mounts configured.\n")
+			}
+		}
+
+	case amLogsCommand.FullCommand():
+		cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
+		am := cfg.AcceleratedMount(*amLogsTargetArg)
+		if accelerationEnabled() && am != nil {
+			kind := "Showing"
+			if *amFollowFlag {
+				kind = "Following"
+			}
+			printInfof("%s logs of accelerated mount %s ...\n", kind, *amLogsTargetArg)
+			am.Logs(*amFollowFlag)
+		} else {
+			amNames := cfg.AcceleratedMountNames()
+			if len(amNames) > 0 {
+				printErrorf("ERROR: No such accelerated mount. Configured mounts: %s\n", strings.Join(amNames, ", "))
+			} else {
+				printErrorf("ERROR: No accelerated mounts configured.\n")
+			}
+		}
 	}
 }

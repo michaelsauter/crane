@@ -6,6 +6,8 @@ import "runtime"
 
 type AcceleratedMount interface {
 	Run()
+	Reset()
+	Logs(follow bool)
 	VolumeArg() string
 	Volume() string
 }
@@ -20,6 +22,12 @@ func (am *acceleratedMount) Volume() string {
 }
 
 func (am *acceleratedMount) Run() {
+}
+
+func (am *acceleratedMount) Reset() {
+}
+
+func (am *acceleratedMount) Logs(follow bool) {
 }
 
 func (am *acceleratedMount) VolumeArg() string {

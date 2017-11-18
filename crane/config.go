@@ -25,6 +25,7 @@ type Config interface {
 	Tag() string
 	NetworkNames() []string
 	VolumeNames() []string
+	AcceleratedMountNames() []string
 	Network(name string) Network
 	Volume(name string) Volume
 	AcceleratedMount(volume string) AcceleratedMount
@@ -236,6 +237,15 @@ func (c *config) VolumeNames() []string {
 	}
 	sort.Strings(volumes)
 	return volumes
+}
+
+func (c *config) AcceleratedMountNames() []string {
+	acceleratedMounts := []string{}
+	for name, _ := range c.acceleratedMountMap {
+		acceleratedMounts = append(acceleratedMounts, name)
+	}
+	sort.Strings(acceleratedMounts)
+	return acceleratedMounts
 }
 
 func (c *config) Network(name string) Network {
