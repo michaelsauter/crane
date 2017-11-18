@@ -446,11 +446,11 @@ func (c *container) DNSOpt() []string {
 
 func (c *container) DNSSearch() []string {
 	var dnsSearch []string
-	rawDNSSearch := c.RawDNS_Search
+	rawDNSSearches := c.RawDNS_Search
 	if len(c.RawDNSSearch) > 0 {
-		rawDNSSearch = c.RawDNSSearch
+		rawDNSSearches = c.RawDNSSearch
 	}
-	for _, rawDNSSearch := range rawDNSSearch {
+	for _, rawDNSSearch := range rawDNSSearches {
 		dnsSearch = append(dnsSearch, expandEnv(rawDNSSearch))
 	}
 	return dnsSearch

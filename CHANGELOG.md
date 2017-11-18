@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Fix `--dns-search` option
+
 ## 3.2.1 (2017-09-06)
 
 * Fix non-accelerated mounts if acceleration is enabled in general
