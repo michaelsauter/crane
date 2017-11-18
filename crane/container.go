@@ -1403,18 +1403,16 @@ func (c *container) start(adHoc bool, targeted bool, attachFlag bool, detachFlag
 	args := []string{"start"}
 
 	// Attach or detach?
-	// Precedence: flags > ad-hoc > config > default (targeted)
-	if !detachFlag {
-		if attachFlag || adHoc {
+	// Precedence: ad-hoc > flags > config > default (targeted)
+	if attachFlag || adHoc {
+		args = append(args, "--attach")
+	} else if !detachFlag {
+		detach := !targeted
+		if c.Detach != nil {
+			detach = *c.Detach
+		}
+		if !detach {
 			args = append(args, "--attach")
-		} else {
-			detach := !targeted
-			if c.Detach != nil {
-				detach = *c.Detach
-			}
-			if !detach {
-				args = append(args, "--attach")
-			}
 		}
 	}
 	// DetachKeys
