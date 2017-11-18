@@ -10,6 +10,8 @@
 
 * Allow multiple networks to be configured under `networks`, as well as options for each network: `--alias` (array), `--ip` (string) and `--ip6`.
 
+* Add `--init` option
+
 ## 3.2.1 (2017-09-06)
 
 * Fix non-accelerated mounts if acceleration is enabled in general

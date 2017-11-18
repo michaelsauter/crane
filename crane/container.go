@@ -99,6 +99,7 @@ type container struct {
 	HealthRetries        int                   `json:"health-retries" yaml:"health-retries"`
 	RawHealthTimeout     string                `json:"health-timeout" yaml:"health-timeout"`
 	RawHostname          string                `json:"hostname" yaml:"hostname"`
+	Init                 bool                  `json:"init" yaml:"init"`
 	Interactive          bool                  `json:"interactive" yaml:"interactive"`
 	Stdin_Open           bool                  `json:"stdin_open" yaml:"stdin_open"`
 	RawIp                string                `json:"ip" yaml:"ip"`
@@ -1133,6 +1134,10 @@ func (c *container) createArgs(cmds []string) []string {
 	// Host
 	if len(c.Hostname()) > 0 {
 		args = append(args, "--hostname", c.Hostname())
+	}
+	// Init
+	if c.Init {
+		args = append(args, "--init")
 	}
 	// Interactive
 	if c.Stdin_Open || c.Interactive {
