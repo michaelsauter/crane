@@ -1,7 +1,6 @@
 package crane
 
 import (
-	"fmt"
 	"os"
 )
 
@@ -25,7 +24,7 @@ func (v *volume) ActualName() string {
 }
 
 func (v *volume) Create() {
-	fmt.Printf("Creating volume %s ...\n", v.ActualName())
+	printInfof("Creating volume %s ...\n", v.ActualName())
 
 	args := []string{"volume", "create", "--name", v.ActualName()}
 	executeCommand("docker", args, os.Stdout, os.Stderr)

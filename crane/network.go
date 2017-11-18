@@ -1,7 +1,6 @@
 package crane
 
 import (
-	"fmt"
 	"os"
 )
 
@@ -31,7 +30,7 @@ func (n *network) ActualName() string {
 }
 
 func (n *network) Create() {
-	fmt.Printf("Creating network %s ...\n", n.ActualName())
+	printInfof("Creating network %s ...\n", n.ActualName())
 
 	args := []string{"network", "create"}
 
