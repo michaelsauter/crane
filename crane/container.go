@@ -168,27 +168,6 @@ type container struct {
 	stderr               io.Writer
 }
 
-type BuildParameters struct {
-	RawContext    string      `json:"context" yaml:"context"`
-	RawFile       string      `json:"file" yaml:"file"`
-	RawDockerfile string      `json:"dockerfile" yaml:"dockerfile"`
-	RawBuildArgs  interface{} `json:"build-arg" yaml:"build-arg"`
-	RawArgs       interface{} `json:"args" yaml:"args"`
-}
-
-type LoggingParameters struct {
-	RawDriver  string      `json:"driver" yaml:"driver"`
-	RawOptions interface{} `json:"options" yaml:"options"`
-}
-
-type HealthcheckParameters struct {
-	RawTest     string `json:"test" yaml:"test"`
-	RawInterval string `json:"interval" yaml:"interval"`
-	RawTimeout  string `json:"timeout" yaml:"timeout"`
-	Retries     int    `json:"retries" yaml:"retries"`
-	Disable     bool   `json:"disable" yaml:"disable"`
-}
-
 type OptInt struct {
 	Defined bool
 	Value   int
@@ -344,25 +323,6 @@ func (c *container) Requires() []string {
 		requires = append(requires, expandEnv(rawRequired))
 	}
 	return requires
-}
-
-func (b BuildParameters) Context() string {
-	return expandEnv(b.RawContext)
-}
-
-func (b BuildParameters) File() string {
-	if len(b.RawFile) > 0 {
-		return expandEnv(b.RawFile)
-	}
-	return expandEnv(b.RawDockerfile)
-}
-
-func (b BuildParameters) BuildArgs() []string {
-	buildArgs := sliceOrMap2ExpandedSlice(b.RawBuildArgs)
-	if len(buildArgs) == 0 {
-		return sliceOrMap2ExpandedSlice(b.RawArgs)
-	}
-	return buildArgs
 }
 
 func (c *container) AddHost() []string {
@@ -540,18 +500,6 @@ func (c *container) GroupAdd() []string {
 	return groupAdd
 }
 
-func (h HealthcheckParameters) Test() string {
-	return expandEnv(h.RawTest)
-}
-
-func (h HealthcheckParameters) Interval() string {
-	return expandEnv(h.RawInterval)
-}
-
-func (h HealthcheckParameters) Timeout() string {
-	return expandEnv(h.RawTimeout)
-}
-
 func (c *container) HealthCmd() string {
 	cmd := c.HealthcheckParams().Test()
 	if len(c.RawLogDriver) > 0 {
@@ -626,14 +574,6 @@ func (c *container) Link() []string {
 		link = append(link, expandEnv(raw))
 	}
 	return link
-}
-
-func (l LoggingParameters) Options() []string {
-	return sliceOrMap2ExpandedSlice(l.RawOptions)
-}
-
-func (l LoggingParameters) Driver() string {
-	return expandEnv(l.RawDriver)
 }
 
 func (c *container) LogDriver() string {
