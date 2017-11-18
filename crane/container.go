@@ -934,9 +934,9 @@ func (c *container) Create(cmds []string) {
 }
 
 // Run container (possibly removes existing one)
-// Implement as create+start as we also ned to connect to networks,
-// and that might fail if we used run and have a very short-lived
-// container.
+// Implemented as create+start as we also need to connect to networks,
+// and that might fail if we used "docker run" and
+// have a very short-lived container.
 func (c *container) Run(cmds []string, detachFlag bool) {
 	adHoc := (len(cmds) > 0)
 	targeted := true
