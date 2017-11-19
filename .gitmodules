@@ -31,3 +31,6 @@
 [submodule "vendor/github.com/imdario/mergo"]
 	path = vendor/github.com/imdario/mergo
 	url = https://github.com/imdario/mergo.git
+[submodule "vendor/github.com/hashicorp/go-uuid"]
+	path = vendor/github.com/hashicorp/go-uuid
+	url = https://github.com/hashicorp/go-uuid.git
