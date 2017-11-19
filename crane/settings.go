@@ -19,7 +19,7 @@ type Settings struct {
 	UUID            string    `json:"uuid"`
 	Version         string    `json:"version"`
 	LatestVersion   string    `json:"latest_version"`
-	LastUpdateCheck time.Time `json:"last_update_check"`
+	NextUpdateCheck time.Time `json:"next_update_check"`
 	CheckForUpdates bool      `json:"check_for_updates"`
 }
 
@@ -57,7 +57,7 @@ func createSettings(filename string) error {
 		UUID:            uuid,
 		Version:         Version,
 		LatestVersion:   Version,
-		LastUpdateCheck: time.Now(),
+		NextUpdateCheck: time.Now().Add(autoUpdateCheckInterval()),
 		CheckForUpdates: true,
 	}
 	msg := fmt.Sprintf("Writing settings file to %s\n", filename)
@@ -66,11 +66,13 @@ func createSettings(filename string) error {
 }
 
 func readSettings() error {
-	// create path if it does not exist yet
+	// Determine settings path
 	sp, err := settingsPath()
 	if err != nil {
 		return err
 	}
+
+	// Create settings path if it does not exist yet
 	if _, err := os.Stat(sp); err != nil {
 		os.MkdirAll(sp, os.ModePerm)
 		if _, err := os.Stat(sp); err != nil {
@@ -78,7 +80,7 @@ func readSettings() error {
 		}
 	}
 
-	// create file if it does not exist yet
+	// Create settings file if it does not exist yet
 	filename := filepath.Join(sp, "config.json")
 	if _, err := os.Stat(filename); err != nil {
 		return createSettings(filename)
@@ -88,23 +90,16 @@ func readSettings() error {
 	settings = &Settings{filename: filename}
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
-		panic(StatusError{err, 74})
+		return err
 	}
-	err = json.Unmarshal(data, settings)
-	if err != nil {
-		err = displaySyntaxError(data, err)
-		panic(StatusError{err, 65})
-	}
-	return nil
+	return json.Unmarshal(data, settings)
 }
 
 func (s *Settings) ShouldCheckForUpdates() bool {
 	if !s.CheckForUpdates {
 		return false
 	}
-	week := 7 * 24 * time.Hour
-	dontCheckUntil := settings.LastUpdateCheck.Add(week)
-	return time.Now().After(dontCheckUntil)
+	return time.Now().After(settings.NextUpdateCheck)
 }
 
 // If version in settings does not match version of binary,
@@ -119,8 +114,13 @@ func (s *Settings) CorrectVersion() error {
 }
 
 func (s *Settings) Update(latestVersion string) error {
-	s.LastUpdateCheck = time.Now()
+	s.NextUpdateCheck = time.Now().Add(autoUpdateCheckInterval())
 	s.LatestVersion = latestVersion
+	return s.Write(s.filename)
+}
+
+func (s *Settings) DelayNextUpdateCheck() error {
+	s.NextUpdateCheck = time.Now().Add(time.Hour).Add(autoUpdateCheckInterval())
 	return s.Write(s.filename)
 }
 

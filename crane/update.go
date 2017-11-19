@@ -26,7 +26,7 @@ type UpdateResponseBody struct {
 	LatestChangelogUrl    string `json:"latest_changelog_url"`
 }
 
-func checkForUpdates(manual bool) {
+func checkForUpdates(manual bool) error {
 	client := &http.Client{Timeout: 3 * time.Second}
 	params := UpdateRequestParams{
 		UUID:    settings.UUID,
@@ -55,7 +55,7 @@ func checkForUpdates(manual bool) {
 		} else {
 			verboseMsg(fmt.Sprintf("Update check failed: %s", err.Error()))
 		}
-		return
+		return nil
 	}
 
 	defer res.Body.Close()
@@ -67,9 +67,12 @@ func checkForUpdates(manual bool) {
 		fmt.Printf("\tRelease Date: %s\n", response.LatestReleaseDate)
 		fmt.Printf("\tChangelog: %s\n", response.LatestChangelogUrl)
 		fmt.Printf("\nUpdate now: %s\n\n", response.LatestInstallationUrl)
-		settings.Update(response.LatestVersion)
-	} else {
-		printSuccessf("Version %s is up-to-date!\n\n", Version)
-		settings.Update(Version)
+		return settings.Update(response.LatestVersion)
 	}
+	printSuccessf("Version %s is up-to-date!\n\n", Version)
+	return settings.Update(Version)
+}
+
+func autoUpdateCheckInterval() time.Duration {
+	return 7 * 24 * time.Hour
 }

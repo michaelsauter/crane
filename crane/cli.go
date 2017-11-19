@@ -350,7 +350,9 @@ func runCli() {
 	} else {
 		settings.CorrectVersion()
 		if settings.ShouldCheckForUpdates() {
-			checkForUpdates(false)
+			if err := checkForUpdates(false); err != nil {
+				printNoticef("Could not update settings file")
+			}
 		} else if settings.LatestVersion != Version {
 			printNoticef("Newer version %s is available!\n\n", settings.LatestVersion)
 		}
