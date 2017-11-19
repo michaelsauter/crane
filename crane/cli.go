@@ -348,7 +348,7 @@ func runCli() {
 	if err != nil {
 		printNoticef(err.Error())
 	} else {
-		settings.CompareVersion()
+		settings.CorrectVersion()
 		if settings.ShouldCheckForUpdates() {
 			checkForUpdates(false)
 		} else if settings.LatestVersion != Version {

@@ -107,7 +107,10 @@ func (s *Settings) ShouldCheckForUpdates() bool {
 	return time.Now().After(dontCheckUntil)
 }
 
-func (s *Settings) CompareVersion() error {
+// If version in settings does not match version of binary,
+// we assume that the binary was updated and update the
+// settings file with the new information.
+func (s *Settings) CorrectVersion() error {
 	if Version != s.Version {
 		s.Version = Version
 		return s.Update(Version)
