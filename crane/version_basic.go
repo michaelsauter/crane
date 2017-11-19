@@ -6,6 +6,9 @@ import (
 	"fmt"
 )
 
+const Version = "3.3.0"
+const Pro = false
+
 func printVersion() {
-	fmt.Println("v3.2.1")
+	fmt.Printf("v%s\n", Version)
 }

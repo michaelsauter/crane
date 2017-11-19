@@ -267,6 +267,11 @@ var (
 		"Follow log output.",
 	).Short('f').Bool()
 	amLogsTargetArg = amLogsCommand.Arg("target", "Target of command").String()
+
+	updateCheckCommand = app.Command(
+		"update-check",
+		"Checks for updates",
+	)
 )
 
 func isVerbose() bool {
@@ -432,6 +437,9 @@ func runCli() {
 		commandAction(*generateTargetArg, func(uow *UnitOfWork) {
 			uow.Generate(*templateFlag, *outputFlag)
 		}, false)
+
+	case updateCheckCommand.FullCommand():
+		checkForUpdates(true)
 
 	case amResetCommand.FullCommand():
 		cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)

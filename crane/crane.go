@@ -14,12 +14,14 @@ import (
 	"syscall"
 )
 
+var printSuccessf func(format string, a ...interface{})
 var printInfof func(format string, a ...interface{})
 var printNoticef func(format string, a ...interface{})
 var printErrorf func(format string, a ...interface{})
 
 func init() {
 	color.Output = os.Stderr
+	printSuccessf = color.New(color.FgGreen).PrintfFunc()
 	printInfof = color.New(color.FgBlue).PrintfFunc()
 	printNoticef = color.New(color.FgYellow).PrintfFunc()
 	printErrorf = color.New(color.FgRed).PrintfFunc()

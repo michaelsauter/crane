@@ -24,6 +24,8 @@
 
 * The `start` command has learned the new option `--attach` to attach to a targeted container even if the configuration specifies `detach: true`.
 
+* Add `update-check` command to query for newer versions.
+
 ## 3.2.1 (2017-09-06)
 
 * Fix non-accelerated mounts if acceleration is enabled in general
