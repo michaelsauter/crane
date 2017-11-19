@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	uuid "github.com/hashicorp/go-uuid"
 	"net/http"
 	"runtime"
 	"time"
@@ -29,9 +28,8 @@ type UpdateResponseBody struct {
 
 func checkForUpdates(manual bool) {
 	client := &http.Client{Timeout: 3 * time.Second}
-	uuid, _ := uuid.GenerateUUID()
 	params := UpdateRequestParams{
-		UUID:    uuid,
+		UUID:    settings.UUID,
 		Arch:    runtime.GOARCH,
 		OS:      runtime.GOOS,
 		Version: Version,
@@ -68,8 +66,10 @@ func checkForUpdates(manual bool) {
 		printNoticef("Newer version %s is available!\n\n", response.LatestVersion)
 		fmt.Printf("\tRelease Date: %s\n", response.LatestReleaseDate)
 		fmt.Printf("\tChangelog: %s\n", response.LatestChangelogUrl)
-		fmt.Printf("\nUpdate now: %s\n", response.LatestInstallationUrl)
+		fmt.Printf("\nUpdate now: %s\n\n", response.LatestInstallationUrl)
+		settings.Update(response.LatestVersion)
 	} else {
-		printSuccessf("Version %s is up-to-date!\n", Version)
+		printSuccessf("Version %s is up-to-date!\n\n", Version)
+		settings.Update(Version)
 	}
 }

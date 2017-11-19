@@ -339,8 +339,21 @@ func allowedContainers(excludedReference []string, onlyReference string) (contai
 }
 
 func runCli() {
-	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
+	command := kingpin.MustParse(app.Parse(os.Args[1:]))
 
+	err := readSettings()
+	if err != nil {
+		printNoticef(err.Error())
+	} else {
+		settings.CompareVersion()
+		if settings.ShouldCheckForUpdates() {
+			checkForUpdates(false)
+		} else if settings.LatestVersion != Version {
+			printNoticef("Newer version %s is available!\n\n", settings.LatestVersion)
+		}
+	}
+
+	switch command {
 	case upCommand.FullCommand():
 		commandAction(*upTargetArg, func(uow *UnitOfWork) {
 			uow.Up(*upCmdArg, *upDetachFlag, *upNoCacheFlag, *upParallelFlag)

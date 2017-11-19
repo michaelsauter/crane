@@ -24,7 +24,7 @@
 
 * The `start` command has learned the new option `--attach` to attach to a targeted container even if the configuration specifies `detach: true`.
 
-* Add `update-check` command to query for newer versions.
+* Add `update-check` command to query for newer versions. This update check is executed automatically before a command if the last check is more than one week ago. To store this information, and to cache the latest version, a new settings file is introduced, which is located at `%APPDATA%\\crane\\config.json` on Windows and `$XDG_CONFIG_HOME/crane/config.json` on Unix systems. If you don't want automatic update checks, set `"check_for_updates": false` in this file.
 
 ## 3.2.1 (2017-09-06)
 
