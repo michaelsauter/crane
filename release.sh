@@ -15,8 +15,7 @@ crane run crane make test
 echo "Update version..."
 grepped_version=$(grep -o "v[0-9]*\.[0-9]*\.[0-9]*" crane/version_basic.go)
 old_version=${grepped_version:1}
-sed -i.bak 's/fmt\.Println("v'$old_version'")/fmt.Println("v'$version'")/' crane/version_basic.go
-sed -i.bak 's/fmt\.Println("v'$old_version' (PRO)")/fmt.Println("v'$version' (PRO)")/' crane/version_pro.go
+sed -i.bak 's/Version = "'$old_version'"/Version = "'$version'"/' crane/version_basic.go crane/version_pro.go
 rm crane/version_basic.go.bak
 rm crane/version_pro.go.bak
 sed -i.bak 's/VERSION="'$old_version'"/VERSION="'$version'"/' download.sh
