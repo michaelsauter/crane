@@ -121,6 +121,14 @@ func executeHook(hook string, containerName string) {
 	}
 }
 
+// Print message when verbose mode is enabled
+func verboseMsg(message string) {
+	if isVerbose() {
+		printInfof("%s\n", message)
+	}
+}
+
+// Log command when verbose mode is enabled
 func verboseLog(message string) {
 	if isVerbose() {
 		printInfof("--> %s\n", message)

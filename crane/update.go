@@ -53,7 +53,7 @@ func checkForUpdates(manual bool) {
 		if manual {
 			printErrorf("ERROR: %s\n", err)
 		} else {
-			verboseLog(err.Error())
+			verboseMsg(fmt.Sprintf("Update check failed: %s", err.Error()))
 		}
 		return
 	}

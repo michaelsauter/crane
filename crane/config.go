@@ -67,7 +67,7 @@ type AcceleratedMountMap map[string]AcceleratedMount
 // readFile will read the config file
 // and return the created config.
 func readFile(filename string) *config {
-	verboseLog("Reading configuration " + filename)
+	verboseMsg("Reading configuration " + filename)
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		panic(StatusError{err, 74})
@@ -323,7 +323,7 @@ func (c *config) setNetworkMap() {
 		if len(c.prefix) > 0 {
 			c.networkMap["default"] = &network{RawName: "default"}
 		} else {
-			verboseLog("Prefix is disabled, not setting up the default network")
+			verboseMsg("Prefix is disabled, not setting up the default network")
 		}
 	}
 }
