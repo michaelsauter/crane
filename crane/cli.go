@@ -252,14 +252,17 @@ var (
 	).Short('O').String()
 	generateTargetArg = generateCommand.Arg("target", "Target of command").String()
 
-	amResetCommand = app.Command(
-		"am-reset",
-		"Resets accelerated mount(s)",
+	amCommand = app.Command(
+		"am",
+		"Sub-commands for accelerated mounts",
+	)
+	amResetCommand = amCommand.Command(
+		"reset",
+		"Resets accelerated mount",
 	)
 	amResetTargetArg = amResetCommand.Arg("target", "Target of command").String()
-
-	amLogsCommand = app.Command(
-		"am-logs",
+	amLogsCommand    = amCommand.Command(
+		"logs",
 		"Show logs of accelerated mount",
 	)
 	amFollowFlag = amLogsCommand.Flag(

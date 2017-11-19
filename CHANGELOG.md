@@ -14,11 +14,11 @@
 
 * Ensure that accelerated mounts are started when starting / unpausing a container
 
-* Add command `am-reset <mount>` to reset an accelerated mount (removes sync container and volume).
+* Add subcommand `am reset <mount>` to reset an accelerated mount (removes sync container and volume).
 
-* Add command `am-logs <mount>` to show the Unison logs to debug syncing issues. Use `--follow`/`-f` to follow the logs.
+* Add subcommand `am logs <mount>` to show the Unison logs to debug syncing issues. Use `--follow`/`-f` to follow the logs.
 
-* Allow service names as accelerated mount as well. If a service is given, all configured bind-mounts of that service are accelerated. If a single bind-mount is given, only this mount is accelerated. Service names can also be passed to `am-reset` (resulting in the reset of all configured bind-mounts) and `am-logs` (if more than one bind-mount is configured, the first one is selected).
+* Allow service names as accelerated mount as well. If a service is given, all configured bind-mounts of that service are accelerated. If a single bind-mount is given, only this mount is accelerated. Service names can also be passed to `am reset` (resulting in the reset of all configured bind-mounts) and `am logs` (if more than one bind-mount is configured, the first one is selected).
 
 * Accelerated mounts have learned a new option `ignore`, e.g. `ignore: "Name {.git,*.md}"`. This is much easier than having to set all flags if you only want to customize which files/folders should not be synced.
 
