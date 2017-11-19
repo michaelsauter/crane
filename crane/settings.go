@@ -120,7 +120,7 @@ func (s *Settings) Update(latestVersion string) error {
 }
 
 func (s *Settings) DelayNextUpdateCheck() error {
-	s.NextUpdateCheck = time.Now().Add(time.Hour).Add(autoUpdateCheckInterval())
+	s.NextUpdateCheck = time.Now().Add(time.Hour)
 	return s.Write(s.filename)
 }
 

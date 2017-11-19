@@ -82,8 +82,12 @@ var (
 
 	versionCommand = app.Command(
 		"version",
-		"Displays the version of Crane.",
+		"Displays the current version and checks for update.",
 	)
+	versionNoCheckFlag = versionCommand.Flag(
+		"no-check",
+		"Don't check for updates.",
+	).Short('n').Bool()
 
 	statsCommand = app.Command(
 		"stats",
@@ -270,11 +274,6 @@ var (
 		"Follow log output.",
 	).Short('f').Bool()
 	amLogsTargetArg = amLogsCommand.Arg("target", "Target of command").String()
-
-	updateCheckCommand = app.Command(
-		"update-check",
-		"Checks for updates",
-	)
 )
 
 func isVerbose() bool {
@@ -349,12 +348,14 @@ func runCli() {
 		printNoticef(err.Error())
 	} else {
 		settings.CorrectVersion()
-		if settings.ShouldCheckForUpdates() {
-			if err := checkForUpdates(false); err != nil {
-				printNoticef("Could not update settings file")
+		if command != versionCommand.FullCommand() {
+			if settings.ShouldCheckForUpdates() {
+				if err := checkForUpdates(false); err != nil {
+					printNoticef("Could not update settings file")
+				}
+			} else if settings.LatestVersion != Version {
+				printNoticef("Newer version %s is available!\n\n", settings.LatestVersion)
 			}
-		} else if settings.LatestVersion != Version {
-			printNoticef("Newer version %s is available!\n\n", settings.LatestVersion)
 		}
 	}
 
@@ -371,6 +372,10 @@ func runCli() {
 
 	case versionCommand.FullCommand():
 		printVersion()
+		if !*versionNoCheckFlag && settings.CheckForUpdates {
+			fmt.Println("")
+			checkForUpdates(true)
+		}
 
 	case statsCommand.FullCommand():
 		commandAction(*statsTargetArg, func(uow *UnitOfWork) {
@@ -455,9 +460,6 @@ func runCli() {
 		commandAction(*generateTargetArg, func(uow *UnitOfWork) {
 			uow.Generate(*templateFlag, *outputFlag)
 		}, false)
-
-	case updateCheckCommand.FullCommand():
-		checkForUpdates(true)
 
 	case amResetCommand.FullCommand():
 		cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)

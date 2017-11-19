@@ -55,6 +55,7 @@ func checkForUpdates(manual bool) error {
 		} else {
 			verboseMsg(fmt.Sprintf("Update check failed: %s", err.Error()))
 		}
+		settings.DelayNextUpdateCheck()
 		return nil
 	}
 
@@ -69,7 +70,7 @@ func checkForUpdates(manual bool) error {
 		fmt.Printf("\nUpdate now: %s\n\n", response.LatestInstallationUrl)
 		return settings.Update(response.LatestVersion)
 	}
-	printSuccessf("Version %s is up-to-date!\n\n", Version)
+	printSuccessf("Version %s is the latest version!\n\n", Version)
 	return settings.Update(Version)
 }
 
