@@ -1419,7 +1419,10 @@ func (c *container) start(adHoc bool, targeted bool, attachFlag bool, detachFlag
 	if len(c.DetachKeys()) > 0 {
 		args = append(args, "--detach-keys", c.DetachKeys())
 	}
-	if c.Stdin_Open || c.Interactive {
+	// Interactive
+	// Implies attaching to the container, so only applicable
+	// if the container is being targeted.
+	if targeted && (c.Stdin_Open || c.Interactive) {
 		args = append(args, "--interactive")
 	}
 
