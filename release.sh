@@ -20,6 +20,8 @@ rm crane/version_basic.go.bak
 rm crane/version_pro.go.bak
 sed -i.bak 's/VERSION="'$old_version'"/VERSION="'$version'"/' download.sh
 rm download.sh.bak
+sed -i.bak 's/'$old_version'/'$version'/' README.md
+rm README.md.bak
 
 echo "Mark version as released in changelog..."
 today=$(date +'%Y-%m-%d')
@@ -33,7 +35,7 @@ echo "Build binaries..."
 crane run crane make build
 
 echo "Update repository..."
-git add crane/cli.go download.sh README.md CHANGELOG.md CONTRIBUTORS
+git add crane/version_basic.go download.sh README.md CHANGELOG.md CONTRIBUTORS
 git commit -m "Bump version to ${version}"
 git tag --sign --message="v$version" "v$version"
 git tag --sign --message="latest" --force latest

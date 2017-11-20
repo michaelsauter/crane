@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 3.3.1 (2017-11-20)
+
 * Do not add `--interactive` to non-targeted containers, otherwise
   Docker attaches to them.
 
