@@ -973,8 +973,10 @@ func (c *container) Run(cmds []string, detachFlag bool) {
 // using the non-prefixed name as an alias
 func (c *container) connectWithNetworks(adHoc bool) {
 	containerNetworks := c.Networks()
-	if _, ok := containerNetworks["default"]; !ok {
-		containerNetworks["default"] = NetworkParameters{}
+	if cfg.Network("default") != nil {
+		if _, ok := containerNetworks["default"]; !ok {
+			containerNetworks["default"] = NetworkParameters{}
+		}
 	}
 	for name, params := range containerNetworks {
 		networkName := cfg.Network(name).ActualName()

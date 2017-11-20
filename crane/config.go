@@ -323,7 +323,7 @@ func (c *config) setNetworkMap() {
 		if len(c.prefix) > 0 {
 			c.networkMap["default"] = &network{RawName: "default"}
 		} else {
-			verboseMsg("Prefix is disabled, not setting up the default network")
+			verboseMsg("No default network will be setup as prefix is disabled.")
 		}
 	}
 }

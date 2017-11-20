@@ -5,6 +5,9 @@
 * Do not add `--interactive` to non-targeted containers, otherwise
   Docker attaches to them.
 
+* Do not try to connect containers with the default network when none
+  has been setup (which is the case when prefixing is disabled).
+
 ## 3.3.0 (2017-11-19)
 
 * **Caution!** Enable prefixing by default again. This restores 3.0 behaviour and makes Crane more compatible with docker-compose. If you don't want this, configure `prefix: false`. However, doing this will also disable the new, automatic `default` network described in the next section.
