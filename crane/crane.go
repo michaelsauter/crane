@@ -56,7 +56,7 @@ func handleRecoveredError(recovered interface{}) {
 	os.Exit(statusError.status)
 }
 
-var requiredDockerVersion = []int{1, 6}
+var requiredDockerVersion = []int{1, 13}
 
 func RealMain() {
 	// On panic, recover the error, display it and return the given status code if any
