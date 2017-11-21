@@ -22,8 +22,8 @@ type Container interface {
 	Provision(nocache bool)
 	PullImage()
 	Create(cmds []string)
-	Run(cmds []string, detachFlag bool)
-	Start(targeted bool, attachFlag bool)
+	Run(cmds []string, targeted bool, detachFlag bool)
+	Start(targeted bool)
 	Kill()
 	Stop()
 	Pause()
@@ -950,10 +950,8 @@ func (c *container) Create(cmds []string) {
 // Implemented as create+start as we also need to connect to networks,
 // and that might fail if we used "docker run" and
 // have a very short-lived container.
-func (c *container) Run(cmds []string, detachFlag bool) {
+func (c *container) Run(cmds []string, targeted bool, detachFlag bool) {
 	adHoc := (len(cmds) > 0)
-	targeted := true
-	attachFlag := false
 
 	if !adHoc {
 		c.Rm(true, false)
@@ -966,7 +964,7 @@ func (c *container) Run(cmds []string, detachFlag bool) {
 
 	c.connectWithNetworks(adHoc)
 
-	c.start(adHoc, targeted, attachFlag, detachFlag)
+	c.start(adHoc, targeted, detachFlag)
 }
 
 // Connects container with default network if required,
@@ -1375,17 +1373,17 @@ func (c *container) createArgs(cmds []string) []string {
 }
 
 // Start container
-func (c *container) Start(targeted bool, attachFlag bool) {
+func (c *container) Start(targeted bool) {
 	adHoc := false
 	detachFlag := false
 	if c.Exists() {
 		if !c.Running() {
 			c.startAcceleratedMounts()
 			fmt.Fprintf(c.CommandsOut(), "Starting container %s ...\n", c.ActualName(adHoc))
-			c.start(adHoc, targeted, attachFlag, detachFlag)
+			c.start(adHoc, targeted, detachFlag)
 		}
 	} else {
-		c.Run([]string{}, detachFlag)
+		c.Run([]string{}, targeted, detachFlag)
 	}
 }
 
@@ -1399,33 +1397,32 @@ func (c *container) startAcceleratedMounts() {
 	}
 }
 
-func (c *container) start(adHoc bool, targeted bool, attachFlag bool, detachFlag bool) {
+func (c *container) start(adHoc bool, targeted bool, detachFlag bool) {
 	executeHook(c.Hooks().PreStart(), c.ActualName(adHoc))
 
 	args := []string{"start"}
 
-	// Attach or detach?
-	// Precedence: ad-hoc > flags > config > default (targeted)
-	if attachFlag || adHoc {
-		args = append(args, "--attach")
-	} else if !detachFlag {
-		detach := !targeted
-		if c.Detach != nil {
-			detach = *c.Detach
-		}
-		if !detach {
+	// If detach is not configured, it is false by default
+	configDetach := false
+	if c.Detach != nil {
+		configDetach = *c.Detach
+	}
+
+	// It is only possible to attach to targeted containers
+	if targeted {
+		// adHoc always attaches because of --rm
+		if adHoc || (!detachFlag && !configDetach) {
 			args = append(args, "--attach")
+			// Interactive - implies attaching!
+			if c.Stdin_Open || c.Interactive {
+				args = append(args, "--interactive")
+			}
 		}
 	}
+
 	// DetachKeys
 	if len(c.DetachKeys()) > 0 {
 		args = append(args, "--detach-keys", c.DetachKeys())
-	}
-	// Interactive
-	// Implies attaching to the container, so only applicable
-	// if the container is being targeted.
-	if targeted && (c.Stdin_Open || c.Interactive) {
-		args = append(args, "--interactive")
 	}
 
 	args = append(args, c.ActualName(adHoc))
@@ -1486,7 +1483,7 @@ func (c *container) Unpause() {
 func (c *container) Exec(cmds []string, privileged bool, user string) {
 	name := c.ActualName(false)
 	if !c.Running() {
-		c.Start(false, false)
+		c.Start(false)
 	}
 	args := []string{"exec"}
 	if privileged {

@@ -77,9 +77,9 @@ func (uow *UnitOfWork) Run(cmds []string, detach bool) {
 	uow.prepareRequirements()
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Run(cmds, detach)
+			container.Run(cmds, true, detach)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
-			container.Start(false, false)
+			container.Start(false)
 		}
 	}
 }
@@ -89,9 +89,9 @@ func (uow *UnitOfWork) Up(cmds []string, detach bool, noCache bool, parallel int
 	uow.prepareRequirements()
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Run(cmds, detach)
+			container.Run(cmds, true, detach)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
-			container.Start(false, false)
+			container.Start(false)
 		}
 	}
 }
@@ -141,13 +141,13 @@ func (uow *UnitOfWork) Pause() {
 }
 
 // Start containers.
-func (uow *UnitOfWork) Start(attach bool) {
+func (uow *UnitOfWork) Start() {
 	uow.prepareRequirements()
 	for _, container := range uow.Containers() {
 		if includes(uow.targeted, container.Name()) {
-			container.Start(true, attach)
+			container.Start(true)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
-			container.Start(false, false)
+			container.Start(false)
 		}
 	}
 }
@@ -171,7 +171,7 @@ func (uow *UnitOfWork) Exec(cmds []string, privileged bool, user string) {
 		if includes(uow.targeted, container.Name()) {
 			container.Exec(cmds, privileged, user)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
-			container.Start(false, false)
+			container.Start(false)
 		}
 	}
 }
@@ -190,7 +190,7 @@ func (uow *UnitOfWork) Create(cmds []string) {
 		if includes(uow.targeted, container.Name()) {
 			container.Create(cmds)
 		} else if includes(uow.requireStarted, container.Name()) || !container.Exists() {
-			container.Start(false, false)
+			container.Start(false)
 		}
 	}
 }

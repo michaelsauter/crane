@@ -131,10 +131,6 @@ var (
 		"start",
 		"Start the containers.",
 	)
-	startAttachFlag = startCommand.Flag(
-		"attach",
-		"Attach to container",
-	).Short('a').Bool()
 	startTargetArg = startCommand.Arg("target", "Target of command").String()
 
 	stopCommand = app.Command(
@@ -404,7 +400,7 @@ func runCli() {
 
 	case startCommand.FullCommand():
 		commandAction(*startTargetArg, func(uow *UnitOfWork) {
-			uow.Start(*startAttachFlag)
+			uow.Start()
 		}, true)
 
 	case stopCommand.FullCommand():

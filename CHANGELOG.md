@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Remove broken flag `crane start --attach`. This flag was introduced in 3.3.0 but did not work properly, and doesn't add much value anyway. It would make more sense to have this flag on `crane run`, but that is left for another version.
+
+* Apply `--interactive` to `docker start` only if `--attach` is already passed to it.
+
 ## 3.3.1 (2017-11-20)
 
 * Do not add `--interactive` to non-targeted containers, otherwise
