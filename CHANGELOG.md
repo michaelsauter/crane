@@ -6,6 +6,8 @@
 
 * Apply `--interactive` to `docker start` only if `--attach` is already passed to it.
 
+* Do not output container ID after `docker create` during `crane run` as the container name is printed after `docker start` anyway.
+
 ## 3.3.1 (2017-11-20)
 
 * Do not add `--interactive` to non-targeted containers, otherwise

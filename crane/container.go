@@ -960,7 +960,9 @@ func (c *container) Run(cmds []string, targeted bool, detachFlag bool) {
 	fmt.Fprintf(c.CommandsOut(), "Running container %s ...\n", c.ActualName(adHoc))
 
 	args := append([]string{"create"}, c.createArgs(cmds)...)
-	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
+	// Hide output of container ID, the name of the container
+	// is printed later anyway when it is started.
+	executeCommand("docker", args, nil, c.CommandsErr())
 
 	c.connectWithNetworks(adHoc)
 
