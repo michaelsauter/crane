@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* [Bugfix] Create default network automatically
+
 ## 3.3.2 (2017-11-21)
 
 * Remove broken flag `crane start --attach`. This flag was introduced in 3.3.0 but did not work properly, and doesn't add much value anyway. It would make more sense to have this flag on `crane run`, but that is left for another version.

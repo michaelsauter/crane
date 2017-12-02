@@ -214,6 +214,17 @@ func TestActualNet(t *testing.T) {
 	assert.Equal(t, "qux_bar", c.ActualNet())
 }
 
+func TestNetworks(t *testing.T) {
+	var c *container
+	// automatically has default network configured for every container
+	c = &container{RawName: "foo"}
+	cfg = &config{
+		containerMap: map[string]Container{"foo": c},
+		networkMap:   map[string]Network{"default": &network{RawName: "default"}},
+	}
+	assert.Contains(t, c.Networks(), "default")
+}
+
 func TestCmd(t *testing.T) {
 	var c *container
 	// String

@@ -671,6 +671,12 @@ func (c *container) Networks() map[string]NetworkParameters {
 				panic(StatusError{fmt.Errorf("unknown type: %v", value), 65})
 			}
 		}
+
+		if cfg.Network("default") != nil {
+			if _, ok := c.networks["default"]; !ok {
+				c.networks["default"] = NetworkParameters{}
+			}
+		}
 	}
 	return c.networks
 }
@@ -973,11 +979,6 @@ func (c *container) Run(cmds []string, targeted bool, detachFlag bool) {
 // using the non-prefixed name as an alias
 func (c *container) connectWithNetworks(adHoc bool) {
 	containerNetworks := c.Networks()
-	if cfg.Network("default") != nil {
-		if _, ok := containerNetworks["default"]; !ok {
-			containerNetworks["default"] = NetworkParameters{}
-		}
-	}
 	for name, params := range containerNetworks {
 		networkName := cfg.Network(name).ActualName()
 		args := []string{"network", "connect"}
