@@ -487,12 +487,20 @@ func runCli() {
 	case amLogsCommand.FullCommand():
 		cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
 		var logsTarget string
+		configuredAcceleratedMounts := cfg.AcceleratedMountNames()
+
 		container := cfg.Container(*amLogsTargetArg)
 		if container != nil {
-			bindMounts := container.BindMounts(cfg.VolumeNames())
-			am := &acceleratedMount{RawVolume: bindMounts[0], configPath: cfg.Path()}
+			allBindMounts := container.BindMounts(cfg.VolumeNames())
+			acceleratedBindMounts := []string{}
+			for _, name := range allBindMounts {
+				if includes(configuredAcceleratedMounts, name) {
+					acceleratedBindMounts = append(acceleratedBindMounts, name)
+				}
+			}
+			am := &acceleratedMount{RawVolume: acceleratedBindMounts[0], configPath: cfg.Path()}
 			logsTarget = am.Volume()
-			if len(bindMounts) > 1 {
+			if len(acceleratedBindMounts) > 1 {
 				printNoticef("WARNING: %s has more than one bind-mount configured. The first one will be selected. To select a different bind-mount, pass it directly.\n", *amLogsTargetArg)
 			}
 		} else {
@@ -507,9 +515,8 @@ func runCli() {
 			printInfof("%s logs of accelerated mount %s ...\n", kind, *amLogsTargetArg)
 			am.Logs(*amFollowFlag)
 		} else {
-			amNames := cfg.AcceleratedMountNames()
-			if len(amNames) > 0 {
-				printErrorf("ERROR: No such accelerated mount. Configured mounts: %s\n", strings.Join(amNames, ", "))
+			if len(configuredAcceleratedMounts) > 0 {
+				printErrorf("ERROR: No such accelerated mount. Configured mounts: %s\n", strings.Join(configuredAcceleratedMounts, ", "))
 			} else {
 				printErrorf("ERROR: No accelerated mounts configured.\n")
 			}

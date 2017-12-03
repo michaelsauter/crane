@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-* [Bugfix] Create default network automatically
+* [Bugfix] Create default network automatically.
+
+* [Bugfix] If `am logs` is passed a service which has multiple bind-mounts configured, Crane is now selecting the first accelerated one, not simply the first one (which might not be accelerated).
 
 ## 3.3.2 (2017-11-21)
 
