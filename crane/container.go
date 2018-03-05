@@ -980,7 +980,11 @@ func (c *container) Run(cmds []string, targeted bool, detachFlag bool) {
 func (c *container) connectWithNetworks(adHoc bool) {
 	containerNetworks := c.Networks()
 	for name, params := range containerNetworks {
-		networkName := cfg.Network(name).ActualName()
+		network := cfg.Network(name)
+		if network == nil {
+			panic(StatusError{fmt.Errorf("Error when parsing network `%v`: container network is not in main networks block.\n", name), 78})
+		}
+		networkName := network.ActualName()
 		args := []string{"network", "connect"}
 		for _, alias := range params.Alias(c.Name()) {
 			args = append(args, "--alias", alias)
