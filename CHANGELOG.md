@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* [Bugfix] Attach --volumes flag to `rm` command, not `provision`
+
+* [Enhancement] Display proper error if non-existant network is referenced
+
 ## 3.3.3 (2017-12-03)
 
 * [Bugfix] Create default network automatically.
