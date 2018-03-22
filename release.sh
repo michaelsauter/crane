@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -eux
 
 version=$1
 
@@ -13,8 +13,7 @@ echo "Running tests..."
 crane run crane make test
 
 echo "Update version..."
-grepped_version=$(grep -o "v[0-9]*\.[0-9]*\.[0-9]*" crane/version_basic.go)
-old_version=${grepped_version:1}
+old_version=$(grep -o "[0-9]*\.[0-9]*\.[0-9]*" crane/version_basic.go)
 sed -i.bak 's/Version = "'$old_version'"/Version = "'$version'"/' crane/version_basic.go crane/version_pro.go
 rm crane/version_basic.go.bak
 rm crane/version_pro.go.bak

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 3.3.4 (2018-03-22)
+
 * [Bugfix] Attach --volumes flag to `rm` command, not `provision`
 
 * [Enhancement] Display proper error if non-existant network is referenced
