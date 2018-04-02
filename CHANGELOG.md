@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 3.4.0 (2018-04-02)
+
 * [Enhancement] Improve CLI help output.
 
 * [Task] Check less frequently for updates (once every 14 days).
