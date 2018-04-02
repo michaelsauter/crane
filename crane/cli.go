@@ -2,10 +2,10 @@ package crane
 
 import (
 	"fmt"
-	"os"
-	"strings"
-
 	"github.com/alecthomas/kingpin"
+	"os"
+	"sort"
+	"strings"
 )
 
 var cfg Config
@@ -41,6 +41,13 @@ var (
 		"tag",
 		"Override image tags.",
 	).String()
+
+	cmdCommand = app.Command(
+		"cmd",
+		"Execute predefined command",
+	)
+	cmdCmdArg       = cmdCommand.Arg("command", "Command to execute").String()
+	cmdArgumentsArg = cmdCommand.Arg("arguments", "Arguments for the command").Strings()
 
 	upCommand = app.Command(
 		"up",
@@ -356,6 +363,36 @@ func runCli() {
 	}
 
 	switch command {
+	case cmdCommand.FullCommand():
+		cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
+		printCmds := func() {
+			cmds := cfg.Cmds()
+			cmdNames := []string{}
+			for name, _ := range cmds {
+				cmdNames = append(cmdNames, name)
+			}
+			sort.Strings(cmdNames)
+			for _, name := range cmdNames {
+				fmt.Fprintf(os.Stdout, "%s: ", name)
+				printInfof("%s\n", strings.Join(cmds[name], " "))
+			}
+		}
+		if len(*cmdCmdArg) == 0 {
+			printCmds()
+			return
+		}
+		definedCmd := cfg.Cmd(*cmdCmdArg)
+		if definedCmd == nil {
+			printErrorf("No such command: %s\n\n", *cmdCmdArg)
+			fmt.Fprintf(os.Stdout, "Available commands:\n")
+			printCmds()
+			return
+		}
+		args := []string{}
+		args = append(args, definedCmd...)
+		args = append(args, *cmdArgumentsArg...)
+		executeCommand("crane", args, os.Stdout, os.Stderr)
+
 	case upCommand.FullCommand():
 		commandAction(*upTargetArg, func(uow *UnitOfWork) {
 			uow.Up(*upCmdArg, *upDetachFlag, *upNoCacheFlag, *upParallelFlag)

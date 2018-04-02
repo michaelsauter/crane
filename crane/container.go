@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/flynn/go-shlex"
 	"io"
 	"os"
 	"path/filepath"
@@ -865,29 +864,12 @@ func (c *container) Workdir() string {
 
 func (c *container) Cmd() []string {
 	var cmd []string
-	var rCmd = c.RawCommand
+	var rawCmd = c.RawCommand
 	if c.RawCmd != nil {
-		rCmd = c.RawCmd
+		rawCmd = c.RawCmd
 	}
-	if rCmd != nil {
-		switch rawCmd := rCmd.(type) {
-		case string:
-			if len(rawCmd) > 0 {
-				cmds, err := shlex.Split(expandEnv(rawCmd))
-				if err != nil {
-					printErrorf("Error when parsing cmd `%v`: %v. Proceeding with %q.", rawCmd, err, cmds)
-				}
-				cmd = append(cmd, cmds...)
-			}
-		case []interface{}:
-			cmds := make([]string, len(rawCmd))
-			for i, v := range rawCmd {
-				cmds[i] = expandEnv(fmt.Sprintf("%v", v))
-			}
-			cmd = append(cmd, cmds...)
-		default:
-			panic(StatusError{fmt.Errorf("unknown type: %v", rawCmd), 65})
-		}
+	if rawCmd != nil {
+		cmd = append(cmd, stringSlice(rawCmd)...)
 	}
 	return cmd
 }

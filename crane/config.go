@@ -25,9 +25,11 @@ type Config interface {
 	Tag() string
 	NetworkNames() []string
 	VolumeNames() []string
+	Cmds() map[string][]string
 	AcceleratedMountNames() []string
 	Network(name string) Network
 	Volume(name string) Volume
+	Cmd(name string) []string
 	AcceleratedMount(volume string) AcceleratedMount
 	ContainerMap() ContainerMap
 	Container(name string) Container
@@ -41,6 +43,7 @@ type config struct {
 	RawHooks             map[string]hooks             `json:"hooks" yaml:"hooks"`
 	RawNetworks          map[string]*network          `json:"networks" yaml:"networks"`
 	RawVolumes           map[string]*volume           `json:"volumes" yaml:"volumes"`
+	RawCmds              map[string]interface{}       `json:"commands" yaml:"commands"`
 	RawAcceleratedMounts map[string]*acceleratedMount `json:"accelerated-mounts" yaml:"accelerated-mounts"`
 	RawMacSyncs          map[string]*acceleratedMount `json:"mac-syncs" yaml:"mac-syncs"`
 	containerMap         ContainerMap
@@ -48,6 +51,7 @@ type config struct {
 	volumeMap            VolumeMap
 	acceleratedMountMap  AcceleratedMountMap
 	groups               map[string][]string
+	cmds                 map[string][]string
 	path                 string
 	prefix               string
 	tag                  string
@@ -239,6 +243,10 @@ func (c *config) VolumeNames() []string {
 	return volumes
 }
 
+func (c *config) Cmds() map[string][]string {
+	return c.cmds
+}
+
 func (c *config) AcceleratedMountNames() []string {
 	acceleratedMounts := []string{}
 	for name, _ := range c.acceleratedMountMap {
@@ -258,6 +266,10 @@ func (c *config) Volume(name string) Volume {
 
 func (c *config) AcceleratedMount(name string) AcceleratedMount {
 	return c.acceleratedMountMap[name]
+}
+
+func (c *config) Cmd(name string) []string {
+	return c.cmds[name]
 }
 
 // Load configuration into the internal structs from the raw, parsed ones
@@ -288,6 +300,12 @@ func (c *config) initialize(prefixFlag string) {
 				}
 			}
 		}
+	}
+	// Cmds
+	c.cmds = make(map[string][]string)
+	for cmdRawName, rawCmd := range c.RawCmds {
+		cmdName := expandEnv(cmdRawName)
+		c.cmds[cmdName] = stringSlice(rawCmd)
 	}
 	// Container map
 	c.containerMap = make(map[string]Container)
