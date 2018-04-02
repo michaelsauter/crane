@@ -14,6 +14,7 @@ ideally suited for development environments or continuous integration.
 * Simple configuration with 1:1 mapping to Docker run flags
 * `docker-compose` compatible
 * **ultra-fast bind-mounts via Unison on Mac** in the PRO version
+* Shortcut commands
 * Grouping of containers
 * Excluding / limiting containers via CLI
 * Smart detach / attach behaviour
