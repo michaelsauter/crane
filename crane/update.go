@@ -75,5 +75,5 @@ func checkForUpdates(manual bool) error {
 }
 
 func autoUpdateCheckInterval() time.Duration {
-	return 7 * 24 * time.Hour
+	return 14 * 24 * time.Hour
 }
