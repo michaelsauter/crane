@@ -96,6 +96,30 @@ func checkDockerClient() {
 	}
 }
 
+// Assemble slice of strings from slice or string with spaces
+func stringSlice(sliceLike interface{}) []string {
+	var strSlice []string
+	switch sl := sliceLike.(type) {
+	case string:
+		if len(sl) > 0 {
+			parts, err := shlex.Split(expandEnv(sl))
+			if err != nil {
+				printErrorf("Error when parsing cmd `%v`: %v. Proceeding with %q.", sl, err, parts)
+			}
+			strSlice = append(strSlice, parts...)
+		}
+	case []interface{}:
+		parts := make([]string, len(sl))
+		for i, v := range sl {
+			parts[i] = expandEnv(fmt.Sprintf("%v", v))
+		}
+		strSlice = append(strSlice, parts...)
+	default:
+		panic(StatusError{fmt.Errorf("unknown type: %v", sl), 65})
+	}
+	return strSlice
+}
+
 // Similar to strings.Join() for int slices.
 func intJoin(intSlice []int, sep string) string {
 	var stringSlice []string

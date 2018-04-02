@@ -8,6 +8,13 @@
 
 * [Feature] Add an easy way to share the SSH socket with a container by adding the `share-ssh-socket` configuration.
 
+* [Feature] Implement shortcut commands. It is now possible to define commands
+  in the `crane.yml`, which can be executed by running `crane cmd <name>`. For
+  example, one could define `console: run web rails c` to run a Rails console in
+  an ad-hoc `web` container with `crane cmd console`. Another use case is e.g.
+  `psql: exec postgres psql` to run PSQL inside the `postgres` container via
+  `crane cmd psql`.
+
 ## 3.3.4 (2018-03-22)
 
 * [Bugfix] Attach --volumes flag to `rm` command, not `provision`
