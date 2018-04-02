@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* [Enhancement] Improve CLI help output.
+
+* [Task] Check less frequently for updates (once every 14 days).
+
 ## 3.3.4 (2018-03-22)
 
 * [Bugfix] Attach --volumes flag to `rm` command, not `provision`
