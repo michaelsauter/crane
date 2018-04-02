@@ -24,7 +24,9 @@ rm README.md.bak
 
 echo "Mark version as released in changelog..."
 today=$(date +'%Y-%m-%d')
-sed -i.bak "s/Unreleased/Unreleased\n\n## $version ($today)/" CHANGELOG.md
+sed -i.bak 's/Unreleased/Unreleased\
+\
+## '$version' ('$today')/' CHANGELOG.md
 rm CHANGELOG.md.bak
 
 echo "Update contributors..."
@@ -36,7 +38,7 @@ crane run crane make build
 echo "Update repository..."
 git add crane/version_basic.go download.sh README.md CHANGELOG.md CONTRIBUTORS
 git commit -m "Bump version to ${version}"
-git tag --sign --message="v$version" "v$version"
+git tag --sign --message="v$version" --force "v$version"
 git tag --sign --message="latest" --force latest
 
 

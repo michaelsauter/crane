@@ -42,13 +42,6 @@ var (
 		"Override image tags.",
 	).String()
 
-	cmdCommand = app.Command(
-		"cmd",
-		"Execute predefined command",
-	)
-	cmdCmdArg       = cmdCommand.Arg("command", "Command to execute").String()
-	cmdArgumentsArg = cmdCommand.Arg("arguments", "Arguments for the command").Strings()
-
 	upCommand = app.Command(
 		"up",
 		"Build or pull images if they don't exist, then run or start the containers. Alias of `lift`.",
@@ -87,52 +80,23 @@ var (
 	liftTargetArg = liftCommand.Arg("target", "Target of command").String()
 	liftCmdArg    = liftCommand.Arg("cmd", "Command for container").Strings()
 
-	versionCommand = app.Command(
-		"version",
-		"Display the current version and check for updates.",
+	runCommand = app.Command(
+		"run",
+		"Run containers. Already existing containers will be removed first.",
 	)
-	versionNoCheckFlag = versionCommand.Flag(
-		"no-check",
-		"Don't check for updates.",
-	).Short('n').Bool()
+	runDetachFlag = runCommand.Flag(
+		"detach",
+		"Detach from container.",
+	).Short('d').Bool()
+	runTargetArg = runCommand.Arg("target", "Target of command").String()
+	runCmdArg    = runCommand.Arg("cmd", "Command for container").Strings()
 
-	statsCommand = app.Command(
-		"stats",
-		"Display statistics about containers.",
+	createCommand = app.Command(
+		"create",
+		"Create containers. Already existing containers will be removed first.",
 	)
-	statsNoStreamFlag = statsCommand.Flag(
-		"no-stream",
-		"Disable stats streaming.",
-	).Short('n').Bool()
-	statsTargetArg = statsCommand.Arg("target", "Target of command").String()
-
-	statusCommand = app.Command(
-		"status",
-		"Display status of containers (similar to `docker ps`).",
-	)
-	noTruncFlag = statusCommand.Flag(
-		"no-trunc",
-		"Don't truncate output.",
-	).Short('n').Bool()
-	statusTargetArg = statusCommand.Arg("target", "Target of command").String()
-
-	pushCommand = app.Command(
-		"push",
-		"Push containers to the registry.",
-	)
-	pushTargetArg = pushCommand.Arg("target", "Target of command").String()
-
-	pauseCommand = app.Command(
-		"pause",
-		"Pause running containers.",
-	)
-	pauseTargetArg = pauseCommand.Arg("target", "Target of command").String()
-
-	unpauseCommand = app.Command(
-		"unpause",
-		"Unpause paused containers.",
-	)
-	unpauseTargetArg = unpauseCommand.Arg("target", "Target of command").String()
+	createTargetArg = createCommand.Arg("target", "Target of command").String()
+	createCmdArg    = createCommand.Arg("cmd", "Command for container").Strings()
 
 	startCommand = app.Command(
 		"start",
@@ -181,23 +145,17 @@ var (
 	).Bool()
 	rmTargetArg = rmCommand.Arg("target", "Target of command").String()
 
-	runCommand = app.Command(
-		"run",
-		"Run containers. Already existing containers will be removed first.",
+	pauseCommand = app.Command(
+		"pause",
+		"Pause running containers.",
 	)
-	runDetachFlag = runCommand.Flag(
-		"detach",
-		"Detach from container.",
-	).Short('d').Bool()
-	runTargetArg = runCommand.Arg("target", "Target of command").String()
-	runCmdArg    = runCommand.Arg("cmd", "Command for container").Strings()
+	pauseTargetArg = pauseCommand.Arg("target", "Target of command").String()
 
-	createCommand = app.Command(
-		"create",
-		"Create containers. Already existing containers will be removed first.",
+	unpauseCommand = app.Command(
+		"unpause",
+		"Unpause paused containers.",
 	)
-	createTargetArg = createCommand.Arg("target", "Target of command").String()
-	createCmdArg    = createCommand.Arg("cmd", "Command for container").Strings()
+	unpauseTargetArg = unpauseCommand.Arg("target", "Target of command").String()
 
 	provisionCommand = app.Command(
 		"provision",
@@ -218,6 +176,12 @@ var (
 		"Pull images.",
 	)
 	pullTargetArg = pullCommand.Arg("target", "Target of command").String()
+
+	pushCommand = app.Command(
+		"push",
+		"Push containers to the registry.",
+	)
+	pushTargetArg = pushCommand.Arg("target", "Target of command").String()
 
 	logsCommand = app.Command(
 		"logs",
@@ -245,6 +209,33 @@ var (
 	).String()
 	logsTargetArg = logsCommand.Arg("target", "Target of command").String()
 
+	statsCommand = app.Command(
+		"stats",
+		"Display statistics about containers.",
+	)
+	statsNoStreamFlag = statsCommand.Flag(
+		"no-stream",
+		"Disable stats streaming.",
+	).Short('n').Bool()
+	statsTargetArg = statsCommand.Arg("target", "Target of command").String()
+
+	statusCommand = app.Command(
+		"status",
+		"Display status of containers (similar to `docker ps`).",
+	)
+	noTruncFlag = statusCommand.Flag(
+		"no-trunc",
+		"Don't truncate output.",
+	).Short('n').Bool()
+	statusTargetArg = statusCommand.Arg("target", "Target of command").String()
+
+	cmdCommand = app.Command(
+		"cmd",
+		"Execute predefined shortcut command.",
+	)
+	cmdCmdArg       = cmdCommand.Arg("command", "Command to execute").String()
+	cmdArgumentsArg = cmdCommand.Arg("arguments", "Arguments for the command").Strings()
+
 	generateCommand = app.Command(
 		"generate",
 		"Generate files by passing the config to given template.",
@@ -261,22 +252,31 @@ var (
 
 	amCommand = app.Command(
 		"am",
-		"Sub-commands for accelerated mounts",
+		"Sub-commands for accelerated mounts.",
 	)
 	amResetCommand = amCommand.Command(
 		"reset",
-		"Reset accelerated mount",
+		"Reset accelerated mount.",
 	)
 	amResetTargetArg = amResetCommand.Arg("target", "Target of command").String()
 	amLogsCommand    = amCommand.Command(
 		"logs",
-		"Show logs of accelerated mount",
+		"Show logs of accelerated mount.",
 	)
 	amFollowFlag = amLogsCommand.Flag(
 		"follow",
 		"Follow log output.",
 	).Short('f').Bool()
 	amLogsTargetArg = amLogsCommand.Arg("target", "Target of command").String()
+
+	versionCommand = app.Command(
+		"version",
+		"Display the current version and check for updates.",
+	)
+	versionNoCheckFlag = versionCommand.Flag(
+		"no-check",
+		"Don't check for updates.",
+	).Short('n').Bool()
 )
 
 func isVerbose() bool {
