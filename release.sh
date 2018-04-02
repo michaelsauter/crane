@@ -10,7 +10,7 @@ if [ -z "$version" ]; then
 fi
 
 echo "Running tests..."
-crane run crane make test
+crane cmd test
 
 echo "Update version..."
 old_version=$(grep -o "[0-9]*\.[0-9]*\.[0-9]*" crane/version_basic.go)
@@ -33,7 +33,7 @@ echo "Update contributors..."
 git contributors | awk '{for (i=2; i<NF; i++) printf $i " "; print $NF}' > CONTRIBUTORS
 
 echo "Build binaries..."
-crane run crane make build
+crane cmd build
 
 echo "Update repository..."
 git add crane/version_basic.go download.sh README.md CHANGELOG.md CONTRIBUTORS
