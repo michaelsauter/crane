@@ -16,10 +16,10 @@ var defaultFiles = []string{"docker-compose.yml", "docker-compose.override.yml",
 var (
 	app         = kingpin.New("crane", "Lift containers with ease - https://www.craneup.tech").Interspersed(false).DefaultEnvars()
 	verboseFlag = app.Flag("verbose", "Enable verbose output.").Short('v').Bool()
-	dryRunFlag  = app.Flag("dry-run", "Dry run (implicit verbose, no side effects).").Bool()
+	dryRunFlag  = app.Flag("dry-run", "Dry run (implicitly verbose; no side effects).").Bool()
 	configFlag  = app.Flag(
 		"config",
-		"Location of config file.",
+		"Location of config file(s).",
 	).Short('c').Default(defaultFiles...).PlaceHolder("~/crane.yml").Strings()
 	prefixFlag = app.Flag(
 		"prefix",
@@ -27,15 +27,15 @@ var (
 	).Short('p').String()
 	excludeFlag = app.Flag(
 		"exclude",
-		"Exclude group or container. Can be repeated.",
+		"Exclude group or container (repeatable).",
 	).Short('x').PlaceHolder("container|group").Strings()
 	onlyFlag = app.Flag(
 		"only",
-		"Include only group or container.",
+		"Limit scope to group or container.",
 	).Short('o').PlaceHolder("container|group").String()
 	extendFlag = app.Flag(
 		"extend",
-		"Extend command from target to dependencies",
+		"Extend command from target to dependencies.",
 	).Short('e').Bool()
 	tagFlag = app.Flag(
 		"tag",
@@ -44,11 +44,11 @@ var (
 
 	upCommand = app.Command(
 		"up",
-		"Build or pull images if they don't exist, then run or start the containers.",
+		"Build or pull images if they don't exist, then run or start the containers. Alias of `lift`.",
 	)
 	upNoCacheFlag = upCommand.Flag(
 		"no-cache",
-		"Build the image without any cache.",
+		"Build the image(s) without any cache.",
 	).Short('n').Bool()
 	upParallelFlag = upCommand.Flag(
 		"parallel",
@@ -56,18 +56,18 @@ var (
 	).Short('l').Default("1").Int()
 	upDetachFlag = upCommand.Flag(
 		"detach",
-		"Detach from container",
+		"Detach from targeted container.",
 	).Short('d').Bool()
 	upTargetArg = upCommand.Arg("target", "Target of command").String()
 	upCmdArg    = upCommand.Arg("cmd", "Command for container").Strings()
 
 	liftCommand = app.Command(
 		"lift",
-		"Build or pull images if they don't exist, then run or start the containers.",
+		"Build or pull images if they don't exist, then run or start the containers. Alias of `up`.",
 	)
 	liftNoCacheFlag = liftCommand.Flag(
 		"no-cache",
-		"Build the image without any cache.",
+		"Build the image(s) without any cache.",
 	).Short('n').Bool()
 	liftParallelFlag = liftCommand.Flag(
 		"parallel",
@@ -75,14 +75,14 @@ var (
 	).Short('l').Default("1").Int()
 	liftDetachFlag = liftCommand.Flag(
 		"detach",
-		"Detach from container",
+		"Detach from targeted container.",
 	).Short('d').Bool()
 	liftTargetArg = liftCommand.Arg("target", "Target of command").String()
 	liftCmdArg    = liftCommand.Arg("cmd", "Command for container").Strings()
 
 	versionCommand = app.Command(
 		"version",
-		"Displays the current version and checks for update.",
+		"Display the current version and check for updates.",
 	)
 	versionNoCheckFlag = versionCommand.Flag(
 		"no-check",
@@ -91,63 +91,63 @@ var (
 
 	statsCommand = app.Command(
 		"stats",
-		"Displays statistics about containers.",
+		"Display statistics about containers.",
 	)
 	statsNoStreamFlag = statsCommand.Flag(
 		"no-stream",
-		"Disable stats streaming (Docker >= 1.7).",
+		"Disable stats streaming.",
 	).Short('n').Bool()
 	statsTargetArg = statsCommand.Arg("target", "Target of command").String()
 
 	statusCommand = app.Command(
 		"status",
-		"Displays status of containers.",
+		"Display status of containers (similar to `docker ps`).",
 	)
 	noTruncFlag = statusCommand.Flag(
 		"no-trunc",
 		"Don't truncate output.",
-	).Bool()
+	).Short('n').Bool()
 	statusTargetArg = statusCommand.Arg("target", "Target of command").String()
 
 	pushCommand = app.Command(
 		"push",
-		"Push the containers to the registry.",
+		"Push containers to the registry.",
 	)
 	pushTargetArg = pushCommand.Arg("target", "Target of command").String()
 
 	pauseCommand = app.Command(
 		"pause",
-		"Pause the containers.",
+		"Pause running containers.",
 	)
 	pauseTargetArg = pauseCommand.Arg("target", "Target of command").String()
 
 	unpauseCommand = app.Command(
 		"unpause",
-		"Unpause the containers.",
+		"Unpause paused containers.",
 	)
 	unpauseTargetArg = unpauseCommand.Arg("target", "Target of command").String()
 
 	startCommand = app.Command(
 		"start",
-		"Start the containers.",
+		"Start stopped containers. Non-existant containers will be created.",
 	)
 	startTargetArg = startCommand.Arg("target", "Target of command").String()
 
 	stopCommand = app.Command(
 		"stop",
-		"Stop the containers.",
+		"Stop running containers.",
 	)
 	stopTargetArg = stopCommand.Arg("target", "Target of command").String()
 
 	killCommand = app.Command(
 		"kill",
-		"Kill the containers.",
+		"Kill running containers.",
 	)
 	killTargetArg = killCommand.Arg("target", "Target of command").String()
 
 	execCommand = app.Command(
 		"exec",
-		"Execute command in the container(s).",
+		"Execute command in the targeted container(s). Stopped containers will be started, non-existant containers will be created first.",
 	)
 	execPrivilegedFlag = execCommand.Flag(
 		"privileged",
@@ -162,11 +162,11 @@ var (
 
 	rmCommand = app.Command(
 		"rm",
-		"Remove the containers.",
+		"Remove stopped containers.",
 	)
 	rmForceFlag = rmCommand.Flag(
 		"force",
-		"Kill containers if they are running first.",
+		"Remove running containers, too.",
 	).Short('f').Bool()
 	rmVolumesFlag = rmCommand.Flag(
 		"volumes",
@@ -176,18 +176,18 @@ var (
 
 	runCommand = app.Command(
 		"run",
-		"Run the containers.",
+		"Run containers. Already existing containers will be removed first.",
 	)
 	runDetachFlag = runCommand.Flag(
 		"detach",
-		"Detach from container",
+		"Detach from container.",
 	).Short('d').Bool()
 	runTargetArg = runCommand.Arg("target", "Target of command").String()
 	runCmdArg    = runCommand.Arg("cmd", "Command for container").Strings()
 
 	createCommand = app.Command(
 		"create",
-		"Create the containers.",
+		"Create containers. Already existing containers will be removed first.",
 	)
 	createTargetArg = createCommand.Arg("target", "Target of command").String()
 	createCmdArg    = createCommand.Arg("cmd", "Command for container").Strings()
@@ -198,7 +198,7 @@ var (
 	)
 	provisionNoCacheFlag = provisionCommand.Flag(
 		"no-cache",
-		"Build the image without any cache.",
+		"Build the image(s) without any cache.",
 	).Short('n').Bool()
 	provisionParallelFlag = provisionCommand.Flag(
 		"parallel",
@@ -214,7 +214,7 @@ var (
 
 	logsCommand = app.Command(
 		"logs",
-		"Display container logs.",
+		"Show container logs.",
 	)
 	followFlag = logsCommand.Flag(
 		"follow",
@@ -222,7 +222,7 @@ var (
 	).Short('f').Bool()
 	tailFlag = logsCommand.Flag(
 		"tail",
-		"Output the specified number of lines at the end of logs.",
+		"Define number of lines to display at the end of the logs.",
 	).String()
 	timestampsFlag = logsCommand.Flag(
 		"timestamps",
@@ -230,17 +230,17 @@ var (
 	).Short('t').Bool()
 	colorizeFlag = logsCommand.Flag(
 		"colorize",
-		"Output the lines with one color per container.",
+		"Use different color for each container.",
 	).Short('z').Bool()
 	sinceFlag = logsCommand.Flag(
 		"since",
-		"Show logs since timestamp (Docker >= 1.7).",
+		"Show logs since timestamp.",
 	).String()
 	logsTargetArg = logsCommand.Arg("target", "Target of command").String()
 
 	generateCommand = app.Command(
 		"generate",
-		"Generate files by passing the config to a given template.",
+		"Generate files by passing the config to given template.",
 	)
 	templateFlag = generateCommand.Flag(
 		"template",
@@ -258,7 +258,7 @@ var (
 	)
 	amResetCommand = amCommand.Command(
 		"reset",
-		"Resets accelerated mount",
+		"Reset accelerated mount",
 	)
 	amResetTargetArg = amResetCommand.Arg("target", "Target of command").String()
 	amLogsCommand    = amCommand.Command(
