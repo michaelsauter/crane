@@ -6,6 +6,8 @@
 
 * [Task] Check less frequently for updates (once every 14 days).
 
+* [Feature] Add an easy way to share the SSH socket with a container by adding the `share-ssh-socket` configuration.
+
 ## 3.3.4 (2018-03-22)
 
 * [Bugfix] Attach --volumes flag to `rm` command, not `provision`

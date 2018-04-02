@@ -141,6 +141,7 @@ type container struct {
 	RawRm                bool                  `json:"rm" yaml:"rm"`
 	RawSecurityOpt       []string              `json:"security-opt" yaml:"security-opt"`
 	RawSecurity_Opt      []string              `json:"security_opt" yaml:"security_opt"`
+	ShareSshSocket       bool                  `json:"share-ssh-socket" yaml:"share-ssh-socket"`
 	RawShmSize           string                `json:"shm-size" yaml:"shm-size"`
 	RawShm_Size          string                `json:"shm_size" yaml:"shm_size"`
 	SigProxy             OptBool               `json:"sig-proxy" yaml:"sig-proxy"`
@@ -1296,6 +1297,11 @@ func (c *container) createArgs(cmds []string) []string {
 	// SecurityOpt
 	for _, securityOpt := range c.SecurityOpt() {
 		args = append(args, "--security-opt", securityOpt)
+	}
+	// Share SSH socket
+	if c.ShareSshSocket {
+		args = append(args, "--volume", "$SSH_AUTH_SOCK:/ssh-socket")
+		args = append(args, "--env", "SSH_AUTH_SOCK=/ssh-socket")
 	}
 	// ShmSize
 	if len(c.ShmSize()) > 0 {
