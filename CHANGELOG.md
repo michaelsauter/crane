@@ -10,10 +10,6 @@
 
 ## 3.4.0 (2018-04-02)
 
-* [Enhancement] Improve CLI help output.
-
-* [Task] Check less frequently for updates (once every 14 days).
-
 * [Feature] Add an easy way to share the SSH socket with a container by adding the `share-ssh-socket` configuration.
 
 * [Feature] Implement shortcut commands. It is now possible to define commands
@@ -22,6 +18,10 @@
   an ad-hoc `web` container with `crane cmd console`. Another use case is e.g.
   `psql: exec postgres psql` to run PSQL inside the `postgres` container via
   `crane cmd psql`.
+
+* [Enhancement] Improve CLI help output.
+
+* [Task] Check less frequently for updates (once every 14 days).
 
 ## 3.3.4 (2018-03-22)
 
