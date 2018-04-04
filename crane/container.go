@@ -1282,7 +1282,8 @@ func (c *container) createArgs(cmds []string) []string {
 	}
 	// Share SSH socket
 	if c.ShareSshSocket {
-		args = append(args, "--volume", "$SSH_AUTH_SOCK:/ssh-socket")
+		sock_path := os.Getenv("SSH_AUTH_SOCK")
+		args = append(args, "--volume", sock_path + ":/ssh-socket")
 		args = append(args, "--env", "SSH_AUTH_SOCK=/ssh-socket")
 	}
 	// ShmSize
