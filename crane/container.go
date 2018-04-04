@@ -927,7 +927,11 @@ func (c *container) Create(cmds []string) {
 	if !adHoc {
 		c.Rm(true, false)
 	}
-	fmt.Fprintf(c.CommandsOut(), "Creating container %s ...\n", c.ActualName(adHoc))
+	msg := "Creating container %s"
+	if adHoc {
+		msg = msg + " (ad-hoc)"
+	}
+	fmt.Fprintf(c.CommandsOut(), msg + " ...\n", c.ActualName(adHoc))
 
 	args := append([]string{"create"}, c.createArgs(cmds)...)
 	executeCommand("docker", args, c.CommandsOut(), c.CommandsErr())
@@ -941,12 +945,14 @@ func (c *container) Create(cmds []string) {
 // have a very short-lived container.
 func (c *container) Run(cmds []string, targeted bool, detachFlag bool) {
 	adHoc := (len(cmds) > 0)
-
 	if !adHoc {
 		c.Rm(true, false)
 	}
-
-	fmt.Fprintf(c.CommandsOut(), "Running container %s ...\n", c.ActualName(adHoc))
+	msg := "Running container %s"
+	if adHoc {
+		msg = msg + " (ad-hoc)"
+	}
+	fmt.Fprintf(c.CommandsOut(), msg + " ...\n", c.ActualName(adHoc))
 
 	args := append([]string{"create"}, c.createArgs(cmds)...)
 	// Hide output of container ID, the name of the container
