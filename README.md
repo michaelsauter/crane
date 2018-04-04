@@ -28,13 +28,13 @@ Please see [www.craneup.tech](https://www.craneup.tech?utm_source=github&utm_med
 
 ## Installation
 
-The latest release is 3.4.0 and requires Docker >= 1.13.
+The latest release is 3.4.1 and requires Docker >= 1.13.
 Please have a look at the [changelog](https://github.com/michaelsauter/crane/blob/master/CHANGELOG.md) when upgrading.
 
 The free version can be installed via:
 
 ```
-bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/v3.4.0/download.sh`" && \
+bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/v3.4.1/download.sh`" && \
 mv crane /usr/local/bin/crane
 ```
 

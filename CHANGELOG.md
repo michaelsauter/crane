@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 3.4.1 (2018-04-04)
+
 * [Bugfix] Fix broken `share-ssh-socket` by passing the value of `SSH_AUTH_SOCK` to the Docker flag, not the environment variable itself
 
 * [Enhancement] Add `--verbose` flag to shortcut command if original Crane command is run in verbose mode

@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-const Version = "3.4.0"
+const Version = "3.4.1"
 const Pro = false
 
 func printVersion() {
