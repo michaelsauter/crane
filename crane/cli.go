@@ -389,6 +389,9 @@ func runCli() {
 			return
 		}
 		args := []string{}
+		if isVerbose() {
+			args = append(args, "--verbose")
+		}
 		args = append(args, definedCmd...)
 		args = append(args, *cmdArgumentsArg...)
 		executeCommand("crane", args, os.Stdout, os.Stderr)
