@@ -2,13 +2,15 @@
 
 ## Unreleased
 
+* [Enhancement] Add `--config`, `-tag` and `--prefix` flags to shortcut command if those flags are specified for the original Crane command as well.
+
 ## 3.4.1 (2018-04-04)
 
-* [Bugfix] Fix broken `share-ssh-socket` by passing the value of `SSH_AUTH_SOCK` to the Docker flag, not the environment variable itself
+* [Bugfix] Fix broken `share-ssh-socket` by passing the value of `SSH_AUTH_SOCK` to the Docker flag, not the environment variable itself.
 
-* [Enhancement] Add `--verbose` flag to shortcut command if original Crane command is run in verbose mode
+* [Enhancement] Add `--verbose` flag to shortcut command if original Crane command is run in verbose mode.
 
-* [Enhancement] Add `(ad-hoc)` to log output when creating/running a container with an ad-hoc command
+* [Enhancement] Add `(ad-hoc)` to log output when creating/running a container with an ad-hoc command.
 
 ## 3.4.0 (2018-04-02)
 
