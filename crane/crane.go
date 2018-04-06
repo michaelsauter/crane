@@ -120,6 +120,29 @@ func stringSlice(sliceLike interface{}) []string {
 	return strSlice
 }
 
+func equalSlices(a, b []string) bool {
+
+	if a == nil && b == nil {
+		return true
+	}
+
+	if a == nil || b == nil {
+		return false
+	}
+
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
 // Similar to strings.Join() for int slices.
 func intJoin(intSlice []int, sep string) string {
 	var stringSlice []string

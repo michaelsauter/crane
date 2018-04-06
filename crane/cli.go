@@ -19,7 +19,7 @@ var (
 	dryRunFlag  = app.Flag("dry-run", "Dry run (implicitly verbose; no side effects).").Bool()
 	configFlag  = app.Flag(
 		"config",
-		"Location of config file(s).",
+		"Location of config file (repeatable).",
 	).Short('c').Default(defaultFiles...).PlaceHolder("~/crane.yml").Strings()
 	prefixFlag = app.Flag(
 		"prefix",
@@ -389,8 +389,19 @@ func runCli() {
 			return
 		}
 		args := []string{}
-		if isVerbose() {
+		if *verboseFlag {
 			args = append(args, "--verbose")
+		}
+		if !equalSlices(*configFlag, defaultFiles) {
+			for _, conf := range *configFlag {
+				args = append(args, "--config", conf)
+			}
+		}
+		if len(*prefixFlag) > 0 {
+			args = append(args, "--prefix", *prefixFlag)
+		}
+		if len(*tagFlag) > 0 {
+			args = append(args, "--tag", *tagFlag)
 		}
 		args = append(args, definedCmd...)
 		args = append(args, *cmdArgumentsArg...)
