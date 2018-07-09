@@ -162,6 +162,7 @@ type container struct {
 	RawVolumeDriver      string                `json:"volume-driver" yaml:"volume-driver"`
 	RawVolume_Driver     string                `json:"volume_driver" yaml:"volume_driver"`
 	RawVolumesFrom       []string              `json:"volumes-from" yaml:"volumes-from"`
+	RawVolumes_From       []string             `json:"volumes_from" yaml:"volumes_from"`
 	RawWorkdir           string                `json:"workdir" yaml:"workdir"`
 	RawWorking_Dir       string                `json:"working_dir" yaml:"working_dir"`
 	RawCmd               interface{}           `json:"cmd" yaml:"cmd"`
@@ -849,8 +850,12 @@ func (c *container) VolumeDriver() string {
 
 func (c *container) VolumesFrom() []string {
 	var volumesFrom []string
-	for _, rawVolumesFrom := range c.RawVolumesFrom {
-		volumesFrom = append(volumesFrom, expandEnv(rawVolumesFrom))
+	rawVolumesFrom := c.RawVolumes_From
+	if len(c.RawVolumesFrom) > 0 {
+		rawVolumesFrom = c.RawVolumesFrom
+	}
+	for _, raw := range rawVolumesFrom {
+		volumesFrom = append(volumesFrom, expandEnv(raw))
 	}
 	return volumesFrom
 }
