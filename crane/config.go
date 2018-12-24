@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/imdario/mergo"
-	"gopkg.in/v2/yaml"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -14,6 +12,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/imdario/mergo"
+	"gopkg.in/v2/yaml"
 )
 
 type Config interface {
@@ -418,7 +419,7 @@ func (c *config) determinePrefix(prefixFlag string) {
 	case string:
 		c.prefix = expandEnv(concretePrefix)
 	default:
-		panic(StatusError{fmt.Errorf("prefix must be either string or boolean", c.RawPrefix), 65})
+		panic(StatusError{fmt.Errorf("prefix must be either string or boolean, got %s", c.RawPrefix), 65})
 	}
 }
 

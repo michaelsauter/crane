@@ -162,7 +162,7 @@ type container struct {
 	RawVolumeDriver      string                `json:"volume-driver" yaml:"volume-driver"`
 	RawVolume_Driver     string                `json:"volume_driver" yaml:"volume_driver"`
 	RawVolumesFrom       []string              `json:"volumes-from" yaml:"volumes-from"`
-	RawVolumes_From       []string             `json:"volumes_from" yaml:"volumes_from"`
+	RawVolumes_From      []string              `json:"volumes_from" yaml:"volumes_from"`
 	RawWorkdir           string                `json:"workdir" yaml:"workdir"`
 	RawWorking_Dir       string                `json:"working_dir" yaml:"working_dir"`
 	RawCmd               interface{}           `json:"cmd" yaml:"cmd"`
