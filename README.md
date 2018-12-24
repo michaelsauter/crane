@@ -43,7 +43,7 @@ mv crane /usr/local/bin/crane
 
 ---
 
-Copyright © 2013-2017 Michael Sauter. See the LICENSE file for details.
+Copyright © 2013-2018 Michael Sauter. See the LICENSE file for details.
 
 ---
 
