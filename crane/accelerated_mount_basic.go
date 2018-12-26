@@ -34,7 +34,7 @@ func (am *acceleratedMount) VolumeArg() string {
 	return ""
 }
 
-var proOnly = "Accelerated bind mounts are not available in the free version, please purchase the pro version: https://www.craneup.tech"
+var proOnly = "Accelerated bind mounts are not available in the free version, please purchase the pro version: https://www.crane-orchestration.com"
 
 func accelerationEnabled() bool {
 	if runtime.GOOS == "darwin" || runtime.GOOS == "windows" {

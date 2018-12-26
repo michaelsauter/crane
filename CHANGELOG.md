@@ -87,7 +87,7 @@
 
 * The `start` command has learned the new option `--attach` to attach to a targeted container even if the configuration specifies `detach: true`.
 
-* The `version` command queries for newer versions now. This update check is also executed automatically before any command if the last check is more than one week ago. See the section about [updating](https://www.craneup.tech/docs/3.3/updating) to find out more.
+* The `version` command queries for newer versions now. This update check is also executed automatically before any command if the last check is more than one week ago. See the section about [updating](https://www.crane-orchestration.com/docs/3.3/updating) to find out more.
 
 ## 3.2.1 (2017-09-06)
 
@@ -187,7 +187,7 @@ Behaviour changes:
   network mode is no longer `bridge` but a `default` network to align with
   docker-compose (Careful! 3.1.0 reverts this to 2.x behaviour).
 * The integration of Unison on macOS has been extracted into a paid pro version,
-  see [www.craneup.tech](https://www.craneup.tech). There is still a free
+  see [www.crane-orchestration.com](https://www.crane-orchestration.com). There is still a free
   version for macOS without this feature. If you would like to support Crane,
   you can also buy a pro version for Linux, but right now there is no difference
   in functionality.

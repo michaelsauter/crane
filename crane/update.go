@@ -41,7 +41,7 @@ func checkForUpdates(manual bool) error {
 	response := &UpdateResponseBody{}
 	printInfof("Checking for updates ...\n")
 	res, err := client.Post(
-		"https://www.craneup.tech/update-checks",
+		"https://www.crane-orchestration.com/update-checks",
 		"application/json; charset=utf-8",
 		b,
 	)
