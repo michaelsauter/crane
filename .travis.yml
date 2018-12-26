@@ -1,4 +1,6 @@
 language: go
 go:
-  - 1.6
-script: make test
+  - "1.11.x"
+before_install:
+  - go get golang.org/x/tools/cmd/goimports
+script: env GO111MODULE=on make test

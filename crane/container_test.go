@@ -2,10 +2,11 @@ package crane
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
-	"gopkg.in/yaml.v2"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	yaml "gopkg.in/yaml.v2"
 )
 
 func TestDependencies(t *testing.T) {

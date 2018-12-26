@@ -2,10 +2,11 @@ package crane
 
 import (
 	"fmt"
-	"github.com/alecthomas/kingpin"
 	"os"
 	"sort"
 	"strings"
+
+	"github.com/alecthomas/kingpin"
 )
 
 var cfg Config

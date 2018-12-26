@@ -1,9 +1,10 @@
 package crane
 
 import (
-	"github.com/stretchr/testify/assert"
 	"sort"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // Create a map of stubbed containers out of the provided set

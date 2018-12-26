@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/imdario/mergo"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 type Config interface {

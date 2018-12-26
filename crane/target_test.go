@@ -1,8 +1,9 @@
 package crane
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewTarget(t *testing.T) {

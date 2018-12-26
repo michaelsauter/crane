@@ -3,8 +3,6 @@ package crane
 import (
 	"errors"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/flynn/go-shlex"
 	"io"
 	"os"
 	"os/exec"
@@ -12,6 +10,9 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+
+	"github.com/fatih/color"
+	shlex "github.com/flynn/go-shlex"
 )
 
 var printSuccessf func(format string, a ...interface{})
