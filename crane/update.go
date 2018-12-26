@@ -27,7 +27,8 @@ type UpdateResponseBody struct {
 }
 
 func checkForUpdates(manual bool) error {
-	client := &http.Client{Timeout: 3 * time.Second}
+	timeout := time.Duration(10 * time.Second)
+	client := &http.Client{Timeout: timeout}
 	params := UpdateRequestParams{
 		UUID:    settings.UUID,
 		Arch:    runtime.GOARCH,
