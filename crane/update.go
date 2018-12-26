@@ -74,6 +74,7 @@ func checkForUpdates(manual bool) error {
 	return settings.Update(Version)
 }
 
+// Check for updates roughly every month
 func autoUpdateCheckInterval() time.Duration {
-	return 14 * 24 * time.Hour
+	return 30 * 24 * time.Hour
 }
