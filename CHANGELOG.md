@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+* [Feature] Support `external_links` config of docker-compose. See [#344](https://github.com/michaelsauter/crane/pull/344).
+
+* [Task] Check for updates less frequently and allow higher timeout. Most importantly, check against the
+  new domain, https://www.crane-orchestration.com. The old domain (and therefore the update checks) will
+  cease to work early 1st March 2019.
+
+* [Task] Update to Go 1.11 and use Go modules.
+
+* [Enhancement] Print given prefix when it is neither boolean nor string.
+
+
 ## 3.4.2 (2018-07-09)
 
 * [Enhancement] Support `volumes_from` config of docker-compose (`volumes-from` was already supported).

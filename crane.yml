@@ -1,11 +1,11 @@
 services:
   crane:
-    image: michaelsauter/golang:1.8
+    image: michaelsauter/golang:1.11
     rm: true
     interactive: true
     tty: true
-    volume: ["$GOPATH:/go"]
-    workdir: /go/src/github.com/michaelsauter/crane
+    volume: [".:/crane"]
+    workdir: /crane
     share-ssh-socket: true
     cmd: ["bash"]
 
