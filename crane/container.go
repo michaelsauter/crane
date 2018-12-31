@@ -112,6 +112,7 @@ type container struct {
 	RawLabelFile         []string              `json:"label-file" yaml:"label-file"`
 	RawLink              []string              `json:"link" yaml:"link"`
 	RawLinks             []string              `json:"links" yaml:"links"`
+	RawExternalLinks     []string              `json:"external_links" yaml:"external_links"`
 	RawLogDriver         string                `json:"log-driver" yaml:"log-driver"`
 	RawLogOpt            []string              `json:"log-opt" yaml:"log-opt"`
 	RawLogging           LoggingParameters     `json:"logging" yaml:"logging"`
@@ -579,6 +580,14 @@ func (c *container) Link() []string {
 		link = append(link, expandEnv(raw))
 	}
 	return link
+}
+
+func (c *container) ExternalLinks() []string {
+	var externalLinks []string
+	for _, raw := range c.RawExternalLinks {
+		externalLinks = append(externalLinks, expandEnv(raw))
+	}
+	return externalLinks
 }
 
 func (c *container) LogDriver() string {
@@ -1201,6 +1210,10 @@ func (c *container) createArgs(cmds []string) []string {
 			linkParts[0] = cfg.Container(linkName).ActualName(false)
 			args = append(args, "--link", strings.Join(linkParts, ":"))
 		}
+	}
+	// External Links
+	for _, externalLink := range c.ExternalLinks() {
+		args = append(args, "--link", externalLink)
 	}
 	// LogDriver
 	if len(c.LogDriver()) > 0 {
