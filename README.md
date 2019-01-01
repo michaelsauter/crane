@@ -28,13 +28,13 @@ Please see [www.crane-orchestration.com](https://www.crane-orchestration.com?utm
 
 ## Installation
 
-The latest release is 3.4.2 and requires Docker >= 1.13.
+The latest release is 3.5.0 and requires Docker >= 1.13.
 Please have a look at the [changelog](https://github.com/michaelsauter/crane/blob/master/CHANGELOG.md) when upgrading.
 
 The free version can be installed via:
 
 ```
-bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/v3.4.2/download.sh`" && \
+bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/v3.5.0/download.sh`" && \
 mv crane /usr/local/bin/crane
 ```
 

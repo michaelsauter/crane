@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 3.5.0 (2019-01-01)
+
 * [Feature] Support `external_links` config of docker-compose. See [#344](https://github.com/michaelsauter/crane/pull/344).
 
 * [Task] Check for updates less frequently and allow higher timeout. Most importantly, check against the
