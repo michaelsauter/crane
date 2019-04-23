@@ -99,7 +99,7 @@ func (containers Containers) Logs(follow bool, timestamps bool, tail string, col
 			}
 			appendSources(log.Stdout, stdoutColor, log.Name, "|")
 			appendSources(log.Stderr, stderrColor, log.Name, "*")
-			counter = counter + 1
+			counter += 1
 		}
 	}
 	if len(sources) > 0 {
@@ -191,7 +191,7 @@ func write(prefix string, color *ansi.Color, timestamps bool) func(dest io.Write
 				if string(token[0]) == "[" {
 					// it seems that timestamps are wrapped in [] for events
 					// streamed  in real time during a `docker logs -f`
-					strip = strip + 2
+					strip += 2
 				}
 				token = token[strip:]
 			}

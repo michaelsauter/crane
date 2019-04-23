@@ -12,6 +12,8 @@ import (
 	"sync"
 )
 
+const netBridge = "bridge"
+
 type Container interface {
 	ContainerInfo
 	Exists() bool
@@ -250,7 +252,7 @@ func (c *container) Dependencies() *Dependencies {
 			dependencies.Requires = append(dependencies.Requires, required)
 		}
 	}
-	if c.Net() == "bridge" {
+	if c.Net() == netBridge {
 		// links are strict dependencies only on bridge networks
 		for _, link := range c.Link() {
 			linkName := strings.Split(link, ":")[0]
@@ -704,8 +706,8 @@ func (c *container) ActualNet() string {
 	if len(netParam) == 0 {
 		return ""
 	}
-	if netParam == "bridge" {
-		return "bridge"
+	if netParam == netBridge {
+		return netBridge
 	} else if netParam == "none" {
 		return "none"
 	}
@@ -943,7 +945,7 @@ func (c *container) Create(cmds []string) {
 	}
 	msg := "Creating container %s"
 	if adHoc {
-		msg = msg + " (ad-hoc)"
+		msg += " (ad-hoc)"
 	}
 	fmt.Fprintf(c.CommandsOut(), msg+" ...\n", c.ActualName(adHoc))
 
@@ -964,7 +966,7 @@ func (c *container) Run(cmds []string, targeted bool, detachFlag bool) {
 	}
 	msg := "Running container %s"
 	if adHoc {
-		msg = msg + " (ad-hoc)"
+		msg += " (ad-hoc)"
 	}
 	fmt.Fprintf(c.CommandsOut(), msg+" ...\n", c.ActualName(adHoc))
 
@@ -1249,7 +1251,7 @@ func (c *container) createArgs(cmds []string) []string {
 	}
 	// Net
 	netParam := c.ActualNet()
-	if len(netParam) > 0 && netParam != "bridge" {
+	if len(netParam) > 0 && netParam != netBridge {
 		args = append(args, "--net", netParam)
 	}
 	// NetAlias
