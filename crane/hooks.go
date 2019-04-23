@@ -46,13 +46,13 @@ func (h *hooks) PostStop() string {
 }
 
 // Merge another set of hooks into the existing object. Existing
-// hooks will be overriden if the corresponding hooks from the
+// hooks will be overridden if the corresponding hooks from the
 // source struct are defined. Returns true if some content was
 // overiden in the process.
-func (h *hooks) CopyFrom(source hooks) (overriden bool) {
+func (h *hooks) CopyFrom(source hooks) (overridden bool) {
 	overrideIfFromNotEmpty := func(from string, to *string) {
 		if from != "" {
-			overriden = overriden || *to != ""
+			overridden = overridden || *to != ""
 			*to = from
 		}
 	}
