@@ -68,17 +68,6 @@ func NewTarget(dependencyMap map[string]*Dependencies, targetArg string, extendF
 	return
 }
 
-// includes checks whether the given needle is
-// included in the target
-func (t Target) includes(needle string) bool {
-	for _, name := range t.all() {
-		if name == needle {
-			return true
-		}
-	}
-	return false
-}
-
 // Return all targeted containers, sorted alphabetically
 func (t Target) all() []string {
 	all := t.initial
