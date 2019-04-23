@@ -201,14 +201,6 @@ func executeCommand(name string, args []string, stdout, stderr io.Writer) {
 	}
 }
 
-func executeHiddenCommand(name string, args []string) {
-	if isVerbose() {
-		executeCommand(name, args, os.Stdout, os.Stderr)
-	} else {
-		executeCommand(name, args, nil, nil)
-	}
-}
-
 func executeCommandBackground(name string, args []string) (cmd *exec.Cmd, stdout io.ReadCloser, stderr io.ReadCloser) {
 	verboseLog(name + " " + strings.Join(args, " "))
 	if !isDryRun() {
