@@ -76,7 +76,7 @@ func checkDockerClient() {
 		panic(StatusError{errors.New("Error when probing Docker's client version. Is docker installed and within the $PATH?"), 69})
 	}
 	re := regexp.MustCompile("([0-9]+)\\.([0-9]+)\\.?([0-9]+)?")
-	rawVersions := re.FindStringSubmatch(string(output))
+	rawVersions := re.FindStringSubmatch(output)
 	var versions []int
 	for _, rawVersion := range rawVersions[1:] {
 		version, err := strconv.Atoi(rawVersion)
@@ -150,7 +150,7 @@ func intJoin(intSlice []int, sep string) string {
 	for _, v := range intSlice {
 		stringSlice = append(stringSlice, fmt.Sprint(v))
 	}
-	return strings.Join(stringSlice, ".")
+	return strings.Join(stringSlice, sep)
 }
 
 func executeHook(hook string, containerName string) {

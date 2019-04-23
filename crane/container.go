@@ -1684,7 +1684,7 @@ func imageIDFromTag(tag string) string {
 	if err != nil {
 		return ""
 	}
-	return string(output)
+	return output
 }
 
 // If the reference follows the `container:foo` pattern, return "foo"; otherwise, return an empty string
