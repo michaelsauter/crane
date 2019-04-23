@@ -75,7 +75,9 @@ func readSettings() error {
 
 	// Create settings path if it does not exist yet
 	if _, err := os.Stat(sp); err != nil {
-		os.MkdirAll(sp, os.ModePerm)
+		if err = os.MkdirAll(sp, os.ModePerm); err != nil {
+			return err
+		}
 		if _, err := os.Stat(sp); err != nil {
 			return err
 		}
