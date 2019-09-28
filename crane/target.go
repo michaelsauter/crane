@@ -146,7 +146,9 @@ func (t Target) all() []string {
 		all = append(all, name)
 	}
 	for _, name := range t.affected {
-		all = append(all, name)
+		if !includes(all, name) {
+			all = append(all, name)
+		}
 	}
 	sort.Strings(all)
 	return all

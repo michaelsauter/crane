@@ -139,10 +139,14 @@ func TestDeduplicationAll(t *testing.T) {
 	)
 	groups := map[string][]string{
 		"ab": []string{"a", "b", "a"},
+		"ac": []string{"a", "c"},
 	}
 	cfg = &config{containerMap: containerMap, groups: groups}
 	dependencyMap := cfg.DependencyMap()
 
-	target, _ := NewTarget(dependencyMap, "ab+dependencies+affected")
-	assert.Equal(t, []string{"a", "b", "c"}, target.all())
+	target1, _ := NewTarget(dependencyMap, "ab+dependencies+affected")
+	assert.Equal(t, []string{"a", "b", "c"}, target1.all())
+
+	target2, _ := NewTarget(dependencyMap, "ac+dependencies+affected")
+	assert.Equal(t, []string{"a", "b", "c"}, target2.all())
 }
