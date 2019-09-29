@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Fix failure when a command is applied to a group with dependencies & affected
+  containers, and dependencies & affected containers intersect.
+
+  _@bjaglin_
+
 ## 2.11.0 (2016-11-14)
 
 * Allow to override configuration by another configuration file. By default,
