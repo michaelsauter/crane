@@ -10,7 +10,7 @@ if [ -z "$version" ]; then
 fi
 
 go_path=$(cd ../../../../; pwd)
-docker_run="docker run --rm -it -v $go_path:/go -w /go/src/github.com/michaelsauter/crane michaelsauter/golang:1.7"
+docker_run="docker run --rm -it -v $go_path:/go -w /go/src/github.com/michaelsauter/crane golang:1.13-stretch"
 
 echo "Running tests..."
 $docker_run make test
@@ -43,8 +43,6 @@ echo "Update repository..."
 git add crane/cli.go download.sh README.md CHANGELOG.md CONTRIBUTORS
 git commit -m "Bump version to ${version}"
 git tag --sign --message="v$version" "v$version"
-git tag --sign --message="latest" --force latest
-
 
 echo "v$version tagged."
 echo "Now, run 'git push origin master && git push --tags --force' and publish the release on GitHub."
