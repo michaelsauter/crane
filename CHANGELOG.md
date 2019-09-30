@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.11.1 (2019-09-30)
+
 * Fix failure when a command is applied to a group with dependencies & affected
   containers, and dependencies & affected containers intersect.
 
