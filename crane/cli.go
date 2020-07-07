@@ -272,12 +272,8 @@ var (
 
 	versionCommand = app.Command(
 		"version",
-		"Display the current version and check for updates.",
+		"Display the current version.",
 	)
-	versionNoCheckFlag = versionCommand.Flag(
-		"no-check",
-		"Don't check for updates.",
-	).Short('n').Bool()
 )
 
 func isVerbose() bool {
@@ -347,22 +343,6 @@ func allowedContainers(excludedReference []string, onlyReference string) (contai
 func runCli() {
 	command := kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	err := readSettings()
-	if err != nil {
-		printNoticef(err.Error())
-	} else {
-		settings.CorrectVersion()
-		if command != versionCommand.FullCommand() {
-			if settings.ShouldCheckForUpdates() {
-				if err := checkForUpdates(false); err != nil {
-					printNoticef("Could not update settings file")
-				}
-			} else if settings.LatestVersion != Version {
-				printNoticef("Newer version %s is available!\n\n", settings.LatestVersion)
-			}
-		}
-	}
-
 	switch command {
 	case cmdCommand.FullCommand():
 		cfg = NewConfig(*configFlag, *prefixFlag, *tagFlag)
@@ -420,10 +400,6 @@ func runCli() {
 
 	case versionCommand.FullCommand():
 		printVersion()
-		if !*versionNoCheckFlag && settings.CheckForUpdates {
-			fmt.Println("")
-			checkForUpdates(true)
-		}
 
 	case statsCommand.FullCommand():
 		commandAction(*statsTargetArg, func(uow *UnitOfWork) {
