@@ -128,25 +128,109 @@
     </ul>
   <div class="row">
     <div class="col" style="margin-bottom: 40px">
-      <img src="images/logo.png" style="width: 200px; height: 200px; border-radius: 50%; border-color: #75C9B1; border-style: solid; border-width: 8px; float: left; margin-right: 40px" />
-      <h1 style="font: 80px 'Bungee', cursive; margin-top: 50px; margin-bottom: 0; line-height: 80px">CRANE</h1>
+      <img src="/images/logo.png" style="width: 200px; height: 200px; border-radius: 50%; border-color: #75C9B1; border-style: solid; border-width: 8px; float: left; margin-right: 40px" />
+      <h1 style="font: 80px 'Bungee', cursive; margin-top: 50px; margin-bottom: 0; line-height: 80px">CRANE <span style="font-family: Lato">PRO</span></h1>
       <span style="margin-left: 5px">Lift containers with ease</span>
     </div>
   </div>
-</div><div class="container-fluid" style="background: #F5F4F0; padding-top: 20px; padding-bottom: 20px">
+</div><div class="container-fluid" style="background: #F5F4F0; padding-top: 20px; padding-bottom: 5px">
   <div class="container">
-    <div class="row">
-      <div class="col-9">
-        Crane is a Docker orchestration tool similar to Docker Compose with extra features.<br>
-        Also, there is a PRO version with <a href="pro.html"><b>ultra-fast bind-mounts on Mac</b></a>!
-      </div>
-      <div class="col-3" style="text-align: right;;margin-top: auto; margin-bottom: auto">
-        <a class="btn btn-success" href="pro.html" role="button">Check out PRO</a>
+    <div class="row justify-content-center">
+      <div class="col-12">
+        <p>Docker for Mac is great - but too slow for most use cases. Crane PRO fixes that.<br>Crane's accelerated bind-mounts are <a href="#speed-comparison"><b>10x faster</b></a>* - even compared to the new <code>cached</code> option in Docker 17.06!</p>
       </div>
     </div>
   </div>
 </div>
-<div class="container" style="padding-top: 40px">
+<div class="container">
+  <div class="row justify-content-center" style="margin-top: 20px; margin-bottom: 15px">
+    <div class="col-10">
+      <ul class="ticks">
+        <li>No additional dependencies required - <b>only Docker and Crane</b></li>
+        <li><b>As fast as possible</b> because data is synced, not shared</li>
+        <li>Unlike rsync, syncs data from <b>container to host</b> as well</li>
+        <li><b>Fully automated</b> - no extra commands required to manage the sync</li>
+        <li>Config does not need to be modified and can be shared with Linux users</li>
+      </ul>
+    </div>
+  </div>
+</div>
+<div class="container-fluid" style="background: #F5F4F0; padding-top: 30px; padding-bottom: 20px">
+  <a name="speed-comparison"></a>
+  <div class="container">
+    <div class="row">
+      <div class="col-8">
+        <h5>Speed Comparison</h5>
+        <p>As an example, booting a vanilla Rails app on a mid-2014 2,6GHz Macbook Pro:</p>
+        <table class="table table-condensed">
+          <tbody>
+            <tr>
+              <th scope="row">Default</th>
+              <td width="100%">&gt; 60s</td>
+            </tr>
+            <tr>
+              <th scope="row">With&nbsp;<code>:cached</code>&nbsp;option</th>
+              <td>&gt; 15s</td>
+            </tr>
+            <tr>
+              <th scope="row">Using&nbsp;Crane&nbsp;PRO</th>
+              <td>~ 1.5s</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>Typically, the speed gains are even higher in real-world scenarios.</p>
+      </div>
+      <div class="col-4">
+        <h5>How does it work?</h5>
+        <p>Crane integrates Unison, a two-way file synchronizer. Every accelerated bind-mount is then synced via a Docker volume to the mounting container. Crane does this automatically in the background and adjusts the config on the fly - you shouldn't even notice!</p>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+  document.addEventListener('DOMContentLoaded', function() {
+    var teamLicensesLink = document.querySelector('.js-open-team-licenses')
+    teamLicensesLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      var teamLicensesContainer = document.querySelector('.js-team-licenses-container')
+      teamLicensesContainer.style.display = 'flex'
+    });
+  });
+</script>
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-8" style="text-align: center; margin-top: 40px;">
+      <form action="/charge/a48b747a-88fe-41b3-8554-b739c77a4706" method="post" class="payment">
+        <article>
+          <script src="https://checkout.stripe.com/v3/checkout.js" class="stripe-button" data-key="pk_live_qLVhwxgmCU696Y8zFBsOT5Kp" data-allow-remember-me="false" data-amount="1500" data-label="Buy PRO now for $15"></script>
+        </article>
+      </form>
+      <p style="margin-top: 10px; color: #777">Single-user license with free updates. <a href="#" class="js-open-team-licenses">Need licenses for a team?</a></p>
+    </div>
+  </div>
+  <div class="row justify-content-center js-team-licenses-container" style="display: none">
+    <div class="col-8" style="text-align: center; margin-bottom: 40px">
+      <form action="/charge/378c329b-6e1b-47cf-86d9-f34254380656" method="post" class="payment" style="display: inline-block;">
+        <article>
+          <script src="https://checkout.stripe.com/v3/checkout.js" class="stripe-button" data-key="pk_live_qLVhwxgmCU696Y8zFBsOT5Kp" data-allow-remember-me="false" data-amount="6000" data-label="Buy 5 licenses for $60"></script>
+        </article>
+      </form>
+      <form action="/charge/5c2f222d-ff92-46b1-ab4f-50dba7ea205e" method="post" class="payment" style="display: inline-block;">
+        <article>
+          <script src="https://checkout.stripe.com/v3/checkout.js" class="stripe-button" data-key="pk_live_qLVhwxgmCU696Y8zFBsOT5Kp" data-allow-remember-me="false" data-amount="10000" data-label="Buy 10 licenses for $100"></script>
+        </article>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="container" style="margin-top: 40px">
+  <div class="row">
+    <div class="col-12">
+      <p>Of course, Crane PRO also includes all the features of the basic version. Here are the highlights:</p>
+    </div>
+  </div>
+</div>
+<div class="container">
   <div class="row" style="margin-top: 10px">
   <div class="col">
     <h5>Docker Compose compatible</h5>

@@ -19,6 +19,8 @@
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="manifest" href="manifest.json">
   
+    <link rel="canonical" href="https://michaelsauter.github.io/crane/docs-compatibility.html" />
+  
   <meta name="msapplication-TileColor" content="#ffffff">
   <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
   <meta name="theme-color" content="#ffffff">
@@ -106,86 +108,106 @@
   
 </head>
 <body>
-  <style>
-  .container {
-    width: 900px;
-  }
-</style>
-<div class="container" style="margin-top: 10px">
-    <ul class="nav justify-content-end">
+  <div class="container" style="margin-top: 15px">
+    <div class="row" style="float: left">
+    <div class="col" style="margin-bottom: 20px;">
+      <img src="/images/logo.png" style="width: 50px; height: 50px; border-radius: 50%; border-color: #75C9B1; border-style: solid; border-width: 2px; float: left; margin-right: 10px" />
+      <a href="" style="color: #292b2c; font: 24px 'Bungee', cursive; margin-top: 14px; margin-bottom: 0; line-height: 24px; float: left">CRANE</a>
+    </div>
+  </div>
+    <ul class="nav justify-content-end" style="padding-top: 5px">
       <li class="nav-item">
-        <a class="nav-link" href="installation.html">Installation</a>
+        <a class="nav-link " href="installation.html">Installation</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="getting-started.html">Getting Started</a>
+        <a class="nav-link " href="getting-started.html">Getting Started</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="docs.html">Docs</a>
+        <a class="nav-link active" href="docs.html">Docs</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="https://github.com/michaelsauter/crane">Github</a>
       </li>
     </ul>
-  <div class="row">
-    <div class="col" style="margin-bottom: 40px">
-      <img src="images/logo.png" style="width: 200px; height: 200px; border-radius: 50%; border-color: #75C9B1; border-style: solid; border-width: 8px; float: left; margin-right: 40px" />
-      <h1 style="font: 80px 'Bungee', cursive; margin-top: 50px; margin-bottom: 0; line-height: 80px">CRANE</h1>
-      <span style="margin-left: 5px">Lift containers with ease</span>
-    </div>
-  </div>
-</div><div class="container-fluid" style="background: #F5F4F0; padding-top: 20px; padding-bottom: 20px">
+  
+</div>
+<div class="container-fluid" style="clear: both;background: #F5F4F0; padding-top: 20px; padding-bottom: 20px">
   <div class="container">
     <div class="row">
-      <div class="col-9">
-        Crane is a Docker orchestration tool similar to Docker Compose with extra features.<br>
-        Also, there is a PRO version with <a href="pro.html"><b>ultra-fast bind-mounts on Mac</b></a>!
+      <div class="col-8">
+        Crane is a Docker orchestration tool similar to Docker Compose<br/>with extra features and <a href="pro.html"><b>ultra-fast bind-mounts on Mac</b></a>.
       </div>
-      <div class="col-3" style="text-align: right;;margin-top: auto; margin-bottom: auto">
+      <div class="col-4" style="text-align: right; margin-top: auto; margin-bottom: auto">
         <a class="btn btn-success" href="pro.html" role="button">Check out PRO</a>
       </div>
     </div>
   </div>
-</div>
-<div class="container" style="padding-top: 40px">
-  <div class="row" style="margin-top: 10px">
-  <div class="col">
-    <h5>Docker Compose compatible</h5>
-    <p>Crane reads <code>docker-compose.yml</code> files. Alternatively, you can use Crane's own configuration format, which maps more closely to Docker's run command to make it even easier. The CLI interface has similar commands than docker-compose, but they differ slightly in semantics. Read the <a href="docs-compatibility.html">compatibility notes</a> for more information.</p>
+</div><div class="container">
+  <div class="row" style="margin-top: 40px">
+    <div class="col-3">
+      <ul id="docs-navigation">
+<li>
+  <a href="docs-cli.html">Command Line Interface</a>
+  <ul>
+    <li><a href="docs-cli.html#adjusting-targets">Adjusting targets</a></li>
+    <li><a href="docs-cli.html#ad-hoc-containers">Ad hoc containers</a></li>
+    <li><a href="docs-cli.html#custom-commands">Custom commands</a></li>
+  </ul>
+</li>
+<li>
+  <a href="docs-config.html">Configuration</a>
+  <ul>
+    <li><a href="docs-config.html#services">Services</a></li>
+    <li><a href="docs-config.html#networks">Networks</a></li>
+    <li><a href="docs-config.html#volumes">Volumes</a></li>
+    <li><a href="docs-config.html#groups">Groups</a></li>
+  </ul>
+</li>
+<li><a href="docs-accelerated-mounts.html">Accelerated Mounts</a></li>
+<li>
+  <a href="docs-advanced.html">Advanced Usage</a>
+  <ul>
+    <li><a href="docs-advanced.html#prefixing">Prefixing</a></li>
+    <li><a href="docs-advanced.html#hooks">Hooks</a></li>
+    <li><a href="docs-advanced.html#parallelism">Parallelism</a></li>
+    <li><a href="docs-advanced.html#override-image-tag">Override image tag</a></li>
+    <li><a href="docs-advanced.html#generate-command">Generate command</a></li>
+    <li><a href="docs-advanced.html#yaml-alias-merge">YAML alias/merge</a></li>
+    <li><a href="docs-advanced.html#variable-expansion">Variable expansion</a></li>
+  </ul>
+</li>
+<li><a href="docs-compatibility.html">Compatibility notes</a></li>
+<li><a href="docs-updating.html">Updating</a></li>
+
+</ul>
+
+    </div>
+    <div class="col-9">
+        
+<h2><a id="compatibility-notes" class="anchor" href="#compatibility-notes"></a>Compatibility Notes</h2>
+
+<p>While Crane can read Docker Compose configuration files (version 3), it differs in behaviour. Please make sure to read through the docs to compare. In addition, not all configuration options are fully supported yet:</p>
+
+<ul>
+<li><code>depends_on</code> - accepts only array at the moment</li>
+<li><code>build</code> - only accepts an object, not a string (see <a href="https://github.com/michaelsauter/crane/issues/327">#327</a>)</li>
+</ul>
+
+<p>Moreover, some options are not supported at all or don't make sense in the context of Crane, and will be ignored if present:</p>
+
+<ul>
+<li><code>domainname</code></li>
+<li><code>ulimits</code></li>
+<li><code>container_name</code></li>
+<li><code>deploy</code></li>
+<li><code>secrets</code></li>
+</ul>
+
+
+      </div>
+    </div>
   </div>
-  <div class="col">
-    <h5>Better for development</h5>
-    <p>Instead of detaching from all containers and interleaving the logs (like <code>docker-compose up</code> does), Crane attaches to the target and detaches from the dependencies by default. As a result, using interactive debugging is possible, e.g. if you are using Ruby, <code>pry</code> or <code>byebug</code> work as expected.</p>
-  </div>
-</div>
-<div class="row" style="margin-top: 40px">
-  <div class="col">
-    <h5>Groups</h5>
-    <p>Instead of targeting all configured containers or a single one, Crane supports targeting a group of containers. This works by clustering containers in the configuration into <a href="docs-config.html#groups">groups</a>.</p>
-  </div>
-  <div class="col">
-    <h5>Target extension</h5>
-    <p>By default, Crane applies the command to the target only, and intelligently handles dependencies. However, it is possible to <a href="docs-cli.html#adjusting-targets">extend</a> the command to all dependencies of a target as well.</p>
-  </div>
-  <div class="col">
-    <h5>Great debugging</h5>
-    <p>Crane offers a verbose mode that shows exactly which Docker commands are executed. This makes it trivial to fix issues, or run other containers with similar configuration for experimenting.</p>
-  </div>
-</div>
-<div class="row" style="margin-top: 40px">
-  <div class="col">
-    <h5>Custom Commands</h5>
-    <p><a href="docs-cli.html#custom-commands">Pre-define commands</a> that you run over and over again (like running a server, tests or REPLs) in the configuration. Now they are only a <code>crane cmd</code> away &mdash; a perfectly streamlined Docker workflow.</p>
-  </div>
-  <div class="col">
-    <h5>Hooks</h5>
-    <p>Scripts can be run before or after key lifecycle events of containers. They are run synchronously on the host where Crane is installed and may even interrupt the flow by returning a non-zero status. <a href="docs-advanced.html#hooks">Read more</a>.</p>
-  </div>
-  <div class="col">
-    <h5>Open-Source &amp; free on Linux</h5>
-    <p>The paid PRO version includes fast bind-mounts on Mac. The <a href="installation.html">free basic version</a> includes all other features of Crane.</p>
-  </div>
-</div>
-</div>
+
   <div class="container">
     <div class="row" style="margin-top: 40px; margin-bottom: 40px">
       <div class="col">

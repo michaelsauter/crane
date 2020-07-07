@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="Crane is a Docker orchestration tool similar to Docker Compose with extra features and ultra-fast bind-mounts on macOS.">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="apple-touch-icon" sizes="57x57" href="apple-icon-57x57.png">
+  <link rel="apple-touch-icon" sizes="60x60" href="apple-icon-60x60.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="apple-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="apple-icon-76x76.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="apple-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="apple-icon-120x120.png">
+  <link rel="apple-touch-icon" sizes="144x144" href="apple-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="apple-icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-icon-180x180.png">
+  <link rel="icon" type="image/png" sizes="192x192"  href="android-icon-192x192.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="manifest" href="manifest.json">
+  
+    <link rel="canonical" href="https://michaelsauter.github.io/crane/docs-accelerated-mounts.html" />
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css?family=Bungee|Lato" rel="stylesheet">
+  <style>
+  body {
+    font-family: 'Lato', sans-serif;
+  }
+  .crane-header {
+    font-family: 'Bungee', cursive;
+  }
+  .nav-item {
+    text-transform: uppercase;
+  }
+  .nav-link.active {
+    color: #292b2c;
+  }
+  .code-block {
+    background: #f7f7f9;
+    color: #bd4147;
+    padding: .2rem .4rem;
+    border-radius: .25rem;
+    margin-bottom: 15px;
+  }
+  .code-block pre {
+    color: #bd4147;
+    margin-bottom: 3px;
+  }
+  table.table-condensed td, table.table-condensed th {
+    padding: 0.25rem 0.75rem 0.25rem 0;
+  }
+  ul.ticks li:before {
+    content: "\2714";
+    margin-right: 10px;
+  }
+  ul.ticks li {
+    list-style: none;
+    margin: 10px 0;
+    font-size: 120%;
+  }
+  .stripe-button-el span {
+    height: 50px !important;
+    line-height: 50px !important;
+    padding: 0 20px !important;
+  }
+  h3 {
+    margin-top: 60px;
+  }
+  code {
+    white-space: nowrap;
+  }
+  pre code {
+    white-space: pre-wrap;
+  }
+  #docs-navigation {
+    list-style: none;
+    background: #F5F4F0;
+    border-radius: 5px;
+    padding: 2px 0;
+    float: right;
+  }
+  #docs-navigation > li {
+    font-weight: bold;
+    border-bottom: 1px solid #fff;
+    padding: 3px 15px;
+  }
+  #docs-navigation > li ul {
+    font-weight: normal;
+    padding-left: 25px;
+  }
+  </style>
+  <title>Crane</title>
+  
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-93517487-1', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+  
+</head>
+<body>
+  <div class="container" style="margin-top: 15px">
+    <div class="row" style="float: left">
+    <div class="col" style="margin-bottom: 20px;">
+      <img src="/images/logo.png" style="width: 50px; height: 50px; border-radius: 50%; border-color: #75C9B1; border-style: solid; border-width: 2px; float: left; margin-right: 10px" />
+      <a href="" style="color: #292b2c; font: 24px 'Bungee', cursive; margin-top: 14px; margin-bottom: 0; line-height: 24px; float: left">CRANE</a>
+    </div>
+  </div>
+    <ul class="nav justify-content-end" style="padding-top: 5px">
+      <li class="nav-item">
+        <a class="nav-link " href="installation.html">Installation</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link " href="getting-started.html">Getting Started</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link active" href="docs.html">Docs</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="https://github.com/michaelsauter/crane">Github</a>
+      </li>
+    </ul>
+  
+</div>
+<div class="container-fluid" style="clear: both;background: #F5F4F0; padding-top: 20px; padding-bottom: 20px">
+  <div class="container">
+    <div class="row">
+      <div class="col-8">
+        Crane is a Docker orchestration tool similar to Docker Compose<br/>with extra features and <a href="pro.html"><b>ultra-fast bind-mounts on Mac</b></a>.
+      </div>
+      <div class="col-4" style="text-align: right; margin-top: auto; margin-bottom: auto">
+        <a class="btn btn-success" href="pro.html" role="button">Check out PRO</a>
+      </div>
+    </div>
+  </div>
+</div><div class="container">
+  <div class="row" style="margin-top: 40px">
+    <div class="col-3">
+      <ul id="docs-navigation">
+<li>
+  <a href="docs-cli.html">Command Line Interface</a>
+  <ul>
+    <li><a href="docs-cli.html#adjusting-targets">Adjusting targets</a></li>
+    <li><a href="docs-cli.html#ad-hoc-containers">Ad hoc containers</a></li>
+    <li><a href="docs-cli.html#custom-commands">Custom commands</a></li>
+  </ul>
+</li>
+<li>
+  <a href="docs-config.html">Configuration</a>
+  <ul>
+    <li><a href="docs-config.html#services">Services</a></li>
+    <li><a href="docs-config.html#networks">Networks</a></li>
+    <li><a href="docs-config.html#volumes">Volumes</a></li>
+    <li><a href="docs-config.html#groups">Groups</a></li>
+  </ul>
+</li>
+<li><a href="docs-accelerated-mounts.html">Accelerated Mounts</a></li>
+<li>
+  <a href="docs-advanced.html">Advanced Usage</a>
+  <ul>
+    <li><a href="docs-advanced.html#prefixing">Prefixing</a></li>
+    <li><a href="docs-advanced.html#hooks">Hooks</a></li>
+    <li><a href="docs-advanced.html#parallelism">Parallelism</a></li>
+    <li><a href="docs-advanced.html#override-image-tag">Override image tag</a></li>
+    <li><a href="docs-advanced.html#generate-command">Generate command</a></li>
+    <li><a href="docs-advanced.html#yaml-alias-merge">YAML alias/merge</a></li>
+    <li><a href="docs-advanced.html#variable-expansion">Variable expansion</a></li>
+  </ul>
+</li>
+<li><a href="docs-compatibility.html">Compatibility notes</a></li>
+<li><a href="docs-updating.html">Updating</a></li>
+
+</ul>
+
+    </div>
+    <div class="col-9">
+
+<h2><a id="accelerated-mounts" class="anchor" href="#accelerated-mounts"></a>Accelerated Mounts on Mac</h2>
+
+<p>Crane can optionally make use of Unison to have faster bind-mounts between the
+host and Docker for Mac. <strong>This feature is available in the <a href="pro.html">PRO version</a> only.</strong> Example configuration:</p>
+
+<div class="code-block">
+<pre><code>services:
+  hello:
+    image: alpine
+    rm: true
+    interactive: true
+    tty: true
+    volume:
+      - "foo:/bar"
+accelerated-mounts:
+  hello:</code></pre>
+</div>
+
+<p>When Crane is asked to run the <code>hello</code> service, it automatically sets up an accelerated mount for <code>foo:/bar</code>. Behind the scenes, Crane starts a sync container (which is using Unison internally) connected to a plain Docker volume, which is then mounted to <code>/bar</code> in the <code>hello</code> container. From a user perspective however, everything looks as if the host directory <code>foo</code> is directly bind-mounted to <code>/bar</code> in the container.</p>
+
+<p>Accelerated mounts can either be specified using a service name (then all configured bind-mounts of this service are accelerated), or by specifying a specific bind mount. The example above is equivalent to:</p>
+
+<div class="code-block">
+<pre><code>accelerated-mounts:
+  "foo:/bar":</code></pre>
+</div>
+
+<p>To reduce the amount of syncing that needs to be done, different containers or multiple instances of the same container
+definition share the same sync container and volume.</p>
+
+<p>It is possible to customize each accelerated mount:</p>
+
+<ul>
+<li><code>uid</code>/<code>gid</code>: Defaults to <code>0</code>/<code>0</code>. Set this to the user/group ID the consuming
+container expects, e.g. <code>1000</code>/<code>1000</code>.</li>
+<li><code>ignore</code>: Defaults to
+<code>Name {.git}</code> and allows to exclude files / folders from the sync. See <a href="http://www.cis.upenn.edu/~bcpierce/unison/download/releases/stable/unison-manual.html#ignore">Ignoring Paths</a> for possible values.</li>
+<li><code>flags</code>: Defaults to
+<code>["-auto", "-batch", "-ignore='Name {.git}'", "-confirmbigdel=false", "-contactquietly", "-prefer=newer"]</code>, but can be overriden using anything that
+you can pass to <code>unison</code>, see its
+<a href="http://www.cis.upenn.edu/%7Ebcpierce/unison/download/releases/stable/unison-manual.html#prefs">manual</a>.</li>
+</ul>
+
+<p>To debug what is happening when the sync is not behaving as expected, you can use:<br/><code>crane am logs -f hello</code>. To remove the sync, use <code>crane am reset hello</code>.</p>
+
+<div class="alert alert-warning" role="alert">
+  If you have set <code>uid</code>/<code>gid</code> to non-root but notice that the synced folder itself is still owned by root, you need to create the (empty) folder with correct ownership in the Docker image. This is because accelerated mounts use volumes behind the scenes, and Docker will create non-existing mount points with root permissions.
+</div>
+
+    </div>
+  </div>
+</div>
+
+  <div class="container">
+    <div class="row" style="margin-top: 40px; margin-bottom: 40px">
+      <div class="col">
+        Copyright &copy; 2020 Michael Sauter
+      </div>
+    </div>
+  </div>
+</body>
+</html>

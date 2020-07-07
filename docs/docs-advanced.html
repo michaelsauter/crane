@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="Crane is a Docker orchestration tool similar to Docker Compose with extra features and ultra-fast bind-mounts on macOS.">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="apple-touch-icon" sizes="57x57" href="apple-icon-57x57.png">
+  <link rel="apple-touch-icon" sizes="60x60" href="apple-icon-60x60.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="apple-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="apple-icon-76x76.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="apple-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="apple-icon-120x120.png">
+  <link rel="apple-touch-icon" sizes="144x144" href="apple-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="apple-icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-icon-180x180.png">
+  <link rel="icon" type="image/png" sizes="192x192"  href="android-icon-192x192.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="manifest" href="manifest.json">
+  
+    <link rel="canonical" href="https://michaelsauter.github.io/crane/docs-advanced.html" />
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css?family=Bungee|Lato" rel="stylesheet">
+  <style>
+  body {
+    font-family: 'Lato', sans-serif;
+  }
+  .crane-header {
+    font-family: 'Bungee', cursive;
+  }
+  .nav-item {
+    text-transform: uppercase;
+  }
+  .nav-link.active {
+    color: #292b2c;
+  }
+  .code-block {
+    background: #f7f7f9;
+    color: #bd4147;
+    padding: .2rem .4rem;
+    border-radius: .25rem;
+    margin-bottom: 15px;
+  }
+  .code-block pre {
+    color: #bd4147;
+    margin-bottom: 3px;
+  }
+  table.table-condensed td, table.table-condensed th {
+    padding: 0.25rem 0.75rem 0.25rem 0;
+  }
+  ul.ticks li:before {
+    content: "\2714";
+    margin-right: 10px;
+  }
+  ul.ticks li {
+    list-style: none;
+    margin: 10px 0;
+    font-size: 120%;
+  }
+  .stripe-button-el span {
+    height: 50px !important;
+    line-height: 50px !important;
+    padding: 0 20px !important;
+  }
+  h3 {
+    margin-top: 60px;
+  }
+  code {
+    white-space: nowrap;
+  }
+  pre code {
+    white-space: pre-wrap;
+  }
+  #docs-navigation {
+    list-style: none;
+    background: #F5F4F0;
+    border-radius: 5px;
+    padding: 2px 0;
+    float: right;
+  }
+  #docs-navigation > li {
+    font-weight: bold;
+    border-bottom: 1px solid #fff;
+    padding: 3px 15px;
+  }
+  #docs-navigation > li ul {
+    font-weight: normal;
+    padding-left: 25px;
+  }
+  </style>
+  <title>Crane</title>
+  
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-93517487-1', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+  
+</head>
+<body>
+  <div class="container" style="margin-top: 15px">
+    <div class="row" style="float: left">
+    <div class="col" style="margin-bottom: 20px;">
+      <img src="/images/logo.png" style="width: 50px; height: 50px; border-radius: 50%; border-color: #75C9B1; border-style: solid; border-width: 2px; float: left; margin-right: 10px" />
+      <a href="" style="color: #292b2c; font: 24px 'Bungee', cursive; margin-top: 14px; margin-bottom: 0; line-height: 24px; float: left">CRANE</a>
+    </div>
+  </div>
+    <ul class="nav justify-content-end" style="padding-top: 5px">
+      <li class="nav-item">
+        <a class="nav-link " href="installation.html">Installation</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link " href="getting-started.html">Getting Started</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link active" href="docs.html">Docs</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="https://github.com/michaelsauter/crane">Github</a>
+      </li>
+    </ul>
+  
+</div>
+<div class="container-fluid" style="clear: both;background: #F5F4F0; padding-top: 20px; padding-bottom: 20px">
+  <div class="container">
+    <div class="row">
+      <div class="col-8">
+        Crane is a Docker orchestration tool similar to Docker Compose<br/>with extra features and <a href="pro.html"><b>ultra-fast bind-mounts on Mac</b></a>.
+      </div>
+      <div class="col-4" style="text-align: right; margin-top: auto; margin-bottom: auto">
+        <a class="btn btn-success" href="pro.html" role="button">Check out PRO</a>
+      </div>
+    </div>
+  </div>
+</div><div class="container">
+  <div class="row" style="margin-top: 40px">
+    <div class="col-3">
+      <ul id="docs-navigation">
+<li>
+  <a href="docs-cli.html">Command Line Interface</a>
+  <ul>
+    <li><a href="docs-cli.html#adjusting-targets">Adjusting targets</a></li>
+    <li><a href="docs-cli.html#ad-hoc-containers">Ad hoc containers</a></li>
+    <li><a href="docs-cli.html#custom-commands">Custom commands</a></li>
+  </ul>
+</li>
+<li>
+  <a href="docs-config.html">Configuration</a>
+  <ul>
+    <li><a href="docs-config.html#services">Services</a></li>
+    <li><a href="docs-config.html#networks">Networks</a></li>
+    <li><a href="docs-config.html#volumes">Volumes</a></li>
+    <li><a href="docs-config.html#groups">Groups</a></li>
+  </ul>
+</li>
+<li><a href="docs-accelerated-mounts.html">Accelerated Mounts</a></li>
+<li>
+  <a href="docs-advanced.html">Advanced Usage</a>
+  <ul>
+    <li><a href="docs-advanced.html#prefixing">Prefixing</a></li>
+    <li><a href="docs-advanced.html#hooks">Hooks</a></li>
+    <li><a href="docs-advanced.html#parallelism">Parallelism</a></li>
+    <li><a href="docs-advanced.html#override-image-tag">Override image tag</a></li>
+    <li><a href="docs-advanced.html#generate-command">Generate command</a></li>
+    <li><a href="docs-advanced.html#yaml-alias-merge">YAML alias/merge</a></li>
+    <li><a href="docs-advanced.html#variable-expansion">Variable expansion</a></li>
+  </ul>
+</li>
+<li><a href="docs-compatibility.html">Compatibility notes</a></li>
+<li><a href="docs-updating.html">Updating</a></li>
+
+</ul>
+
+    </div>
+    <div class="col-9">
+
+<h2><a id="advanced-usage" class="anchor" href="#advanced-usage"></a>Advanced Usage</h2>
+
+<h3><a id="prefixing" class="anchor" href="#prefixing"></a>Prefixing</h3>
+
+<p>By default, services, <a href="docs-config.html#networks">networks</a> and <a href="docs-config.html#volumes">volumes</a> are prefixed with the project folder (the folder where the configuration file is located).</p>
+<p>However, it is also possible to set a different prefix via the global CLI <code>--prefix</code> flag (or <code>CRANE_PREFIX</code> environment variable). The specified prefix is simply appended without any modification. A common use case for this feature is to launch a set of services
+in parallel, e.g. for CI builds.</p>
+<div class="alert alert-warning" role="alert">
+  Remember that you will have to provide the same prefix for subsequent calls if you want to address the same set of services.
+</div>
+<p>Another option is to set a permanent prefix in the configuration itself. This can be done via the top-level setting <code>prefix: "foo"</code>. It is also possible to disable prefixing altogether with <code>prefix: false</code>.
+<div class="alert alert-warning" role="alert">
+  When prefixing is disabled, Crane will not set up a default network as described in the <a href="docs-config.html#networks">networks section</a>. The reason for this is that Docker has a built-in network <code>default</code> which has completely different semantics than user-defined networks such as <code>foo_default</code>.
+</div>
+
+<h3><a id="hooks" class="anchor" href="#hooks"></a>Hooks</h3>
+
+<p>In order to run certain commands before or after key lifecycle events of containers, hooks can be declared in the configuration. They are run synchronously on the host where Crane is installed, outside containers, via an <code>exec</code> call. They may interrupt the flow by returning a non-zero status. If shell features more advanced than basic variable expansion is required, you should explicitly spawn a shell to run the command in (<code>sh -c 'ls *'</code>).</p>
+
+<p>Hooks are declared at the top level of the configuration, under the <code>hooks</code> key. See YAML example below:</p>
+
+<div class="code-block">
+<pre><code>services:
+  service1:
+    image: busybox
+    detach: true
+    command: ["sleep", "50"]
+  service2:
+    image: busybox
+    detach: true
+    command: ["sleep", "50"]
+  service3:
+    image: busybox
+    detach: true
+    command: ["sleep", "50"]
+groups:
+  foo:
+    - service1
+    - service2
+  bar:
+    - service2
+    - service3
+hooks:
+  foo:
+    post-start: echo container from foo started
+  bar:
+    post-stop: echo container from bar stopped
+  service3:
+    post-stop: echo container service3 stopped
+</code></pre>
+</div>
+
+<p>Hooks can be defined on a group level (<code>foo</code>, <code>bar</code>) so that they apply to all services within that group, or directly on a container (<code>service3</code>). At most one hook can be registered per container and per event. When more than one hook is found for a given container and a given event, the following rules apply:</p>
+
+<ul>
+<li>Container-defined hooks have priority over group-defined ones, so in the example above, only "container service3 stopped" will be echoed when stopping <code>service3</code>.</li>
+<li>A fatal error will be raised at startup when 2 group-inherited hooks conflict. This is not the case in the previous example; even though <code>foo</code> and <code>bar</code> both contain <code>service2</code>, the hooks they declare are disjoint.</li>
+</ul>
+
+<p>The following hooks are currently available:</p>
+
+<ul>
+<li><code>pre-build</code>: Executed before building an image</li>
+<li><code>post-build</code>: Executed after building an image</li>
+<li><code>pre-start</code>: Executed before starting or running a container</li>
+<li><code>post-start</code>: Executed after starting or running a container</li>
+<li><code>pre-stop</code>: Executed before stopping, killing or removing a running container</li>
+<li><code>post-stop</code>: Executed after stopping, killing or removing a running container</li>
+</ul>
+
+<p>Every hook will have the name of the container for which this hook runs available as the environment variable <code>CRANE_HOOKED_CONTAINER</code>.</p>
+
+<p>A typical example for a hook is waiting for some service to become available:</p>
+<div class="code-block">
+  <pre><code>until `docker exec postgres-build psql -c 'select now()' 1>/dev/null 2>/dev/null`
+  do echo Waiting for Postgres to start ...
+  sleep 1
+done</code></pre>
+</div>
+
+<h3><a id="parallelism" class="anchor" href="#parallelism"></a>Parallelism</h3>
+
+<p>By default, Crane executes all commands sequentially. However, you might want
+to increase the level of parallelism for network-heavy operations, in order to
+cut down the overall run time. The <code>--parallel</code>/<code>-l</code> flag allows you to
+specify the level of parallelism for commands where network can be a
+bottleneck (namely <code>provision</code> and <code>up</code>). Passing a value of 0 effectively
+disable throttling, which means that all provisioning will be done in parallel.</p>
+
+<h3><a id="override-image-tag" class="anchor" href="#override-image-tag"></a>Override image tag</h3>
+
+<p>By using a the <code>--tag</code> flag, it is possible to globally overrides image tags. If
+you specify <code>--tag 2.0-rc2</code>, an image name <code>repo/app:1.0</code> is treated as
+<code>repo/app:2.0-rc2</code>. The <code>CRANE_TAG</code> environment variable can also be used to
+set the global tag.</p>
+
+<h3><a id="generate-command" class="anchor" href="#generate-command"></a>Generate command</h3>
+
+<p>The <code>generate</code> command can transform (part of) the configuration based on a
+given template, making it easy to re-use the configuation with other tools.
+<code>--template</code> is a required flag, which should point to a Go template. By
+default, the output is printed to STDOUT. It can also be written to a file using
+the <code>--output</code> flag. If the given filename contains <code>%s</code>, then multiple files
+are written (one per container), substituting <code>%s</code> with the name of the
+container. For each container, an object of type
+<a href="https://godoc.org/github.com/michaelsauter/crane/crane#ContainerInfo">ContainerInfo</a>
+is passed to the template. If one file is generated for all targeted containers,
+a list of containers is located under the key <code>Containers</code>.  This feature is
+experimental, which means it can be changed or even removed in every minor
+version update.</p>
+
+<div class="alert alert-info" role="alert">
+  Example templates can be found at
+<a href="https://github.com/michaelsauter/crane-templates">crane-templates</a>.
+</div>
+
+<h3><a id="yaml-alias-merge" class="anchor" href="#yaml-advanced-usage"></a>YAML alias/merge</h3>
+
+<p>YAML gives you some advanced features like <a href="http://www.yaml.org/spec/1.2/spec.html#id2786196">alias</a> and <a href="http://yaml.org/type/merge.html">merge</a>. They allow you to easily avoid duplicated code in your <code>crane.yml</code> file. As a example, imagine you need to define 2 different services: <code>web</code> and <code>admin</code>. They share almost the same configuration except the <code>cmd</code> declaration. And imagine you also need 2 instances for each one for using with a node balancer. Then you can declare them as simply:</p>
+
+<div class="code-block">
+<pre><code>services:
+  web1: &amp;web
+    image: my-web-app
+    link: ["db:db"]
+    ...
+    cmd: web
+  web2: *web
+
+  admin1: &amp;admin { &lt;&lt;: *web, command: admin }
+  admin2: *admin
+</code></pre>
+</div>
+
+<p>As a summary, <code>&amp;anchor</code> declares the anchor property, <code>*alias</code> is the alias indicator to simply copy the mapping it references, and <code>&lt;&lt;: *merge</code> includes all the mapping but let you override some keys.</p>
+
+<h3><a id="variable-expansion" class="anchor" href="#variable-expansion"></a>Variable Expansion</h3>
+
+<p>Basic environment variable expansion (<code>${FOO}</code>, <code>$FOO</code>) is supported throughout the configuration, but advanced shell features such as command substitution (<code>$(cat foo)</code>, <code>`cat foo`</code>) or advanced expansions (<code>sp{el,il,al}l</code>, <code>foo*</code>, <code>~/project</code>, <code>$((A * B))</code>, <code>${PARAMETER#PATTERN}</code>) are <em>not</em> as the Docker CLI is called directly. Use <code>$$</code> for escaping a raw <code>$</code>.</p>
+
+<p>A use case for this is to pass an environment variable from the CLI to the container "at runtime". If your configuration contains <code>env: ["FOO=$FOO"]</code>, then <code>FOO=hello crane run ubuntu bash</code> has access to <code>$FOO</code> with the value of <code>hello</code>.</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row" style="margin-top: 40px; margin-bottom: 40px">
+      <div class="col">
+        Copyright &copy; 2020 Michael Sauter
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="Crane is a Docker orchestration tool similar to Docker Compose with extra features and ultra-fast bind-mounts on macOS.">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="apple-touch-icon" sizes="57x57" href="apple-icon-57x57.png">
+  <link rel="apple-touch-icon" sizes="60x60" href="apple-icon-60x60.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="apple-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="apple-icon-76x76.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="apple-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="apple-icon-120x120.png">
+  <link rel="apple-touch-icon" sizes="144x144" href="apple-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="apple-icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-icon-180x180.png">
+  <link rel="icon" type="image/png" sizes="192x192"  href="android-icon-192x192.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="manifest" href="manifest.json">
+  
+    <link rel="canonical" href="https://michaelsauter.github.io/crane/docs-config.html" />
+  
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css?family=Bungee|Lato" rel="stylesheet">
+  <style>
+  body {
+    font-family: 'Lato', sans-serif;
+  }
+  .crane-header {
+    font-family: 'Bungee', cursive;
+  }
+  .nav-item {
+    text-transform: uppercase;
+  }
+  .nav-link.active {
+    color: #292b2c;
+  }
+  .code-block {
+    background: #f7f7f9;
+    color: #bd4147;
+    padding: .2rem .4rem;
+    border-radius: .25rem;
+    margin-bottom: 15px;
+  }
+  .code-block pre {
+    color: #bd4147;
+    margin-bottom: 3px;
+  }
+  table.table-condensed td, table.table-condensed th {
+    padding: 0.25rem 0.75rem 0.25rem 0;
+  }
+  ul.ticks li:before {
+    content: "\2714";
+    margin-right: 10px;
+  }
+  ul.ticks li {
+    list-style: none;
+    margin: 10px 0;
+    font-size: 120%;
+  }
+  .stripe-button-el span {
+    height: 50px !important;
+    line-height: 50px !important;
+    padding: 0 20px !important;
+  }
+  h3 {
+    margin-top: 60px;
+  }
+  code {
+    white-space: nowrap;
+  }
+  pre code {
+    white-space: pre-wrap;
+  }
+  #docs-navigation {
+    list-style: none;
+    background: #F5F4F0;
+    border-radius: 5px;
+    padding: 2px 0;
+    float: right;
+  }
+  #docs-navigation > li {
+    font-weight: bold;
+    border-bottom: 1px solid #fff;
+    padding: 3px 15px;
+  }
+  #docs-navigation > li ul {
+    font-weight: normal;
+    padding-left: 25px;
+  }
+  </style>
+  <title>Crane</title>
+  
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-93517487-1', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+  
+</head>
+<body>
+  <div class="container" style="margin-top: 15px">
+    <div class="row" style="float: left">
+    <div class="col" style="margin-bottom: 20px;">
+      <img src="/images/logo.png" style="width: 50px; height: 50px; border-radius: 50%; border-color: #75C9B1; border-style: solid; border-width: 2px; float: left; margin-right: 10px" />
+      <a href="" style="color: #292b2c; font: 24px 'Bungee', cursive; margin-top: 14px; margin-bottom: 0; line-height: 24px; float: left">CRANE</a>
+    </div>
+  </div>
+    <ul class="nav justify-content-end" style="padding-top: 5px">
+      <li class="nav-item">
+        <a class="nav-link " href="installation.html">Installation</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link " href="getting-started.html">Getting Started</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link active" href="docs.html">Docs</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="https://github.com/michaelsauter/crane">Github</a>
+      </li>
+    </ul>
+  
+</div>
+<div class="container-fluid" style="clear: both;background: #F5F4F0; padding-top: 20px; padding-bottom: 20px">
+  <div class="container">
+    <div class="row">
+      <div class="col-8">
+        Crane is a Docker orchestration tool similar to Docker Compose<br/>with extra features and <a href="pro.html"><b>ultra-fast bind-mounts on Mac</b></a>.
+      </div>
+      <div class="col-4" style="text-align: right; margin-top: auto; margin-bottom: auto">
+        <a class="btn btn-success" href="pro.html" role="button">Check out PRO</a>
+      </div>
+    </div>
+  </div>
+</div><div class="container">
+  <div class="row" style="margin-top: 40px">
+    <div class="col-3">
+      <ul id="docs-navigation">
+<li>
+  <a href="docs-cli.html">Command Line Interface</a>
+  <ul>
+    <li><a href="docs-cli.html#adjusting-targets">Adjusting targets</a></li>
+    <li><a href="docs-cli.html#ad-hoc-containers">Ad hoc containers</a></li>
+    <li><a href="docs-cli.html#custom-commands">Custom commands</a></li>
+  </ul>
+</li>
+<li>
+  <a href="docs-config.html">Configuration</a>
+  <ul>
+    <li><a href="docs-config.html#services">Services</a></li>
+    <li><a href="docs-config.html#networks">Networks</a></li>
+    <li><a href="docs-config.html#volumes">Volumes</a></li>
+    <li><a href="docs-config.html#groups">Groups</a></li>
+  </ul>
+</li>
+<li><a href="docs-accelerated-mounts.html">Accelerated Mounts</a></li>
+<li>
+  <a href="docs-advanced.html">Advanced Usage</a>
+  <ul>
+    <li><a href="docs-advanced.html#prefixing">Prefixing</a></li>
+    <li><a href="docs-advanced.html#hooks">Hooks</a></li>
+    <li><a href="docs-advanced.html#parallelism">Parallelism</a></li>
+    <li><a href="docs-advanced.html#override-image-tag">Override image tag</a></li>
+    <li><a href="docs-advanced.html#generate-command">Generate command</a></li>
+    <li><a href="docs-advanced.html#yaml-alias-merge">YAML alias/merge</a></li>
+    <li><a href="docs-advanced.html#variable-expansion">Variable expansion</a></li>
+  </ul>
+</li>
+<li><a href="docs-compatibility.html">Compatibility notes</a></li>
+<li><a href="docs-updating.html">Updating</a></li>
+
+</ul>
+
+    </div>
+    <div class="col-9">
+
+<h2><a id="configuration" class="anchor" href="#configuration"></a>Configuration</h2>
+
+<p>The configuration defines a map of services in either JSON or YAML. Crane can read from multiple configuration files and merge them. By default it reads (in this order, last one wins) <code>docker-compose.yml</code>, <code>docker-compose.override.yml</code>, <code>crane.yml</code> and <code>crane.override.yml</code>. This can be overwritten by passing <code>--config</code> (multiple times if desired) or setting <code>CRANE_CONFIG</code> (use colons to specify multiple files). If the given paths are relative, Crane searches for the configuration in the current directory, then recursively in the parent directory.</p>
+
+<p>An example config looks like this:</p>
+
+<div class="code-block">
+<pre><code>services:
+  cranedev:
+    image: michaelsauter/golang:1.7
+    rm: true
+    interactive: true
+    tty: true
+    volume: ["$GOPATH:/go"]
+    workdir: /go/src/github.com/michaelsauter/crane
+    command: ["sh"]</code></pre>
+</div>
+
+<p>The configuration knows the following top-level keys:</p>
+<ul>
+  <li><a href="docs-advanced.html#prefixing">prefix</a></li>
+  <li><a href="#services">services</a></li>
+  <li><a href="#volumes">volumes</a></li>
+  <li><a href="docs-config.html#networks">networks</a></li>
+  <li><a href="#groups">groups</a></li>
+  <li><a href="docs-advanced.html#hooks">hooks</a></li>
+  <li><a href="docs-cli.html#custom-commands">commands</a></li>
+  <li><a href="docs-accelerated-mounts.html">accelerated-mounts</a></li>
+</ul>
+
+<h3><a class="anchor" id="services"></a>Services</h3>
+
+<p>The map of services consists of the name of the container mapped to the container configuration, which is made up of the following keys. You may specify either the "Compose key" or the "Crane key", both have the same effect.</p>
+
+<table class="table"><thead>
+<tr>
+<th>Crane / Compose key</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead><tbody>
+<tr><td><code>image</code></td><td>string</td><td>If not given, the service name will be used</td></tr>
+<tr><td><code>build</code></td><td>object</td><td>Maps to <code>docker build</code>. Keys:<ul><li> <code>context</code> (string)</li><li> <code>file/dockerfile</code> (string)</li><li> <code>build-arg/args</code> (array/map)</li></ul></td></tr>
+<tr><td><code>requires</code>/<code>depends_on</code></td><td>array</td><td> Container dependencies</td></tr>
+<tr><td><code>add-host</code>/<code>extra_hosts</code></td><td>array</td><td></td></tr>
+<tr><td><code>blkio-weight</code></td><td>integer</td><td></td></tr>
+<tr><td style="white-space: nowrap;"><code>blkio-weight-device</code></td><td>array</td><td></td></tr>
+<tr><td><code>cap-add</code>/<code>cap_add</code></td></td><td>array</td><td></td></tr>
+<tr><td><code>cap-drop</code>/<code>cap_drop</code></td><td>array</td><td></td></tr>
+<tr><td><code>cgroup-parent</code>/<code>cgroup_parent</code></td><td>string</td><td></td></tr>
+<tr><td><code>cidfile</code></td><td>string</td><td></td></tr>
+<tr><td><code>cpu-period</code></td><td>integer</td><td></td></tr>
+<tr><td><code>cpu-quota</code></td><td>integer</td><td></td></tr>
+<tr><td><code>cpuset</code></td><td>integer</td><td></td></tr>
+<tr><td><code>cpu-shares</code></td><td>integer</td><td></td></tr>
+<tr><td><code>detach</code></td><td> boolean</td><td></td></tr>
+<tr><td><code>detach-keys</code></td><td>string</td><td></td></tr>
+<tr><td><code>devices</code>/<code>device</code></td><td>array</td><td></td></tr>
+<tr><td><code>device-read-bps</code></td><td>array</td><td> </td></tr>
+<tr><td><code>device-read-iops</code></td><td>array</td><td></td></tr>
+<tr><td><code>device-write-bp</code></td><td>array</td><td> </td></tr>
+<tr><td><code>device-write-iops</code></td><td>array</td><td></td></tr>
+<tr><td><code>dns</code></td><td>array</td><td></td></tr>
+<tr><td><code>dns-opt</code></td><td>array</td><td> </td></tr>
+<tr><td><code>dns-search</code>/<code>dns_search</code></td><td>array</td><td></td></tr>
+<tr><td><code>entrypoint</code></td><td>string</td><td></td></tr>
+<tr><td><code>env</code>/<code>environment</code></td><td>array/map</td><td> Can be declared as a string array with <code>"key[=value]"</code> items or a string-to-string mapping where each <code>key: value</code> will be translated to the corresponding <code>"key=value"</code> string.</td></tr>
+<tr><td><code>env-file</code>/<code>env_file</code></td><td>array</td><td></td></tr>
+<tr><td><code>expose</code></td><td>array</td><td></td></tr>
+<tr><td><code>external_links</code></td><td>array</td><td>Link to container started outside of Crane.</td></tr>
+<tr><td><code>group-add</code>/<code>group_add</code></td><td>array</td><td> </td></tr>
+<tr><td><code>health-cmd</code><br/><code>healthcheck&gt;test</code></td><td>string</td><td>Array form of docker-compose is not (yet) supported.</td></tr>
+<tr><td><code>health-interval</code><br/><code>healthcheck&gt;interval</code></td><td>string</td><td></td></tr>
+<tr><td><code>health-retries</code><br/><code>healthcheck&gt;retries</code></td><td>integer</td><td></td></tr>
+<tr><td><code>health-timeouts</code><br/><code>healthcheck&gt;timeout</code></td><td>string</td><td></td></tr>
+<tr><td><code>hostname</code></td><td>string</td><td></td></tr>
+<tr><td><code>init</code></td><td> boolean</td></tr>
+<tr><td><code>interactive</code>/<code>stdin_open</code></td><td> boolean</td></tr>
+<tr><td><code>ip</code></td><td>string</td><td> </td></tr>
+<tr><td><code>ip6</code></td><td>string</td><td></td></tr>
+<tr><td><code>ipc</code></td><td>string</td><td> The <code>container:id</code> syntax is not supported, use <code>container:name</code> if you want to reuse another container IPC.</td></tr>
+<tr><td><code>isolation</code></td><td>string</td><td></td></tr>
+<tr><td><code>kernel-memory</code></td><td>string</td><td></td></tr>
+<tr><td><code>label</code>/<code>labels</code></td><td>array/map</td><td> Can be declared as a string array with <code>"key[=value]"</code> items or a string-to-string mapping where each <code>key: value</code> will be translated to the corresponding <code>"key=value"</code> string.</td></tr>
+<tr><td><code>label-file</code></td><td>array</td><td></td></tr>
+<tr><td><code>link</code>/<code>links</code></td><td>array</td><td>Doubles as a dependency when used without a custom network.</td></tr>
+<tr><td><code>log-driver</code></td><td>string</td><td>Use <code>logging</code> for docker-compose.</td></tr>
+<tr><td><code>log-opt</code></td><td>array</td><td>Use <code>logging</code> for docker-compose.</td></td></tr>
+<tr><td><code>lxc-conf</code></td><td>array</td><td></td></tr>
+<tr><td><code>mac-address</code>/<code>mac_address</code><td>string</td><td></td></tr>
+<tr><td><code>memory</code></td><td>string</td><td></td></tr>
+<tr><td><code>memory-reservation</code></td><td>string</td><td> </td></tr>
+<tr><td><code>memory-swap</code></td><td>string</td><td></td></tr>
+<tr><td><code>memory-swappiness</code></td><td>integer</td><td> </td></tr>
+<tr><td><code>net</code>/<code>network_mode</code></td><td>string</td><td>The <code>container:id</code> syntax is not supported, use <code>container:name</code> if you want to reuse another container network stack.</td></tr>
+<tr><td><code>net-alias</code></td><td>array</td><td> </td></tr>
+<tr><td><code>networks</code></td><td>array/map</td><td>If a map is used, each network can be configured with additional options: <code>alias</code>/<code>aliases</code>, <code>ip</code>/<code>ipv4_address</code> and <code>ip6</code>/<code>ipv6_address</code>.</td></tr>
+<tr><td><code>oom-kill-disable</code></td><td>boolean</td><td> </td></tr>
+<tr><td><code>oom-score-adj</code></td><td>string</td><td> </td></tr>
+<tr><td><code>pid</code></td><td>string</td><td></td></tr>
+<tr><td><code>privileged</code></td><td>boolean</td><td></td></tr>
+<tr><td><code>publish</code>/<code>ports</code></td><td>array</td><td></td></tr>
+<tr><td><code>publish-all</code></td><td>boolean</td><td></td></tr>
+<tr><td><code>read-only</code>/<code>read_only</code></td><td>boolean</td><td></td></tr>
+<tr><td><code>restart</code></td><td>string</td><td> </td></tr>
+<tr><td><code>rm</code></td><td>boolean</td><td></td></tr>
+<tr><td><code>security-opt</code>/<code>security_opt</code></td><td>array</td><td></td></tr>
+<tr><td><code>share-ssh-socket</code></td><td>boolean</td><td>Adds <code>--volume $SSH_AUTH_SOCK:/ssh-socket</code> and <code>--env SSH_AUTH_SOCK=/ssh-socket</code>, which forwards the hosts' SSH agent into the container</td></tr>
+<tr><td><code>shm-size</code>/<code>shm_size</code></td><td>string</td><td> </td></tr>
+<tr><td><code>sig-proxy</code></td><td>boolean</td><td> <code>true</code> by default</td></tr>
+<tr><td><code>stop-signal</code>/<code>stop_signal</code></td><td>string</td><td>  </td></tr>
+<tr><td><code>tmpfs</code></td><td>array</td><td></td></tr>
+<tr><td><code>tty</code></td><td>boolean</td><td></td></tr>
+<tr><td><code>ulimit</code></td><td>array</td><td></td></tr>
+<tr><td><code>user</code></td><td>string</td><td></td></tr>
+<tr><td><code>uts</code></td><td>string</td><td> </td></tr>
+<tr><td><code>volume</code>/<code>volumes</code></td><td>array</td><td> In contrast to plain Docker, the host path can be relative.</td></tr>
+<tr><td><code>volume-driver</code>/<code>volume_driver</code></td><td>string</td><td></td></tr>
+<tr><td><code>volumes-from</code></td><td>array</td><td> </td></tr>
+<tr><td><code>workdir</code>/<code>working_dir</code></td><td>string</td><td></td></tr>
+<tr><td><code>cmd</code>/<code>command</code></td><td>array/string</td><td> Command to append to <code>docker run</code> (overwriting <code>CMD</code>).</td></tr>
+</tbody>
+</table>
+
+<p>See the <a href="https://docs.docker.com/engine/reference/commandline/docker/">Docker documentation</a> for more details about the parameters.</p>
+
+
+<h3><a id="networks" class="anchor" href="#networks"></a>Networks</h3>
+
+<p>Docker networks are supported via the top-level config <code>networks</code>. Networks are automatically created by Crane when necessary, and never cleaned up. When a <a href="docs-advanced.html#prefixing">prefix</a> is used, it is also applied to the network.</p>
+
+<p>Containers may have dependencies that should be started prior to themselves. Once configured via <code>requires/depends_on</code>, Crane will take care of start order etc.</p>
+
+<div class="code-block">
+<pre><code>services:
+  foo:
+    requires: ["bar"]
+    networks:
+      qux:
+  bar:
+    networks:
+      qux:
+        alias: ["baz"]
+networks:
+  qux:
+</code></pre>
+</div>
+
+<div class="alert alert-info" role="alert">
+  Crane automatically creates a <code>default</code> network for you, and all containers connect to it using their name as an alias. Therefore, containers can reach each other by name.
+</div>
+
+
+<h3><a class="anchor" id="volumes" href="#volumes"></a>Volumes</h3>
+
+<p>Docker volumes are supported via the top-level config <code>volumes</code>. Volumes are automatically created by
+Crane when necessary, and never cleaned up. When a <a href="docs-advanced.html#prefixing">prefix</a>
+is used, it is also applied to the volume.</p>
+
+<div class="code-block">
+<pre><code>services:
+  foo:
+    volume: ["bar:/path"]
+volumes:
+  bar:
+</code></pre>
+</div>
+
+<h3><a class="anchor" id="groups"></a>Groups</h3>
+
+<p>Next to services, you can also specify groups, and then execute Crane commands
+against those groups. If you do not specify any target, the command will apply
+to all services. However, you can override this by specifying a <code>default</code>
+group. Groups of services can be specified like this (YAML shown):</p>
+
+<div class="code-block">
+<pre><code>services:
+  database1:
+    ../..
+  database2:
+    ../..
+  service1:
+    ../..
+  service2:
+    ../..
+groups:
+  default: ["service1", "database1"]
+  databases: ["database1", "database2"]
+  services: ["service1", "service2"]
+</code></pre>
+</div>
+
+<p>This could be used like so: <code>crane provision service1</code>, <code>crane run databases</code>
+or <code>crane up services</code>. <code>crane status</code> is an alias for <code>crane status default</code>
+in this example. If <code>default</code> were not specified, then <code>crane up</code> would start
+<code>database1</code>, <code>database2</code>, <code>service1</code> and <code>service2</code>.</p>
+
+    </div>
+  </div>
+</div>
+
+  <div class="container">
+    <div class="row" style="margin-top: 40px; margin-bottom: 40px">
+      <div class="col">
+        Copyright &copy; 2020 Michael Sauter
+      </div>
+    </div>
+  </div>
+</body>
+</html>
