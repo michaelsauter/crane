@@ -13,7 +13,6 @@ commands:
   test: run crane make test
   build: run crane make build
   build-darwin: run crane make build-darwin
-  build-darwin-pro: run crane make build-darwin-pro
   gofmt: run crane gofmt -w crane
 
 accelerated-mounts:

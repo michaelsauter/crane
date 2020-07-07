@@ -15,11 +15,5 @@ build-linux: imports
 build-darwin: imports
 	GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -o crane_darwin_amd64 -v github.com/michaelsauter/crane
 
-build-darwin-pro: imports
-	GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -tags pro -o crane_darwin_amd64_pro -v github.com/michaelsauter/crane
-
 build-windows: imports
 	GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -o crane_windows_amd64.exe -v github.com/michaelsauter/crane
-
-build-windows-pro: imports
-	GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -tags pro -o crane_windows_amd64_pro.exe -v github.com/michaelsauter/crane

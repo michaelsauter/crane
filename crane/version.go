@@ -1,5 +1,3 @@
-// +build !pro
-
 package crane
 
 import (
