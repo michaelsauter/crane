@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+* [Feature] Accelerated mounts are now available in the free version - there is no separate pro version anymore
+
+* [Feature] Support `--runtime`
+
+* [Task] As updates have become very infrequent, Crane no longer checks for updates.
+
+* [Task] Docs have moved to https://michaelsauter.github.io/crane/
+
 ## 3.5.0 (2019-01-01)
 
 * [Feature] Support `external_links` config of docker-compose. See [#344](https://github.com/michaelsauter/crane/pull/344).
