@@ -1,5 +1,5 @@
 # Crane
-Lift containers with ease - [www.crane-orchestration.com](https://www.crane-orchestration.com?utm_source=github&utm_medium=web&utm_campaign=readme&utm_content=header)
+Lift containers with ease - [michaelsauter.github.io/crane](https://michaelsauter.github.io/crane/)
 
 
 ## Overview
@@ -13,10 +13,9 @@ ideally suited for development environments or continuous integration.
 * Extensive support of Docker run flags
 * Simple configuration with 1:1 mapping to Docker run flags
 * `docker-compose` compatible
-* **ultra-fast bind-mounts via Unison on Mac** in the PRO version
+* **ultra-fast bind-mounts via Unison on Mac**
 * Shortcut commands
-* Grouping of containers
-* Excluding / limiting containers via CLI
+* Flexible ways to target containers (through groups and CLI flags to exclude/limit)
 * Smart detach / attach behaviour
 * Verbose output which shows exact Docker commands
 * Hooks
@@ -24,26 +23,21 @@ ideally suited for development environments or continuous integration.
 
 ## Documentation & Usage
 
-Please see [www.crane-orchestration.com](https://www.crane-orchestration.com?utm_source=github&utm_medium=web&utm_campaign=readme&utm_content=docs).
+Please see [michaelsauter.github.io/crane/docs.html](https://michaelsauter.github.io/crane/docs.html).
 
 ## Installation
 
 The latest release is 3.5.0 and requires Docker >= 1.13.
 Please have a look at the [changelog](https://github.com/michaelsauter/crane/blob/master/CHANGELOG.md) when upgrading.
 
-The free version can be installed via:
-
 ```
 bash -c "`curl -sL https://raw.githubusercontent.com/michaelsauter/crane/v3.5.0/download.sh`" && \
 mv crane /usr/local/bin/crane
 ```
 
-**If you are on Mac, check out the PRO version which seamlessly integrates
-[ultra-fast bind-mounts via Unison](https://www.crane-orchestration.com?utm_source=github&utm_medium=web&utm_campaign=readme&utm_content=pro)**.
-
 ---
 
-Copyright © 2013-2018 Michael Sauter. See the LICENSE file for details.
+Copyright © 2013-2020 Michael Sauter. See the LICENSE file for details.
 
 ---
 
