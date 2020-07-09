@@ -141,6 +141,7 @@ type container struct {
 	Read_Only            bool                  `json:"read_only" yaml:"read_only"`
 	RawRestart           string                `json:"restart" yaml:"restart"`
 	RawRm                bool                  `json:"rm" yaml:"rm"`
+	RawRuntime           string                `json:"runtime" yaml:"runtime"`
 	RawSecurityOpt       []string              `json:"security-opt" yaml:"security-opt"`
 	RawSecurity_Opt      []string              `json:"security_opt" yaml:"security_opt"`
 	ShareSshSocket       bool                  `json:"share-ssh-socket" yaml:"share-ssh-socket"`
@@ -756,6 +757,10 @@ func (c *container) Restart() string {
 	return expandEnv(c.RawRestart)
 }
 
+func (c *container) Runtime() string {
+	return expandEnv(c.RawRuntime)
+}
+
 func (c *container) SecurityOpt() []string {
 	var securityOpt []string
 	rawSecurityOpt := c.RawSecurity_Opt
@@ -1301,6 +1306,10 @@ func (c *container) createArgs(cmds []string) []string {
 	// Rm
 	if adHoc || c.RawRm {
 		args = append(args, "--rm")
+	}
+	// Runtime
+	if len(c.Runtime()) > 0 {
+		args = append(args, "--runtime", c.Runtime())
 	}
 	// SecurityOpt
 	for _, securityOpt := range c.SecurityOpt() {
