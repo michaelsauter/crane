@@ -12,6 +12,12 @@ build: build-linux build-darwin build-windows
 build-linux: imports
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o crane_linux_amd64 -v github.com/michaelsauter/crane
 
+build-linux-arm: imports
+	GOOS=linux GOARCH=arm CGO_ENABLED=0 go build -o crane_linux_arm -v github.com/michaelsauter/crane
+
+build-linux-arm64: imports
+	GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o crane_linux_arm64 -v github.com/michaelsauter/crane
+
 build-darwin: imports
 	GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -o crane_darwin_amd64 -v github.com/michaelsauter/crane
 
