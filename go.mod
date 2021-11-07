@@ -1,4 +1,4 @@
-module github.com/michaelsauter/crane
+module github.com/michaelsauter/crane/v3
 
 require (
 	github.com/alecthomas/kingpin v2.2.6+incompatible
