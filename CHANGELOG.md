@@ -4,6 +4,8 @@
 
 ## 3.6.1 (2021-11-22)
 
+* [Task] Add major version as suffix to Go module; allows to install Crane via go install `github.com/michaelsauter/crane@latest`
+
 ## 3.6.0 (2020-07-09)
 
 * [Feature] Accelerated mounts are now available in the free version - there is no separate pro version anymore
