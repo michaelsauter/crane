@@ -1,4 +1,4 @@
-module github.com/michaelsauter/crane
+module github.com/michaelsauter/crane/v3
 
 require (
 	github.com/alecthomas/kingpin v2.2.6+incompatible
@@ -16,3 +16,5 @@ require (
 	github.com/stretchr/testify v1.2.2
 	gopkg.in/yaml.v2 v2.2.2
 )
+
+go 1.16

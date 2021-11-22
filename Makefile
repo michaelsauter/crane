@@ -10,16 +10,16 @@ fmt:
 build: build-linux build-darwin build-windows
 
 build-linux: imports
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o crane_linux_amd64 -v github.com/michaelsauter/crane
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o crane_linux_amd64 -v github.com/michaelsauter/crane/v3
 
 build-linux-arm: imports
-	GOOS=linux GOARCH=arm CGO_ENABLED=0 go build -o crane_linux_arm -v github.com/michaelsauter/crane
+	GOOS=linux GOARCH=arm CGO_ENABLED=0 go build -o crane_linux_arm -v github.com/michaelsauter/crane/v3
 
 build-linux-arm64: imports
-	GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o crane_linux_arm64 -v github.com/michaelsauter/crane
+	GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o crane_linux_arm64 -v github.com/michaelsauter/crane/v3
 
 build-darwin: imports
-	GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -o crane_darwin_amd64 -v github.com/michaelsauter/crane
+	GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -o crane_darwin_amd64 -v github.com/michaelsauter/crane/v3
 
 build-windows: imports
-	GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -o crane_windows_amd64.exe -v github.com/michaelsauter/crane
+	GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -o crane_windows_amd64.exe -v github.com/michaelsauter/crane/v3
