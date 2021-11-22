@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 3.6.1 (2021-11-22)
+
 ## 3.6.0 (2020-07-09)
 
 * [Feature] Accelerated mounts are now available in the free version - there is no separate pro version anymore
