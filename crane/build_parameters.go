@@ -1,11 +1,11 @@
 package crane
 
 type BuildParameters struct {
-	RawContext    string      `json:"context" yaml:"context"`
-	RawFile       string      `json:"file" yaml:"file"`
-	RawDockerfile string      `json:"dockerfile" yaml:"dockerfile"`
-	RawBuildArgs  interface{} `json:"build-arg" yaml:"build-arg"`
-	RawArgs       interface{} `json:"args" yaml:"args"`
+	RawContext    string `json:"context" yaml:"context"`
+	RawFile       string `json:"file" yaml:"file"`
+	RawDockerfile string `json:"dockerfile" yaml:"dockerfile"`
+	RawBuildArgs  any    `json:"build-arg" yaml:"build-arg"`
+	RawArgs       any    `json:"args" yaml:"args"`
 }
 
 func (b BuildParameters) Context() string {

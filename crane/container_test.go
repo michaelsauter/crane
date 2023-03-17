@@ -239,7 +239,7 @@ func TestCmd(t *testing.T) {
 	// Array
 	os.Clearenv()
 	os.Setenv("CMD", "1")
-	c = &container{RawCmd: []interface{}{"echo", "$CMD", "$$CMD"}}
+	c = &container{RawCmd: []any{"echo", "$CMD", "$$CMD"}}
 	assert.Equal(t, []string{"echo", "1", "$CMD"}, c.Cmd())
 }
 
@@ -317,7 +317,7 @@ func TestOptBoolYAML(t *testing.T) {
 
 func TestBuildArgs(t *testing.T) {
 	var c *container
-	c = &container{RawBuild: BuildParameters{RawBuildArgs: []interface{}{"key1=value1"}}}
+	c = &container{RawBuild: BuildParameters{RawBuildArgs: []any{"key1=value1"}}}
 	cfg = &config{path: "foo"}
 	assert.Equal(t, "key1=value1", c.BuildParams().BuildArgs()[0])
 }

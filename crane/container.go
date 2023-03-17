@@ -88,8 +88,8 @@ type container struct {
 	RawDNSSearch         []string              `json:"dns-search" yaml:"dns-search"`
 	RawDNS_Search        []string              `json:"dns_search" yaml:"dns_search"`
 	RawEntrypoint        string                `json:"entrypoint" yaml:"entrypoint"`
-	RawEnv               interface{}           `json:"env" yaml:"env"`
-	RawEnvironment       interface{}           `json:"environment" yaml:"environment"`
+	RawEnv               any                   `json:"env" yaml:"env"`
+	RawEnvironment       any                   `json:"environment" yaml:"environment"`
 	RawEnvFile           []string              `json:"env-file" yaml:"env-file"`
 	RawEnv_File          []string              `json:"env_file" yaml:"env_file"`
 	RawExpose            []string              `json:"expose" yaml:"expose"`
@@ -109,8 +109,8 @@ type container struct {
 	RawIPC               string                `json:"ipc" yaml:"ipc"`
 	RawIsolation         string                `json:"isolation" yaml:"isolation"`
 	RawKernelMemory      string                `json:"kernel-memory" yaml:"kernel-memory"`
-	RawLabel             interface{}           `json:"label" yaml:"label"`
-	RawLabels            interface{}           `json:"labels" yaml:"labels"`
+	RawLabel             any                   `json:"label" yaml:"label"`
+	RawLabels            any                   `json:"labels" yaml:"labels"`
 	RawLabelFile         []string              `json:"label-file" yaml:"label-file"`
 	RawLink              []string              `json:"link" yaml:"link"`
 	RawLinks             []string              `json:"links" yaml:"links"`
@@ -128,7 +128,7 @@ type container struct {
 	RawNet               string                `json:"net" yaml:"net"`
 	RawNetwork_Mode      string                `json:"network_mode" yaml:"network_mode"`
 	RawNetAlias          []string              `json:"net-alias" yaml:"net-alias"`
-	RawNetworks          interface{}           `json:"networks" yaml:"networks"`
+	RawNetworks          any                   `json:"networks" yaml:"networks"`
 	NoHealthcheck        bool                  `json:"no-healthcheck" yaml:"no-healthcheck"`
 	OomKillDisable       bool                  `json:"oom-kill-disable" yaml:"oom-kill-disable"`
 	RawOomScoreAdj       string                `json:"oom-score-adj" yaml:"oom-score-adj"`
@@ -152,8 +152,8 @@ type container struct {
 	RawStop_Signal       string                `json:"stop_signal" yaml:"stop_signal"`
 	RawStopTimeout       string                `json:"stop-timeout" yaml:"stop-timeout"`
 	RawStop_Grace_Period string                `json:"stop_grace_period" yaml:"stop_grace_period"`
-	RawSysctl            interface{}           `json:"sysctl" yaml:"sysctl"`
-	RawSysctls           interface{}           `json:"sysctls" yaml:"sysctls"`
+	RawSysctl            any                   `json:"sysctl" yaml:"sysctl"`
+	RawSysctls           any                   `json:"sysctls" yaml:"sysctls"`
 	RawTmpfs             []string              `json:"tmpfs" yaml:"tmpfs"`
 	Tty                  bool                  `json:"tty" yaml:"tty"`
 	RawUlimit            []string              `json:"ulimit" yaml:"ulimit"`
@@ -169,8 +169,8 @@ type container struct {
 	RawVolumes_From      []string              `json:"volumes_from" yaml:"volumes_from"`
 	RawWorkdir           string                `json:"workdir" yaml:"workdir"`
 	RawWorking_Dir       string                `json:"working_dir" yaml:"working_dir"`
-	RawCmd               interface{}           `json:"cmd" yaml:"cmd"`
-	RawCommand           interface{}           `json:"command" yaml:"command"`
+	RawCmd               any                   `json:"cmd" yaml:"cmd"`
+	RawCommand           any                   `json:"command" yaml:"command"`
 	hooks                hooks
 	networks             map[string]NetworkParameters
 	stdout               io.Writer
@@ -193,7 +193,7 @@ type LogSource struct {
 	Name   string
 }
 
-func (o *OptInt) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (o *OptInt) UnmarshalYAML(unmarshal func(any) error) error {
 	if err := unmarshal(&o.Value); err != nil {
 		return err
 	}
@@ -209,7 +209,7 @@ func (o *OptInt) UnmarshalJSON(b []byte) (err error) {
 	return
 }
 
-func (o *OptBool) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (o *OptBool) UnmarshalYAML(unmarshal func(any) error) error {
 	if err := unmarshal(&o.Value); err != nil {
 		return err
 	}
@@ -646,18 +646,18 @@ func (c *container) Networks() map[string]NetworkParameters {
 		value := c.RawNetworks
 		if value != nil {
 			switch concreteValue := value.(type) {
-			case []interface{}: // YAML or JSON: array
+			case []any: // YAML or JSON: array
 				for _, v := range concreteValue {
 					c.networks[v.(string)] = NetworkParameters{}
 				}
-			case map[interface{}]interface{}: // YAML: hash
+			case map[any]any: // YAML: hash
 				for k, v := range concreteValue {
 					if v == nil {
 						c.networks[k.(string)] = NetworkParameters{}
 					} else {
 						switch concreteParams := v.(type) {
-						case map[interface{}]interface{}:
-							stringMap := make(map[string]interface{})
+						case map[any]any:
+							stringMap := make(map[string]any)
 							for x, y := range concreteParams {
 								stringMap[x.(string)] = y
 							}
@@ -667,13 +667,13 @@ func (c *container) Networks() map[string]NetworkParameters {
 						}
 					}
 				}
-			case map[string]interface{}: // JSON: hash
+			case map[string]any: // JSON: hash
 				for k, v := range concreteValue {
 					if v == nil {
 						c.networks[k] = NetworkParameters{}
 					} else {
 						switch concreteParams := v.(type) {
-						case map[string]interface{}:
+						case map[string]any:
 							c.networks[k] = createNetworkParemetersFromMap(concreteParams)
 						default:
 							panic(StatusError{fmt.Errorf("unknown type: %v", v), 65})
@@ -1711,15 +1711,15 @@ func containerReference(reference string) (name string) {
 }
 
 // Transform an unmarshalled payload (YAML or JSON) of type slice or map to a slice of env-expanded "K=V" strings
-func sliceOrMap2ExpandedSlice(value interface{}) []string {
+func sliceOrMap2ExpandedSlice(value any) []string {
 	var result []string
-	expandedStringOrPanic := func(v interface{}) string {
+	expandedStringOrPanic := func(v any) string {
 		switch concreteValue := v.(type) {
-		case []interface{}: // YAML or JSON
+		case []any: // YAML or JSON
 			panic(StatusError{fmt.Errorf("unknown type: %v", v), 65})
-		case map[interface{}]interface{}: // YAML
+		case map[any]any: // YAML
 			panic(StatusError{fmt.Errorf("unknown type: %v", v), 65})
-		case map[string]interface{}: // JSON
+		case map[string]any: // JSON
 			panic(StatusError{fmt.Errorf("unknown type: %v", v), 65})
 		default:
 			return expandEnv(fmt.Sprintf("%v", concreteValue))
@@ -1727,15 +1727,15 @@ func sliceOrMap2ExpandedSlice(value interface{}) []string {
 	}
 	if value != nil {
 		switch concreteValue := value.(type) {
-		case []interface{}: // YAML or JSON: array
+		case []any: // YAML or JSON: array
 			for _, v := range concreteValue {
 				result = append(result, expandedStringOrPanic(v))
 			}
-		case map[interface{}]interface{}: // YAML: hash
+		case map[any]any: // YAML: hash
 			for k, v := range concreteValue {
 				result = append(result, expandedStringOrPanic(k)+"="+expandedStringOrPanic(v))
 			}
-		case map[string]interface{}: // JSON: hash
+		case map[string]any: // JSON: hash
 			for k, v := range concreteValue {
 				result = append(result, expandEnv(k)+"="+expandedStringOrPanic(v))
 			}

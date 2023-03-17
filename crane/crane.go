@@ -15,10 +15,10 @@ import (
 	shlex "github.com/flynn/go-shlex"
 )
 
-var printSuccessf func(format string, a ...interface{})
-var printInfof func(format string, a ...interface{})
-var printNoticef func(format string, a ...interface{})
-var printErrorf func(format string, a ...interface{})
+var printSuccessf func(format string, a ...any)
+var printInfof func(format string, a ...any)
+var printNoticef func(format string, a ...any)
+var printErrorf func(format string, a ...any)
 
 func init() {
 	color.Output = os.Stderr
@@ -33,7 +33,7 @@ type StatusError struct {
 	status int
 }
 
-func handleRecoveredError(recovered interface{}) {
+func handleRecoveredError(recovered any) {
 	if recovered == nil {
 		return
 	}
@@ -98,7 +98,7 @@ func checkDockerClient() {
 }
 
 // Assemble slice of strings from slice or string with spaces
-func stringSlice(sliceLike interface{}) []string {
+func stringSlice(sliceLike any) []string {
 	var strSlice []string
 	switch sl := sliceLike.(type) {
 	case string:
@@ -109,7 +109,7 @@ func stringSlice(sliceLike interface{}) []string {
 			}
 			strSlice = append(strSlice, parts...)
 		}
-	case []interface{}:
+	case []any:
 		parts := make([]string, len(sl))
 		for i, v := range sl {
 			parts[i] = expandEnv(fmt.Sprintf("%v", v))
