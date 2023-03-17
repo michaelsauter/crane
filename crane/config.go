@@ -38,13 +38,13 @@ type Config interface {
 }
 
 type config struct {
-	RawPrefix            interface{}                  `json:"prefix" yaml:"prefix"`
+	RawPrefix            any                          `json:"prefix" yaml:"prefix"`
 	RawContainers        map[string]*container        `json:"services" yaml:"services"`
 	RawGroups            map[string][]string          `json:"groups" yaml:"groups"`
 	RawHooks             map[string]hooks             `json:"hooks" yaml:"hooks"`
 	RawNetworks          map[string]*network          `json:"networks" yaml:"networks"`
 	RawVolumes           map[string]*volume           `json:"volumes" yaml:"volumes"`
-	RawCmds              map[string]interface{}       `json:"commands" yaml:"commands"`
+	RawCmds              map[string]any               `json:"commands" yaml:"commands"`
 	RawAcceleratedMounts map[string]*acceleratedMount `json:"accelerated-mounts" yaml:"accelerated-mounts"`
 	RawMacSyncs          map[string]*acceleratedMount `json:"mac-syncs" yaml:"mac-syncs"`
 	containerMap         ContainerMap

@@ -1,8 +1,8 @@
 package crane
 
 type LoggingParameters struct {
-	RawDriver  string      `json:"driver" yaml:"driver"`
-	RawOptions interface{} `json:"options" yaml:"options"`
+	RawDriver  string `json:"driver" yaml:"driver"`
+	RawOptions any    `json:"options" yaml:"options"`
 }
 
 func (l LoggingParameters) Options() []string {

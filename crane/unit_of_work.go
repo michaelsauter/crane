@@ -225,7 +225,7 @@ func (uow *UnitOfWork) Generate(templateFile string, output string) {
 		return
 	}
 
-	executeTemplate := func(outputFile string, templateInfo interface{}) {
+	executeTemplate := func(outputFile string, templateInfo any) {
 		writer := os.Stdout
 		if len(outputFile) > 0 {
 			writer, _ = os.Create(outputFile)
