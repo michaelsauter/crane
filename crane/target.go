@@ -71,9 +71,7 @@ func NewTarget(dependencyMap map[string]*Dependencies, targetArg string, extendF
 // Return all targeted containers, sorted alphabetically
 func (t Target) all() []string {
 	all := t.initial
-	for _, name := range t.dependencies {
-		all = append(all, name)
-	}
+	all = append(all, t.dependencies...)
 	sort.Strings(all)
 	return all
 }
